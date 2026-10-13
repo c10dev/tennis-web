@@ -20,11 +20,13 @@
     "test:stats": "vitest run --project stats",
     "coverage": "vitest run --project engine --coverage",
     "sim": "tsx engine/cli/sim.ts",
-    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit",
-    "lint": "eslint ."
+    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.0",
     "@types/node": "24.19.2",
     "@vitest/coverage-v8": "5.0.4",
     "eslint": "10.12.0",
