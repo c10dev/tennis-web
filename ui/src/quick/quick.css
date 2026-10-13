@@ -26,3 +26,7 @@ ul.recent .lost { color: var(--loss); }
 .plan-btn { flex: 1; min-width: 96px; padding: 7px 10px; }
 .plan-btn.selected, .plan-btn.selected:hover { background: var(--court); color: var(--paper); }
 .plan-line { font-size: 13px; }
+/* The sound toggle (ADR-023): a small paper pill pinned top right on every quick screen, above the 3D replay. */
+.sound-pill { position: fixed; top: 12px; right: 16px; z-index: 40; display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; font-size: 14px; border-radius: 999px; }
+.sound-pill .icon { flex: none; }

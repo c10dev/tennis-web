@@ -173,6 +173,37 @@ test.describe('quick match', () => {
     expect(errors).toEqual([]);
   });
 
+  const sfx = (page: Page) => page.evaluate(() => ((window as unknown as { __sfx?: { kind: string }[] }).__sfx ?? []).map((c) => c.kind));
+
+  test('sounds the decision point: three deals, the pick, the face-down hold, the flip and the clash (ADR-023)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await startLadder(page);
+    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    await expect.poll(() => sfx(page)).toEqual(['deal', 'deal', 'deal']);
+    await page.keyboard.press('Digit1');
+    // The next decision can follow 0.6 s after the outcome in fast mode: compare the first decision's cues only.
+    await expect.poll(async () => (await sfx(page)).slice(0, 7)).toEqual(['deal', 'deal', 'deal', 'pick', 'hold', 'flip', 'clash']);
+    expect(errors).toEqual([]);
+  });
+
+  test('mutes from the sound toggle, remembers it after a reload, and then plays nothing', async ({ page }) => {
+    await startLadder(page);
+    await page.locator('#sound-toggle').click();
+    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
+    await page.reload();
+    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#sound-toggle')).toContainText('Sound off');
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    await page.keyboard.press('Digit2');
+    await expect(page.locator('#outcome')).toBeVisible();
+    expect(await sfx(page)).toEqual([]);
+  });
+
   test('keeps the season mode one click away', async ({ page }) => {
     await page.goto('/#/');
     await page.locator('#new-career').click();

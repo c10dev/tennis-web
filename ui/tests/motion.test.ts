@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { countValue, createSequence, easeOutCubic, prefersReducedMotion, staggerMs } from '../src/lib/motion.ts';
+import { countUp, countValue, createSequence, easeOutCubic, prefersReducedMotion, staggerMs } from '../src/lib/motion.ts';
 
 describe('motion helpers (ADR-021)', () => {
   afterEach(() => {
@@ -57,5 +57,39 @@ describe('motion helpers (ADR-021)', () => {
     const late = vi.fn();
     seq.onSkip(late);
     expect(late).toHaveBeenCalledTimes(1);
+  });
+
+  /** Runs countUp with frames handed out by hand at `t0 + ms`, reporting each value step. */
+  function countWithFrames(to: number) {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+    vi.stubGlobal('cancelAnimationFrame', () => {});
+    const el = { textContent: '' } as HTMLElement;
+    const steps: number[] = [];
+    const seq = createSequence();
+    const t0 = performance.now();
+    const done = countUp(el, to, 1, seq, String, 0, (v) => steps.push(v));
+    const frame = (ms: number) => frames.shift()!(t0 + ms);
+    return { el, steps, seq, done, frame };
+  }
+
+  it('reports each new value of a count-up once, and the last one when it ends on time', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const c = countWithFrames(5);
+    for (const ms of [100, 100, 300, 600, 900]) c.frame(ms);
+    expect(c.steps).toEqual([1, 3, 4]);
+    await vi.advanceTimersByTimeAsync(1000);
+    await c.done;
+    expect(c.steps).toEqual([1, 3, 4, 5]);
+    expect(c.el.textContent).toBe('5');
+  });
+
+  it('reports nothing more when skipped: the final number is shown silently', async () => {
+    const c = countWithFrames(5);
+    c.frame(100);
+    c.seq.skip();
+    await c.done;
+    expect(c.steps).toEqual([1]);
+    expect(c.el.textContent).toBe('5');
   });
 });

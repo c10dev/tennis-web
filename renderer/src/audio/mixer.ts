@@ -1,14 +1,21 @@
 // Web Audio synthesis for the cues (GDD §8.4): no sample files. Ball sounds are short filtered noise and tones,
 // the crowd is filtered noise (a bed plus applause bursts). Browser-only and not unit-tested; cues.ts decides
-// what plays and when.
-import { AUDIO } from '../tuning/index.ts';
+// what plays and when. UI cues (ADR-023) come as voices from uiCues.ts.
+import { AUDIO } from '../tuning/audio.ts';
 import type { Cue } from './cues.ts';
+import { uiSound, type UiCue, type Voice } from './uiCues.ts';
 import { createVoice } from './voice.ts';
 
-export type Bus = 'master' | 'sfx' | 'crowd' | 'umpire';
+export type Bus = 'master' | 'sfx' | 'crowd' | 'umpire' | 'ui';
 
 export interface Mixer {
   play(cue: Cue): void;
+  /** A quick-screen UI sound; the face-down hold also ducks the crowd. */
+  playUi(cue: UiCue): void;
+  /** Drops `bus` to `level` of its volume for `sec`, then brings it back. */
+  duck(bus: Bus, level: number, sec: number): void;
+  /** The crowd murmur under everything: on for matches, off on menus. */
+  setBed(on: boolean): void;
   setVolume(bus: Bus, value: number): void;
   volume(bus: Bus): number;
   setMuted(muted: boolean): void;
@@ -32,7 +39,7 @@ export function createMixer(): Mixer {
   const ctx = new AudioContext();
   const volumes: Record<Bus, number> = { ...AUDIO.volume };
   const gains = {} as Record<Bus, GainNode>;
-  for (const bus of ['master', 'sfx', 'crowd', 'umpire'] as const) {
+  for (const bus of ['master', 'sfx', 'crowd', 'umpire', 'ui'] as const) {
     gains[bus] = ctx.createGain();
     gains[bus].gain.value = volumes[bus];
     if (bus !== 'master') gains[bus].connect(gains.master);
@@ -50,7 +57,8 @@ export function createMixer(): Mixer {
   bedFilter.type = 'lowpass';
   bedFilter.frequency.value = 500;
   const bedGain = ctx.createGain();
-  bedGain.gain.value = 0.12;
+  const bedLevel = 0.12;
+  bedGain.gain.value = bedLevel;
   bed.connect(bedFilter).connect(bedGain).connect(gains.crowd);
   bed.start();
 
@@ -83,7 +91,54 @@ export function createMixer(): Mixer {
     osc.stop(t + decay + 0.02);
   };
 
+  /** One UI voice on the ui bus, `v.delay` from now. */
+  const uiVoice = (v: Voice) => {
+    const t = ctx.currentTime + v.delay;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(v.peak, t + v.attack);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + v.attack + v.decay);
+    env.connect(gains.ui);
+    const end = t + v.attack + v.decay + 0.02;
+    if (v.type === 'tone') {
+      const osc = ctx.createOscillator();
+      osc.type = v.wave;
+      osc.frequency.setValueAtTime(v.freq, t);
+      if (v.endFreq !== v.freq) osc.frequency.exponentialRampToValueAtTime(v.endFreq, end);
+      osc.connect(env);
+      osc.start(t);
+      osc.stop(end);
+    } else {
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      const filter = ctx.createBiquadFilter();
+      filter.type = v.filter;
+      filter.frequency.value = v.freq;
+      filter.Q.value = v.q;
+      src.connect(filter).connect(env);
+      src.start(t, Math.random());
+      src.stop(end);
+    }
+  };
+  const duck = (bus: Bus, level: number, sec: number) => {
+    const g = gains[bus].gain;
+    const t = ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(volumes[bus] * level, t, 0.04);
+    g.setTargetAtTime(volumes[bus], t + sec, 0.12);
+  };
+
   return {
+    playUi(cue) {
+      if (muted) return;
+      const s = uiSound(cue);
+      for (const v of s.voices) uiVoice(v);
+      if (s.duck) duck(s.duck.bus, s.duck.level, s.duck.sec);
+    },
+    duck,
+    setBed(on) {
+      bedGain.gain.setTargetAtTime(on ? bedLevel : 0, ctx.currentTime, 0.3);
+    },
     play(cue) {
       if (muted) return;
       const soft = 'replay' in cue && cue.replay ? 0.6 : 1;

@@ -7,7 +7,7 @@ import {
 } from '@tennis/renderer';
 import { clipStep } from './clip.ts';
 import { createControls } from './controls.ts';
-import { createSound } from './sound.ts';
+import { createSound, type Sound } from './sound.ts';
 
 export interface Broadcast {
   /** Plays a match (or a match so far). keepTime keeps the clock where it is: for a match that grew by a set. */
@@ -28,6 +28,8 @@ export interface BroadcastOptions {
   controls?: boolean;
   /** Programme without the introduction and replays (quick matches). */
   bare?: boolean;
+  /** A sound shared with the screen (quick matches, ADR-023); without it the broadcast makes its own toggle. */
+  sound?: Sound;
   /** After every drawn frame. */
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
 }
@@ -46,7 +48,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   score.append(scoreBug.element);
   const overlays = createOverlays();
   graphics.append(overlays.element);
-  const sound = createSound(soundRoot);
+  const sound = options.sound ?? createSound(soundRoot);
 
   let mode = options.mode;
   let programme: Programme | null = null;
@@ -156,7 +158,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       clipWindow = null;
       cancelAnimationFrame(raf);
       controls?.dispose();
-      sound.mixer?.dispose();
+      if (!options.sound) sound.mixer?.dispose();
       viewer?.dispose();
       root.replaceChildren();
       document.body.classList.remove('broadcast-page');

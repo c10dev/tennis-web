@@ -8,6 +8,7 @@ import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/g
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
+import { appSound } from '../lib/sound.ts';
 
 const R = QUICK_REWARD.reveal;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -58,6 +59,7 @@ export function quickResult(ctx: Ctx): Screen {
   const rose = [...ratings.querySelectorAll<HTMLElement>('.rating-gain.rose')];
 
   const seq = createSequence();
+  const sound = appSound();
   const show = (el: HTMLElement | null) => el?.classList.add('shown');
   const showAll = () => {
     for (const el of element.querySelectorAll<HTMLElement>('.step, .pbp')) show(el);
@@ -71,7 +73,9 @@ export function quickResult(ctx: Ctx): Screen {
   async function run() {
     const steps: [string, HTMLElement | null, () => Promise<void>][] = [
       ['result', headline, () => seq.wait(R.stepSec)],
-      ['points', gains, () => countUp(count, v.delta, R.countSec, seq)],
+      // Each new number ticks, climbing over the count (falling for a loss) (ADR-023).
+      ['points', gains, () => countUp(count, v.delta, R.countSec, seq, signed, 0,
+        (x) => sound.ui({ kind: 'tick', i: Math.abs(x) - 1, n: Math.abs(v.delta), down: v.delta < 0 }))],
       ['overtakes', overtakes, () => seq.wait(R.stepSec + R.staggerSec * v.overtakes.length)],
       ['ratings', ratings, tickRatings],
       ['goal', goal, lockGoal],
@@ -104,6 +108,7 @@ export function quickResult(ctx: Ctx): Screen {
       if (seq.skipped) return;
       const r = v.ratings.filter((x) => x.rose)[i]!;
       el.classList.add('is-ticked');
+      sound.ui({ kind: 'rise' });
       await countUp(el.querySelector<HTMLElement>('.to')!, r.after, R.tickSec, seq, String, r.before);
     }
     await seq.wait(R.stepSec);
@@ -112,6 +117,7 @@ export function quickResult(ctx: Ctx): Screen {
   async function lockGoal() {
     await seq.wait(R.lockSec);
     goal.classList.add('is-locked');
+    if (!seq.skipped) sound.ui({ kind: 'stamp' });
     await seq.wait(R.stepSec);
   }
 
@@ -125,7 +131,7 @@ export function quickResult(ctx: Ctx): Screen {
       stage.remove();
       return;
     }
-    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true });
+    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
     stage.append(caption);
     let open = true;
     const close = () => {
@@ -159,6 +165,8 @@ export function quickResult(ctx: Ctx): Screen {
     element.classList.add('is-skipped');
     seq.skip();
     finish();
+    // A skip lands on the end state with one sound: the goal's stamp.
+    sound.ui({ kind: 'stamp' });
   };
   let unbind = onSkipInput(skip);
   const unbindOnDone = () => {

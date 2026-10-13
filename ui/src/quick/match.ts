@@ -11,6 +11,7 @@ import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
 import { stagger } from '../lib/motion.ts';
+import { appSound } from '../lib/sound.ts';
 import { playReveal, revealElement } from './reveal.ts';
 import { renderRead } from './scout.ts';
 
@@ -30,7 +31,14 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const stage = h('div');
   const panel = h('div', { class: 'quick-panel', id: 'quick-panel' });
   const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel);
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true });
+  const sound = appSound();
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
+  /** The deal sounds, one per card on the CSS deal stagger (motion.css: 120 ms, then 60 ms apart); cut short by a pick. */
+  let deals: ReturnType<typeof setTimeout>[] = [];
+  const stopDeals = () => {
+    deals.forEach(clearTimeout);
+    deals = [];
+  };
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
   let disposed = false;
@@ -79,6 +87,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('span', { class: 'rule' }, `beats ${CARD_LABEL[c.beats]}`),
         h('span', { class: 'strength', title: 'How well this card suits you right now' }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
+    deals = [0, 1, 2].map((i) => setTimeout(() => sound.ui({ kind: 'deal', i }), 120 + 60 * i));
     phase('choose');
   }
 
@@ -87,6 +96,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     busy = true;
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point);
+    stopDeals();
+    sound.ui({ kind: 'pick' });
     phase('reveal');
     // The picked card rises above the others for a beat, then both cards go face down (ADR-021).
     panel.querySelector('.cards')?.classList.add('is-picked');
@@ -96,7 +107,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     panel.classList.remove('stop');
     const reveal = revealElement(r, opponent);
     panel.replaceChildren(reveal);
-    await playReveal(reveal, () => !disposed);
+    await playReveal(reveal, () => !disposed, (cue) => sound.ui(cue));
     if (broadcast && !disposed) {
       load();
       await broadcast.ready();
@@ -135,6 +146,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     element, bare: true,
     dispose: () => {
       disposed = true;
+      stopDeals();
       window.removeEventListener('keydown', onKey);
       broadcast?.dispose();
     },

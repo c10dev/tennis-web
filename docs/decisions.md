@@ -759,3 +759,35 @@ Format: one entry per decision, newest at the bottom.
   proxy (390×844 at DPR 3, CPU 6× slower) 3.1 ms median, 59 fps. Before/after screenshots (hard/clay/grass × main,
   serve, side, reaction) were checked by eye and not committed. TD-012's GLTF route is closed for Rally Pop; fingers,
   shoe detail and per-player appearance stay open (TD-049).
+
+## ADR-023: UI sounds for the quick screens
+- **Date:** 2026-10-14
+- **Status:** Accepted
+- **Context:** ADR-021 built the motion of the decision point and the result but left out its sound layer (TD-047):
+  docs/design-references.md §4 Motion asks for a crowd duck while the cards lie face down, a hit on the clash and a
+  rising pitch per count-up tick. Quick matches were silent: the broadcast's sound started off behind its own toggle,
+  made per screen. The user chose synthesised sounds, on by default, with a remembered mute.
+- **Decision:**
+  - **Sounds as data** (`renderer/src/audio/uiCues.ts`): `uiSound(cue)` returns tone and noise voices (and a crowd duck
+    for the hold) from `AUDIO.ui`; the mixer only plays them on a new `ui` bus. Cues: `deal` (three triangle blips,
+    3 semitones apart), `pick` (a short upward chirp), `hold` (a low hum; the crowd drops to 25% for 0.5 s), `flip`
+    (a band-passed swish), `clash` (a thump, then a chord that climbs on a win, sits on a draw, falls on a loss),
+    `tick` (square blips climbing up to an octave over the count, walking down a fifth on a loss; ticks closer than
+    45 ms are dropped), `rise` (two notes up per rating that rose) and `stamp` (a falling thump for the goal). Every
+    voice is ≤ 0.6 s and ≤ 0.5 peak (unit-tested). No samples, no new dependencies.
+  - **One sound for the page** (`ui/src/lib/sound.ts`): the mixer is made on the first pointer or key press (autoplay
+    policy), sound is on by default and the mute is kept in localStorage (`tennis-sound`). A `Sound on / off` pill
+    (`#sound-toggle`, Lucide volume-2 / volume-x, `aria-pressed`) sits top right on the ladder, match and result.
+    Quick matches hand this sound to the broadcast (`BroadcastOptions.sound`), so ball, crowd and umpire play in the
+    clips too; the replay page keeps its own toggle and sliders. The crowd murmur runs under a match only
+    (`Mixer.setBed`).
+  - **Three-free entry:** `@tennis/renderer/audio` (package `exports`) carries the mixer and the UI cues without Three.js;
+    the lint rule for ui/ allows it by name. The career screens still load no Three.js or broadcast code (e2e).
+  - **Where cues fire:** deals on the CSS deal stagger (120 ms, then 60 ms apart; a pick cuts them), pick on the
+    choice, hold/flip/clash from `playReveal`, ticks from `countUp`'s new `onStep` (each new number, the last one too
+    when it ends on time), rise as each rating ticks, stamp as the goal locks. A skip or reduced motion plays the stamp
+    alone. In dev builds `window.__sfx` logs every cue played (e2e).
+- **Consequences:** e2e checks the decision point's cues in order, the result's climbing ticks, rises and stamp, the
+  skip's lone stamp, and a remembered mute that plays nothing. The main `app` chunk grows 2.2 kB; the audio code shares
+  a 25 kB chunk with engine code the dev page already split out. Sounds are synthesised, untested by ear in CI, and have
+  no volume slider on the quick screens (TD-050).

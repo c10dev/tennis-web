@@ -121,6 +121,31 @@ test.describe('quick result', () => {
     expect(errors).toEqual([]);
   });
 
+  test('ticks the points up on climbing notes, chimes each rating that rose and stamps the goal (ADR-023)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await playToResult(page, 3, true);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase), { timeout: 15_000 }).toBe('done');
+    const v = nodeResult(3);
+    const cues = await page.evaluate(() => (window as unknown as { __sfx: { kind: string; i?: number; n?: number; down?: boolean }[] }).__sfx);
+    const after = cues.slice(cues.findLastIndex((c) => c.kind === 'clash') + 1);
+    const ticks = after.filter((c) => c.kind === 'tick');
+    expect(ticks.length).toBeGreaterThan(2);
+    for (const t of ticks) expect(t).toMatchObject({ n: Math.abs(v.delta), down: v.delta < 0 });
+    for (let k = 1; k < ticks.length; k++) expect(ticks[k]!.i!).toBeGreaterThan(ticks[k - 1]!.i!);
+    expect(after.filter((c) => c.kind === 'rise')).toHaveLength(v.ratings.filter((r) => r.rose).length);
+    expect(after.at(-1)!.kind).toBe('stamp');
+    expect(errors).toEqual([]);
+  });
+
+  test('skipping the reveal plays the stamp alone', async ({ page }) => {
+    await playToResult(page, 3, true);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('replay');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('done');
+    const cues = await page.evaluate(() => (window as unknown as { __sfx: { kind: string }[] }).__sfx.map((c) => c.kind));
+    expect(cues.slice(cues.lastIndexOf('clash') + 1)).toEqual(['stamp']);
+  });
+
   test('keeps the next goal\'s label and line inside its gold lock ring', async ({ page }) => {
     await playToResult(page, 3, true);
     await page.keyboard.press('Enter');

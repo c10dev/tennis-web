@@ -71,7 +71,8 @@ export default tseslint.config(
         'error',
         {
           patterns: [
-            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*'], message: 'Import workspace packages by name.' },
+            // '@tennis/renderer/audio' is the renderer's Three-free entry (ADR-023), for screens without the 3D chunk.
+            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*', '!@tennis/renderer/audio'], message: 'Import workspace packages by name.' },
           ],
         },
       ],
