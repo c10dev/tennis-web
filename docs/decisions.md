@@ -485,6 +485,8 @@ Format: one entry per decision, newest at the bottom.
   parts). Headless Chromium uses software WebGL, so fps is indicative only (TD-024) and was measured on a loaded
   machine, alternating the two builds: 25–31 fps before, 20–24 after (−20 to −25%). Turning parts off one at a
   time: without the sky dome +3–4 fps (it is now drawn after the opaque meshes), without rig outlines +0.5–1,
-  Lambert instead of toon no change. The software rasteriser is fill-bound, so a GPU should see far less. Screenshots before and after (main, serve, side, reaction on each surface) are in
-  `docs/screenshots/rally-pop/` (not committed). Phone performance, the GLTF/CC0 rig and the umpire chair in the side
-  replay camera are open (TD-030–TD-032).
+  Lambert instead of toon no change. The software rasteriser is fill-bound. On a desktop GPU (Chrome on Windows,
+  RTX 5060, i5-14600KF, canvas 3841×1849 at DPR 1.75, clay main camera) both builds hold the 60 fps refresh cap and
+  the frame callback takes 0.5 → 0.6 ms median (p95 0.8 → 1.0 ms). Screenshots before and after (main, serve, side, reaction on each surface) are in
+  `docs/screenshots/rally-pop/` (not committed). Phone performance, the GLTF/CC0 rig, the umpire chair in the side replay
+  camera and the polish left out are open (TD-030–TD-033).
