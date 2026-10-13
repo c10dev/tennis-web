@@ -143,3 +143,25 @@ export const QUICK_AI = {
   /** Attack weight falls by this share per unit of fatigue. */
   fatigueAttack: 0.5,
 } as const;
+
+/** The quick-match ladder and its rewards (ADR-016). */
+export const QUICK = {
+  /** Ladder points by starting rank: top × exp(−(rank − 1) / scale). */
+  startTop: 1600,
+  startScale: 16,
+  /** A win pays win + perRankAbove for every place the opponent was above; a loss costs `loss`. */
+  win: 20,
+  perRankAbove: 4,
+  loss: 6,
+  /** AI matches played around the ladder after each of the user's matches. */
+  background: 6,
+  /** Rating progress per card played, on the ratings behind it; a win pays winXp times as much. */
+  xpPerCard: 0.008,
+  winXp: 1.5,
+  rewardStats: {
+    attack: ['servePower', 'forehand', 'aggression'],
+    defend: ['consistency', 'movement'],
+    counter: ['return', 'decision', 'agility'],
+  },
+  surfaces: ['hard', 'clay', 'grass'],
+} as const;

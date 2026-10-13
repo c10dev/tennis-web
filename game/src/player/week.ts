@@ -51,8 +51,8 @@ export function endWeek(p: CareerPlayer, week: WeekActivity, rng: Rng): CareerPl
   return out;
 }
 
-/** Adds progress to a rating, turning every whole point into a rating change, within 1–20. */
-function adjust(p: CareerPlayer, k: Rated, delta: number): void {
+/** Adds progress to a rating (mutating `p`), turning every whole point into a rating change, within 1–20. */
+export function adjust(p: CareerPlayer, k: Rated, delta: number): void {
   let progress = (p.progress[k] ?? 0) + delta;
   let rating = p.attributes[k];
   while (progress >= 1 && rating < 20) {

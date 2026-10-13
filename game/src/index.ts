@@ -28,3 +28,7 @@ export { rankingsView } from './views/rankings.ts';
 export { savesView } from './views/saves.ts';
 export { historyView, tournamentView, type MatchRow } from './views/tournament.ts';
 export { aiCard, BEATEN_BY, CARDS, cardEntropy, cardOdds, type CardContext } from './quick/ai.ts';
+export { finishQuick, ladderOrder, newLadder, nextOpponent, pointsToNext, rankOf, type QuickRecord, type QuickState } from './quick/ladder.ts';
+export { matchOver, playPoint, startQuick, userRole, type QuickMatch } from './quick/match.ts';
+export { cardReward } from './quick/rewards.ts';
+export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './quick/save.ts';

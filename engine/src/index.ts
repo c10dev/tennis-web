@@ -1,7 +1,7 @@
 // Public API of the engine. Consumers (CLI, renderer, UI) import from here only.
 export { exhibitionConfig } from './match/exhibition.ts';
 export { fingerprint } from './match/fingerprint.ts';
-export { advance, finish, isOver, replayMatch, setTactic, startMatch, type LiveMatch } from './match/live.ts';
+export { advance, finish, isOver, liveStatus, replayMatch, setTactic, startMatch, type LiveMatch } from './match/live.ts';
 export { createConfig, DEFAULT_TACTIC, simulateMatch } from './match/simulateMatch.ts';
 export { addMetrics, emptyMetrics, matchMetrics, runBatch, summarize, type Metrics, type Summary } from './match/metrics.ts';
 export { computeStats } from './match/stats.ts';

@@ -154,3 +154,9 @@ function validate(config: MatchConfig): void {
     if (!(f >= 0 && f <= 1)) throw new RangeError(`Starting fatigue must be in [0, 1], got ${f}`);
   }
 }
+
+/** What a caller may know between points: who serves next, each player's fatigue, points played. */
+export function liveStatus(live: LiveMatch): { server: PlayerId; fatigue: Record<PlayerId, number>; pointsPlayed: number; over: boolean } {
+  const s = live.state;
+  return { server: s.scoring.score.server, fatigue: { ...s.fatigue }, pointsPlayed: s.points.length, over: isOver(live) };
+}
