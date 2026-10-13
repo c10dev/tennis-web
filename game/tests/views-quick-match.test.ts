@@ -3,7 +3,7 @@ import { USER_ID } from '../src/player/create.ts';
 import { ladderOrder, pointsToNext, rankOf } from '../src/quick/ladder.ts';
 import { decide } from '../src/quick/match.ts';
 import { quickHomeView } from '../src/views/quick-home.ts';
-import { cardChoices, decisionSituation, revealView, scoreLine } from '../src/views/quick-match.ts';
+import { cardChoices, decisionSituation, momentLabel, revealView, scoreLine } from '../src/views/quick-match.ts';
 import { freshLadder, ladderWithDecision, toDecision } from './quick-helpers.ts';
 
 describe('quickHomeView', () => {
@@ -21,6 +21,16 @@ describe('quickHomeView', () => {
   });
 });
 
+describe('momentLabel', () => {
+  it('names every decision point on the banner, the user first', () => {
+    expect(momentLabel([6, 4], ['set_point', 'match_point'])).toBe('MATCH POINT');
+    expect(momentLabel([3, 6], ['set_point', 'match_point'])).toBe('MATCH POINT DOWN');
+    expect(momentLabel([5, 5], [])).toBe('5-ALL');
+    expect(momentLabel([5, 2], [])).toBe('BIG POINT');
+    expect(momentLabel([1, 5], [])).toBe('BIG POINT');
+  });
+});
+
 describe('a decision point', () => {
   const m = toDecision(ladderWithDecision(freshLadder()));
 
@@ -29,7 +39,7 @@ describe('a decision point', () => {
     expect(sit.role === 'serve' || sit.role === 'return').toBe(true);
     expect(sit.line).toMatch(/^(Your serve|Their serve) · \d+-\d+$/);
     expect(sit.line.endsWith(scoreLine(m))).toBe(true);
-    expect(sit.moment).not.toBeNull();
+    expect(sit.moment).toMatch(/^(MATCH POINT|MATCH POINT DOWN|\d+-ALL|BIG POINT)$/);
     const cards = cardChoices(m);
     expect(cards.map((c) => c.card)).toEqual(['attack', 'defend', 'counter']);
     expect(cards.find((c) => c.card === 'attack')!.beats).toBe('defend');

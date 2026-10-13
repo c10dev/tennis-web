@@ -28,9 +28,12 @@ function playOut(m: QuickMatch, pick = (i: number) => CYCLE[i % 3]!) {
 }
 
 describe('isDecisionPoint (ADR-017)', () => {
-  it('stops from five all and at any set or match point, not before', () => {
+  it('stops once either player reaches five points, and at any set or match point, not before', () => {
     expect(isDecisionPoint(score(0, 0), ['tiebreak'])).toBe(false);
-    expect(isDecisionPoint(score(4, 5), ['tiebreak'])).toBe(false);
+    expect(isDecisionPoint(score(4, 4), ['tiebreak'])).toBe(false);
+    expect(isDecisionPoint(score(4, 2), ['tiebreak'])).toBe(false);
+    expect(isDecisionPoint(score(5, 0), ['tiebreak'])).toBe(true);
+    expect(isDecisionPoint(score(3, 5), ['tiebreak'])).toBe(true);
     expect(isDecisionPoint(score(5, 5), ['tiebreak'])).toBe(true);
     expect(isDecisionPoint(score(6, 2), ['set_point', 'match_point', 'tiebreak'])).toBe(true);
     expect(isDecisionPoint(score(1, 6), ['set_point', 'match_point', 'tiebreak'])).toBe(true);
@@ -90,13 +93,14 @@ describe('a quick match flow (ADR-017)', () => {
     expect(a.recipe.config.tactics[0]).toEqual(planTactic('aggressive'));
   });
 
-  it('stops for cards at least once in most matches, and only at decision points', () => {
+  it('stops for cards at least twice in every match, and only at decision points', () => {
     const counts = Array.from({ length: 100 }, (_, i) => {
       const m = quick(100 + i);
       playOut(m);
       for (const p of pointsOf(m).filter((x) => x.cards)) expect(isDecisionPoint(p.scoreBefore, p.tags)).toBe(true);
       return m.decisions.length;
     }).sort((x, y) => x - y);
-    expect(counts[50]).toBeGreaterThanOrEqual(1);
+    expect(counts[0]).toBeGreaterThanOrEqual(2);
+    expect(counts[50]).toBeGreaterThanOrEqual(3);
   });
 });
