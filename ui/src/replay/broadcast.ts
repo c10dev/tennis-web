@@ -5,6 +5,7 @@ import {
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
   type ViewMode,
 } from '@tennis/renderer';
+import { within } from '../lib/async.ts';
 import { clipStep } from './clip.ts';
 import { createControls } from './controls.ts';
 import { createSound, type Sound } from './sound.ts';
@@ -35,6 +36,8 @@ export interface BroadcastOptions {
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
+/** The longest a new viewer may spend compiling before it draws anyway (a lost context never finishes). */
+const WARM_LIMIT_MS = 1500;
 
 export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Broadcast {
   document.body.classList.add('broadcast-page');
@@ -128,8 +131,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         const created = createViewer(canvas, timeline);
         viewer = created;
         warmed = false;
-        // A failed parallel compile only means the first frame compiles them itself, as before.
-        warming = created.warm().catch(() => {}).then(() => {
+        // A failed or stuck parallel compile only means the first frame compiles them itself, as before.
+        warming = within(created.warm(), WARM_LIMIT_MS).then(() => {
           if (viewer === created) warmed = true;
         });
         surface = timeline.surface;
@@ -137,6 +140,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         resize();
       }
       programme = build(timeline);
+      if (!opts.keepTime) liveMatchT = 0;
       clock = opts.keepTime ? clockReducer(programme, clock, { type: 'seek', t: clock.t }) : createClock();
       controls?.setProgramme(programme);
       return timeline;
