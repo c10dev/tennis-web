@@ -605,3 +605,88 @@ Format: one entry per decision, newest at the bottom.
   the frame callback takes 0.5 → 0.6 ms median (p95 0.8 → 1.0 ms). Screenshots before and after (main, serve, side, reaction on each surface) are in
   `docs/screenshots/rally-pop/` (not committed). Phone performance, the GLTF/CC0 rig, the umpire chair in the side replay
   camera and the polish left out are open (TD-038–TD-041).
+
+
+## ADR-020: Art direction B "Rally Pop", phase 1a (UI theme)
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** Phase 1 of ADR-018 restyles the DOM UI. It is split in two parallel sessions: 1a (this one) owns the
+  palette, fonts, icons and the CSS of every screen; 1b owns motion (`ui/src/quick/motion.css`, `lib/motion.ts`,
+  `quick/{match,result}.ts`) and refers to the colour tokens by name. The UI was dark navy panels, one yellow accent,
+  `system-ui`. No new dependencies; fonts and icons are copied files.
+- **Decision:**
+  - **Tokens** (`ui/src/theme.css`, imported first by `style.css`): `--court #123a8c` (UI base), `--court-2 #1b4db3`,
+    `--paper #ffffff` (cards, tiles), `--paper-2 #eef3fc` (tracks, tints), `--ink #15171e` (outlines, text on paper),
+    `--ink-muted #5a6172`, `--optic #d6f53a` (Play, "You read it!", the live accent), `--gold #ffc21a` (ladder
+    points, the moment banner, rises), `--gold-tint #fff1c2`; card fills `--atk #ff7a45`, `--def #4aa3ff`,
+    `--ctr #3fd3b0` (phase 0, kept) and text variants `--atk-text #c2410c`, `--def-text #0b66d6`, `--ctr-text #047e73`.
+    Surface tokens `--text`, `--muted`, `--win`, `--loss`, `--link`, `--rule`, `--error`, `--focus` hold the court-blue
+    values on `:root` (white, `#bfd0f2`, optic, `#bfd0f2`, …) and are re-pointed on paper surfaces (`.paper`, `.card`,
+    `.card-btn`, `.chip`, `.gain`, `.decisive`, `.overtake`, `.match-panel`, `.note-banner`, `header.top` and form
+    controls) to ink, ink-muted, court, ink-muted, … so a component written once reads on both. Kept names re-pointed:
+    `--panel-bg` and `--bug-bg` are ink at 0.86 / 0.92, `--bug-accent` is optic. Sticker helpers: `--outline` (3 px
+    ink), `--lift` (0 5 px 0 ink).
+  - **Card text colours.** The doc's `#C23A1C / #1565C8 / #0B7F6A` gave a smallest ΔE of 32 (protan, Attack–Counter).
+    A scratch search over hue ±9° of the phase-0 fills at ≥ 4.6:1 on white reached 49; the trio above gives up a
+    little ΔE for ≥ 5.0:1. Smallest CIE76 ΔE after Machado 2009 simulation (severity 1):
+
+    | Trio | Normal | Protan | Deutan | Tritan |
+    |---|---|---|---|---|
+    | Fills `#ff7a45 / #4aa3ff / #3fd3b0` | 78 | 38 (A–C) | 53 (A–C) | 18 (D–C) |
+    | Text `#c2410c / #0b66d6 / #047e73` | 80 | 45 (A–C) | 61 (A–C) | 16 (D–C) |
+    | Doc B text `#C23A1C / #1565C8 / #0B7F6A` (rejected) | 79 | 32 | 51 | 15 |
+
+    Tritan stays the weakest (Defend–Counter); every card and chip keeps its Lucide icon, name and key.
+  - **Contrast** (WCAG 2; every text/background pair in the CSS; large = 18.66 px bold or 24 px):
+
+    | Pair | Ratio |
+    |---|---|
+    | White / court (body, headlines, verdict "=") | 10.4 |
+    | Muted and loss `#bfd0f2` / court | 6.7 |
+    | Optic / court (win, verdict ✓, title, pips) | 8.4 |
+    | Link `#dce6fa` / court | 8.3 |
+    | Error `#ffb4a6` / court | 6.1 |
+    | White / tell band (12 % white over court) | 7.5 (muted label 4.8) |
+    | Muted / decision panel over a white sky (95 % court) | 5.9 |
+    | Ink / paper | 17.9 |
+    | Ink-muted / paper | 6.2 |
+    | Court / paper (win on paper, brand, overtaken rank) | 10.4 |
+    | Court-2 / paper (links, ▲) | 7.6 |
+    | Attack, Defend, Counter text / paper | 5.2, 5.4, 5.0 |
+    | Ink key / Attack, Defend, Counter band | 6.9, 6.8, 9.5 |
+    | Ink / optic (Play, active buttons, bug points) | 14.5 |
+    | Ink / gold (moment banner, points tile) | 11.1 |
+    | Ink, ink-muted / paper-2 | 16.1, 5.6 |
+    | Ink, ink-muted / gold tint (your row) | 15.9, 5.5 |
+    | White / selected plan toggle (court) | 10.4 |
+    | Error `#b42318` / paper | 6.6 |
+    | White, muted, optic / bug (ink 0.92 over a white sky) | 14.3, 9.2, 11.6 |
+    | White, muted / dev panel (ink 0.86 over a white sky) | 11.8, 7.6 |
+
+    Non-text: paper card on court 10.4, optic pip 8.4, hollow "their point" pip ring 6.7, gold decision ring 6.5,
+    focus rings optic on court 8.4 and court-2 on paper 7.6. Ink-muted on gold is 3.8, so the gold tile's label is ink.
+  - **Won and lost** (ADR-018): the accent (optic on court, court on paper) against the muted tone, always with a
+    word or symbol (✓ / ✗ / =, W / L, ▲ / ▼); pips add shape (filled yours, hollow theirs). Hawk-Eye IN is optic, OUT
+    white; career rank moves follow win/loss instead of green/red.
+  - **Fonts** (`ui/public/fonts/`, `ui/src/fonts.css`, google/fonts commit 8b0a1d0, one OFL.txt each):
+    Lilita One 400 (11.9 KB) for h1/h2, the rank, verdicts, card names, big numbers and big buttons; Nunito 600/800
+    (16.6 + 16.5 KB) for body; Barlow Condensed 600/700 (24.1 + 24.3 KB) for the score bug and broadcast overlays only.
+    93.4 KB in total; a quick screen loads ~45 KB (Lilita + Nunito), Barlow only with the broadcast. `font-display:
+    swap`, system fallbacks, Lilita and Nunito 600 preloaded. Nunito is instanced from the variable font and Nunito and
+    Barlow are Latin-subset with fontTools; Lilita One is converted to WOFF2 only, because its OFL reserves the name
+    "Lilita" and a subset would be a Modified Version.
+  - **Sticker cards:** paper, 3 px ink outline, 16 px radius, a 5 px ink drop shadow, a 26 px band in the card's fill
+    with the key in its corner, a 30 px icon and the name in Lilita in the card's text colour, strength as an
+    ink-outlined bar. The same sticker language covers chips, the gold tilted moment banner, result tiles (the points
+    tile gold on a win), overtake pills, the ladder rank card (gold trophy, gold progress bar), the next-opponent card
+    (scouting line with an eye, plan toggles filled court blue when chosen) and optic Play buttons.
+  - **Broadcast layer:** the score bug and overlays are ink with optic, in Barlow Condensed with tabular figures. Ink
+    rather than navy because the UI base and the hard court (`#3470b8`) are both blue and a navy bug sinks into them;
+    ink holds 14.3:1 with white even over the daylight sky. Optic ties the live points to the ball; gold stays for
+    rewards and stakes. The tiebreak points cell is paper. Dev panels on the replay page are ink at 0.86.
+  - **Icons:** `lib/icons.ts` exports `icon(name)` (Lucide 0.468.0 path data, ISC) with eye, trophy and chevrons-up
+    added; `cardIcon` is kept. Eye is on the tell (`scout.ts`) and the home scouting line, trophy on the rank
+    (`home.ts`); chevrons-up is for 1b's rise animation (`result.ts` is theirs).
+- **Consequences:** `e2e/quick-colours.spec.ts` checks the card text and band colours, white cards, the gold moment,
+  4.5:1 and a protan/deutan ΔE above 30 computed in the test, and that all five faces load. Motion keyframes already
+  in `quick-match.css` / `quick-result.css` were left as they were for 1b. Open: TD-042–TD-045.
