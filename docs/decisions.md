@@ -275,3 +275,20 @@ Format: one entry per decision, newest at the bottom.
 
   The AI-played user finishes 39th on average and gains 2.09 overall. `npm run test:season` guards these with 10
   seasons. A season takes about 1.3 s of simulation, all on the main thread.
+
+## ADR-012: Save files keep recipes, not events
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** M4 saves careers in IndexedDB. A finished match's event JSON is about 0.4 MB (TD-009), and a season
+  has hundreds of matches.
+- **Decision:**
+  - `SaveFile { saveVersion: 1, summary: { name, week, savedAt }, state: SeasonState }`. The state is plain JSON.
+    AI matches keep only their winner and score; the user's matches keep a `MatchRecipe`, from which any replay is
+    rebuilt with `replayMatch` (ADR-010).
+  - `fromSave` refuses any other `saveVersion` with a clear message rather than migrating; there are no older saves.
+  - Slots: `auto` (written at the end of every week) and `slot1`–`slot3`. `SaveStore` is the interface:
+    `MemoryStore` for tests, `IndexedDbStore` (ui/, database `tennis-sim`, object store `saves`) in the browser.
+  - The game layer never reads the clock: the UI passes `savedAt`.
+- **Consequences:** A season's save is about 35 KB at the start and 95 KB at the end with 19 of the user's matches
+  (one match's events used to be 0.4 MB). Loading and carrying on gives exactly the weeks that would have followed
+  without saving, and replays from loaded recipes have the same fingerprints.

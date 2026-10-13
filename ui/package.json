@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@tennis/engine": "0.1.0",
+    "@tennis/game": "0.1.0",
     "@tennis/renderer": "0.1.0"
   }
 }

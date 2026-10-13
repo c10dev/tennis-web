@@ -19,3 +19,5 @@ export {
   currentRanking, newSeason, playerById, type MatchRecord, type SeasonState, type Standing, type TournamentRecord, type TournamentState, type UserChoice,
 } from './season/state.ts';
 export { beginWeek, closeWeek, seasonOver, weekPreview, type WeekPreview } from './season/week.ts';
+export { fromSave, SAVE_VERSION, toSave, type SaveFile, type SaveSummary } from './save/format.ts';
+export { checkSlot, MemoryStore, SLOTS, type SaveStore, type Slot, type SlotSummary } from './save/store.ts';
