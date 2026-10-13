@@ -52,15 +52,16 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
 
   const push = (hitter: PlayerId, shot: ShotType, landing: geo.Landing, speed: number, spin: number, outcome: Outcome, wing?: Wing) => {
     const from = geo.contactPoint(rng, pos[hitter], sideOf(hitter), shot === 'serve');
+    const flightSec = geo.flightSec(from, landing, speed);
     const event: ShotEvent = {
-      type: 'shot', t, hitter, shot, from, speedKmh: speed, spinRpm: spin, netClearance: landing.netClearance,
+      type: 'shot', t, hitter, shot, from, flightSec, speedKmh: speed, spinRpm: spin, netClearance: landing.netClearance,
       outcome, hitterPos: { ...pos[hitter] }, receiverPos: { ...pos[other(hitter)] },
     };
     if (wing) event.wing = wing;
     if (landing.bounce) event.bounce = landing.bounce;
     shots.push(event);
     shotsHit[hitter] += 1;
-    return geo.flightSec(from, landing, speed);
+    return flightSec;
   };
   const finish = (winner: PlayerId, endedBy: Outcome, serveNumber: 1 | 2, lastFlight: number): PointResult => ({
     winner, serveNumber, endedBy, shots, shotsHit, durationSec: t + lastFlight + 0.8,

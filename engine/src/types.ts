@@ -1,7 +1,7 @@
 // Event and data schema shared by the engine and its consumers (GDD §7).
 // Changing anything here means bumping SCHEMA_VERSION and recording an ADR (CLAUDE.md rule 6).
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type PlayerId = 'A' | 'B';
 export type Surface = 'hard' | 'clay' | 'grass';
@@ -82,6 +82,8 @@ export interface ShotEvent {
   from: Vec3;
   /** First bounce; outside the court when the shot is out. Absent when the ball does not bounce (net). */
   bounce?: Vec2;
+  /** Seconds from contact to the first bounce, or to the net when the ball does not bounce (schema v2). */
+  flightSec: number;
   speedKmh: number;
   spinRpm: number;
   /** Height above the net tape in metres; negative means the ball hit the net. */

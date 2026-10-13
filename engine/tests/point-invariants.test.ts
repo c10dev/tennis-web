@@ -58,6 +58,19 @@ describe('simulatePoint invariants', () => {
     }
   });
 
+  it('records each ball flight, so a replay knows when it lands without engine internals (schema v2)', () => {
+    for (const { result } of sample) {
+      result.shots.forEach((s, i) => {
+        expect(s.flightSec).toBeGreaterThan(0);
+        expect(s.flightSec).toBeLessThan(3);
+        const next = result.shots[i + 1];
+        if (!next) expect(s.t + s.flightSec + 0.8).toBeCloseTo(result.durationSec, 9);
+        else if (s.outcome === 'fault') expect(next.t).toBeCloseTo(s.t + 4, 9);
+        else expect(next.t).toBeCloseTo(s.t + s.flightSec + 0.45, 9);
+      });
+    }
+  });
+
   it('puts bounces where the outcome says: in the box or court when good, outside or into the net when not', () => {
     for (const { input, result } of sample) {
       for (const s of result.shots) {
