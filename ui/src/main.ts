@@ -1,14 +1,14 @@
 // Dev replay page: simulate ?seed=&surface= with the engine, or load replay JSON, and play it with the renderer.
 import { exhibitionConfig, fingerprint, simulateMatch, type MatchResult, type Surface } from '@tennis/engine';
 import {
-  buildTimeline, clockReducer, createClock, createScoreBug, createViewer, matchFrameAt, type ClockAction, type ClockState, type Timeline,
-  type Viewer,
+  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createScoreBug, createViewer, type ClockAction, type ClockState,
+  type Programme, type Viewer,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createPanel } from './panel.ts';
 import './style.css';
 
-interface Session { result: MatchResult; timeline: Timeline; viewer: Viewer; clock: ClockState }
+interface Session { result: MatchResult; programme: Programme; viewer: Viewer; clock: ClockState }
 
 const el = (id: string) => document.getElementById(id)!;
 const canvas = el('view') as HTMLCanvasElement;
@@ -20,13 +20,13 @@ let session: Session | null = null;
 const scoreBug = createScoreBug();
 el('score').append(scoreBug.element);
 const dispatch = (action: ClockAction) => {
-  if (session) session.clock = clockReducer(session.timeline, session.clock, action);
+  if (session) session.clock = clockReducer(session.programme, session.clock, action);
 };
 const controls = createControls(el('controls'), dispatch);
 const panel = createPanel(el('panel'), { seed, surface }, (json, name) => start(json as MatchResult, name), () => session?.result ?? null);
 
 function start(result: MatchResult, source: string): void {
-  let timeline: Timeline;
+  let timeline;
   try {
     timeline = buildTimeline(result);
   } catch (err) {
@@ -36,8 +36,9 @@ function start(result: MatchResult, source: string): void {
   session?.viewer.dispose();
   const viewer = createViewer(canvas, timeline);
   viewer.resize(canvas.clientWidth, canvas.clientHeight);
-  session = { result, timeline, viewer, clock: createClock() };
-  controls.setTimeline(timeline);
+  const programme = buildProgramme(timeline, 'full');
+  session = { result, programme, viewer, clock: createClock() };
+  controls.setProgramme(programme);
   const [a, b] = timeline.names;
   panel.show({ title: `${a} vs ${b} · ${timeline.surface} · ${source}`, fingerprint: fingerprint(result) });
 }
@@ -49,9 +50,11 @@ function loop(now: number): void {
   const dt = (now - last) / 1000;
   last = now;
   if (session) {
-    session.clock = clockReducer(session.timeline, session.clock, { type: 'tick', dt });
-    const frame = matchFrameAt(session.timeline, session.clock.t);
+    session.clock = clockReducer(session.programme, session.clock, { type: 'tick', dt });
+    const frame = broadcastFrameAt(session.programme, session.clock.t);
     session.viewer.render(frame, dt);
+    // Read by the e2e tests and handy when debugging the director.
+    Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
     scoreBug.update(frame.scoreBug);
     controls.update(session.clock, frame);
   }

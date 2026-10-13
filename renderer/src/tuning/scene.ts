@@ -57,3 +57,21 @@ export const RIG = {
   runLeanSpeed: 8,
   shadowRadius: 0.45,
 } as const;
+
+/** Stands, ad boards and the umpire chair around the surround (Three x across, engine y along the court). */
+export const VENUE = {
+  /** Inner edge of the side stands (|x|) and end stands (|y|), metres from the centre. */
+  sideStandX: 14,
+  endStandY: 22,
+  /** Side stands run this far along the court each way; end stands fill between the side stands. */
+  sideStandHalfLength: 24,
+  tiers: 7,
+  tierDepth: 1.4,
+  tierRise: 0.8,
+  boardHeight: 0.9,
+  umpireChairX: -7.3,
+  umpireChairHeight: 2.2,
+  seats: { hard: 0x24406e, clay: 0x2e5a3b, grass: 0x40305e },
+  boards: { hard: 0x1f4fa0, clay: 0x1c5a32, grass: 0x2d5d2a },
+  chair: 0x3b4048,
+} as const;

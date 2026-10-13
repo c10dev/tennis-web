@@ -1,8 +1,8 @@
 // Transport bar: play/pause, previous/next point, seek bar, speeds, time and point readout, keyboard shortcuts.
-import { PLAYBACK, type ClockAction, type ClockState, type Frame, type Timeline } from '@tennis/renderer';
+import { PLAYBACK, type ClockAction, type ClockState, type Frame, type Programme } from '@tennis/renderer';
 
 export interface Controls {
-  setTimeline(timeline: Timeline): void;
+  setProgramme(programme: Programme): void;
   update(clock: ClockState, frame: Frame): void;
 }
 
@@ -58,9 +58,9 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
   let total = 0;
   let points = 0;
   return {
-    setTimeline(timeline) {
-      total = timeline.totalSec;
-      points = timeline.segments.length;
+    setProgramme(programme) {
+      total = programme.totalSec;
+      points = programme.timeline.segments.length;
       seek.max = String(total);
     },
     update(clock, frame) {
