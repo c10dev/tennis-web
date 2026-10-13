@@ -53,7 +53,7 @@ export function quickResult(ctx: Ctx): Screen {
     h('button', { id: 'to-ladder', onclick: () => ctx.go('#/quick') }, 'Ladder'));
   const element = h('section', { class: `quick-result ${v.won ? 'won' : 'lost'}`, id: 'quick-result', style: `--stagger-rise:${R.staggerSec * 1000}ms` },
     decisive, headline, gains, overtakes, ratings, goal, actions,
-    h('p', { class: 'muted skip-hint' }, 'Click or press space to skip'));
+    h('p', { class: 'muted skip-hint' }, 'Click, Space or Enter to skip'));
   for (const list of [gains.querySelectorAll('.gain'), overtakes?.querySelectorAll('.overtake') ?? [], ratings.querySelectorAll('.rating-gain')]) stagger(list as Iterable<HTMLElement>);
   const rose = [...ratings.querySelectorAll<HTMLElement>('.rating-gain.rose')];
 
