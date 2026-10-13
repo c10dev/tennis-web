@@ -23,6 +23,7 @@ Format: one entry per decision, newest at the bottom.
 - **Decision:**
   1. Point and shot outcomes are drawn from probabilities. Shot coordinates, speeds and times are generated afterwards to
      match the outcome (an `out` error lands outside the court). Geometry feeds back only through a position-quality term.
+     *(2026-10-13: that term was never implemented; no outcome reads a position. See ADR-008.)*
   2. All GDD attributes exist in the types. M1 formulas use serve, forehand, backhand, return, movement, agility,
      stamina, composure, aggression, consistency and decision. Volley, overhead, slice and drop shot wait for later.
   3. Attributes are stored as integers 1–20 and normalised to 0–1 inside the engine.
