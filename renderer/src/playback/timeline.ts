@@ -1,5 +1,5 @@
 // A match laid out on one replay clock: each point gets a segment (toss lead, the point, a pause after it).
-import type { MatchResult, PlayerId, PointEvent, ScoreState, Surface } from '@tennis/engine';
+import type { MatchResult, PlayerId, PlayStyle, PointEvent, ScoreState, Surface } from '@tennis/engine';
 import { SUPPORTED_SCHEMA_VERSION } from '../version.ts';
 import { PLAYBACK } from '../tuning/index.ts';
 
@@ -27,6 +27,7 @@ export interface Timeline {
   /** Replay second each point starts (what the clock's point jumps use). */
   pointStarts: number[];
   names: [string, string];
+  styles: [PlayStyle, PlayStyle];
   surface: Surface;
   noAd: boolean;
   winner: PlayerId;
@@ -60,7 +61,8 @@ export function buildTimeline(result: MatchResult): Timeline {
   if (segments.length === 0 || finalScore === null) throw new Error('Replay has no points or no match_end event.');
   const config = result.config;
   return {
-    segments, totalSec: t, pointStarts: segments.map((s) => s.start), names: [config.players[0].name, config.players[1].name], surface: config.surface,
+    segments, totalSec: t, pointStarts: segments.map((s) => s.start), names: [config.players[0].name, config.players[1].name],
+    styles: [config.players[0].style, config.players[1].style], surface: config.surface,
     noAd: config.rules.noAd, winner: result.winner, finalScore,
   };
 }

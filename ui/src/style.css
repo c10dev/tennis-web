@@ -48,3 +48,38 @@ button:hover { background: #36425a; }
   #panel { top: auto; bottom: 120px; }
   #controls .time, #controls .point { min-width: 0; }
 }
+
+/* Broadcast graphics (GDD §8.2) */
+#graphics { position: fixed; inset: 0; pointer-events: none; }
+.overlays > [hidden] { display: none; }
+.overlays > div { position: absolute; background: var(--bug-bg); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); font-weight: 600; }
+.ov-replay { top: 96px; left: 16px; padding: 3px 10px; color: #10141c; background: var(--bug-accent) !important; letter-spacing: 0.12em; }
+.ov-serve { right: 16px; bottom: 92px; padding: 6px 12px; display: grid; text-align: right; }
+.ov-serve .value { font-size: 22px; font-variant-numeric: tabular-nums; }
+.ov-serve .label, .ov-rally .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+.ov-rally { right: 16px; bottom: 160px; padding: 6px 12px; display: flex; gap: 10px; align-items: baseline; }
+.ov-rally .value { font-size: 20px; font-variant-numeric: tabular-nums; }
+.ov-lower { left: 16px; bottom: 92px; display: flex; align-items: stretch; }
+.ov-lower .title { padding: 8px 14px; background: var(--bug-accent); color: #10141c; letter-spacing: 0.1em; }
+.ov-lower .detail { padding: 8px 14px; }
+.ov-lower .detail:empty { display: none; }
+.ov-intro { left: 50%; bottom: 110px; transform: translateX(-50%); display: flex; gap: 2px; background: transparent !important; box-shadow: none !important; }
+.ov-intro .player { display: grid; padding: 10px 22px; background: var(--bug-bg); min-width: 180px; }
+.ov-intro .name { font-size: 22px; }
+.ov-intro .style { color: var(--bug-accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+.ov-hawkeye { top: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 16px; }
+.ov-hawkeye .call { font-size: 26px; letter-spacing: 0.1em; }
+.ov-hawkeye .call.in { color: #6fe08a; }
+.ov-hawkeye .call.out { color: #ff7a6b; }
+.ov-hawkeye .margin { color: var(--muted); font-variant-numeric: tabular-nums; }
+.ov-stats { top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 10px 6px; }
+.ov-stats table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ov-stats th, .ov-stats td { padding: 5px 16px; text-align: center; }
+.ov-stats th.title { color: var(--bug-accent); letter-spacing: 0.1em; }
+.ov-stats td.label { color: var(--muted); font-weight: 500; }
+.ov-stats td.side, .ov-stats th.side { min-width: 70px; }
+.ov-stats tr + tr td { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+@media (max-width: 640px) {
+  .ov-intro { flex-direction: column; bottom: 180px; }
+  .ov-stats th, .ov-stats td { padding: 4px 8px; }
+}

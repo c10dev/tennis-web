@@ -2,5 +2,6 @@
 // match result (ADR-007).
 export * from './broadcast.ts';
 export * from './camera.ts';
+export * from './overlay.ts';
 export * from './playback.ts';
 export * from './scene.ts';

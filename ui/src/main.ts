@@ -1,7 +1,8 @@
 // Dev replay page: simulate ?seed=&surface= with the engine, or load replay JSON, and play it with the renderer.
 import { exhibitionConfig, fingerprint, simulateMatch, type MatchResult, type Surface } from '@tennis/engine';
 import {
-  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createScoreBug, createViewer, type ClockAction, type ClockState,
+  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, overlayAt,
+  type ClockAction, type ClockState,
   type Programme, type Viewer,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
@@ -19,6 +20,8 @@ const seed = Number.parseInt(params.get('seed') ?? '42', 10) >>> 0;
 let session: Session | null = null;
 const scoreBug = createScoreBug();
 el('score').append(scoreBug.element);
+const overlays = createOverlays();
+el('graphics').append(overlays.element);
 const dispatch = (action: ClockAction) => {
   if (session) session.clock = clockReducer(session.programme, session.clock, action);
 };
@@ -56,6 +59,7 @@ function loop(now: number): void {
     // Read by the e2e tests and handy when debugging the director.
     Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
     scoreBug.update(frame.scoreBug);
+    overlays.update(overlayAt(session.programme, frame), session.programme.timeline.names);
     controls.update(session.clock, frame);
   }
   requestAnimationFrame(loop);

@@ -10,6 +10,8 @@ export type { CameraId, Clip, ClipKind, Programme, ViewMode } from './broadcast/
 export { cameraPose } from './camera/cameras.ts';
 export { dampPan, mainCamPose, panTarget, type CamPose } from './camera/mainCam.ts';
 export { scoreBugModel, type ScoreBugModel, type ScoreBugRow } from './overlay/scoreBug.ts';
+export { createOverlays, type OverlayView } from './overlay/overlayDom.ts';
+export { overlayAt, type OverlayModel } from './overlay/overlays.ts';
 export { createScoreBug, type ScoreBugView } from './overlay/scoreBugDom.ts';
 export { clockReducer, createClock, type ClockAction, type ClockState, type Seekable } from './playback/clock.ts';
 export { matchFrameAt, type Frame } from './playback/frame.ts';
