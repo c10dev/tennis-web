@@ -118,5 +118,7 @@ export const QUICK_REWARD = {
   reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 1, replaySpeed: 1.25, staggerSec: 0.12, tickSec: 0.25, lockSec: 0.2 },
 } as const;
 
-/** The guided first match (proposal P4, option A): the first opponent's habit, one a new player can see at once. */
-export const QUICK_GUIDE = { habit: 'big_point_attack' } as const;
+/** The guided first match (proposal P4, option A): the first opponent's habit, one a new player can see at once.
+ *  Defend-unless-behind applies at 52% of first decisions and 59% of all (big_point_attack: 0% and 45%), and the score
+ *  on screen shows when it does. */
+export const QUICK_GUIDE = { habit: 'defend_unless_behind' } as const;

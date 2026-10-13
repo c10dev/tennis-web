@@ -23,15 +23,18 @@ describe('the guided first match', () => {
     const s = freshLadder(3);
     const m = startQuick(s);
     let lines = 0;
+    let predictions = 0;
     for (autoPlay(m); !matchOver(m); autoPlay(m)) {
       const line = guideLine(s, m);
       const predicted = habitCard(decisionContext(m));
-      if (predicted === 'attack') expect(line).toBe('Their habit says attack here: Counter beats Attack.');
+      if (predicted) expect(line).toBe('Their habit says defend here: Attack beats Defend.');
       else expect(line).toMatch(/tell/);
       lines++;
+      if (predicted) predictions++;
       decide(m, 'defend');
     }
     expect(lines).toBeGreaterThan(0);
+    expect(predictions).toBeGreaterThan(0);
     const next = finishQuick(s, m);
     const m2 = startQuick(next);
     autoPlay(m2);
