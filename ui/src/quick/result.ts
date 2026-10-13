@@ -5,7 +5,7 @@ import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
-import { countUp, createSequence, type Sequence } from './result-sequence.ts';
+import { countUp, createSequence, type Sequence } from '../lib/motion.ts';
 
 const R = QUICK_REWARD.reveal;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
