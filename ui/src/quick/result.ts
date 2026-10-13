@@ -1,15 +1,16 @@
 // After the match (ADR-017): the decisive point replayed (3D, or a play-by-play in fast mode) with the choice named,
 // then the result, the points counting up, the players passed, the ratings that rose, the next goal and [Play again].
-// Click or space skips the reveal. Every final text is in the page from the start; the reveal only shows it.
+// Motion (ADR-021): the tiles rise 120 ms apart, the points count up with an ease-out, the names passed slide in, each
+// rating that rose ticks up, the goal locks in. Click, space or Enter skips to the end; reduced motion starts there.
+// Every final text is in the page from the start; the reveal only shows it.
 import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
-import { countUp, createSequence, type Sequence } from './result-sequence.ts';
+import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
 
 const R = QUICK_REWARD.reveal;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
-const signed = (x: number) => `${x >= 0 ? '+' : ''}${x}`;
 const phase = (p: string) => {
   document.body.dataset.resultPhase = p;
 };
@@ -30,7 +31,7 @@ export function quickResult(ctx: Ctx): Screen {
   const decisive = step('decisive', 'decisive', h('span', { class: 'kicker' }, v.decisive.user ? 'The decisive point' : 'The last point'),
     h('ol', { id: 'play-by-play', class: ctx.fastMode ? '' : 'compact' }, lines),
     h('p', { id: 'decisive-line', class: v.decisive.won ? 'you' : 'them' }, v.decisive.line));
-  const count = h('strong', { 'aria-hidden': 'true' }, '+0');
+  const count = h('strong', { 'aria-hidden': 'true' }, signed(v.delta));
   const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`));
   const gains = step('gains', 'gains',
     h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
@@ -42,20 +43,26 @@ export function quickResult(ctx: Ctx): Screen {
   const ratings = step('ratings card', 'rating-gains', h('h3', null, 'Training from this match'),
     v.ratings.map((r) => h('div', { class: `rating-gain${r.rose ? ' rose' : ''}` },
       h('span', { class: 'label' }, r.label),
-      h('span', { class: 'value' }, r.rose ? `${r.before} → ${r.after}` : String(r.after), r.rose ? h('span', { class: 'up' }, ' ▲') : null),
+      r.rose
+        ? h('span', { class: 'value' }, h('span', { class: 'from' }, String(r.before)), ' → ', h('span', { class: 'to' }, String(r.after)), h('span', { class: 'up tick' }, ' ▲'))
+        : h('span', { class: 'value' }, String(r.after)),
       h('span', { class: 'bar' }, h('span', { class: 'fill', style: `--from:${pct(r.fillBefore)};--to:${pct(r.fill)}` })))));
   const goal = step('goal', 'next-goal', h('span', { class: 'kicker' }, 'Next goal'), h('strong', null, v.goalLine));
   const actions = h('div', { class: 'actions' },
     h('button', { class: 'primary big', id: 'play-again', onclick: again }, 'Play again'),
     h('button', { id: 'to-ladder', onclick: () => ctx.go('#/quick') }, 'Ladder'));
-  const element = h('section', { class: `quick-result ${v.won ? 'won' : 'lost'}`, id: 'quick-result' },
+  const element = h('section', { class: `quick-result ${v.won ? 'won' : 'lost'}`, id: 'quick-result', style: `--stagger-rise:${R.staggerSec * 1000}ms` },
     decisive, headline, gains, overtakes, ratings, goal, actions,
-    h('p', { class: 'muted skip-hint' }, 'Click or press space to skip'));
+    h('p', { class: 'muted skip-hint' }, 'Click, Space or Enter to skip'));
+  for (const list of [gains.querySelectorAll('.gain'), overtakes?.querySelectorAll('.overtake') ?? [], ratings.querySelectorAll('.rating-gain')]) stagger(list as Iterable<HTMLElement>);
+  const rose = [...ratings.querySelectorAll<HTMLElement>('.rating-gain.rose')];
 
   const seq = createSequence();
   const show = (el: HTMLElement | null) => el?.classList.add('shown');
   const showAll = () => {
     for (const el of element.querySelectorAll<HTMLElement>('.step, .pbp')) show(el);
+    for (const el of rose) el.classList.add('is-ticked');
+    goal.classList.add('is-locked');
     decisive.classList.add('collapsed');
     element.classList.add('done');
   };
@@ -65,9 +72,9 @@ export function quickResult(ctx: Ctx): Screen {
     const steps: [string, HTMLElement | null, () => Promise<void>][] = [
       ['result', headline, () => seq.wait(R.stepSec)],
       ['points', gains, () => countUp(count, v.delta, R.countSec, seq)],
-      ['overtakes', overtakes, () => seq.wait(R.stepSec)],
-      ['ratings', ratings, () => seq.wait(R.stepSec)],
-      ['goal', goal, () => seq.wait(R.stepSec)],
+      ['overtakes', overtakes, () => seq.wait(R.stepSec + R.staggerSec * v.overtakes.length)],
+      ['ratings', ratings, tickRatings],
+      ['goal', goal, lockGoal],
     ];
     phase('replay');
     show(decisive);
@@ -88,6 +95,24 @@ export function quickResult(ctx: Ctx): Screen {
       await then();
     }
     if (!seq.skipped) finish();
+  }
+
+  /** Once the rows have risen, each rating that rose ticks up to its new number, one after another. */
+  async function tickRatings() {
+    await seq.wait(R.staggerSec * v.ratings.length);
+    for (const [i, el] of rose.entries()) {
+      if (seq.skipped) return;
+      const r = v.ratings.filter((x) => x.rose)[i]!;
+      el.classList.add('is-ticked');
+      await countUp(el.querySelector<HTMLElement>('.to')!, r.after, R.tickSec, seq, String, r.before);
+    }
+    await seq.wait(R.stepSec);
+  }
+
+  async function lockGoal() {
+    await seq.wait(R.lockSec);
+    goal.classList.add('is-locked');
+    await seq.wait(R.stepSec);
   }
 
   /** The decisive point in 3D, full screen with the line as a caption; removed when it ends or on skip. */
@@ -126,34 +151,31 @@ export function quickResult(ctx: Ctx): Screen {
     requestAnimationFrame(() => element.querySelector<HTMLButtonElement>('#play-again')?.focus());
   }
 
+  /** Jumps to the end state: every animation cut (.is-skipped), final numbers, Play again focused. */
   const skip = () => {
     if (element.classList.contains('done')) return;
+    element.classList.add('is-skipped');
     seq.skip();
     finish();
   };
-  const onClick = (e: MouseEvent) => {
-    if (!(e.target as HTMLElement).closest('button')) skip();
+  let unbind = onSkipInput(skip);
+  const unbindOnDone = () => {
+    unbind();
+    unbind = () => {};
   };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.code !== 'Space' || element.classList.contains('done')) return;
-    e.preventDefault();
-    skip();
-  };
-  window.addEventListener('click', onClick);
-  window.addEventListener('keydown', onKey);
+  seq.onSkip(unbindOnDone);
   // From the first frame, so the screen is in the page: the first step fades in and focus can land.
   requestAnimationFrame(() => {
     if (element.classList.contains('done')) return;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) skip();
-    else void run();
+    if (prefersReducedMotion()) skip();
+    else void run().then(unbindOnDone);
   });
   return {
     element,
     dispose: () => {
       element.classList.add('done');
       seq.skip();
-      window.removeEventListener('click', onClick);
-      window.removeEventListener('keydown', onKey);
+      unbind();
       delete document.body.dataset.resultPhase;
     },
   };

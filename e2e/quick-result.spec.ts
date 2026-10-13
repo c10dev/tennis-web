@@ -35,6 +35,19 @@ async function recordPhases(page: Page) {
   });
 }
 
+/** Records every text the points count shows, with the page clock (window.__count). */
+async function recordCount(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __count: [number, string][] };
+    w.__count = [];
+    new MutationObserver(() => {
+      const t = document.querySelector('#points-delta strong')?.textContent;
+      if (t && w.__count.at(-1)?.[1] !== t) w.__count.push([performance.now(), t]);
+    }).observe(document, { childList: true, characterData: true, subtree: true });
+  });
+}
+const css = (page: Page, sel: string, prop: string) => page.locator(sel).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+
 async function playToResult(page: Page, seed: number, fast: boolean) {
   await page.goto('/#/');
   await page.locator('#quick-match').click();
@@ -59,8 +72,11 @@ test.describe('quick result', () => {
   test('reveals the decisive point, the result, points, passes, ratings and the goal in order, as Node computes them', async ({ page }) => {
     const errors = watchErrors(page);
     await recordPhases(page);
+    await recordCount(page);
     await playToResult(page, 3, true);
     const v = nodeResult(3);
+    // The tiles rise 120 ms apart (ADR-021).
+    expect(await page.locator('#gains .gain').evaluateAll((els) => els.map((el) => getComputedStyle(el).transitionDelay.split(',')[0]))).toEqual(['0s', '0.12s', '0.24s']);
     await expect(page.locator('#decisive-line')).toHaveText(v.decisive.line);
     await expect(page.locator('#play-by-play li')).toHaveText(v.playByPlay);
     await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase), { timeout: 15_000 }).toBe('done');
@@ -76,6 +92,64 @@ test.describe('quick result', () => {
     await expect(page.locator('#next-goal strong')).toHaveText(v.goalLine);
     await expect(page.locator('#play-again')).toBeFocused();
     for (const el of await page.locator('#quick-result .step').all()) await expect(el).toHaveCSS('opacity', '1');
+    // The points count up with an ease-out over about a second; every rating that rose ticks; the goal locks in.
+    const shown = await page.evaluate(() => (window as unknown as { __count: [number, string][] }).__count);
+    const count = shown.slice(shown.findIndex((x) => x[1] === '+0'));
+    expect(count[0]![1]).toBe('+0');
+    expect(count.at(-1)![1]).toBe(`${v.delta >= 0 ? '+' : ''}${v.delta}`);
+    if (Math.abs(v.delta) >= 10) {
+      expect(count.length).toBeGreaterThan(5);
+      const spent = count.at(-1)![0] - count[0]![0];
+      expect(spent).toBeGreaterThan(700);
+      expect(spent).toBeLessThan(1600);
+    }
+    await expect(page.locator('#rating-gains .rating-gain.rose.is-ticked')).toHaveCount(v.ratings.filter((r) => r.rose).length);
+    await expect(page.locator('#next-goal')).toHaveClass(/is-locked/);
+    expect(errors).toEqual([]);
+  });
+
+  test('skips with Enter as well, cutting every animation to its end', async ({ page }) => {
+    const errors = watchErrors(page);
+    await playToResult(page, 3, true);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('replay');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('done');
+    await expect(page.locator('#quick-result')).toHaveClass(/is-skipped/);
+    await expect(page.locator('#play-again')).toBeFocused();
+    await expect(page.locator('#next-goal')).toHaveClass(/is-locked/);
+    expect(await css(page, '#gains .gain:last-child', 'transition-duration')).toMatch(/^0s/);
+    expect(errors).toEqual([]);
+  });
+
+  test('with reduced motion, shows the final result at once and plays the match reveal as cuts', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await recordPhases(page);
+    await recordCount(page);
+    await page.goto('/#/');
+    await page.locator('#quick-match').click();
+    await page.locator('#quick-seed').fill('3');
+    await page.locator('#quick-start').click();
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    expect(await css(page, '#card-attack', 'animation-duration')).toBe('0s');
+    await page.keyboard.press('Digit1');
+    await expect(page.locator('#reveal')).toBeVisible();
+    expect(await css(page, '#reveal .flip.yours', 'transition-duration')).toBe('0s');
+    let i = 1;
+    while (!page.url().includes('#/quick/result')) {
+      if (await page.evaluate(() => document.body.dataset.quickPhase === 'choose')) await page.keyboard.press(`Digit${i++ % 3 + 1}`);
+      await page.waitForTimeout(30);
+    }
+    const v = nodeResult(3);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase), { timeout: 1000 }).toBe('done');
+    expect(await page.evaluate(() => (window as unknown as { __phases: string[] }).__phases)).toEqual(['done']);
+    await expect(page.locator('#points-delta strong')).toHaveText(`${v.delta >= 0 ? '+' : ''}${v.delta}`);
+    expect(await page.evaluate(() => (window as unknown as { __count: [number, string][] }).__count.map((x) => x[1]))).toEqual([`${v.delta >= 0 ? '+' : ''}${v.delta}`]);
+    await expect(page.locator('#quick-result h1')).toHaveText(v.headline);
+    await expect(page.locator('#play-again')).toBeFocused();
+    await expect(page.locator('#decisive-replay')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 

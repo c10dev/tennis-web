@@ -43,6 +43,14 @@ export default defineConfig({
       },
       {
         test: {
+          // Pure UI helpers only (motion maths, sequences); the DOM is covered by the Playwright suites.
+          name: 'ui',
+          include: ['ui/tests/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'stats',
           include: ['engine/tests/**/*.slow.test.ts'],
           testTimeout: 300_000,

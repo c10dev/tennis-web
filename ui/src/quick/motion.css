@@ -1,0 +1,88 @@
+/* Rally Pop motion (ADR-021): tokens, keyframes and .is-* states for the quick screens. Imported after the screen CSS,
+   so a rule here with the same selector weight wins. Colours and fonts belong to the theme (phase 1a). */
+:root {
+  --dur-short: 150ms;
+  --dur-medium: 280ms;
+  --dur-long: 500ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* One step of a stagger: the cards deal, the result's tiles, names and ratings rise. */
+  --stagger-deal: 60ms;
+  --stagger-rise: 120ms;
+}
+
+/* ---- Decision point: the banner wipes in, the cards deal up with an overshoot, a card lifts on hover or focus. */
+.quick-panel .moment-banner { animation: banner-wipe 240ms var(--ease-emphasized) backwards; }
+.quick-panel .moment-banner .moment { animation: none; }
+@keyframes banner-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.card-btn { transition: transform var(--dur-short) ease-out, opacity var(--dur-short) ease-out; }
+.card-btn.is-dealt { animation: card-deal 360ms var(--ease-back) calc(120ms + var(--i, 0) * var(--stagger-deal)) backwards; }
+@keyframes card-deal { from { transform: translateY(56px) scale(0.9) rotate(-2deg); opacity: 0; } }
+.card-btn:hover, .card-btn:focus-visible { transform: translateY(-12px) scale(1.05); }
+.cards.is-picked .card-btn.is-selected { transform: translateY(-24px) scale(1.08); }
+.cards.is-picked .card-btn:not(.is-selected) { transform: scale(0.96); opacity: 0.5; }
+
+/* ---- Reveal: face down, one flip for both (the parent's class), then the verdict pops with a white frame and a kick. */
+.reveal .pair { position: relative; perspective: 700px; }
+.reveal .flip { display: inline-grid; transform-style: preserve-3d; transition: transform var(--flip-dur, 280ms) var(--ease-standard); }
+.reveal .flip > .face { grid-area: 1 / 1; backface-visibility: hidden; }
+.reveal .flip > .back { transform: rotateY(180deg); border-radius: 6px; background: var(--ink, #15171e);
+  border: 2px solid var(--paper, #fff);
+  background-image: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--optic, #f2c94c) 35%, transparent) 6px 9px); }
+.reveal.is-facedown .flip { transform: rotateY(180deg); }
+.reveal.is-flipped .flip { transform: none; }
+.reveal .verdict { opacity: 0; transform: scale(0.5); }
+.reveal .verdict.is-popped { opacity: 1; transform: none; animation: verdict-pop 320ms var(--ease-back) backwards; }
+@keyframes verdict-pop { from { opacity: 0; transform: scale(0.5); } }
+.reveal .flash { position: absolute; inset: -4px; border-radius: 8px; background: #fff; opacity: 0; pointer-events: none; }
+.reveal.is-clash .flash { animation: clash-flash 50ms steps(1, end); }
+@keyframes clash-flash { from { opacity: 0.85; } to { opacity: 0.85; } }
+.reveal.is-clash .flip.yours.is-winner > .front { animation: kick-right 160ms ease-out; }
+.reveal.is-clash .flip.theirs.is-winner > .front { animation: kick-left 160ms ease-out; }
+@keyframes kick-right { 40% { transform: translateX(6px); } }
+@keyframes kick-left { 40% { transform: translateX(-6px); } }
+
+/* ---- Ticker: the newest pip pops; only the ticker's (the decision screen redraws the row without a pop). */
+.pips .pip:last-child { animation: none; }
+.pips .pip.is-new { animation: pip-pop 260ms var(--ease-back); }
+@keyframes pip-pop { from { transform: scale(0.2); opacity: 0; } }
+
+/* ---- Result: steps rise with an overshoot; inside a step the tiles, names and rows rise --stagger-rise apart. */
+.quick-result .step, .quick-result .pbp { transform: translateY(16px);
+  transition: opacity var(--dur-medium) var(--ease-standard), transform var(--dur-long) var(--ease-back); }
+.quick-result .step.shown, .quick-result .pbp.shown,
+.quick-result .step.gains, .quick-result .step.overtakes, .quick-result .step.ratings { transform: none; }
+.quick-result .gain, .quick-result .overtake, .quick-result .rating-gain { opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-standard), transform var(--dur-long) var(--ease-back);
+  transition-delay: calc(var(--i, 0) * var(--stagger-rise)); }
+.quick-result .gain { transform: translateY(20px) scale(0.94); }
+.quick-result .overtake { transform: translateX(56px); }
+.quick-result .rating-gain { transform: translateY(10px); }
+.quick-result .shown .gain, .quick-result .shown .overtake, .quick-result .shown .rating-gain { opacity: 1; transform: none; }
+/* A rating that rose: the new number rolls up and the tick mark pops (replaces the theme's rating-pop). */
+.quick-result .shown .rating-gain.rose .value { animation: none; }
+.rating-gain.rose .to, .rating-gain.rose .tick { display: inline-block; }
+.rating-gain.rose .tick { transform: scale(0); opacity: 0; transition: transform var(--dur-medium) var(--ease-back), opacity var(--dur-short) linear; }
+.rating-gain.rose.is-ticked .tick { transform: none; opacity: 1; }
+.rating-gain.rose.is-ticked .to { animation: tick-up var(--dur-medium) var(--ease-back); }
+@keyframes tick-up { from { transform: translateY(0.6em); opacity: 0.2; } }
+/* The next goal locks in: a short stamp. */
+.quick-result .goal.is-locked strong { display: inline-block; animation: goal-lock 420ms var(--ease-back); }
+.quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); border-radius: 8px; transition: box-shadow var(--dur-short) ease-out; }
+@keyframes goal-lock { from { transform: scale(1.35); opacity: 0; } }
+/* Skipped: every transition and animation ends at once. */
+.quick-result.is-skipped, .quick-result.is-skipped *, .quick-result.is-skipped *::before, .quick-result.is-skipped *::after {
+  animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; transition-delay: 0s !important; }
+
+/* Reduced motion: every flip, pop, slide and count-up is a cut (the TS shows final numbers directly). */
+@media (prefers-reduced-motion: reduce) {
+  .quick-match *, .quick-match *::before, .quick-match *::after,
+  .quick-result, .quick-result *, .quick-result *::before, .quick-result *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}

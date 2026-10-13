@@ -690,3 +690,49 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** `e2e/quick-colours.spec.ts` checks the card text and band colours, white cards, the gold moment,
   4.5:1 and a protan/deutan ΔE above 30 computed in the test, and that all five faces load. Motion keyframes already
   in `quick-match.css` / `quick-result.css` were left as they were for 1b. Open: TD-042–TD-045.
+
+## ADR-021: Rally Pop phase 1b: motion
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The M5/M6 playtests called the reveal and the rewards flat (ADR-017). Direction B "Rally Pop" (ADR-018,
+  docs/design-references.md §1.2–§1.5, §4 Motion) proposes springy motion for the decision point, a simultaneous
+  reveal after Marvel Snap and a layered result after Balatro / Clash Royale. Phase 1a (theme, fonts, palette) runs in
+  parallel and owns the existing CSS; 1b adds motion only, with no new dependencies, and must not change what the game
+  computes.
+- **Decision:**
+  - **Where it lives.** `ui/src/lib/motion.ts` (ease-out, count-up, stagger index, reduced-motion check, the skippable
+    `Sequence` moved from `result-sequence.ts`, skip on click/Space/Enter) and `ui/src/quick/motion.css` (tokens,
+    keyframes, `.is-*` states), imported after the screen CSS so equal-weight rules win. Tokens: `--dur-short` 150 ms,
+    `--dur-medium` 280 ms, `--dur-long` 500 ms; `--ease-standard` `cubic-bezier(0.2, 0, 0, 1)`, `--ease-emphasized`
+    `cubic-bezier(0.05, 0.7, 0.1, 1)`, `--ease-back` `cubic-bezier(0.34, 1.56, 0.64, 1)`. Colours only through 1a's
+    tokens with today's values as fallbacks. Flow timing runs on timers, never on `animationend`, so a hidden tab or
+    reduced motion cannot stall a match.
+  - **Decision point.** The banner wipes in (240 ms, `clip-path`, emphasized); the three cards deal up 120 ms later,
+    60 ms apart, 360 ms each with the back-out overshoot (`.card-btn.is-dealt`, `--i`). Hover or keyboard focus lifts a
+    card `translateY(-12px) scale(1.05)` (150 ms ease-out); the pick rises to `translateY(-24px) scale(1.08)` and
+    the others dim (`.cards.is-picked`, `.card-btn.is-selected`). The theme's `stop-in` on the moment chip is
+    switched off: one orchestrated moment per screen.
+  - **Reveal.** `QUICK_PACE.reveal = { selectSec 0.15, holdSec 0.5, flipSec 0.28, verdictSec 0.15 }`: the pick
+    rises for 150 ms, both cards lie face down for 500 ms, flip together in 280 ms (one class on `#reveal`, so
+    neither side can show first), and the verdict pops 150 ms after the flip (320 ms back-out) with one white frame
+    (50 ms) over the pair and a 6 px kick on the winning card (none on the same card). No freeze (there is no frame
+    loop to stop in the DOM) and no shake. `revealSec` is their sum, 1.08 s (was 0.6), and a test keeps it so;
+    reveal plus score is 1.68 s, and it needs no skip.
+  - **Ticker.** Only the newest pip pops (260 ms back-out, `.pip.is-new`); the decision screen redraws the row
+    without it, and nothing covers the score.
+  - **Result.** Unchanged order and phases (replay → result → points → overtakes → ratings → goal → done).
+    `QUICK_REWARD.reveal` gained `staggerSec 0.12, tickSec 0.25, lockSec 0.2` and `countSec` went 0.7 → 1.0: steps
+    rise with the overshoot, the three tiles 120 ms apart, the points count up with an ease-out cubic over 1 s
+    (one frame each, final text also on skip or when frames stop), the names passed slide in from the right 120 ms
+    apart, the rating rows rise 120 ms apart and each rating that rose rolls from its old number to its new one
+    (250 ms) as its tick mark pops (`.rating-gain.is-ticked`), and the next goal stamps in 200 ms after it shows
+    (`.goal.is-locked`). Then Play again takes focus. Click, Space or Enter (Enter not on a button) adds
+    `.is-skipped`, which cuts every transition and animation, and shows the end state.
+  - **Reduced motion.** CSS zeroes durations and delays on both quick screens, so deals, flips and pops are cuts;
+    the match keeps its waits (the face-down beat is suspense, not motion, and the pace model stays the same), and
+    the result starts at its end state with final numbers (an e2e test emulates `reducedMotion: 'reduce'`).
+- **Consequences:** `npm run quick` median seconds on screen per match 21 → 23 s (≤ 60 s). Fast mode with instant
+  picks (seeds 1–5, Playwright, 2–5 decisions): match 4.9–9.4 s (mean 7.4) → 6.0–11.8 s (mean 9.1), about +0.5 s per
+  decision; the skippable result reveal 3.9–4.6 s → 5.4–6.7 s. Structural DOM: the reveal chips sit in `.flip` wrappers with a
+  plain `.face.back` and the chip as `.face.front`; a rating that rose writes its numbers as `.from`, `.to` and a
+  `.tick`. A `ui` Vitest project tests the pure helpers. Dead theme rules, the missing sound layer and timing-sensitive e2e bounds are TD-046–TD-048.
