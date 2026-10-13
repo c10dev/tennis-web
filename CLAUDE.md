@@ -6,7 +6,7 @@ Tennis management sim (Football Manager-style) with TV-broadcast-style 3D match 
 - `renderer/` — Three.js replay of events (broadcast cams, replays, score bug, audio)
 - `game/` — headless, deterministic career layer (world, calendar, training, season, saves) on the engine
 - `ui/` — menus, management screens, DOM overlays
-- Full design: `GDD.md` (Korean). Current milestone: **M5**; M1–M4 are done (M4: one playable season).
+- Full design: `GDD.md` (Korean). Current milestone: **M5 (casual quick match, see `docs/casual-design.md` and GDD §13)**; M1–M4 are done.
 
 ## Stack
 Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
@@ -36,7 +36,7 @@ game/      src/{world,player,calendar,tournament,season,save,views,tuning.ts} cl
 renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts} tests/
 ui/        index.html src/{career,replay,lib,storage}   (Vite root)
 e2e/       Playwright specs (playwright.config.ts at the root)
-docs/      decisions.md, tech-debt.md
+docs/      decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD)
 GDD.md     game design doc
 ```
 

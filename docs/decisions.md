@@ -312,3 +312,16 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** The career screens load 2.6 + 35.8 + 16.6 kB of script; the 574 kB broadcast chunk (Three.js)
   loads only when a match is watched. `npm run test:e2e` checks the career end to end, including that a match
   watched with a tactic change matches the same recipe replayed in Node.
+
+## ADR-014: Casual direction from the 2026-10-13 design brief
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** After M4 the user shared a new design brief (`docs/casual-design.md`, Korean): a casual web game
+  whose priority is a 1–2 minute short loop with a decisive choice before each point and a visible reward after
+  every match. It conflicts with the GDD's football-manager depth and full-match broadcasts.
+- **Decision:** The brief is the newer source of direction; the GDD keeps the parts that do not conflict and gains
+  §13 with the decisions taken for M5. M5 becomes a casual quick-match MVP (Fast4, per-point cards, an adaptive AI,
+  a 64-player ladder, post-match rewards) built on the existing engine, renderer and game layer. The M4 season mode
+  stays as it is; multi-season play, finances and staff move to M6 or later.
+- **Consequences:** Balance targets for the short loop (length, no dominant card, reading the AI pays off, ladder
+  pace) become measurable done criteria (ADR-016). Engine changes must keep card-free matches byte-identical.
