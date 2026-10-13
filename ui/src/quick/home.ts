@@ -17,6 +17,8 @@ export function quickHome(ctx: Ctx): Screen {
     ctx.go('#/quick/match');
   };
   const fast = h('input', { type: 'checkbox', id: 'fast-mode', checked: ctx.fastMode, onchange: (e: Event) => { ctx.fastMode = (e.target as HTMLInputElement).checked; } });
+  // The 3D code (Three.js, ~600 kB) loads while the player looks at the ladder, so Play starts at once.
+  if (!ctx.fastMode) prefetch3d();
   const element = h('section', { class: 'quick-home' },
     h('div', { class: 'card rank-card', id: 'ladder' },
       h('div', { class: 'rank' }, h('span', { class: 'muted' }, v.name), h('span', { class: 'rank-badge' }, icon('trophy', 36), h('strong', { id: 'quick-rank' }, `#${v.rank}`))),
@@ -65,4 +67,14 @@ function startForm(ctx: Ctx): Screen {
     error,
     h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'quick-start', onclick: start }, 'Start the ladder')));
   return { element };
+}
+
+let prefetched = false;
+/** Starts loading the broadcast module once, when the browser is idle (or soon, where it has no idle callback). */
+function prefetch3d(): void {
+  if (prefetched) return;
+  prefetched = true;
+  const load = () => void import('../replay/broadcast.ts');
+  if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2000 });
+  else setTimeout(load, 500);
 }

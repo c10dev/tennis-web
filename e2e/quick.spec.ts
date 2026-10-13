@@ -178,6 +178,27 @@ test.describe('quick match', () => {
     await expect(page.locator('#quick-seed')).toBeVisible();
   });
 
+  test('fetches the 3D code while the ladder waits for Play', async ({ page }) => {
+    const scripts: string[] = [];
+    page.on('request', (r) => scripts.push(r.url()));
+    await startLadder(page, SEED);
+    await expect.poll(() => scripts.some((u) => /replay\/broadcast/.test(u)), { timeout: 5000 }).toBe(true);
+  });
+
+  test('leaves the 3D code alone on the ladder in fast mode', async ({ browser }) => {
+    // A fresh context: no cached modules, fast mode already on.
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL! });
+    await context.addInitScript(() => localStorage.setItem('tennis-fast-mode', '1'));
+    const page = await context.newPage();
+    const scripts: string[] = [];
+    page.on('request', (r) => scripts.push(r.url()));
+    await startLadder(page, SEED);
+    await expect(page.locator('#fast-mode')).toBeChecked();
+    await page.waitForTimeout(1500);
+    expect(scripts.some((u) => /replay\/broadcast/.test(u))).toBe(false);
+    await context.close();
+  });
+
   test('shows the reading tip at the first decision until dismissed, then never again (TD-027)', async ({ page }) => {
     const errors = watchErrors(page);
     await startLadder(page, SEED);
