@@ -154,6 +154,19 @@ test.describe('quick match', () => {
     expect(errors).toEqual([]);
   });
 
+  test('plays the next match from Play again on the plan picked on the ladder', async ({ page }) => {
+    await startLadder(page, SEED);
+    await page.locator('#plan-defensive').click();
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect(page.locator('#ticker')).toContainText('Plan · Defensive', { timeout: 30_000 });
+    await playThrough(page);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#play-again')).toBeFocused();
+    await page.locator('#play-again').click();
+    await expect(page.locator('#ticker')).toContainText('Plan · Defensive', { timeout: 30_000 });
+  });
+
   test('shows the reading tip at the first decision until dismissed, then never again (TD-027)', async ({ page }) => {
     const errors = watchErrors(page);
     await startLadder(page, SEED);

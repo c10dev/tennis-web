@@ -10,6 +10,7 @@ import { h } from '../lib/h.ts';
 import { glyph } from '../lib/icons.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
 import { appSound } from '../lib/sound.ts';
+import { savedPlan } from './plan.ts';
 
 const R = QUICK_REWARD.reveal;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -25,7 +26,7 @@ export function quickResult(ctx: Ctx): Screen {
   const v = quickResultView(ctx.quick);
   const record = ctx.quick.history.at(-1)!;
   const again = () => {
-    ctx.quickMatch = startQuick(ctx.quick!);
+    ctx.quickMatch = startQuick(ctx.quick!, savedPlan());
     ctx.go('#/quick/match');
   };
   const step = (cls: string, id: string, ...children: Parameters<typeof h>[2][]) => h('div', { class: `step ${cls}`, id }, ...children);

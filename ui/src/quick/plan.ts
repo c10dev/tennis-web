@@ -5,7 +5,8 @@ import { h } from '../lib/h.ts';
 const KEY = 'tennis-quick-plan';
 const PLANS = planChoices();
 
-function readPlan(): GamePlan {
+/** The plan last picked on the ladder (or the default): Play again on the result screen uses it too. */
+export function savedPlan(): GamePlan {
   try {
     const saved = localStorage.getItem(KEY);
     return PLANS.find((p) => p.plan === saved)?.plan ?? PLANS.find((p) => p.default)!.plan;
@@ -23,7 +24,7 @@ function savePlan(plan: GamePlan) {
 }
 
 export function planPicker(): { element: HTMLElement; plan: () => GamePlan } {
-  let plan = readPlan();
+  let plan = savedPlan();
   const line = h('span', { class: 'muted plan-line', id: 'plan-line' });
   const buttons = PLANS.map((p) => h('button', { class: 'plan-btn', id: `plan-${p.plan}`, type: 'button', onclick: () => select(p.plan) }, p.label));
   function select(next: GamePlan) {
