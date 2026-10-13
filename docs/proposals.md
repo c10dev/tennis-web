@@ -127,3 +127,9 @@ loop is "points to the next rank always visible" and continuous growth.
   still "#1, nothing to do".
 
 **Default:** A. P3's streaks and P2's rivals carry over into each new division.
+
+**Built for review** on the local branch `proposal/p5-divisions` (not merged): `promote()` after a match that ends in
+the top 8 once the division has had 10 matches; a new world from the ladder seed with AI levels +1 per division and
+ids prefixed (`d2p01`); records keep the opponent's name; "Division N" on the ladder home, "Promoted to Division N" on
+the result, "Top 8 · promotion" as the goal. The same ten 300-match ladders now end in division 3.2 at rank 15 on
+average (division 1.2 and rank 15 at match 100, 2.3 and rank 21 at match 200) instead of #1.6 with nothing to chase.
