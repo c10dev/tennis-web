@@ -78,6 +78,13 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     drawChoose();
   }
 
+  /** How well a card suits the player now: a bar, named for touch and screen readers too (not only a hover title). */
+  const strengthBar = (strength: number) => {
+    const pct = Math.min(100, Math.round(strength * 60));
+    return h('span', { class: 'strength', title: 'How well this card suits you right now', role: 'img', 'aria-label': `Suits you ${pct}%` },
+      h('span', { class: 'fill', style: `width:${pct}%` }));
+  };
+
   function drawChoose() {
     const sit = decisionSituation(qm!);
     const tip = readingTip(() => panel.focus({ preventScroll: true }));
@@ -91,7 +98,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card} is-dealt`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
         h('span', { class: 'key' }, String(i + 1)), h('strong', null, cardIcon(c.card), ' ', c.label), h('span', { class: 'flavour' }, c.flavour),
         h('span', { class: 'rule' }, `beats ${CARD_LABEL[c.beats]}`),
-        h('span', { class: 'strength', title: 'How well this card suits you right now' }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
+        strengthBar(c.strength)))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
     deals = [0, 1, 2].map((i) => setTimeout(() => sound.ui({ kind: 'deal', i }), 120 + 60 * i));
     announce(`${sit.moment}, ${scoreLine(qm!)}. ${sit.line}. Choose 1 Attack, 2 Defend or 3 Counter.`);
