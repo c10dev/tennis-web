@@ -8,7 +8,7 @@ type Store = Pick<Storage, 'getItem' | 'setItem'>;
 export interface AppSound {
   readonly muted: boolean;
   setMuted(muted: boolean): void;
-  /** Makes the mixer; call from a user gesture. Later calls do nothing. */
+  /** Makes the mixer, or wakes it if the browser created it suspended; call from every user gesture. */
   unlock(): void;
   /** Plays a UI cue while on; nothing before the first gesture or while muted. */
   ui(cue: UiCue): void;
@@ -47,6 +47,7 @@ export function createAppSound(deps: AppSoundDeps): AppSound {
     setMuted(value) {
       muted = value;
       mixer?.setMuted(value);
+      if (!value) mixer?.resume();
       try {
         deps.storage?.setItem(KEY, value ? 'off' : 'on');
       } catch {
@@ -54,10 +55,12 @@ export function createAppSound(deps: AppSoundDeps): AppSound {
       }
     },
     unlock() {
-      if (mixer) return;
-      mixer = deps.make();
-      mixer.setMuted(muted);
-      mixer.setBed(bed);
+      if (!mixer) {
+        mixer = deps.make();
+        mixer.setMuted(muted);
+        mixer.setBed(bed);
+      }
+      mixer.resume();
     },
     ui(cue) {
       if (!mixer || muted) return;
@@ -81,7 +84,8 @@ export function createAppSound(deps: AppSoundDeps): AppSound {
 
 let app: AppSound | null = null;
 
-/** The page's sound, unlocked by its first pointer or key press. */
+/** The page's sound, unlocked by the page's gestures. A touch screen allows audio on the end of a tap (pointerup,
+ *  click), not on the first touch, so every gesture tries again; resuming a running context does nothing. */
 export function appSound(): AppSound {
   if (app) return app;
   let storage: Store | null;
@@ -94,8 +98,7 @@ export function appSound(): AppSound {
   if (import.meta.env.DEV) deps.log = (cue) => ((window as unknown as { __sfx?: UiCue[] }).__sfx ??= []).push(cue);
   const sound = createAppSound(deps);
   const unlock = () => sound.unlock();
-  window.addEventListener('pointerdown', unlock, { capture: true, once: true });
-  window.addEventListener('keydown', unlock, { capture: true, once: true });
+  for (const type of ['pointerdown', 'pointerup', 'click', 'keydown'] as const) window.addEventListener(type, unlock, { capture: true });
   app = sound;
   return sound;
 }

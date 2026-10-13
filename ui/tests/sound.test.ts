@@ -5,8 +5,8 @@ import { createAppSound } from '../src/lib/sound.ts';
 
 // The app's one sound (ADR-023): made on the first gesture, on by default, mute remembered, UI cues only while on.
 function fakeMixer() {
-  return { playUi: vi.fn(), setMuted: vi.fn(), setBed: vi.fn(), play: vi.fn(), dispose: vi.fn() } as unknown as Mixer & {
-    playUi: ReturnType<typeof vi.fn>; setMuted: ReturnType<typeof vi.fn>; setBed: ReturnType<typeof vi.fn>;
+  return { playUi: vi.fn(), setMuted: vi.fn(), setBed: vi.fn(), resume: vi.fn(), play: vi.fn(), dispose: vi.fn() } as unknown as Mixer & {
+    playUi: ReturnType<typeof vi.fn>; setMuted: ReturnType<typeof vi.fn>; setBed: ReturnType<typeof vi.fn>; resume: ReturnType<typeof vi.fn>;
   };
 }
 function fakeStorage(init: Record<string, string> = {}) {
@@ -30,6 +30,20 @@ describe('createAppSound', () => {
     s.ui(pick);
     expect(mixer.playUi).toHaveBeenCalledWith(pick);
     expect(s.mixer).toBe(mixer);
+  });
+
+  it('wakes the audio on every gesture: a touch screen only allows it on the tap that ends, not the first touch', () => {
+    const mixer = fakeMixer();
+    const make = vi.fn(() => mixer);
+    const s = createAppSound({ make, storage: fakeStorage(), now: () => 0 });
+    s.unlock();
+    s.unlock();
+    s.unlock();
+    expect(make).toHaveBeenCalledTimes(1);
+    expect(mixer.resume).toHaveBeenCalledTimes(3);
+    s.setMuted(true);
+    s.setMuted(false);
+    expect(mixer.resume).toHaveBeenCalledTimes(4);
   });
 
   it('remembers mute, plays nothing and hands no mixer to the broadcast while muted', () => {

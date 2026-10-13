@@ -16,6 +16,8 @@ export interface Mixer {
   duck(bus: Bus, level: number, sec: number): void;
   /** The crowd murmur under everything: on for matches, off on menus. */
   setBed(on: boolean): void;
+  /** Starts a context the browser created suspended; call from a user gesture (a tap's end, a click, a key). */
+  resume(): void;
   setVolume(bus: Bus, value: number): void;
   volume(bus: Bus): number;
   setMuted(muted: boolean): void;
@@ -136,6 +138,9 @@ export function createMixer(): Mixer {
       if (s.duck) duck(s.duck.bus, s.duck.level, s.duck.sec);
     },
     duck,
+    resume() {
+      if (ctx.state === 'suspended') void ctx.resume();
+    },
     setBed(on) {
       bedGain.gain.setTargetAtTime(on ? bedLevel : 0, ctx.currentTime, 0.3);
     },
