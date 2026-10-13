@@ -6,6 +6,10 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.strict,
   {
+    // noUncheckedIndexedAccess makes every array index optional; `!` on an index we just bounded is the plain idiom.
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
+  },
+  {
     // CLAUDE.md rules 1 and 2: the engine is deterministic and knows nothing about rendering.
     files: ['engine/src/**/*.ts'],
     rules: {
