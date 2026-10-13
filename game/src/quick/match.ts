@@ -45,6 +45,7 @@ export function playPoint(m: QuickMatch, card: Card): { A: Card; B: Card } {
   const ai = aiCard({
     style: m.recipe.config.players[1].style, role: role === 'serve' ? 'return' : 'serve', history: m.userCards[role],
     fatigue: status.fatigue.B, rng: stream(m.seed, 'card', m.matchNo, status.pointsPlayed),
+    ...(m.recipe.cards.length ? { lastOwn: m.recipe.cards.at(-1)!.B } : {}),
   });
   const cards = { A: card, B: ai };
   advance(m.live, 'point', { cards });

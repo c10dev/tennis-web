@@ -13,6 +13,8 @@ export interface CardContext {
   /** The user's cards so far in the matching role (user returning when the AI serves), oldest first. */
   history: readonly Card[];
   fatigue: number;
+  /** The AI's own previous card in this match, if any. */
+  lastOwn?: Card;
 }
 
 /** The AI's chances of playing attack, defend and counter in this situation. */
@@ -21,6 +23,10 @@ export function cardOdds(ctx: CardContext): [number, number, number] {
   let p = [a * (1 - QUICK_AI.fatigueAttack * ctx.fatigue), d, c];
   const total = p.reduce((x, y) => x + y, 0);
   p = p.map((x) => x / total);
+  if (ctx.lastOwn) {
+    const again = CARDS.indexOf(ctx.lastOwn);
+    p = p.map((x, i) => (1 - QUICK_AI.sticky) * x + (i === again ? QUICK_AI.sticky : 0));
+  }
   const recent = ctx.history.slice(-QUICK_AI.window);
   if (recent.length > 0) {
     const counts = CARDS.map((card) => recent.filter((x) => x === card).length / recent.length);

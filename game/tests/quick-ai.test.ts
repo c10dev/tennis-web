@@ -22,10 +22,12 @@ describe('aiCard', () => {
     expect(share(cp, 'counter')).toBeGreaterThan(0.4);
   });
 
-  it('reads a habit: after a run of attacks it counters far more often', () => {
-    const fresh = sample({ style: 'all_court', role: 'return', history: [], fatigue: 0 });
-    const read = sample({ style: 'all_court', role: 'return', history: ['attack', 'attack', 'attack', 'attack', 'attack', 'attack'], fatigue: 0 });
-    expect(share(read, 'counter')).toBeGreaterThan(share(fresh, 'counter') + 0.2);
+  // Adaptation is deliberately mild (QUICK_AI.adapt): strong enough to punish a one-card habit, weak enough that the
+  // AI's own tells stay readable (ADR-016).
+  it('reads a habit: after a run of attacks it counters clearly more often', () => {
+    const fresh = sample({ style: 'baseliner', role: 'return', history: [], fatigue: 0 });
+    const read = sample({ style: 'baseliner', role: 'return', history: ['attack', 'attack', 'attack', 'attack', 'attack', 'attack'], fatigue: 0 });
+    expect(share(read, 'counter')).toBeGreaterThan(share(fresh, 'counter') + 0.08);
   });
 
   it('stays hard to predict: at least 1.3 bits of entropy whatever it has seen', () => {
@@ -35,6 +37,12 @@ describe('aiCard', () => {
         expect(cardEntropy(sample({ style, role, history: Array(6).fill('defend') as Card[], fatigue: 0 }))).toBeGreaterThanOrEqual(1.3);
       }
     }
+  });
+
+  it('tends to repeat its own last card: a tell a user can learn', () => {
+    const after = sample({ style: 'all_court', role: 'serve', history: [], fatigue: 0, lastOwn: 'defend' });
+    const fresh = sample({ style: 'all_court', role: 'serve', history: [], fatigue: 0 });
+    expect(share(after, 'defend')).toBeGreaterThan(share(fresh, 'defend') + 0.15);
   });
 
   it('attacks less when tired', () => {

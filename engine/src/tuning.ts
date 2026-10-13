@@ -173,8 +173,8 @@ export const CARDS = {
   secondServeShare: 0.6,
   /** Winning the matchup: own rally errors × exp(−edgeError), winners +edgeWinner on the logit, serve +edgeAce and
    *  +edgeQuality; losing it the reverse. A returner who wins it takes edgeQuality off the serve. */
-  edgeError: 0.22,
-  edgeWinner: 0.22,
+  edgeError: 0.25,
+  edgeWinner: 0.25,
   edgeAce: 0.2,
   edgeQuality: 0.03,
   /** Ratings behind each card; strength = 1 + statWeight × (their mean − average). */

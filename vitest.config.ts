@@ -21,7 +21,14 @@ export default defineConfig({
       {
         test: {
           name: 'season',
-          include: ['game/tests/**/*.slow.test.ts'],
+          include: ['game/tests/season.slow.test.ts'],
+          testTimeout: 600_000,
+        },
+      },
+      {
+        test: {
+          name: 'quick',
+          include: ['game/tests/quick.slow.test.ts'],
           testTimeout: 600_000,
         },
       },

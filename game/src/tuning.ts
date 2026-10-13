@@ -127,17 +127,19 @@ export const AI = {
 export const QUICK_AI = {
   /** Base card weights by style and role (attack, defend, counter). */
   base: {
-    big_server: { serve: [0.5, 0.2, 0.3], return: [0.4, 0.3, 0.3] },
-    baseliner: { serve: [0.3, 0.4, 0.3], return: [0.3, 0.42, 0.28] },
-    counter_puncher: { serve: [0.25, 0.3, 0.45], return: [0.2, 0.33, 0.47] },
-    serve_and_volley: { serve: [0.5, 0.2, 0.3], return: [0.42, 0.25, 0.33] },
-    all_court: { serve: [0.34, 0.33, 0.33], return: [0.34, 0.33, 0.33] },
+    big_server: { serve: [0.6, 0.15, 0.25], return: [0.45, 0.25, 0.3] },
+    baseliner: { serve: [0.25, 0.5, 0.25], return: [0.25, 0.5, 0.25] },
+    counter_puncher: { serve: [0.2, 0.3, 0.5], return: [0.15, 0.3, 0.55] },
+    serve_and_volley: { serve: [0.6, 0.15, 0.25], return: [0.45, 0.25, 0.3] },
+    all_court: { serve: [0.4, 0.3, 0.3], return: [0.3, 0.3, 0.4] },
   },
   /** How many of the user's recent cards (in the same role) the AI looks at, and how often it acts on a read. */
   window: 6,
-  adapt: 0.4,
+  adapt: 0.15,
+  /** A readable tell: the AI leans this much towards repeating its own previous card. */
+  sticky: 0.3,
   /** No card is played more often than this: the mix is pulled towards even until it holds (≥ 1.3 bits). */
-  maxShare: 0.58,
+  maxShare: 0.6,
   /** A read only counts when one card is clearly the habit: its share above an even third, scaled to 0–1. */
   habitFloor: 1 / 3,
   /** Attack weight falls by this share per unit of fatigue. */
@@ -164,4 +166,18 @@ export const QUICK = {
     counter: ['return', 'decision', 'agility'],
   },
   surfaces: ['hard', 'clay', 'grass'],
+} as const;
+
+/** How a quick match is shown (ADR-016): per point a card reveal, the end of the rally (all of it on a key point) at
+ *  `speed`, and the score. The UI plays exactly these windows; the balance report adds them up. */
+export const QUICK_PACE = {
+  revealSec: 0.4,
+  scoreSec: 0.4,
+  /** Seconds of point time shown for an ordinary point, counted back from its end. */
+  clipSec: 2.2,
+  speed: 2.5,
+  /** The serve toss before contact (renderer PLAYBACK.tossLeadSec). */
+  tossSec: 1,
+  /** Rallies at least this long are key points, shown whole (as are points that end a set or win a break). */
+  keyRally: 10,
 } as const;

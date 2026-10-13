@@ -26,7 +26,9 @@
     "test:e2e": "playwright test",
     "test:game": "vitest run --project game",
     "test:season": "vitest run --project season",
-    "season": "tsx game/cli/season.ts"
+    "season": "tsx game/cli/season.ts",
+    "quick": "tsx game/cli/quick.ts",
+    "test:quick": "vitest run --project quick"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
