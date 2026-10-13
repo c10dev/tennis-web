@@ -120,3 +120,7 @@ export const QUICK_REWARD = {
 
 /** Win streaks (proposal P3, option A): shown, never paid; a stamp when a streak reaches one of these. */
 export const QUICK_STREAK = { milestones: [3, 5, 10] } as const;
+/** The guided first match (proposal P4, option A): the first opponent's habit, one a new player can see at once.
+ *  Defend-unless-behind applies at 52% of first decisions and 59% of all (big_point_attack: 0% and 45%), and the score
+ *  on screen shows when it does. */
+export const QUICK_GUIDE = { habit: 'defend_unless_behind' } as const;

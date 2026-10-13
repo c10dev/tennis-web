@@ -42,6 +42,10 @@
 .hint { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 8px 12px; background: var(--paper); color: var(--ink);
   border: 2px solid var(--ink); border-radius: 12px; font-size: 14px; font-weight: 700; }
 .hint .hint-dismiss { flex: none; padding: 4px 12px; font-size: 13px; }
+/* The guided first match (proposal P4): what the habit predicts, a gold-edged note above the cards. */
+.guide { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 6px 12px; background: var(--paper); color: var(--ink);
+  border: 2px solid var(--ink); border-left: 8px solid var(--gold); border-radius: 12px; font-size: 14px; font-weight: 800; }
+.guide .icon { flex: none; color: var(--court-2); }
 /* Phones: the three cards stay side by side, smaller, without the flavour line, so the panel fits a 667 px screen. */
 @media (max-width: 640px) {
   .quick-panel { bottom: 10px; width: calc(100vw - 16px); padding: 10px 12px 12px; }
@@ -54,6 +58,7 @@
   .card-btn .rule { font-size: 12px; }
   .reveal .pair { flex-direction: column; gap: 6px; }
   .hint { font-size: 12px; padding: 6px 8px; margin-bottom: 8px; gap: 8px; }
+  .guide { font-size: 12px; padding: 4px 8px; margin-bottom: 8px; }
 }
 /* Points without cards: a running ticker. */
 .ticker .situation { margin-bottom: 6px; }

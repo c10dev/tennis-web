@@ -3,7 +3,7 @@
 // point, the chips of the last decision): in this situation, this card.
 import type { Card } from '@tennis/engine';
 import { pick, stream } from '../rng.ts';
-import { QUICK_PERSONA } from '../tuning.ts';
+import { QUICK_GUIDE, QUICK_PERSONA } from '../tuning.ts';
 import { BEATEN_BY } from './cards.ts';
 import type { DecisionContext, Habit, Persona } from './types.ts';
 
@@ -13,6 +13,10 @@ export const personaOf = (seed: number, playerId: string): Persona => ({
   habit: pick(stream(seed, 'persona', playerId), HABITS),
   tellAccuracy: QUICK_PERSONA.tellAccuracy,
 });
+
+/** A ladder opponent's persona: the derived one, or the guide habit for the ladder's first opponent (proposal P4). */
+export const personaFor = (s: { seed: number; tutor?: string }, playerId: string): Persona =>
+  playerId === s.tutor ? { habit: QUICK_GUIDE.habit, tellAccuracy: QUICK_PERSONA.tellAccuracy } : personaOf(s.seed, playerId);
 
 /** What a habit looks at: the AI's side of the decision, nothing random. */
 export type HabitSituation = Pick<DecisionContext, 'persona' | 'score' | 'tags' | 'lastPointWinner' | 'decisions'>;

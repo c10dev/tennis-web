@@ -4,13 +4,13 @@
 import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
-  autoPlay, CARD_LABEL, cardChoices, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, resumeQuick, revealView,
-  scoreLine, tickerView, withLive, type QuickMatch,
+  autoPlay, CARD_LABEL, cardChoices, clipFor, decide, decisionSituation, finishQuick, guideLine, matchOver, opponentRead, QUICK_PACE, resumeQuick,
+  revealView, scoreLine, tickerView, withLive, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { announce } from '../lib/announce.ts';
 import { h } from '../lib/h.ts';
-import { cardIcon } from '../lib/icons.ts';
+import { cardIcon, icon } from '../lib/icons.ts';
 import { stagger } from '../lib/motion.ts';
 import { appSound } from '../lib/sound.ts';
 import { readingTip, retireHint } from './hint.ts';
@@ -100,6 +100,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   function drawChoose() {
     const sit = decisionSituation(qm!);
     const tip = readingTip(() => panel.focus({ preventScroll: true }));
+    // The guided first match (proposal P4): what the first opponent's habit predicts at this decision.
+    const guide = guideLine(ctx.quick!, qm!);
     panel.classList.add('stop');
     panel.replaceChildren(
       h('div', { class: 'moment-banner' }, h('span', { class: 'moment', id: 'moment' }, sit.moment), h('strong', { class: 'stop-score' }, scoreLine(qm!))),
@@ -107,6 +109,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       pipRow(qm!, lastPoint(qm!)),
       renderRead(opponentRead(qm!)),
       ...(tip ? [tip] : []),
+      ...(guide ? [h('p', { class: 'guide paper', id: 'guide', role: 'note' }, icon('eye', 16), h('span', null, guide))] : []),
       h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card} is-dealt`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
         h('span', { class: 'key' }, String(i + 1)), h('strong', null, cardIcon(c.card), ' ', c.label), h('span', { class: 'flavour' }, c.flavour),
         h('span', { class: 'rule' }, `beats ${CARD_LABEL[c.beats]}`),

@@ -46,4 +46,4 @@ export { quickResultView, type RatingView } from './views/quick-result.ts';
 export { playByPlay } from './views/quick-play-by-play.ts';
 export { overtakesBetween } from './quick/overtakes.ts';
 export { nextGoal } from './quick/standing.ts';
-export { habitLine, opponentRead, opponentScouting, rivalLine } from './views/quick-scout.ts';
+export { guideLine, habitLine, opponentRead, opponentScouting, rivalLine } from './views/quick-scout.ts';
