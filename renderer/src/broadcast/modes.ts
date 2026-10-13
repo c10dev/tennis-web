@@ -7,20 +7,22 @@ import type { ViewMode } from './types.ts';
 /** Points that can decide a game, set or match. */
 export const BIG_POINTS: ReadonlySet<PointTag> = new Set(['break_point', 'set_point', 'match_point']);
 
-/** Break, set and match points, tiebreak points, and every point that ends a game. */
-export const isKeyPoint = (s: PointSegment): boolean => s.endsGame || s.point.tags.some((t) => BIG_POINTS.has(t) || t === 'tiebreak');
+/** Break, set and match points, tiebreak points, and every point that ends a game. In a one-tiebreak match every point
+ *  is a tiebreak point, so there the tag says nothing. */
+export const isKeyPoint = (s: PointSegment, tiebreakOnly = false): boolean =>
+  s.endsGame || s.point.tags.some((t) => BIG_POINTS.has(t) || (t === 'tiebreak' && !tiebreakOnly));
 
 export function selectPoints(timeline: Timeline, mode: ViewMode): number[] {
   const all = timeline.segments.map((_, i) => i);
   if (mode === 'full') return all;
   if (mode === 'result') return [];
-  if (mode === 'key') return all.filter((i) => isKeyPoint(timeline.segments[i]!));
+  if (mode === 'key') return all.filter((i) => isKeyPoint(timeline.segments[i]!, timeline.tiebreakOnly));
   const picked = new Set<number>();
   let gameStart = 0;
   timeline.segments.forEach((s, i) => {
     const p = s.point;
     const rally = p.rallyLength >= BROADCAST.longRally || (p.endedBy === 'winner' && p.rallyLength >= BROADCAST.winnerRally);
-    if (isKeyPoint(s) || rally) picked.add(i);
+    if (isKeyPoint(s, timeline.tiebreakOnly) || rally) picked.add(i);
     if (!s.endsGame) return;
     if (s.isBreak) for (let k = gameStart; k <= i; k++) picked.add(k);
     gameStart = i + 1;

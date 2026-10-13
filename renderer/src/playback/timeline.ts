@@ -36,6 +36,8 @@ export interface Timeline {
   noAd: boolean;
   /** Every set is one tiebreak (ADR-017): the score bug drops games and shows each set's tiebreak count. */
   tiebreakOnly: boolean;
+  /** Sets a player needs to win the match. */
+  setsToWin: number;
   /** False while the match is still being played (no match_end yet): then there is no winner or final score. */
   complete: boolean;
   winner: PlayerId | null;
@@ -87,7 +89,7 @@ export function buildTimeline(result: ReplayInput): Timeline {
   return {
     segments, totalSec: t, pointStarts: segments.map((s) => s.start), names: [config.players[0].name, config.players[1].name],
     styles: [config.players[0].style, config.players[1].style], surface: config.surface,
-    noAd: config.rules.noAd, tiebreakOnly, complete: finalScore !== null, winner, finalScore,
+    noAd: config.rules.noAd, tiebreakOnly, setsToWin: Math.ceil(config.rules.bestOf / 2), complete: finalScore !== null, winner, finalScore,
   };
 }
 

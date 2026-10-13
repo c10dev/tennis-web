@@ -18,12 +18,13 @@ export type Cue = CueBody & { at: number };
 
 type Timed = { T: number; cue: CueBody };
 
-export function crowdIntensity(s: PointSegment): number {
+/** `tiebreakOnly`: every point of a one-tiebreak match carries the tiebreak tag, so it earns no bonus there. */
+export function crowdIntensity(s: PointSegment, tiebreakOnly = false): number {
   const c = AUDIO.crowd;
   const p = s.point;
   const base = p.endedBy === 'ace' ? c.ace : p.endedBy === 'winner' ? c.winner : p.endedBy === 'double_fault' ? c.doubleFault : c.error;
   let tags = 0;
-  for (const t of p.tags) tags += c[t];
+  for (const t of p.tags) if (!(t === 'tiebreak' && tiebreakOnly)) tags += c[t];
   const rally = Math.min(c.rallyMax, p.rallyLength * c.perRallyShot);
   return Math.min(1, base + rally + tags + (s.endsGame ? c.gameWon : 0));
 }
@@ -41,7 +42,7 @@ function pointCues(tl: Timeline, s: PointSegment): Timed[] {
     const out_ = shot.outcome === 'unforced_error' || shot.outcome === 'forced_error';
     if (fault || out_) out.push({ T: land + AUDIO.callDelaySec, cue: { kind: 'call', text: fault ? 'Fault' : 'Out' } });
   }
-  out.push({ T: s.landed + AUDIO.crowdDelaySec, cue: { kind: 'crowd', intensity: crowdIntensity(s) } });
+  out.push({ T: s.landed + AUDIO.crowdDelaySec, cue: { kind: 'crowd', intensity: crowdIntensity(s, tl.tiebreakOnly) } });
   const ctx = { server: s.point.server, winner: s.point.winner, endsGame: s.endsGame, gap: s.gap, noAd: tl.noAd };
   out.push({ T: s.end + AUDIO.scoreCallDelaySec, cue: { kind: 'call', text: scoreCall(s.point.scoreAfter, ctx, tl.names) } });
   return out;
@@ -54,16 +55,23 @@ export function allCues(p: Programme): Cue[] {
   const hit = cache.get(p);
   if (hit) return hit;
   const perPoint = new Map<number, Timed[]>();
+  /** Live cues already placed: a cue on a cut can fall inside both clips by a rounding hair. */
+  const placed = new Set<Timed>();
   const cues: Cue[] = [];
   for (const clip of p.clips) {
     if (clip.kind !== 'live' && clip.kind !== 'replay') continue;
     const seg = p.timeline.segments[clip.pointIndex]!;
     if (!perPoint.has(clip.pointIndex)) perPoint.set(clip.pointIndex, pointCues(p.timeline, seg));
     const end = clip.matchFrom + clip.duration * clip.rate;
-    for (const { T, cue } of perPoint.get(clip.pointIndex)!) {
+    for (const item of perPoint.get(clip.pointIndex)!) {
+      const { T, cue } = item;
       if (T < clip.matchFrom || T >= end) continue;
       const at = clip.start + (T - clip.matchFrom) / clip.rate;
-      if (clip.kind === 'live') cues.push({ ...cue, at });
+      if (clip.kind === 'live') {
+        if (placed.has(item)) continue;
+        placed.add(item);
+        cues.push({ ...cue, at });
+      }
       else if ('replay' in cue) cues.push({ ...cue, replay: true, at });
     }
   }

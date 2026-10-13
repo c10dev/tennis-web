@@ -55,18 +55,32 @@ function caption(tl: Timeline, seg: PointSegment, T: number): OverlayModel['lowe
   if (T < seg.start || T > seg.zero + OVERLAY.lowerThirdAfterSec) return null;
   const { tags, scoreBefore, server } = seg.point;
   const name = (id: PlayerId) => tl.names[id === 'A' ? 0 : 1]!;
-  if (tags.includes('match_point')) return { title: 'MATCH POINT', detail: name(setLeader(scoreBefore)) };
-  if (tags.includes('set_point')) return { title: 'SET POINT', detail: name(setLeader(scoreBefore)) };
+  const named = (title: string, id: PlayerId | null) => (id ? { title, detail: name(id) } : { title });
+  if (tags.includes('match_point')) return named('MATCH POINT', matchPointHolder(tl, scoreBefore));
+  if (tags.includes('set_point')) return named('SET POINT', setLeader(scoreBefore));
   if (tags.includes('break_point')) return { title: 'BREAK POINT', detail: name(server === 'A' ? 'B' : 'A') };
-  if (tags.includes('tiebreak')) return { title: 'TIEBREAK' };
+  // Every point of a one-tiebreak match is a tiebreak point: no caption for that.
+  if (tags.includes('tiebreak') && !tl.tiebreakOnly) return { title: 'TIEBREAK' };
   return null;
 }
 
-/** Who is one point from the set: the player ahead in games, or in points in a tiebreak or at 5-5 and beyond. */
-function setLeader(score: ScoreState): PlayerId {
+/** Who is one point from the set: the player ahead in games, or in points in a tiebreak; null at a sudden-death point
+ *  (Fast4's 4-4), where both are. */
+function setLeader(score: ScoreState): PlayerId | null {
   const [ga, gb] = score.games;
   if (!score.tiebreak && ga !== gb) return ga > gb ? 'A' : 'B';
-  return score.points[0] >= score.points[1] ? 'A' : 'B';
+  const [pa, pb] = score.points;
+  return pa === pb ? null : pa > pb ? 'A' : 'B';
+}
+
+/** Who is one point from the match: the set leader, or at sudden death the one player a set from the match (null if
+ *  both are). */
+function matchPointHolder(tl: Timeline, score: ScoreState): PlayerId | null {
+  const leader = setLeader(score);
+  if (leader) return leader;
+  const won = (i: 0 | 1) => score.sets.filter(([a, b]) => (i === 0 ? a > b : b > a)).length;
+  const close = ([0, 1] as const).filter((i) => won(i) === tl.setsToWin - 1);
+  return close.length === 1 ? (close[0] === 0 ? 'A' : 'B') : null;
 }
 
 const statsCache = new WeakMap<Timeline, Map<string, MatchStats>>();

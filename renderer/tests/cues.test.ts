@@ -55,7 +55,7 @@ describe('crowdIntensity', () => {
   it('cheers winners louder than errors, longer rallies and bigger points louder still', () => {
     const segs = tl.segments;
     const avg = (f: (s: (typeof segs)[number]) => boolean) => {
-      const xs = segs.filter(f).map(crowdIntensity);
+      const xs = segs.filter(f).map((s) => crowdIntensity(s));
       return xs.reduce((a, b) => a + b, 0) / xs.length;
     };
     expect(avg((s) => s.point.endedBy === 'winner')).toBeGreaterThan(avg((s) => s.point.endedBy === 'unforced_error'));

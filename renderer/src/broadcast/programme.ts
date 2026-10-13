@@ -68,10 +68,14 @@ export function clipAt(programme: Programme, t: number): Clip {
   return c[lo]!;
 }
 
-/** Programme second showing match second T live, or the next live moment after it; 0 if none. */
+/** Programme second showing match second T live, or the next live moment after it; the end of the last live clip
+ *  for the end of the match (switching mode there must not restart the programme); 0 with no live clips. */
 export function programmeTimeFor(programme: Programme, T: number): number {
   const live = programme.clips.filter((c) => c.kind === 'live');
   const inside = live.find((c) => T >= c.matchFrom && T < c.matchFrom + c.duration);
   if (inside) return inside.start + (T - inside.matchFrom);
-  return live.find((c) => c.matchFrom >= T)?.start ?? 0;
+  const after = live.find((c) => c.matchFrom >= T);
+  if (after) return after.start;
+  const last = live.at(-1);
+  return last ? last.start + last.duration : 0;
 }
