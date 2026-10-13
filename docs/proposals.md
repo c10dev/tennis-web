@@ -54,6 +54,13 @@ rematch plays exactly like a first meeting, apart from what the player remembers
 
 **Default:** A.
 
+**Built for review** on the local branch `proposal/p2-rival-memory` (not merged): `RivalRecord.yours` (the user's
+big-point cards against that rival, optional so old saves load), the AI reading them with this match's cards
+(`decisionOdds`, same +0.15 lean as within a match), and "; remembers your counters" on the rival line. Measured over
+60 ladders × 30 matches: a bot that always plays Counter wins 40.5% of rematches on main and 38.7% here (first
+meetings 43%); the reader bot is unchanged (51% in rematches). The effect is small by design (the habit stays the
+main read); raise `QUICK_AI.adapt` for rivals if playtests want rematches to bite harder.
+
 ## P3. A reason for "one more" right after a win
 
 **Finding.** The result screen ends with the next goal ("2 wins to Top 32") and Play again. Nothing marks a run of
