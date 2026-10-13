@@ -1,16 +1,28 @@
-/* Quick match: big rank, big cards, little else (ADR-016). */
-.title .actions.stack { flex-direction: column; align-items: center; gap: 14px; }
+/* Quick match: big rank, big cards, little else (ADR-016), Rally Pop look (ADR-020). */
+.title .actions.stack { flex-direction: column; align-items: center; gap: 16px; }
 .title .season-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
-button.big { font-size: 18px; padding: 10px 28px; }
-.quick-home { display: grid; gap: 14px; max-width: 640px; margin: 0 auto; }
-.rank-card .rank { display: flex; justify-content: space-between; align-items: baseline; }
-.rank-card .rank strong { font-size: 56px; color: var(--bug-accent); font-variant-numeric: tabular-nums; }
-.to-next { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; }
-.to-next .bar { grid-column: 1 / -1; height: 10px; background: #2a3443; border-radius: 5px; overflow: hidden; }
-.to-next .fill { display: block; height: 100%; background: linear-gradient(90deg, #6aa8ff, var(--bug-accent)); }
-.to-next .points { font-variant-numeric: tabular-nums; }
-.opponent h2 { margin: 4px 0; }
-.opponent .fast { display: block; margin-top: 10px; }
+.quick-home { display: grid; gap: 18px; max-width: 640px; margin: 0 auto; }
+.rank-card .rank { display: flex; justify-content: space-between; align-items: center; }
+.rank-card .rank > .muted { font-weight: 800; font-size: 17px; }
+.rank-badge { display: inline-flex; align-items: center; gap: 10px; }
+.rank-badge .icon { color: var(--ink); fill: var(--gold); stroke-width: 2.2; }
+.rank-card .rank strong { font: 400 64px/1 var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+/* Progress to the next place: a gold bar in an ink outline. */
+.to-next { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; margin-top: 10px; }
+.to-next .bar { grid-column: 1 / -1; height: 18px; background: var(--paper-2); border: var(--outline); border-radius: 999px; overflow: hidden; }
+.to-next .fill { display: block; height: 100%; background: var(--gold); border-right: var(--outline); }
+.to-next .points { font-weight: 800; font-variant-numeric: tabular-nums; }
+.opponent h2 { margin: 4px 0; font-size: 30px; }
+.opponent > .muted:first-child { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.opponent #quick-play { width: 100%; margin-top: 4px; }
+.opponent .fast { display: block; margin-top: 12px; }
 ul.recent { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-ul.recent .won { color: var(--win); }
+ul.recent .won { color: var(--win); font-weight: 800; }
 ul.recent .lost { color: var(--loss); }
+/* The game plan picker on the ladder, next to Play: paper toggles, the chosen one filled court blue. */
+.plan-picker { display: grid; gap: 6px; margin: 14px 0; }
+.plan-picker > .muted:first-child { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+.plan-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.plan-btn { flex: 1; min-width: 96px; padding: 7px 10px; }
+.plan-btn.selected, .plan-btn.selected:hover { background: var(--court); color: var(--paper); }
+.plan-line { font-size: 13px; }

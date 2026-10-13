@@ -2,6 +2,7 @@
 import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, startQuick, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
+import { icon } from '../lib/icons.ts';
 import { planPicker } from './plan.ts';
 
 const STYLES: CreatableStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
@@ -18,7 +19,7 @@ export function quickHome(ctx: Ctx): Screen {
   const fast = h('input', { type: 'checkbox', id: 'fast-mode', checked: ctx.fastMode, onchange: (e: Event) => { ctx.fastMode = (e.target as HTMLInputElement).checked; } });
   const element = h('section', { class: 'quick-home' },
     h('div', { class: 'card rank-card', id: 'ladder' },
-      h('div', { class: 'rank' }, h('span', { class: 'muted' }, v.name), h('strong', { id: 'quick-rank' }, `#${v.rank}`)),
+      h('div', { class: 'rank' }, h('span', { class: 'muted' }, v.name), h('span', { class: 'rank-badge' }, icon('trophy', 36), h('strong', { id: 'quick-rank' }, `#${v.rank}`))),
       h('div', { class: 'to-next' },
         h('div', { class: 'bar' }, h('span', { class: 'fill', style: `width:${Math.round(v.progress * 100)}%` })),
         h('span', { class: 'muted', id: 'to-next' }, v.rank === 1 ? 'Top of the ladder' : `${v.toNext} pts to #${v.rank - 1}`),
@@ -27,7 +28,7 @@ export function quickHome(ctx: Ctx): Screen {
       h('span', { class: 'muted' }, 'Next opponent'),
       h('h2', null, v.opponent.name),
       h('p', { class: 'muted' }, `#${v.opponent.rank} · ${v.opponent.style} · level ${v.opponent.level.toFixed(1)} · ${v.opponent.surface} · tiebreak to 7`),
-      h('p', { class: 'scouting', id: 'home-scouting' }, h('span', { class: 'muted' }, 'Scouting: '), scout.habit),
+      h('p', { class: 'scouting', id: 'home-scouting' }, icon('eye', 18), h('span', { class: 'muted' }, 'Scouting: '), scout.habit),
       scout.rival ? h('p', { class: 'rival', id: 'home-rival' }, scout.rival) : null,
       picker.element,
       h('button', { class: 'primary big', id: 'quick-play', onclick: play }, 'Play'),
