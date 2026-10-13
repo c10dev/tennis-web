@@ -1,6 +1,9 @@
 // Public API of the renderer: turns a MatchResult into frames and draws them with Three.js (GDD §8).
 // It reads engine data through @tennis/engine's index only and never imports ui/.
 export { SUPPORTED_SCHEMA_VERSION } from './version.ts';
+export { scoreCall, type CallContext } from './audio/calls.ts';
+export { allCues, crowdIntensity, cuesBetween, type Cue } from './audio/cues.ts';
+export { createMixer, type Bus, type Mixer } from './audio/mixer.ts';
 export { broadcastFrameAt, type BroadcastFrame } from './broadcast/frame.ts';
 export { lineCall, type LineCall } from './broadcast/hawkeye.ts';
 export { selectPoints } from './broadcast/modes.ts';
@@ -20,5 +23,5 @@ export { buildTimeline, scoreAt, segmentAt, type GapKind, type PointSegment, typ
 export { CapsuleRig, type PlayerRig } from './scene/rig.ts';
 export { createStage, type Stage, type StageFrame } from './scene/stage.ts';
 export { buildVenue, standHeightAt } from './scene/venue.ts';
-export { BROADCAST, PLAYBACK } from './tuning/index.ts';
+export { AUDIO, BROADCAST, PLAYBACK } from './tuning/index.ts';
 export { createViewer, type Viewer } from './viewer.ts';

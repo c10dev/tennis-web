@@ -1,12 +1,13 @@
 // Dev replay page: simulate ?seed=&surface= with the engine, or load replay JSON, and play it with the renderer.
 import { exhibitionConfig, fingerprint, simulateMatch, type MatchResult, type Surface } from '@tennis/engine';
 import {
-  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, overlayAt,
+  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, overlayAt,
   type ClockAction, type ClockState,
   type Programme, type Viewer,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createPanel } from './panel.ts';
+import { createSound } from './sound.ts';
 import './style.css';
 
 interface Session { result: MatchResult; programme: Programme; viewer: Viewer; clock: ClockState }
@@ -26,6 +27,7 @@ const dispatch = (action: ClockAction) => {
   if (session) session.clock = clockReducer(session.programme, session.clock, action);
 };
 const controls = createControls(el('controls'), dispatch);
+const sound = createSound(el('sound'));
 const panel = createPanel(el('panel'), { seed, surface }, (json, name) => start(json as MatchResult, name), () => session?.result ?? null);
 
 function start(result: MatchResult, source: string): void {
@@ -53,7 +55,11 @@ function loop(now: number): void {
   const dt = (now - last) / 1000;
   last = now;
   if (session) {
+    const before = session.clock.t;
     session.clock = clockReducer(session.programme, session.clock, { type: 'tick', dt });
+    if (sound.mixer && session.clock.playing) {
+      for (const cue of cuesBetween(session.programme, before, session.clock.t, session.clock.speed)) sound.mixer.play(cue);
+    }
     const frame = broadcastFrameAt(session.programme, session.clock.t);
     session.viewer.render(frame, dt);
     // Read by the e2e tests and handy when debugging the director.

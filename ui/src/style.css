@@ -83,3 +83,11 @@ button:hover { background: #36425a; }
   .ov-intro { flex-direction: column; bottom: 180px; }
   .ov-stats th, .ov-stats td { padding: 4px 8px; }
 }
+
+#sound { position: fixed; top: 196px; right: 16px; display: grid; gap: 6px; justify-items: end; padding: 8px 10px;
+  background: var(--panel-bg); border-radius: 6px; font-size: 13px; }
+#sound .sliders { display: grid; gap: 4px; }
+#sound .sliders[hidden] { display: none; }
+#sound label { display: flex; gap: 8px; align-items: center; justify-content: flex-end; color: var(--muted); }
+#sound input[type='range'] { width: 110px; padding: 0; }
+@media (max-width: 640px) { #sound { top: auto; bottom: 230px; } }
