@@ -1,6 +1,6 @@
 // Report section owned by the match-flow workstream (ADR-017): length, decisions, pace, matchup weight, skill, ladder.
 import type { Row } from '../../engine/cli/report.ts';
-import { ladderPace, matchupEdge, median, share, skillLadder, type WinRate } from '../src/quick/balance.ts';
+import { ladderPace, matchupEdge, median, planWinRates, share, skillLadder, type WinRate } from '../src/quick/balance.ts';
 import { readerBot } from '../src/quick/bots.ts';
 import { QUICK_TARGETS } from '../src/quick/targets.ts';
 import { check } from './quick-rows.ts';
@@ -18,5 +18,12 @@ export function flowRows(random: WinRate, n: number, seed: number, ladders: numb
     check('Won matchup at a decision point (pp)', matchupEdge(Math.max(300, Math.floor(n / 2)), seed), T.matchupEdge, '%'),
     { label: 'Win % by rating 11..15 vs 13', value: skill.map((w) => `${(w * 100).toFixed(0)}`).join('/'), range: 'rising', status: skill.every((w, i) => i === 0 || w > skill[i - 1]!) ? 'PASS' : 'FAIL' },
     check('Places climbed in 30 matches', ladderPace(readerBot, ladders, 30, seed), T.ladderClimb30),
+    planRow(planWinRates(Math.max(300, Math.floor(n / 2)), seed)),
   ];
+}
+
+/** Reported, not guarded: aggressive beats defensive for average players (TD-031, an open design question). */
+function planRow(w: ReturnType<typeof planWinRates>): Row {
+  const pct = (x: number) => (x * 100).toFixed(0);
+  return { label: 'Win % by plan agg/bal/def (random cards)', value: `${pct(w.aggressive)}/${pct(w.balanced)}/${pct(w.defensive)}`, range: 'TD-031', status: 'info' };
 }

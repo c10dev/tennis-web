@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { averagePlayer, bigServer, createConfig, fingerprint, finish, replayMatch, type Card, type PointEvent, type ScoreState } from '@tennis/engine';
-import { matchupEdge } from '../src/quick/balance.ts';
+import { matchupEdge, planWinRates } from '../src/quick/balance.ts';
 import { isDecisionPoint } from '../src/quick/moments.ts';
 import { autoPlay, createQuickMatch, decide, matchOver, type QuickMatch } from '../src/quick/match.ts';
 import { personaOf } from '../src/quick/persona.ts';
@@ -130,5 +130,18 @@ describe('matchupEdge', () => {
     expect(edge).toBeGreaterThan(0.12);
     expect(edge).toBeLessThan(0.4);
     expect(matchupEdge(60, 3)).toBe(edge);
+  });
+});
+
+describe('planWinRates (TD-031)', () => {
+  it('measures each game plan with random cards against every AI style, the same way on every run', () => {
+    const a = planWinRates(40, 3);
+    expect(Object.keys(a)).toEqual(['aggressive', 'balanced', 'defensive']);
+    for (const w of Object.values(a)) {
+      expect(w).toBeGreaterThanOrEqual(0);
+      expect(w).toBeLessThanOrEqual(1);
+    }
+    expect(planWinRates(40, 3)).toEqual(a);
+    expect(planWinRates(40, 4)).not.toEqual(a);
   });
 });

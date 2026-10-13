@@ -70,6 +70,19 @@ export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): WinR
   return out;
 }
 
+/** Win rate of each game plan (random cards, an average player) against an average AI of every style (TD-031). */
+export function planWinRates(n: number, seed: number): Record<GamePlan, number> {
+  const rate = (plan: GamePlan) => {
+    let wins = 0;
+    for (let i = 0; i < n; i++) {
+      const config = tiebreakConfig(averagePlayer('Bot'), styled(STYLES[i % 4]!), i, plan);
+      if (botMatch(config, streamSeed(seed, 'plan', i), randomBot).result.winner === 'A') wins++;
+    }
+    return wins / n;
+  };
+  return { aggressive: rate('aggressive'), balanced: rate('balanced'), defensive: rate('defensive') };
+}
+
 /** Win rates of players rated 11–15 everywhere (random cards) against an average AI. */
 export function skillLadder(n: number, seed: number): number[] {
   return [11, 12, 13, 14, 15].map((r, k) => {
