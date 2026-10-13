@@ -5,13 +5,13 @@
 .quick-result.done .skip-hint { visibility: hidden; }
 .quick-result .kicker { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
 .quick-result h1 { font-size: 40px; margin: 0; }
-.quick-result.won h1 { color: #6fe08a; } .quick-result.lost h1 { color: #ff9a8f; }
+.quick-result.won h1 { color: var(--win); } .quick-result.lost h1 { color: var(--loss); }
 .decisive { background: #19212c; border: 1px solid #2a3443; border-left: 4px solid var(--bug-accent); border-radius: 8px; padding: 12px 16px; text-align: left; }
 #play-by-play { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 3px; font-variant-numeric: tabular-nums; color: var(--muted); }
 #play-by-play.compact, .decisive.collapsed #play-by-play { display: none; }
 #play-by-play li:last-child { color: var(--text); font-weight: 600; }
 #decisive-line { margin: 6px 0 0; font-size: 20px; font-weight: 700; }
-#decisive-line.you { color: #6fe08a; } #decisive-line.them { color: #ff9a8f; }
+#decisive-line.you { color: var(--win); } #decisive-line.them { color: var(--loss); }
 .gains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .gain { display: grid; gap: 4px; background: #19212c; border: 1px solid #2a3443; border-radius: 8px; padding: 12px; }
 .gain strong { font-size: 24px; font-variant-numeric: tabular-nums; }
@@ -19,7 +19,7 @@
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .overtakes ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 6px 0 0; padding: 0; }
 .overtake { background: #1f3a2a; color: #b8f5c8; border-radius: 14px; padding: 4px 12px; }
-.overtake strong { color: #6fe08a; }
+.overtake strong { color: var(--win); }
 #rating-gains { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
 #rating-gains h3 { grid-column: 1 / -1; margin: 0 0 4px; }
 .rating-gain { display: grid; grid-template-columns: 1fr auto 70px; gap: 8px; align-items: center; text-align: left; }
@@ -39,4 +39,4 @@
 @keyframes rating-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 @media (max-width: 640px) { .gains, #rating-gains { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .quick-result .step, .quick-result .pbp { transition: none; } }
-.quick-result.lost #points-delta strong { color: #ff9a8f; }
+.quick-result.lost #points-delta strong { color: var(--loss); }

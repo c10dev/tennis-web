@@ -357,7 +357,8 @@ Format: one entry per decision, newest at the bottom.
 
 ## ADR-016: Quick-match AI, ladder, rewards, pacing and balance targets
 - **Date:** 2026-10-13
-- **Status:** Accepted
+- **Status:** Superseded by ADR-017 (the per-point design and its targets were replaced after the first playtest);
+  the ladder points rule still holds
 - **Context:** The casual short loop (ADR-014) has to be short, decided by the user's reads, varied, and rewarding
   after every match. These are design targets, checked by `npm run quick` and guarded by `npm run test:quick`.
 - **Decision:**
@@ -407,7 +408,8 @@ Format: one entry per decision, newest at the bottom.
   - **Format:** `setFormat: 'tiebreak'` — a match is one tiebreak to seven, two clear, from 0-0 (event schema v5;
     the set reads 1-0 at the end). Recipes store `null` for points played without cards.
   - **Decisions:** the user picks a game plan (aggressive / balanced / defensive) before the match; points play on
-    with that tactic and no cards, quickly. The match stops for a card only at big points (from 5-5, and any set or
+    with that tactic and no cards, quickly. The match stops for a card only at big points (once either player has five points — first planned as
+    from 5-5, see the flow sub-bullet — and any set or
     match point): three to five per match. At those points a won matchup is worth about +25 pp of point-win chance.
   - **Readable opponents:** every opponent has a persona (a habit such as "attacks on big points" or "counters after
     losing a point") derived from the seed and their id. A scouting line before the match names it; the choose
@@ -517,3 +519,22 @@ Format: one entry per decision, newest at the bottom.
     fast mode; then the result, the points counting up, the players passed, the ratings (rises first, bars growing
     from the old share) and the next goal, each fading in; click or space skips to the end and [Play again] takes
     focus. All final texts are in the page from the start (①'s e2e reads them at once). Fast mode reveals in about 5 s.
+
+## ADR-018: Art direction B "Rally Pop"
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The research in `docs/design-references.md` (references by screen, licence and colour checks, three
+  directions with style tiles) recommended B "Rally Pop" for the casual loop; the user chose it over A "Night
+  Session" (the fallback) and C "Tactics Board".
+- **Decision:** a sunny club court in a toy box: toon 3D with ink outlines, sticker cards, springy reveal and
+  count-up motion, Lilita One + Nunito with Barlow Condensed kept in the score bug. Phased:
+  - **Phase 0 (done with the M6 merge):** the colour-blind-safe card trio as tokens (`--atk #ff7a45`, `--def #4aa3ff`,
+    `--ctr #3fd3b0`; smallest ΔE after protan/deutan simulation 38/53, against 2/13 before), a Lucide icon on every
+    card and card chip (zap, shield, rotate-ccw; ISC, path data copied into `ui/src/lib/icons.ts`, no package),
+    and won/lost shown with the accent, a muted tone and a symbol (✓ / ✗ / =) instead of green against red.
+  - **Phase 1:** UI tokens, self-hosted fonts and motion, the light Rally Pop palette.
+  - **Phase 2:** the renderer (toon materials, outlines on players/net/ball, an unlit ball with a trail, daylight,
+    per-surface kits, chunkier proportions), built in parallel with M6 because no M6 stream owned renderer files.
+  - **Phase 3:** rig proportions or a CC0 chunky body (TD-012).
+- **Consequences:** the M3 default of a realistic Mesh2Motion body no longer fits; TD-012 is decided in phase 3.
+  `e2e/quick-colours.spec.ts` guards phase 0.

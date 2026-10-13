@@ -4,6 +4,13 @@
   --text: #f4f6fa;
   --muted: #9aa6b8;
   --panel-bg: rgba(14, 18, 26, 0.82);
+  /* Card colours, apart for protan and deutan viewers (ADR-018, docs/design-references.md §4); never the only cue. */
+  --atk: #ff7a45;
+  --def: #4aa3ff;
+  --ctr: #3fd3b0;
+  /* Won and lost: the accent and a muted tone with a word or symbol, not green against red. */
+  --win: var(--bug-accent);
+  --loss: #b4bccb;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }

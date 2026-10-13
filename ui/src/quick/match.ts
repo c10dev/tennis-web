@@ -9,6 +9,7 @@ import {
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
+import { cardIcon } from '../lib/icons.ts';
 import { renderRead } from './scout.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -69,7 +70,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       pipRow(qm!, lastPoint(qm!)),
       renderRead(opponentRead(qm!)),
       h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card}`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
-        h('span', { class: 'key' }, String(i + 1)), h('strong', null, c.label), h('span', { class: 'flavour' }, c.flavour),
+        h('span', { class: 'key' }, String(i + 1)), h('strong', null, cardIcon(c.card), ' ', c.label), h('span', { class: 'flavour' }, c.flavour),
         h('span', { class: 'rule' }, `beats ${CARD_LABEL[c.beats]}`),
         h('span', { class: 'strength', title: 'How well this card suits you right now' }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     phase('choose');
@@ -81,10 +82,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     panel.classList.remove('stop');
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point);
-    const verdict = r.matchup === 'won' ? 'You read it!' : r.matchup === 'lost' ? 'They read you' : 'Same card';
+    const verdict = r.matchup === 'won' ? '✓ You read it!' : r.matchup === 'lost' ? '✗ They read you' : '= Same card';
     panel.replaceChildren(h('div', { class: `reveal ${r.matchup}`, id: 'reveal' },
-      h('div', { class: 'pair' }, h('span', { class: `chip ${r.yours}` }, `You · ${CARD_LABEL[r.yours]}`), h('span', { class: 'vs' }, 'v'),
-        h('span', { class: `chip ${r.theirs}` }, `${CARD_LABEL[r.theirs]} · ${opponent}`)),
+      h('div', { class: 'pair' }, h('span', { class: `chip ${r.yours}` }, cardIcon(r.yours, 16), ` You · ${CARD_LABEL[r.yours]}`), h('span', { class: 'vs' }, 'v'),
+        h('span', { class: `chip ${r.theirs}` }, cardIcon(r.theirs, 16), ` ${CARD_LABEL[r.theirs]} · ${opponent}`)),
       h('strong', { class: 'verdict' }, verdict)));
     phase('reveal');
     await sleep(QUICK_PACE.revealSec * 1000);

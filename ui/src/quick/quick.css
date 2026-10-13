@@ -12,5 +12,5 @@ button.big { font-size: 18px; padding: 10px 28px; }
 .opponent h2 { margin: 4px 0; }
 .opponent .fast { display: block; margin-top: 10px; }
 ul.recent { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-ul.recent .won { color: #6fe08a; }
-ul.recent .lost { color: #ff9a8f; }
+ul.recent .won { color: var(--win); }
+ul.recent .lost { color: var(--loss); }
