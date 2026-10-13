@@ -445,6 +445,13 @@ Format: one entry per decision, newest at the bottom.
     **Reward:** the card progress of ADR-016 stays; a win also lifts the rating behind the decisive card (or behind
     the game plan without a decision) that is nearest its next whole shown number up to it, at most 0.2 rating — the
     win always shows a rise named after the choice that won it. Before this, 10% of won matches showed a whole-number
-    rise. Measured (`npm run quick -- --n 300 --seed 1`, 30 ladders of 30 matches, reader bot): visible rise in 100% of
-    wins, 0.54 shown points a match, decisive moment in 100% of matches with a decision, 0.91 players passed a match;
-    places climbed in 30 matches 17.7 before and after (the shown points are mostly progress, below a whole rating).
+    rise. Measured (`npm run quick -- --n 2000 --seed 1`, 30 ladders of 30 matches, reader bot, on the contract's
+    flow): visible rise in 100% of wins, 0.54 shown points a match, decisive moment in 100% of matches with a decision,
+    0.91 players passed a match; places climbed in 30 matches 17.7 before and after (the extra progress rarely crosses
+    a whole rating, which is what the engine reads). **Next goal** (`quick/standing.ts`): the first of Top 50/32/16/8
+    and #1 above the user; wins needed counts wins over an opponent two places up (the average of the three possible),
+    the rest of the ladder standing still. **Screen** (`ui/src/quick/result.ts`): the decisive point replays full
+    screen in 3D with the line as a caption (the whole point up to its last 8 s, at 1.25×), or as a play-by-play in
+    fast mode; then the result, the points counting up, the players passed, the ratings (rises first, bars growing
+    from the old share) and the next goal, each fading in; click or space skips to the end and [Play again] takes
+    focus. All final texts are in the page from the start (①'s e2e reads them at once). Fast mode reveals in about 5 s.
