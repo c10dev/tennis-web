@@ -12,6 +12,7 @@ export const COURT_DRAW = {
   surroundHalfWidth: 13,
   surroundHalfLength: 21,
   grassStripes: 12,
+  netTapeRadius: 0.025,
 } as const;
 
 /** Rally Pop palette (ADR-018, docs/design-references.md §3): yellow-green belongs to the ball alone. */

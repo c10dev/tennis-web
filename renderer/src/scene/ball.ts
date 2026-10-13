@@ -5,6 +5,7 @@ import type { Vec3 } from '@tennis/engine';
 import { BALL_LOOK, COLOURS } from '../tuning/index.ts';
 import type { TrailPoint } from './ballMotion.ts';
 import { groundToThree, toThree } from './coords.ts';
+import { addOutline } from './outline.ts';
 import { createTrail } from './trail.ts';
 
 export interface BallLook {
@@ -23,6 +24,7 @@ export function createBall(): BallView {
   const material = new MeshBasicMaterial({ color: COLOURS.ball, toneMapped: false, fog: false });
   const ball = new Mesh(new SphereGeometry(BALL_LOOK.radius, 16, 12), material);
   ball.name = 'ball';
+  addOutline(ball);
   const shadow = new Mesh(
     new CircleGeometry(BALL_LOOK.radius * 1.2, 16),
     new MeshBasicMaterial({ color: COLOURS.shadow, transparent: true, opacity: BALL_LOOK.shadowOpacity, depthWrite: false }),

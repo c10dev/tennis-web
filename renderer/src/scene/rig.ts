@@ -6,9 +6,10 @@ import {
 } from 'three';
 import { lerp } from '../math.ts';
 import type { PlayerPose } from '../playback/pose.ts';
-import { COLOURS, RIG } from '../tuning/index.ts';
+import { COLOURS, LOOK, RIG } from '../tuning/index.ts';
 import { groundToThree, yawFor } from './coords.ts';
 import { lit } from './materials.ts';
+import { addOutline } from './outline.ts';
 
 export interface PlayerRig {
   readonly object3d: Object3D;
@@ -18,9 +19,10 @@ export interface PlayerRig {
 interface Angles { yaw: number; roll: number }
 
 /** A capsule `length` long hanging down from its group's origin. */
-function limb(radius: number, length: number, colour: number): Mesh {
+function limb(name: string, radius: number, length: number, colour: number): Mesh {
   const mesh = new Mesh(new CapsuleGeometry(radius, length - 2 * radius, 3, 8), lit(colour));
   mesh.position.y = -length / 2;
+  mesh.name = name;
   return mesh;
 }
 
@@ -41,6 +43,7 @@ export class MannequinRig implements PlayerRig {
     this.torso.name = 'torso';
     const body = new Mesh(new CapsuleGeometry(RIG.torsoRadius, RIG.torsoLength, 4, 10), lit(shirt));
     body.position.y = RIG.torsoRadius + RIG.torsoLength / 2;
+    body.name = 'body';
     const headY = RIG.torsoLength + 2 * RIG.torsoRadius + RIG.headRadius * 0.6;
     const head = new Mesh(new SphereGeometry(RIG.headRadius, 12, 8), lit(COLOURS.skin));
     head.position.y = headY;
@@ -60,16 +63,20 @@ export class MannequinRig implements PlayerRig {
     shadow.position.y = 0.004;
     shadow.name = 'shadow';
     this.object3d.add(this.hips, shadow);
+    const parts: readonly string[] = LOOK.outline.rigParts;
+    const outlined: Mesh[] = [];
+    this.object3d.traverse((o) => { if (o instanceof Mesh && parts.includes(o.name)) outlined.push(o); });
+    outlined.forEach(addOutline);
   }
 
   private leg(side: 'left' | 'right'): Group {
     const thigh = new Group();
     thigh.name = `leg-${side}`;
     thigh.position.x = (side === 'left' ? 1 : -1) * RIG.hipHalfWidth;
-    thigh.add(limb(RIG.legRadius + 0.01, RIG.legSegment, COLOURS.shorts));
+    thigh.add(limb(`thigh-${side}`, RIG.legRadius + 0.01, RIG.legSegment, COLOURS.shorts));
     const shin = new Group();
     shin.position.y = -RIG.legSegment;
-    shin.add(limb(RIG.legRadius, RIG.legSegment, COLOURS.skin));
+    shin.add(limb(`shin-${side}`, RIG.legRadius, RIG.legSegment, COLOURS.skin));
     const foot = new Mesh(new BoxGeometry(0.1, 0.06, 0.24), lit(COLOURS.shoes));
     foot.position.set(0, -RIG.legSegment + 0.03, 0.05);
     foot.name = `foot-${side}`;
@@ -126,6 +133,7 @@ function along(mesh: Mesh, start: number, length: number, sign = -1): Mesh {
 /** Arm, handle and an oval head laid out along the pivot's −x (out to the right). */
 function racketParts(): Mesh[] {
   const arm = along(new Mesh(new CylinderGeometry(0.045, 0.04, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength);
+  arm.name = 'arm-right';
   const handle = along(new Mesh(new CylinderGeometry(0.016, 0.016, RIG.handleLength, 6), lit(COLOURS.racket)), RIG.armLength, RIG.handleLength);
   const head = new Mesh(new CylinderGeometry(RIG.racketHeadRadius, RIG.racketHeadRadius, 0.02, 14), lit(COLOURS.racket));
   head.rotation.x = Math.PI / 2;
@@ -138,6 +146,7 @@ function racketParts(): Mesh[] {
 /** The free arm along the pivot's +x (out to the left), ending in the hand that tosses. */
 function leftArmParts(): Mesh[] {
   const arm = along(new Mesh(new CylinderGeometry(0.045, 0.04, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength, 1);
+  arm.name = 'arm-left';
   const hand = new Mesh(new SphereGeometry(0.05, 8, 6), lit(COLOURS.skin));
   hand.position.x = RIG.armLength;
   hand.name = 'left-hand';

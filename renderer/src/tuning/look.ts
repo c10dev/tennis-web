@@ -5,6 +5,17 @@ export const LOOK = {
   toon: true,
   /** Light level of each cel band (shadow, mid, lit), 0–255: what MeshToonMaterial's gradient map holds. */
   toonBands: [110, 190, 255],
+  /** Inverted-hull ink outlines on players, net and ball only: one extra draw per outlined part. */
+  outline: {
+    colour: 0x15171e,
+    /** Width in pixels of a 720-pixel-tall view, whatever the distance or the camera's field of view. */
+    px: 1.5,
+    referenceHeight: 720,
+    /** Rig parts that get a hull (named meshes in MannequinRig); thin ones (handle, visor, feet, hand) do not. */
+    rigParts: ['body', 'head', 'racket-head', 'arm-right', 'arm-left', 'thigh-left', 'thigh-right', 'shin-left', 'shin-right'],
+    /** Ceiling on outline draws for the whole stage: two players, net posts and tape, ball. */
+    maxDraws: 24,
+  },
 } as const;
 
 /** The optic ball (docs/design-references.md §3, ball readability). Sizes in metres, times in seconds of match time. */
