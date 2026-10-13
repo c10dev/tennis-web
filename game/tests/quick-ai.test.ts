@@ -39,11 +39,6 @@ describe('aiCard', () => {
     }
   });
 
-  it('tends to repeat its own last card: a tell a user can learn', () => {
-    const after = sample({ style: 'all_court', role: 'serve', history: [], fatigue: 0, lastOwn: 'defend' });
-    const fresh = sample({ style: 'all_court', role: 'serve', history: [], fatigue: 0 });
-    expect(share(after, 'defend')).toBeGreaterThan(share(fresh, 'defend') + 0.15);
-  });
 
   it('attacks less when tired', () => {
     const fresh = sample({ style: 'big_server', role: 'serve', history: [], fatigue: 0 });

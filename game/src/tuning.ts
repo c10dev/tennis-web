@@ -136,8 +136,6 @@ export const QUICK_AI = {
   /** How many of the user's recent cards (in the same role) the AI looks at, and how often it acts on a read. */
   window: 6,
   adapt: 0.15,
-  /** A readable tell: the AI leans this much towards repeating its own previous card. */
-  sticky: 0.3,
   /** No card is played more often than this: the mix is pulled towards even until it holds (≥ 1.3 bits). */
   maxShare: 0.6,
   /** A read only counts when one card is clearly the habit: its share above an even third, scaled to 0–1. */
@@ -208,7 +206,12 @@ export const QUICK_PLAN = {
 
 /** Opponent personas, tells and rival memory. */
 export const QUICK_PERSONA = {
+  /** Chance the tell points at the card the opponent really plays. */
   tellAccuracy: 0.7,
+  /** Chance the opponent plays its habit card when its habit applies (the rest follows its style mix). */
+  habitShare: 0.72,
+  /** A rival record keeps the opponent's cards at this many latest decision points. */
+  rivalSeen: 12,
 } as const;
 
 /** The result screen's rewards. */

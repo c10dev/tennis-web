@@ -480,3 +480,21 @@ Format: one entry per decision, newest at the bottom.
       | Won matchup at a decision point | +24.6 pp | +20–30 pp |
       | Win % by rating 11/12/13/14/15 vs 13 | 38/42/50/60/69 | rising |
       | Places climbed in 30 matches | 19.2 | 10–25 |
+
+  - **Read (workstream ②), 2026-10-13:** six habits, each a rule checkable on the choose screen (`habitCard` in
+    `game/src/quick/persona.ts`): `big_point_attack` attacks at any match point; `counter_after_loss` counters after
+    losing the last point; `repeat_card` repeats its own card from the last decision; `defend_unless_behind` defends
+    when level or ahead; `copy_user` plays the user's last decision card; `beat_user_last` plays the card that beats
+    it. The contract's `repeat_winner`, `defend_when_ahead` and `safe_on_match_point` applied at only 32–37% of
+    decisions (two of the six would then defend), so the first two were widened and the third replaced; habits now
+    apply at 63% of decisions. When the habit applies the AI plays its card `QUICK_PERSONA.habitShare` = 0.72 of
+    the time, the rest in its style mix's proportions; otherwise the style mix (`QUICK_AI`, whose `sticky` repeat is
+    removed: repeating is now one persona's habit, not everyone's noise). The tell is drawn after the card from a
+    stream seeded by one draw of the decision stream (so tell accuracy never shifts the card), points at the real
+    card 70% of the time, and has four short texts per card. Rival records (`recordRival`, last 12 big-point cards)
+    ride in `QuickState.rivals`, quick save v2 (v1 loads with none). Measured on this branch (`npm run quick -- --n
+    2000 --seed 1`, flow still at 2 decisions and +14 pp a won matchup): habit share 72.5%, random 51.0%, always
+    attack/defend/counter 48.4/51.5/49.1%, follows the tells 58.5% (matchups won 70% / lost 15%), knows habit and
+    style (`scoutBot`) 56.3% (64% / 18%), habit only 54.8%, odds ceiling 56.3%. With the flow approximated (won
+    matchup +29 pp, decisions from 4-4: 3.4 a match) the same code gives 66.7% / 64.8% / 68.9% and fixed cards
+    44–48%: the habit target needs ① near the top of its edge range (TD-033).

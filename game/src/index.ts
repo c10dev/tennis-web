@@ -32,7 +32,8 @@ export { aiCard, aiDecision, BEATEN_BY, CARDS, cardEntropy, cardOdds, decisionOd
 export { finalScore, finishQuick, ladderOrder, newLadder, nextOpponent, pointsToNext, rankOf, type QuickRecord, type QuickState } from './quick/ladder.ts';
 export { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, userRole, type QuickMatch, type QuickMatchInit } from './quick/match.ts';
 export { isDecisionPoint } from './quick/moments.ts';
-export { HABITS, personaOf } from './quick/persona.ts';
+export { habitCard, HABITS, personaOf } from './quick/persona.ts';
+export { recordRival, type Meeting } from './quick/rivals.ts';
 export { PLANS, planTactic } from './quick/plan.ts';
 export { cardReward } from './quick/rewards.ts';
 export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './quick/save.ts';
@@ -41,4 +42,4 @@ export type * from './quick/types.ts';
 export { quickHomeView } from './views/quick-home.ts';
 export { CARD_LABEL, cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine, tickerView } from './views/quick-match.ts';
 export { quickResultView } from './views/quick-result.ts';
-export { opponentRead } from './views/quick-scout.ts';
+export { habitLine, opponentRead, opponentScouting, rivalLine } from './views/quick-scout.ts';

@@ -4,8 +4,8 @@ import type { Card, PlayerId, PlayStyle, PointTag, Rng } from '@tennis/engine';
 /** The user's plan for the points played without cards. */
 export type GamePlan = 'aggressive' | 'balanced' | 'defensive';
 
-/** An opponent's signature habit at big points: what makes them readable. */
-export type Habit = 'big_point_attack' | 'counter_after_loss' | 'repeat_winner' | 'defend_when_ahead' | 'copy_user' | 'safe_on_match_point';
+/** An opponent's signature habit at decision points: what makes them readable (rules in `persona.ts`). */
+export type Habit = 'big_point_attack' | 'counter_after_loss' | 'repeat_card' | 'defend_unless_behind' | 'copy_user' | 'beat_user_last';
 
 export interface Persona {
   habit: Habit;

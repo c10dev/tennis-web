@@ -48,7 +48,7 @@ export function startQuick(s: QuickState, plan: GamePlan = 'balanced'): QuickMat
     firstServer: streamSeed(s.seed, 'quick-toss', s.matchNo) % 2 === 0 ? 'A' : 'B',
   });
   const seed = streamSeed(s.seed, 'quick', s.matchNo);
-  return createQuickMatch({ config, seed, matchNo: s.matchNo, opponent, plan, persona: personaOf(s.seed, opponent), rival: null });
+  return createQuickMatch({ config, seed, matchNo: s.matchNo, opponent, plan, persona: personaOf(s.seed, opponent), rival: s.rivals[opponent] ?? null });
 }
 
 export const matchOver = (m: QuickMatch): boolean => isOver(m.live);
