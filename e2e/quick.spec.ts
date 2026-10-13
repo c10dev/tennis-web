@@ -1,14 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { Card } from '@tennis/engine';
-import { autoPlay, createPlayer, decide, defaultAllocation, finishQuick, matchOver, newLadder, startQuick } from '@tennis/game';
+import { autoPlay, createPlayer, decide, defaultAllocation, finishQuick, matchOver, newLadder, startQuick, type GamePlan } from '@tennis/game';
 
 const SEED = 3;
 const CYCLE: Card[] = ['attack', 'defend', 'counter'];
 
 /** The same first match in Node: the default style on the start form is the first option, big server. */
-function nodeFirstMatch() {
+function nodeFirstMatch(plan: GamePlan = 'balanced') {
   const s = newLadder(SEED, createPlayer({ name: 'Alex Kim', style: 'big_server', allocation: defaultAllocation('big_server') }, SEED));
-  const qm = startQuick(s);
+  const qm = startQuick(s, plan);
   let i = 0;
   for (autoPlay(qm); !matchOver(qm); autoPlay(qm)) decide(qm, CYCLE[i++ % 3]!);
   return finishQuick(s, qm).history[0]!;
@@ -37,6 +37,9 @@ async function playThrough(page: Page, keys = false, limit = Infinity) {
   while (!page.url().includes('#/quick/result') && i < limit) {
     const ready = await page.evaluate(() => document.body.dataset.quickPhase === 'choose' && !!document.querySelector('#card-attack'));
     if (ready) {
+      // Every stop is named on the banner, over a pip for each point played so far.
+      await expect(page.locator('#moment')).toHaveText(/^(MATCH POINT|MATCH POINT DOWN|\d+-ALL|BIG POINT)$/);
+      expect(await page.locator('#point-pips .pip').count()).toBe(Number(await page.evaluate(() => document.body.dataset.quickPoints)));
       const card = CYCLE[i % 3]!;
       if (keys) await page.keyboard.press(`Digit${i % 3 + 1}`);
       else await page.locator(`#card-${card}`).click();
@@ -56,6 +59,8 @@ test.describe('quick match', () => {
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toBe('auto');
+    await expect(page.locator('#ticker #score-line')).toHaveText(/^\d+-\d+$/);
+    await expect(page.locator('#ticker')).toContainText('Plan · Balanced');
     await expect(page.locator('#situation')).toHaveText(/(Your|Their) serve · \d+-\d+/, { timeout: 15_000 });
     await expect(page.locator('#opponent-read #scouting')).toBeVisible();
     const decisions = await playThrough(page);
@@ -66,6 +71,23 @@ test.describe('quick match', () => {
     await expect(page.locator('#points-delta')).toContainText(`${expected.pointsDelta >= 0 ? '+' : ''}${expected.pointsDelta}`);
     await expect(page.locator('#rank-change')).toContainText(`#${expected.rankBefore} → #${expected.rankAfter}`);
     await expect(page.locator('#rating-gains .rating-gain')).toHaveCount(expected.progress.length);
+    expect(errors).toEqual([]);
+  });
+
+  test('plays the game plan picked next to Play, and remembers it', async ({ page }) => {
+    const errors = watchErrors(page);
+    await startLadder(page);
+    await expect(page.locator('#plan-balanced')).toHaveClass(/selected/);
+    await page.locator('#plan-aggressive').click();
+    await expect(page.locator('#plan-aggressive')).toHaveClass(/selected/);
+    await expect(page.locator('#plan-line')).toContainText('winners');
+    await page.reload();
+    await expect(page.locator('#plan-aggressive')).toHaveClass(/selected/);
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await playThrough(page);
+    const expected = nodeFirstMatch('aggressive');
+    await expect(page.locator('#quick-result h1')).toHaveText(`${expected.won ? 'You won' : 'You lost'} ${expected.score}`);
     expect(errors).toEqual([]);
   });
 

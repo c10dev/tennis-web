@@ -436,3 +436,47 @@ Format: one entry per decision, newest at the bottom.
   | Places climbed in 30 matches (reads half the time) | 10–25 |
   | Won matches where a shown rating rises | ≥ 80% |
   | Matches with decisions where a decisive moment is found | 100% |
+  - **Flow (stream ①):**
+    - *Card weight.* `CARDS` edge values were doubled: edgeError 0.4, edgeWinner 0.5, edgeAce 0.6, edgeQuality 0.08
+      (were 0.25 / 0.25 / 0.2 / 0.03). This supersedes ADR-015's matrix and its ±0.08–0.17 bound. Average players,
+      20,000 points each; the table shows the server's point-win shift from the card-free 0.623:
+
+      | Server \ returner | attack | defend | counter |
+      |---|---|---|---|
+      | attack | +0.013 | +0.206 | −0.239 |
+      | defend | −0.281 | −0.006 | +0.226 |
+      | counter | +0.226 | −0.260 | +0.000 |
+
+      Against an even mix of the returner's cards, the three serve cards land within 0.006 of each other; the three
+      return cards land within 0.013. Attack still serves 2.1× the aces and 3.4× the double faults of defend. The
+      serve terms carry more of the increase than the rally terms. Scaling all four evenly would cancel a
+      big-serving hitter's extra edge from attack.
+    - *How it is measured.* `matchupEdge` (`quick/balance.ts`) plays one-tiebreak matches between two average
+      players, each holding one card at every decision point. The six card pairs share seeds. The result is the
+      user's point-win share at decision points with the card that beats the opponent's card, minus the same
+      share with the same card as the opponent. Both roles and the pressure of big points are included.
+    - *Card-free matches.* They are unchanged: engine goldens pass, and `npm run sim -- --n 10000 --seed 42` is
+      byte-identical before and after on hard, clay and grass.
+    - *Decision points.* `isDecisionPoint` stops once either player has `QUICK_MOMENTS.fromPoints` (5) points, and
+      at any set or match point. The rule a player reads: "from 5 points on, every point is a big point". 5-all
+      gave a median of 2 decisions with 62% of matches at 2 or more. Now the quartiles are 2 / 3 / 5, the 90th
+      percentile is 7, and every match has at least 2 (TD-030). The banner names every stop: MATCH POINT,
+      MATCH POINT DOWN, N-ALL, or BIG POINT.
+    - *Pace.* `QUICK_PACE` is shared by the UI and the model (`pointSeconds`). A point without cards shows its last
+      1.6 s in 3D at 3× plus a 0.35 s ticker beat; fast mode shows the beat only. A decision point gets a 0.6 s
+      reveal, the whole point (at most its last 8 s) at 2×, and a 0.6 s score. ADR-016's per-point clip rules
+      (key rally, decisive point) no longer pick the window; every decision point plays whole.
+    - *Game plan.* Three toggles next to Play on the ladder. The last choice is remembered in localStorage
+      (`tennis-quick-plan`), and the plan is passed to `startQuick`. The ticker shows it during the match.
+      Aggressive is slightly dominant (TD-031).
+    - *Report.* `npm run quick -- --n 2000 --seed 1`, flow rows:
+
+      | Metric | Value | Target |
+      |---|---|---|
+      | Points per match (median) | 11 | 10–14 |
+      | Decisions per match (median) | 3 | 3–5 |
+      | Matches with 2+ decisions | 100% | ≥ 90% |
+      | Seconds on screen per match (median) | 21 s | ≤ 60 s |
+      | Won matchup at a decision point | +24.6 pp | +20–30 pp |
+      | Win % by rating 11/12/13/14/15 vs 13 | 38/42/50/60/69 | rising |
+      | Places climbed in 30 matches | 19.2 | 10–25 |

@@ -171,19 +171,19 @@ export const QUICK = {
   surfaces: ['hard', 'clay', 'grass'],
 } as const;
 
-/** How a quick match is shown (ADR-016): per point a card reveal, the end of the rally (all of it on a key point) at
- *  `speed`, and the score. The UI plays exactly these windows; the balance report adds them up. */
+/** How a quick match is shown (ADR-017). A point without cards: its last `autoClipSec` in 3D at `autoSpeed`, then a
+ *  ticker beat of `autoSec` (fast mode: the beat only). A decision point: the card reveal, the whole point (its last
+ *  `keyMaxSec` at most) at `speed`, and the score. The UI plays exactly these windows; the balance report adds them up. */
 export const QUICK_PACE = {
-  revealSec: 0.4,
-  scoreSec: 0.4,
-  /** Seconds of point time shown for an ordinary point, counted back from its end. */
-  clipSec: 2.2,
-  speed: 2.5,
+  autoSec: 0.35,
+  autoClipSec: 1.6,
+  autoSpeed: 3,
+  revealSec: 0.6,
+  scoreSec: 0.6,
+  speed: 2,
   /** The serve toss before contact (renderer PLAYBACK.tossLeadSec). */
   tossSec: 1,
-  /** Rallies at least this long are key points, shown whole (as are points that end a set or win a break). */
-  keyRally: 10,
-  /** Even a key point shows at most its last this-many seconds (a long point with a second serve runs 20 s+). */
+  /** Even a decision point shows at most its last this-many seconds (a long point with a second serve runs 20 s+). */
   keyMaxSec: 8,
 } as const;
 
@@ -193,9 +193,10 @@ export const QUICK_PACE = {
 /** A quick match is one tiebreak to seven, two clear. */
 export const TIEBREAK_RULES = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
 
-/** Where a quick match stops for cards: from this many points all, and at any set or match point. */
+/** Where a quick match stops for cards: once either player has this many points, and at any set or match point.
+ *  Over 4,000 tiebreaks of average players: median 3 decisions, at least 2 in every match (5-all gave median 2). */
 export const QUICK_MOMENTS = {
-  fromAll: 5,
+  fromPoints: 5,
 } as const;
 
 /** The user's game plan as the tactic for the points played without cards. */

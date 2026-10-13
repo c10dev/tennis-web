@@ -1,20 +1,22 @@
 // A quick match's screens as data (ADR-017): the decision point (situation and cards), the reveal.
-import { liveCardStrength, liveStatus, matchup, type Card, type PointCards, type PointEvent } from '@tennis/engine';
+import { liveCardStrength, liveStatus, matchup, type Card, type PointCards, type PointEvent, type PointTag } from '@tennis/engine';
 import { BEATEN_BY, CARDS } from '../quick/ai.ts';
 import { userRole, type QuickMatch } from '../quick/match.ts';
+import { PLANS } from '../quick/plan.ts';
+import type { GamePlan } from '../quick/types.ts';
 
 /** The decision point from the user's side (the user is player A). */
 export function decisionSituation(m: QuickMatch) {
   const st = liveStatus(m.live);
   const role = userRole(m);
   const [a, b] = st.score.points;
-  const ahead = a > b ? 'A' : b > a ? 'B' : null;
-  const matchPoint = st.nextTags.includes('match_point');
-  return {
-    role,
-    line: `${role === 'serve' ? 'Your serve' : 'Their serve'} · ${a}-${b}`,
-    moment: matchPoint ? (ahead === 'A' ? 'MATCH POINT' : 'MATCH POINT DOWN') : a === b ? `${a}-ALL` : null,
-  };
+  return { role, line: `${role === 'serve' ? 'Your serve' : 'Their serve'} · ${a}-${b}`, moment: momentLabel([a, b], st.nextTags) };
+}
+
+/** The banner over a decision point; tiebreak points, the user first. */
+export function momentLabel([a, b]: readonly [number, number], tags: readonly PointTag[]): string {
+  if (tags.includes('match_point')) return a > b ? 'MATCH POINT' : 'MATCH POINT DOWN';
+  return a === b ? `${a}-ALL` : 'BIG POINT';
 }
 
 /** The running score while points play without cards. */
@@ -44,5 +46,26 @@ export function revealView(cards: PointCards, point: PointEvent) {
   return {
     yours: cards.A, theirs: cards.B, matchup: m > 0 ? 'won' as const : m < 0 ? 'lost' as const : 'even' as const,
     winner: point.winner === 'A' ? 'you' as const : 'them' as const, how: HOW[point.endedBy] ?? 'Error',
+  };
+}
+
+const PLAN_TEXT: Record<GamePlan, { label: string; line: string }> = {
+  aggressive: { label: 'Aggressive', line: 'Go for your shots: more winners, more errors' },
+  balanced: { label: 'Balanced', line: 'Play the percentages' },
+  defensive: { label: 'Defensive', line: 'Make them play one more ball' },
+};
+
+/** The game plans the user picks from before a match: how the points without cards are played. */
+export const planChoices = () => PLANS.map((plan) => ({ plan, ...PLAN_TEXT[plan], default: plan === 'balanced' }));
+
+/** The running ticker after point `p` of a match (later points, if already played, are left out). */
+export function tickerView(m: QuickMatch, p: PointEvent) {
+  const upTo = m.live.events.filter((e): e is PointEvent => e.type === 'point' && e.index <= p.index);
+  return {
+    score: `${p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0)}-${p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0)}`,
+    winner: p.winner === 'A' ? 'you' as const : 'them' as const,
+    how: HOW[p.endedBy] ?? 'Error',
+    plan: PLAN_TEXT[m.plan].label,
+    pips: upTo.map((x) => ({ winner: x.winner === 'A' ? 'you' as const : 'them' as const, decision: !!x.cards })),
   };
 }

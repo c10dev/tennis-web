@@ -4,36 +4,49 @@ import { decisionOdds } from '../src/quick/ai.ts';
 import { exploitBot, fixedBot, randomBot, readerBot, tellBot, type BotView } from '../src/quick/bots.ts';
 import { broadcastSeconds, clipFor, decisive } from '../src/quick/pace.ts';
 import { QUICK_PACE } from '../src/tuning.ts';
+import { freshLadder, playLadderMatch } from './quick-helpers.ts';
 
-const points = simulateMatch(createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'fast4' } }), 4)
+const fast4 = simulateMatch(createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'fast4' } }), 4)
   .events.filter((e): e is PointEvent => e.type === 'point');
+/** A ladder match: points without cards, and decision points with both cards. */
+const points = playLadderMatch(freshLadder()).m.live.events.filter((e): e is PointEvent => e.type === 'point');
 
-describe('quick-match pacing', () => {
+describe('quick-match pacing (ADR-017)', () => {
   it('marks as decisive the points that win a set or a break', () => {
-    const decided = points.filter(decisive);
+    const decided = fast4.filter(decisive);
     expect(decided.length).toBeGreaterThan(0);
     for (const p of decided) expect(p.scoreAfter.sets.length > p.scoreBefore.sets.length || (p.tags.includes('break_point') && p.winner !== p.server)).toBe(true);
-    expect(decisive(points.at(-1)!)).toBe(true);
+    expect(decisive(fast4.at(-1)!)).toBe(true);
   });
 
-  it('shows the last seconds of an ordinary point, and all of a key point', () => {
+  it('shows a decision point whole (up to its last seconds), and only the end of a point without cards', () => {
+    expect(points.some((p) => p.cards)).toBe(true);
+    expect(points.some((p) => !p.cards)).toBe(true);
     for (const p of points) {
       const end = p.durationSec;
       const clip = clipFor(p);
       expect(clip.toTau).toBeCloseTo(end, 9);
-      const key = decisive(p) || p.rallyLength >= QUICK_PACE.keyRally;
-      expect(clip.full).toBe(key);
-      if (key) expect(clip.fromTau).toBeCloseTo(Math.max(-QUICK_PACE.tossSec, end - QUICK_PACE.keyMaxSec), 9);
-      else expect(clip.fromTau).toBeCloseTo(Math.max(-QUICK_PACE.tossSec, end - QUICK_PACE.clipSec), 9);
+      expect(clip.full).toBe(!!p.cards);
+      const shown = p.cards ? QUICK_PACE.keyMaxSec : QUICK_PACE.autoClipSec;
+      expect(clip.fromTau).toBeCloseTo(Math.max(-QUICK_PACE.tossSec, end - shown), 9);
     }
   });
 
-  it('adds up a match as reveal + clip at playback speed + score, point by point', () => {
+  it('adds up a match as the UI plays it: a quick clip and a ticker beat per point without cards; reveal, clip and score per decision', () => {
     const expected = points.reduce((a, p) => {
       const c = clipFor(p);
-      return a + QUICK_PACE.revealSec + (c.toTau - c.fromTau) / QUICK_PACE.speed + QUICK_PACE.scoreSec;
+      return a + (p.cards
+        ? QUICK_PACE.revealSec + (c.toTau - c.fromTau) / QUICK_PACE.speed + QUICK_PACE.scoreSec
+        : (c.toTau - c.fromTau) / QUICK_PACE.autoSpeed + QUICK_PACE.autoSec);
     }, 0);
     expect(broadcastSeconds(points)).toBeCloseTo(expected, 9);
+  });
+
+  it('ticks a point without cards by faster than it plays a decision', () => {
+    const auto = points.find((p) => !p.cards)!;
+    const card = points.find((p) => p.cards)!;
+    expect(broadcastSeconds([auto])).toBeLessThan(broadcastSeconds([card]));
+    expect(broadcastSeconds([auto])).toBeLessThan(1.5);
   });
 });
 

@@ -5,7 +5,7 @@
 .quick-match.fast .quick-panel { bottom: auto; top: 30vh; }
 .situation { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
 .situation .versus { color: var(--muted); }
-.situation .moment { background: var(--bug-accent); color: #10141c; padding: 2px 8px; border-radius: 3px; font-weight: 700; letter-spacing: 0.08em; }
+.quick-panel .moment { background: var(--bug-accent); color: #10141c; padding: 2px 8px; border-radius: 3px; font-weight: 700; letter-spacing: 0.08em; }
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .card-btn { display: grid; gap: 4px; text-align: left; padding: 12px; border-radius: 8px; border-width: 2px; background: #1c2431; }
 .card-btn .key { color: var(--muted); font-size: 12px; }
@@ -27,3 +27,28 @@
 .outcome { margin: 0; font-size: 16px; }
 .outcome.you { color: #6fe08a; } .outcome.them { color: #ff9a8f; }
 @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+/* The game plan picker on the ladder, next to Play. */
+.plan-picker { display: grid; gap: 6px; margin: 12px 0; }
+.plan-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.plan-btn { flex: 1; min-width: 96px; background: #1c2431; border: 2px solid #34425a; }
+.plan-btn.selected { border-color: var(--bug-accent); color: var(--text); font-weight: 700; }
+.plan-line { font-size: 13px; }
+/* Points without cards: a running ticker. */
+.ticker .situation { margin-bottom: 6px; }
+.ticker .plan { margin-left: auto; font-size: 13px; }
+.tick-line { display: flex; align-items: baseline; gap: 14px; font-variant-numeric: tabular-nums; }
+.tick-score { font-size: 30px; letter-spacing: 0.04em; }
+.tick-point.you { color: #6fe08a; } .tick-point.them { color: #ff9a8f; }
+.pips { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0 4px; min-height: 10px; }
+.pip { width: 10px; height: 10px; border-radius: 50%; background: #3a4558; }
+.pip.you { background: #6fe08a; } .pip.them { background: #ff9a8f; }
+.pip.decision { box-shadow: 0 0 0 2px #10151e, 0 0 0 3px var(--bug-accent); }
+.pips .pip:last-child { animation: pip-in 0.25s ease-out; }
+@keyframes pip-in { from { transform: scale(0.2); opacity: 0; } }
+/* A decision point: the match stops. */
+.quick-panel.stop { border-color: var(--bug-accent); box-shadow: 0 0 0 1px var(--bug-accent), 0 10px 40px rgba(0, 0, 0, 0.6); }
+.moment-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.moment-banner .moment { font-size: 18px; padding: 4px 12px; animation: stop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.moment-banner .stop-score { font-size: 30px; font-variant-numeric: tabular-nums; }
+@keyframes stop-in { from { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .moment-banner .moment, .pips .pip:last-child { animation: none; } }
