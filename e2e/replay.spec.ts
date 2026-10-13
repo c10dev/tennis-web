@@ -127,6 +127,13 @@ test.describe('replay page', () => {
     await expect.poll(async () => Number((await dataset(page)).t)).toBeGreaterThan(Number(t0));
   });
 
+  test('preloads only the fonts it uses: no Lilita on the replay page, Lilita on the game (TD-042)', async ({ page }) => {
+    await open(page, '/?seed=42&surface=clay');
+    await expect(page.locator('link[rel="preload"][href*="lilita"]')).toHaveCount(0);
+    await page.goto('/#/');
+    await expect(page.locator('link[rel="preload"][href*="lilita"]')).toHaveCount(1);
+  });
+
   test('turns sound on and plays with it without errors', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '/?seed=42&surface=clay');
