@@ -49,6 +49,8 @@ export function tournamentScreen(ctx: Ctx): Screen {
     return `Week ${s.week}: ${v!.name} won by ${v!.champion}.${you}`;
   }
   const element = h('div', { class: 'tournament' },
+    // A note for this screen (a save loaded mid-tournament lands here, not on Home).
+    ctx.note ? h('p', { class: 'note-banner', id: 'note' }, ctx.note) : null,
     h('h2', null, v.name, h('span', { class: 'muted' }, ` · ${v.tier} · ${v.surface}`)),
     actions,
     h('div', { class: 'draw', id: 'draw' }, v.rounds.map((r) => h('div', { class: 'round' }, h('h4', null, r.name),

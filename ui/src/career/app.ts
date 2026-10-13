@@ -146,7 +146,8 @@ async function render(): Promise<void> {
   // A new screen opens at its top; a re-render of the same screen (after an action) keeps the place.
   if (path !== shownPath) window.scrollTo(0, 0);
   shownPath = path;
-  if (route.name === 'home') note = null;
+  // The screens that show the note have now shown it.
+  if (route.name === 'home' || route.name === 'tournament') note = null;
 }
 
 window.addEventListener('hashchange', () => void render());

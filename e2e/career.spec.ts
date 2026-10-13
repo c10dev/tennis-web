@@ -190,6 +190,20 @@ test.describe('career', () => {
     expect(errors).toEqual([]);
   });
 
+  test('says a save was loaded on the screen it opens, mid-tournament too, and only there', async ({ page }) => {
+    await newCareer(page);
+    await page.locator('#enter').click();
+    await expect(page.locator('#draw')).toBeVisible();
+    await page.locator('#nav-saves').click();
+    await page.locator('tr[data-slot="slot2"] button.save').click();
+    await expect(page.locator('#saves-message')).toHaveText('Saved to Slot 2.');
+    await page.locator('tr[data-slot="slot2"] button.load').click();
+    await expect(page.locator('#draw')).toBeVisible();
+    await expect(page.locator('#note')).toHaveText('Loaded Alex Kim, week 1.');
+    await page.locator('#nav-home').click();
+    await expect(page.locator('#note')).toHaveCount(0);
+  });
+
   test('sends a malformed history link home instead of crashing', async ({ page }) => {
     const errors = watchErrors(page);
     await newCareer(page);
