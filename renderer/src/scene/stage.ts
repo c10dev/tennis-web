@@ -25,7 +25,8 @@ export function createStage(timeline: Timeline): Stage {
   sun.position.set(-20, 40, 15);
   scene.add(new HemisphereLight(0xdfe8ff, 0x3a4030, 1.1), new AmbientLight(0xffffff, 0.25), sun);
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
-  const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(COLOURS.players.A), B: new MannequinRig(COLOURS.players.B) };
+  const kit = COLOURS.kits[timeline.surface];
+  const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(kit.A), B: new MannequinRig(kit.B) };
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';
   const ball = createBall();
