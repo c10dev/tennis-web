@@ -65,6 +65,11 @@ describe('outlines on the stage', () => {
     expect(outlinesUnder(stage.scene.getObjectByName('venue')!)).toEqual([]);
   });
 
+  it('outlines the hands, shoes and cap (ADR-022)', () => {
+    for (const part of ['right-hand', 'left-hand', 'foot-left', 'foot-right', 'cap']) expect(all.filter((o) => o.name === `${part}-outline`), part).toHaveLength(2);
+    expect(LOOK.outline.maxDraws).toBe(32);
+  });
+
   it('stays within the draw budget: one extra draw per outlined part', () => {
     const perPlayer = LOOK.outline.rigParts.length;
     expect(all.length).toBe(2 * perPlayer + 3 + 1);

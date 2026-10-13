@@ -62,7 +62,13 @@ export const RIG = {
   armLength: 0.56,
   armRadius: 0.055,
   handleLength: 0.27,
+  handleRadius: 0.016,
   racketHeadRadius: 0.19,
+  /** Phase 3 (ADR-022): mitten hands, chunky rounded shoes, smoother capsules. */
+  hand: { radius: 0.07 },
+  shoe: { length: 0.3, width: 0.13, height: 0.09 },
+  /** Mesh smoothness: capsule/limb radial and cap segments, and the head's sphere. */
+  segments: { radial: 12, cap: 4, sphere: [16, 12] },
   /** Racket direction is set by a roll (down +, up −) then a yaw sweep (0 = out to the right, + towards the front). */
   idle: { yaw: 0.4, roll: 0.7 },
   forehand: { from: -1.6, to: 2.6, roll: 0.15 },

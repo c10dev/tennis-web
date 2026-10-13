@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { Vector3, type Object3D } from 'three';
+import { Box3, CapsuleGeometry, Vector3, type Mesh, type MeshToonMaterial, type Object3D } from 'three';
 import type { PlayerPose } from '../src/playback/pose.ts';
 import { MannequinRig } from '../src/scene/rig.ts';
+import { RIG } from '../src/tuning/index.ts';
 
 const pose = (o: Partial<PlayerPose> = {}): PlayerPose => ({
   pos: { x: 1, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none',
@@ -112,5 +113,56 @@ describe('MannequinRig', () => {
     expect(y(rig, 'left-hand')).toBeGreaterThan(y(rig, 'head'));
     rig.apply(pose());
     expect(y(rig, 'left-hand')).toBeLessThan(1.2);
+  });
+});
+
+describe('MannequinRig, Rally Pop phase 3 (ADR-022)', () => {
+  const rig = new MannequinRig(0x1f6fd6);
+  rig.apply(pose());
+  const mesh = (name: string) => rig.object3d.getObjectByName(name) as Mesh;
+  const box = (name: string) => {
+    rig.object3d.updateWorldMatrix(true, true);
+    return new Box3().setFromObject(mesh(name), true);
+  };
+
+  it('grips the racket in a right hand at the end of the arm', () => {
+    const shoulder = world(rig.object3d.getObjectByName('arm-pivot-right')!);
+    const hand = world(mesh('right-hand'));
+    expect(hand.distanceTo(shoulder)).toBeCloseTo(RIG.armLength, 2);
+    expect(hand.distanceTo(world(mesh('handle')))).toBeCloseTo(RIG.handleLength / 2, 1);
+    expect(RIG.hand.radius).toBeGreaterThan(RIG.armRadius);
+  });
+
+  it('has rounded arms and limbs with the segment counts in tuning', () => {
+    for (const name of ['arm-right', 'arm-left', 'thigh-left', 'shin-right', 'body']) {
+      const g = mesh(name).geometry;
+      expect(g, name).toBeInstanceOf(CapsuleGeometry);
+      expect((g as CapsuleGeometry).parameters.radialSegments, name).toBe(RIG.segments.radial);
+    }
+    expect(RIG.segments.radial).toBeGreaterThanOrEqual(12);
+  });
+
+  it('stands in chunky shoes: soles on the ground, toes forward', () => {
+    for (const side of ['left', 'right']) {
+      const b = box(`foot-${side}`);
+      const size = b.getSize(new Vector3());
+      expect(size.z).toBeGreaterThanOrEqual(RIG.shoe.length - 1e-6);
+      expect(size.x).toBeGreaterThanOrEqual(RIG.shoe.width - 1e-6);
+      expect(size.y).toBeGreaterThanOrEqual(RIG.shoe.height - 1e-6);
+      expect(Math.abs(b.min.y)).toBeLessThan(0.01);
+      // Facing the far end (−z) from z = 11: the toe reaches further forward than the heel goes back.
+      const ankle = world(rig.object3d.getObjectByName(`leg-${side}`)!).z;
+      expect(ankle - b.min.z).toBeGreaterThan(b.max.z - ankle);
+    }
+    expect(RIG.shoe.length).toBeGreaterThan(0.24);
+    expect(RIG.shoe.height).toBeGreaterThan(0.06);
+  });
+
+  it('wears a cap in the kit colour above the visor', () => {
+    const cap = mesh('cap');
+    expect((cap.material as MeshToonMaterial).color.getHex()).toBe(0x1f6fd6);
+    expect(world(cap).y).toBeGreaterThan(world(mesh('head')).y);
+    expect(box('cap').max.y).toBeGreaterThan(box('head').max.y);
+    expect(box('cap').max.y).toBeLessThan(2);
   });
 });

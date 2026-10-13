@@ -736,3 +736,26 @@ Format: one entry per decision, newest at the bottom.
   decision; the skippable result reveal 3.9–4.6 s → 5.4–6.7 s. Structural DOM: the reveal chips sit in `.flip` wrappers with a
   plain `.face.back` and the chip as `.face.front`; a rating that rose writes its numbers as `.from`, `.to` and a
   `.tick`. A `ui` Vitest project tests the pure helpers. Dead theme rules, the missing sound layer and timing-sensitive e2e bounds are TD-046–TD-048.
+
+## ADR-022: Rally Pop phase 3: the capsule rig, polished
+- **Date:** 2026-10-14
+- **Status:** Accepted
+- **Context:** ADR-018 left phase 3 to choose between the capsule mannequin scaled in tuning (ADR-019) and a CC0 chunky
+  GLTF body (KayKit, Quaternius; TD-012, TD-039). GPU timings the same day (TD-024, TD-038) showed headroom: 0.6–0.7 ms
+  CPU per frame and 60 fps at 110 draws. A quick match shows 3D in clips of one to eight seconds, often at 2–3×. The
+  figure was faceted (6-sided arms, 8-sided limbs), had no racket hand, a box for each shoe, and a visor on a bare
+  head that read as a stripe across the forehead.
+- **Decision:** keep the capsule rig and polish it; no GLTF, no new assets or dependencies, strokes stay procedural.
+  - **Parts** (`scene/rigParts.ts`, split out of `rig.ts`): arms are capsules; mitten hands (`right-hand` at the end of
+    the racket arm, gripping the handle; `left-hand` for the toss); shoes are flattened capsules 0.30 × 0.13 × 0.09 m,
+    soles on the ground, toes forward (were 0.24 × 0.10 × 0.06 boxes); a cap crown in the kit colour, slightly
+    flattened so the figure stays under 2 m, with the visor at its brim.
+  - **Tuning** (TD-039): `RIG.hand`, `RIG.shoe`, `RIG.handleRadius` and `RIG.segments` (radial 12, cap 4, head sphere
+    16 × 12) replace the literals in `rig.ts`.
+  - **Outlines:** hands, shoes and cap join `LOOK.outline.rigParts` (14 per player); `maxDraws` 24 → 32, exactly the
+    stage's count (2 × 14 + net 3 + ball 1).
+- **Consequences:** draws at the main camera 110 → 123–124. On the desktop GPU (headed Chromium through WSLg/D3D12,
+  1920×1080 at DPR 1.75, seeds 3–5) the frame callback stays at 0.5–0.6 ms median (p95 0.9–1.0) at 60 fps; the phone
+  proxy (390×844 at DPR 3, CPU 6× slower) 3.1 ms median, 59 fps. Before/after screenshots (hard/clay/grass × main,
+  serve, side, reaction) were checked by eye and not committed. TD-012's GLTF route is closed for Rally Pop; fingers,
+  shoe detail and per-player appearance stay open (TD-049).
