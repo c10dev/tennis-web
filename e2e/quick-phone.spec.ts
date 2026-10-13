@@ -47,6 +47,13 @@ test.describe('quick screens on a phone', () => {
     expect(errors).toEqual([]);
   });
 
+  test('does not leave a tapped-over card lifted: touch screens have no hover', async ({ page }) => {
+    await toFirstDecision(page);
+    await page.locator('#card-defend').hover();
+    await page.waitForTimeout(300);
+    expect(await page.locator('#card-defend').evaluate((el) => getComputedStyle(el).transform)).toBe('none');
+  });
+
   test('stacks the revealed cards with the "v" between them', async ({ page }) => {
     await toFirstDecision(page);
     await page.locator('#card-attack').tap();

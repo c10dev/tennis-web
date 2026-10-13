@@ -68,10 +68,10 @@ a { color: var(--link); }
 
 button, select, input { font: inherit; background: var(--paper); border: 2px solid var(--ink); border-radius: 10px; padding: 4px 10px; }
 button { cursor: pointer; font-weight: 800; box-shadow: 0 3px 0 var(--ink); }
-button:hover { background: var(--paper-2); }
+@media (hover: hover) { button:hover { background: var(--paper-2); } }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.primary { background: var(--optic); }
-button.primary:hover { background: #e2fa6a; }
+@media (hover: hover) { button.primary:hover { background: #e2fa6a; } }
 button.big { font: 400 22px/1.1 var(--font-display); letter-spacing: 0.02em; padding: 10px 30px; border-width: 3px; border-radius: 14px;
   box-shadow: var(--lift); }
 input[type='checkbox'], input[type='range'] { accent-color: var(--court-2); }
