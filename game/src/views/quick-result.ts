@@ -12,11 +12,15 @@ import { RATING_LABEL } from './format.ts';
 import { playByPlay } from './quick-play-by-play.ts';
 import { playerName } from './quick-home.ts';
 
-/** A shown rating: whole numbers, whether it rose, and the share of the way to the next one. */
+/** A shown rating: whole numbers, whether it rose, and the share of the way to the next one before and after. */
 export interface RatingView extends StatChange {
   rose: boolean;
   fill: number;
+  /** Where the bar starts: the old share, or empty when the number rose (the bar starts over). */
+  fillBefore: number;
 }
+
+const share = (value: number, shown: number) => Math.min(0.999, Math.max(0, value * QUICK_REWARD.displayScale - shown));
 
 export function quickResultView(s: QuickState) {
   const r = s.history.at(-1)!;
@@ -25,8 +29,8 @@ export function quickResultView(s: QuickState) {
   const goal = nextGoal(s);
   const ratings: RatingView[] = r.progress.map((p) => {
     const [before, after] = [displayRating(p.before), displayRating(p.after)];
-    const fill = Math.max(0, p.after * QUICK_REWARD.displayScale - after);
-    return { key: p.key, label: RATING_LABEL[p.key] ?? p.key, before, after, rose: after > before, fill: Math.min(0.999, fill) };
+    const rose = after > before;
+    return { key: p.key, label: RATING_LABEL[p.key] ?? p.key, before, after, rose, fill: share(p.after, after), fillBefore: rose ? 0 : share(p.before, before) };
   }).sort((x, y) => Number(y.rose) - Number(x.rose));
   return {
     won: r.won, headline: `${r.won ? 'You won' : 'You lost'} ${r.score}`, opponent: playerName(s, r.opponent), delta: r.pointsDelta,

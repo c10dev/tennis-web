@@ -1,7 +1,6 @@
 // The decisive point as text (ADR-017): the fast-mode replay on the result screen, one line at a time.
 import type { PlayerId, PointEvent, ShotEvent } from '@tennis/engine';
 import type { Highlight } from '../quick/highlight.ts';
-import { CARD_LABEL } from './quick-match.ts';
 
 const who = (p: PlayerId) => (p === 'A' ? 'Your' : 'Their');
 
@@ -25,7 +24,7 @@ export function playByPlay(p: PointEvent, h: Highlight): string[] {
   const [a, b] = p.scoreAfter.points;
   return [
     `${h.score} · ${p.server === 'A' ? 'You serve' : 'They serve'}`,
-    h.user && h.ai ? `You ${CARD_LABEL[h.user]} · ${CARD_LABEL[h.ai]} them` : 'No cards: your game plan',
+    h.user && h.ai ? `You ${h.user}, they ${h.ai}` : 'No cards: your game plan',
     serve ? `${p.serveNumber === 1 ? 'First' : 'Second'} serve, ${Math.round(serve.speedKmh)} km/h` : null,
     p.rallyLength > 2 ? `${p.rallyLength}-shot rally` : null,
     `${ending(p)}`,

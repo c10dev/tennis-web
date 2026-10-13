@@ -27,7 +27,7 @@ export { playerView } from './views/player.ts';
 export { rankingsView } from './views/rankings.ts';
 export { savesView } from './views/saves.ts';
 export { historyView, tournamentView, type MatchRow } from './views/tournament.ts';
-export { QUICK_PACE } from './tuning.ts';
+export { QUICK_PACE, QUICK_REWARD } from './tuning.ts';
 export { aiCard, aiDecision, BEATEN_BY, CARDS, cardEntropy, cardOdds, decisionOdds, type CardContext } from './quick/ai.ts';
 export { finalScore, finishQuick, ladderOrder, newLadder, nextOpponent, pointsToNext, rankOf, type QuickRecord, type QuickState } from './quick/ladder.ts';
 export { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, userRole, type QuickMatch, type QuickMatchInit } from './quick/match.ts';

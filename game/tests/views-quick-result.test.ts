@@ -36,6 +36,8 @@ describe('quickResultView', () => {
       expect(r.rose).toBe(r.after > r.before);
       expect(r.fill).toBeGreaterThanOrEqual(0);
       expect(r.fill).toBeLessThan(1);
+      expect(r.fillBefore).toBeLessThanOrEqual(r.fill);
+      if (r.rose) expect(r.fillBefore).toBe(0);
     }
     const rose = v.ratings.map((r) => r.rose);
     expect(rose).toEqual([...rose].sort((a, b) => Number(b) - Number(a)));

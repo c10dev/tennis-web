@@ -220,6 +220,8 @@ export const QUICK_REWARD = {
   milestones: [50, 32, 16, 8, 1],
   /** Wins are estimated against the opponent this many places above (the next opponent is one of the three above). */
   placesAbove: 2,
-  /** Estimates stop here ("50+ wins"). */
+  /** Estimates stop here. */
   maxWins: 50,
+  /** The result screen's reveal: play-by-play lines, pauses between steps, the points count-up, the replay speed. */
+  reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 0.7, replaySpeed: 1.25 },
 } as const;
