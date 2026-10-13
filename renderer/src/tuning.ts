@@ -10,6 +10,10 @@ export const PLAYBACK = {
   setEndSec: 8,
   matchEndHoldSec: 3,
   speeds: [0.25, 0.5, 1, 2, 4] as const,
+  /** Longest real-time step one tick may advance; a stalled or hidden tab resumes instead of jumping. */
+  maxTickSec: 0.25,
+  /** "Previous point" within this long of a point's start goes to the point before it. */
+  prevPointGraceSec: 1,
 } as const;
 
 /** Net tape height in metres (ITF): the ball's clearance is measured from the centre. */
