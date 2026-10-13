@@ -36,7 +36,18 @@
 .reveal.won .verdict { color: var(--win); } .reveal.lost .verdict { color: var(--loss); }
 .outcome { margin: 0; font-size: 16px; font-weight: 800; }
 .outcome.you { color: var(--win); } .outcome.them { color: var(--loss); }
-@media (max-width: 640px) { .cards { grid-template-columns: 1fr; } .card-btn { padding-top: 34px; } }
+/* Phones: the three cards stay side by side, smaller, without the flavour line, so the panel fits a 667 px screen. */
+@media (max-width: 640px) {
+  .quick-panel { bottom: 10px; width: calc(100vw - 16px); padding: 10px 12px 12px; }
+  .situation { gap: 4px 10px; margin-bottom: 6px; font-size: 14px; }
+  .cards { gap: 8px; }
+  .card-btn { padding: 32px 8px 10px; gap: 2px; }
+  .card-btn strong { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 19px; }
+  .card-btn strong .icon { width: 24px; height: 24px; }
+  .card-btn .flavour { display: none; }
+  .card-btn .rule { font-size: 12px; }
+  .reveal .pair { flex-direction: column; gap: 6px; }
+}
 /* Points without cards: a running ticker. */
 .ticker .situation { margin-bottom: 6px; }
 .ticker .plan { margin-left: auto; font-size: 13px; }

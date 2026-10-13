@@ -6,7 +6,8 @@ import type { AppSound } from '../lib/sound.ts';
 export function soundToggle(sound: AppSound): HTMLButtonElement {
   const button = h('button', { type: 'button', class: 'sound-pill', id: 'sound-toggle' });
   const draw = () => {
-    button.replaceChildren(icon(sound.muted ? 'volume-x' : 'volume-2', 18), sound.muted ? ' Sound off' : ' Sound on');
+    // Narrow screens hide the label (CSS) but keep it as the button's name.
+    button.replaceChildren(icon(sound.muted ? 'volume-x' : 'volume-2', 18), h('span', { class: 'label' }, sound.muted ? 'Sound off' : 'Sound on'));
     button.setAttribute('aria-pressed', String(!sound.muted));
   };
   button.addEventListener('click', () => {

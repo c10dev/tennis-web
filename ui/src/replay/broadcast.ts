@@ -40,7 +40,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   document.body.classList.add('broadcast-page');
   const canvas = Object.assign(document.createElement('canvas'), { id: 'view' });
   const [score, graphics, soundRoot, controlsRoot] = ['score', 'graphics', 'sound', 'controls'].map(div) as [HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLDivElement];
-  root.append(canvas, score, graphics, soundRoot);
+  root.append(canvas, score, graphics);
+  // A shared sound (quick matches) has its own toggle; only the broadcast's own sound needs its panel.
+  if (!options.sound) root.append(soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
   let clipWindow: { end: number; speed: number; done: () => void; first: boolean } | null = null;
