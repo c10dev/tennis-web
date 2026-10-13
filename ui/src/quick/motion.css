@@ -13,6 +13,42 @@
   --stagger-rise: 120ms;
 }
 
+/* ---- Decision point: the banner wipes in, the cards deal up with an overshoot, a card lifts on hover or focus. */
+.quick-panel .moment-banner { animation: banner-wipe 240ms var(--ease-emphasized) backwards; }
+.quick-panel .moment-banner .moment { animation: none; }
+@keyframes banner-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.card-btn { transition: transform var(--dur-short) ease-out, opacity var(--dur-short) ease-out; }
+.card-btn.is-dealt { animation: card-deal 360ms var(--ease-back) calc(120ms + var(--i, 0) * var(--stagger-deal)) backwards; }
+@keyframes card-deal { from { transform: translateY(56px) scale(0.9) rotate(-2deg); opacity: 0; } }
+.card-btn:hover, .card-btn:focus-visible { transform: translateY(-12px) scale(1.05); }
+.cards.is-picked .card-btn.is-selected { transform: translateY(-24px) scale(1.08); }
+.cards.is-picked .card-btn:not(.is-selected) { transform: scale(0.96); opacity: 0.5; }
+
+/* ---- Reveal: face down, one flip for both (the parent's class), then the verdict pops with a white frame and a kick. */
+.reveal .pair { position: relative; perspective: 700px; }
+.reveal .flip { display: inline-grid; transform-style: preserve-3d; transition: transform var(--flip-dur, 280ms) var(--ease-standard); }
+.reveal .flip > .face { grid-area: 1 / 1; backface-visibility: hidden; }
+.reveal .flip > .back { transform: rotateY(180deg); border-radius: 6px; background: var(--ink, #15171e);
+  border: 2px solid var(--paper, #fff);
+  background-image: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--optic, #f2c94c) 35%, transparent) 6px 9px); }
+.reveal.is-facedown .flip { transform: rotateY(180deg); }
+.reveal.is-flipped .flip { transform: none; }
+.reveal .verdict { opacity: 0; transform: scale(0.5); }
+.reveal .verdict.is-popped { opacity: 1; transform: none; animation: verdict-pop 320ms var(--ease-back) backwards; }
+@keyframes verdict-pop { from { opacity: 0; transform: scale(0.5); } }
+.reveal .flash { position: absolute; inset: -4px; border-radius: 8px; background: #fff; opacity: 0; pointer-events: none; }
+.reveal.is-clash .flash { animation: clash-flash 50ms steps(1, end); }
+@keyframes clash-flash { from { opacity: 0.85; } to { opacity: 0.85; } }
+.reveal.is-clash .flip.yours.is-winner > .front { animation: kick-right 160ms ease-out; }
+.reveal.is-clash .flip.theirs.is-winner > .front { animation: kick-left 160ms ease-out; }
+@keyframes kick-right { 40% { transform: translateX(6px); } }
+@keyframes kick-left { 40% { transform: translateX(-6px); } }
+
+/* ---- Ticker: the newest pip pops; only the ticker's (the decision screen redraws the row without a pop). */
+.pips .pip:last-child { animation: none; }
+.pips .pip.is-new { animation: pip-pop 260ms var(--ease-back); }
+@keyframes pip-pop { from { transform: scale(0.2); opacity: 0; } }
+
 /* Reduced motion: every flip, pop, slide and count-up is a cut (the TS shows final numbers directly). */
 @media (prefers-reduced-motion: reduce) {
   .quick-match *, .quick-match *::before, .quick-match *::after,

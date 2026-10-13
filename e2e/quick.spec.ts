@@ -50,6 +50,33 @@ async function playThrough(page: Page, keys = false, limit = Infinity) {
   return i;
 }
 
+/** Records when the picked card lifts, the reveal appears face-down, flips, and the verdict pops (ms, page clock), and
+ *  at the pop: the cards that flipped, the matchup and which side kicked. */
+async function watchReveal(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { __reveal: Record<string, number>; __pop: { flips: number; matchup: string; winners: string[] } };
+    w.__reveal = {};
+    const mark = (k: string) => {
+      w.__reveal[k] ??= performance.now();
+    };
+    new MutationObserver(() => {
+      if (document.querySelector('.card-btn.is-selected')) mark('selected');
+      if (document.querySelector('#reveal.is-facedown')) mark('facedown');
+      if (document.querySelector('#reveal.is-flipped')) mark('flipped');
+      if (document.querySelector('#reveal .verdict.is-popped') && !w.__reveal.popped) {
+        mark('popped');
+        w.__pop = {
+          flips: document.querySelectorAll('#reveal .flip').length,
+          matchup: document.querySelector('#reveal')!.className.match(/won|lost|even/)![0],
+          winners: [...document.querySelectorAll('#reveal .flip.is-winner')].map((x) => (x.classList.contains('yours') ? 'yours' : 'theirs')),
+        };
+      }
+    }).observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
+  });
+}
+const css = (page: Page, sel: string, prop: string) => page.locator(sel).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+const ms = (s: string) => s.split(',').map((x) => parseFloat(x) * (x.trim().endsWith('ms') ? 1 : 1000));
+
 test.describe('quick match', () => {
   test.setTimeout(180_000);
 
@@ -71,6 +98,32 @@ test.describe('quick match', () => {
     await expect(page.locator('#points-delta')).toContainText(`${expected.pointsDelta >= 0 ? '+' : ''}${expected.pointsDelta}`);
     await expect(page.locator('#rank-change')).toContainText(`#${expected.rankBefore} → #${expected.rankAfter}`);
     await expect(page.locator('#rating-gains .rating-gain')).toHaveCount(expected.progress.length);
+    expect(errors).toEqual([]);
+  });
+
+  test('deals the cards in with a stagger, lifts them on hover, then flips both cards at once before the verdict (ADR-021)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await startLadder(page);
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    expect(await css(page, '.moment-banner', 'animation-name')).toBe('banner-wipe');
+    const delays = await Promise.all(['attack', 'defend', 'counter'].map(async (c) => ms(await css(page, `#card-${c}`, 'animation-delay'))[0]!));
+    expect(await css(page, '#card-attack', 'animation-name')).toBe('card-deal');
+    for (const gap of [delays[1]! - delays[0]!, delays[2]! - delays[1]!]) expect(gap >= 50 && gap <= 70, `stagger ${gap} ms`).toBe(true);
+    await page.locator('#card-defend').hover();
+    await expect.poll(() => css(page, '#card-defend', 'transform')).toBe('matrix(1.05, 0, 0, 1.05, 0, -12)');
+    await watchReveal(page);
+    await page.keyboard.press('Digit1');
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __reveal: Record<string, number> }).__reveal.popped ?? 0)).toBeGreaterThan(0);
+    const t = await page.evaluate(() => (window as unknown as { __reveal: Record<string, number> }).__reveal);
+    expect(t.selected).toBeLessThan(t.facedown!);
+    expect(t.flipped! - t.facedown!).toBeGreaterThanOrEqual(400);
+    expect(t.flipped! - t.facedown!).toBeLessThan(1200);
+    expect(t.popped! - t.flipped!).toBeGreaterThanOrEqual(380);
+    const pop = await page.evaluate(() => (window as unknown as { __pop: { flips: number; matchup: string; winners: string[] } }).__pop);
+    expect(pop.flips).toBe(2);
+    expect(pop.winners).toEqual(pop.matchup === 'won' ? ['yours'] : pop.matchup === 'lost' ? ['theirs'] : []);
     expect(errors).toEqual([]);
   });
 

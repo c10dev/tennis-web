@@ -10,13 +10,15 @@ import {
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
+import { stagger } from '../lib/motion.ts';
+import { playReveal, revealElement } from './reveal.ts';
 import { renderRead } from './scout.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** One pip per point played: green yours, red theirs, ringed where you chose a card. */
-const pipRow = (m: QuickMatch, p: PointEvent | undefined) => h('div', { class: 'pips', id: 'point-pips' },
-  p ? tickerView(m, p).pips.map((x) => h('span', { class: `pip ${x.winner}${x.decision ? ' decision' : ''}` })) : []);
+/** One pip per point played: green yours, red theirs, ringed where you chose a card; on the ticker the newest pops in. */
+const pipRow = (m: QuickMatch, p: PointEvent | undefined, popNew = false) => h('div', { class: 'pips', id: 'point-pips' },
+  p ? tickerView(m, p).pips.map((x, i, all) => h('span', { class: `pip ${x.winner}${x.decision ? ' decision' : ''}${popNew && i === all.length - 1 ? ' is-new' : ''}` })) : []);
 const lastPoint = (m: QuickMatch) => m.live.events.findLast((e): e is PointEvent => e.type === 'point');
 
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
@@ -47,7 +49,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('div', { class: 'situation' }, h('span', { class: 'versus' }, `You v ${opponent}`), h('span', { class: 'plan muted' }, `Plan · ${v.plan}`)),
         h('div', { class: 'tick-line' }, h('strong', { id: 'score-line', class: 'tick-score' }, v.score),
           h('span', { class: `tick-point ${v.winner}` }, `${v.winner === 'you' ? 'Your point' : 'Their point'} · ${v.how}`)),
-        pipRow(qm!, p)));
+        pipRow(qm!, p, true)));
       phase('auto');
       await sleep(QUICK_PACE.autoSec * 1000);
     }
@@ -69,26 +71,29 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       h('div', { class: 'situation' }, h('span', { class: 'versus' }, `You v ${opponent}`), h('span', { id: 'situation' }, sit.line)),
       pipRow(qm!, lastPoint(qm!)),
       renderRead(opponentRead(qm!)),
-      h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card}`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
+      h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card} is-dealt`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
         h('span', { class: 'key' }, String(i + 1)), h('strong', null, cardIcon(c.card), ' ', c.label), h('span', { class: 'flavour' }, c.flavour),
         h('span', { class: 'rule' }, `beats ${CARD_LABEL[c.beats]}`),
         h('span', { class: 'strength', title: 'How well this card suits you right now' }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
+    stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
     phase('choose');
   }
 
   async function choose(card: Card) {
     if (busy || !qm!.pending) return;
     busy = true;
-    panel.classList.remove('stop');
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point);
-    const verdict = r.matchup === 'won' ? '✓ You read it!' : r.matchup === 'lost' ? '✗ They read you' : '= Same card';
-    panel.replaceChildren(h('div', { class: `reveal ${r.matchup}`, id: 'reveal' },
-      h('div', { class: 'pair' }, h('span', { class: `chip ${r.yours}` }, cardIcon(r.yours, 16), ` You · ${CARD_LABEL[r.yours]}`), h('span', { class: 'vs' }, 'v'),
-        h('span', { class: `chip ${r.theirs}` }, cardIcon(r.theirs, 16), ` ${CARD_LABEL[r.theirs]} · ${opponent}`)),
-      h('strong', { class: 'verdict' }, verdict)));
     phase('reveal');
-    await sleep(QUICK_PACE.revealSec * 1000);
+    // The picked card rises above the others for a beat, then both cards go face down (ADR-021).
+    panel.querySelector('.cards')?.classList.add('is-picked');
+    panel.querySelector(`#card-${card}`)?.classList.add('is-selected');
+    await sleep(QUICK_PACE.reveal.selectSec * 1000);
+    if (disposed) return;
+    panel.classList.remove('stop');
+    const reveal = revealElement(r, opponent);
+    panel.replaceChildren(reveal);
+    await playReveal(reveal, () => !disposed);
     if (broadcast && !disposed) {
       load();
       phase('clip');

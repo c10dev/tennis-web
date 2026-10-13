@@ -42,6 +42,16 @@ describe('quick-match pacing (ADR-017)', () => {
     expect(broadcastSeconds(points)).toBeCloseTo(expected, 9);
   });
 
+  it('times the reveal as the UI plays it (ADR-021): the pick, the face-down hold, the flip and the verdict', () => {
+    const { selectSec, holdSec, flipSec, verdictSec } = QUICK_PACE.reveal;
+    expect(QUICK_PACE.revealSec).toBeCloseTo(selectSec + holdSec + flipSec + verdictSec, 9);
+    expect(holdSec).toBeGreaterThanOrEqual(0.45);
+    expect(holdSec).toBeLessThanOrEqual(0.65);
+    expect(flipSec).toBeGreaterThanOrEqual(0.25);
+    expect(flipSec).toBeLessThanOrEqual(0.3);
+    expect(QUICK_PACE.revealSec + QUICK_PACE.scoreSec).toBeLessThanOrEqual(1.8);
+  });
+
   it('ticks a point without cards by faster than it plays a decision', () => {
     const auto = points.find((p) => !p.cards)!;
     const card = points.find((p) => p.cards)!;

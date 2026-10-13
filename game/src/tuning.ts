@@ -176,7 +176,10 @@ export const QUICK_PACE = {
   autoSec: 0.35,
   autoClipSec: 1.6,
   autoSpeed: 3,
-  revealSec: 0.6,
+  /** The reveal (ADR-021): the picked card lifts, both cards lie face down, flip at the same instant, and the verdict
+   *  pops this long after the flip. The UI plays these; revealSec is their sum (the screen-time model uses it). */
+  reveal: { selectSec: 0.15, holdSec: 0.5, flipSec: 0.28, verdictSec: 0.15 },
+  revealSec: 1.08,
   scoreSec: 0.6,
   speed: 2,
   /** The serve toss before contact (renderer PLAYBACK.tossLeadSec). */
