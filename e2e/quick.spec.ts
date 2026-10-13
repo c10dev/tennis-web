@@ -106,8 +106,14 @@ test.describe('quick match', () => {
     const errors = watchErrors(page);
     await startLadder(page, SEED);
     await expect(page.locator('#plan-balanced')).toHaveClass(/selected/);
+    // The choice is announced, not shown by fill alone (TD-044): a named group of toggle buttons.
+    await expect(page.getByRole('group', { name: 'Game plan' })).toBeVisible();
+    await expect(page.locator('#plan-balanced')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#plan-aggressive')).toHaveAttribute('aria-pressed', 'false');
     await page.locator('#plan-aggressive').click();
     await expect(page.locator('#plan-aggressive')).toHaveClass(/selected/);
+    await expect(page.locator('#plan-aggressive')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#plan-balanced')).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('#plan-line')).toContainText('winners');
     await page.reload();
     await expect(page.locator('#plan-aggressive')).toHaveClass(/selected/);

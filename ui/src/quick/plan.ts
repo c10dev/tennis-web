@@ -29,11 +29,15 @@ export function planPicker(): { element: HTMLElement; plan: () => GamePlan } {
   function select(next: GamePlan) {
     plan = next;
     savePlan(next);
-    PLANS.forEach((p, i) => buttons[i]!.classList.toggle('selected', p.plan === next));
+    PLANS.forEach((p, i) => {
+      buttons[i]!.classList.toggle('selected', p.plan === next);
+      buttons[i]!.setAttribute('aria-pressed', String(p.plan === next));
+    });
     line.textContent = PLANS.find((p) => p.plan === next)!.line;
   }
   select(plan);
   const element = h('div', { class: 'plan-picker', id: 'plan-picker' },
-    h('span', { class: 'muted' }, 'Game plan'), h('div', { class: 'plan-buttons', role: 'group' }, buttons), line);
+    h('span', { class: 'muted', id: 'plan-label' }, 'Game plan'),
+    h('div', { class: 'plan-buttons', role: 'group', 'aria-labelledby': 'plan-label' }, buttons), line);
   return { element, plan: () => plan };
 }
