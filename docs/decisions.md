@@ -179,3 +179,42 @@ Format: one entry per decision, newest at the bottom.
   byte-identical before and after. Rendered running speed over 20 matches: p50 0.49, p90 3.34, p99 5.06, max 6.88 m/s
   (was max 14.9). The fingerprint golden for clay seed 42 is now `d351eb07`. Replay JSON written before and after this
   change is equally valid v2: same fields, different positions and times.
+
+## ADR-009: M3 broadcast architecture
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** GDD §10 M3 asks for a multi-camera director, replays, stats graphics, crowd and ball sound, better
+  player animation and highlight modes. The user accepted every default in the M3 clarification round.
+- **Decision:**
+  - **Programme.** `buildProgramme(timeline, mode)` turns the match into clips: an intro, live clips cut wherever
+    the camera changes, replay and Hawk-Eye inserts in the pause after a point, or one result clip. Each clip maps
+    programme time to match time (`matchFrom`, `rate`: 1 live, 0.5 replay, 0 for stills) and may pin the score bug to
+    another moment (`scoreTime`, so a replay shows the score after the point). `broadcastFrameAt` adds camera, clip
+    and Hawk-Eye call to `matchFrameAt`. The clock plays anything with `totalSec` and `pointStarts`, so seek, speed
+    and point jumps work in every mode.
+  - **Director.** `cameraTrack` lays rules over the match from event tags only: Main by default; Side while players
+    change ends; Reaction (point winner) for 2 s after aces, winners and break/set/match points; Serve Cam from the
+    end of the previous pause to just after contact before big points and the first point of each game.
+  - **Viewing modes.** Key points: break/set/match points, tiebreak points and points that end a game. Highlights:
+    those, whole break games, rallies of 10+ and winners after 5+ shots.
+  - **Replays and Hawk-Eye.** Winners after 5+ shots, 10+ shot rallies, converted big points and close calls are
+    replayed: the last 3 s at half speed from the side, tracking the ball. `lineCall` measures the last bounce
+    against the service box or singles court (lines in); within 5 cm a still close-up of the mark follows. The call
+    always agrees with the engine's in/out. Players cannot challenge (needs engine rules).
+  - **Graphics.** `overlayAt` derives serve speed, rally count, BREAK/SET/MATCH POINT and TIEBREAK captions (naming
+    who has the chance), the player introduction, REPLAY, the Hawk-Eye call and set/match stats (`computeStats` over
+    that set's points). DOM writers only use `textContent`.
+  - **Sound.** `allCues` puts hits, bounces, net cords, crowd reactions (by outcome, rally length and importance)
+    and umpire calls on the programme clock; `cuesBetween` hands each out once, drops voices above 2x and everything
+    on a seek; replays get the ball only. The mixer synthesises every sound with Web Audio (no files, four buses);
+    the umpire speaks through `speechSynthesis`. Sound starts off until the user turns it on.
+  - **Players.** `MannequinRig` (hips, two-segment legs, torso, head and cap, racket arm, tossing arm) draws gait,
+    crouch, split step and toss signals added to `PlayerPose`. A skinned GLTF rig can still replace it behind
+    `PlayerRig`.
+  - **Venue.** Stepped stands, ad boards and an umpire chair; `standHeightAt` keeps cameras above the stands.
+  - **Browser tests.** `npm run test:e2e` (Playwright 1.64.0, Chromium) checks fingerprints against the engine run
+    in Node, playback, all five cameras, modes, JSON loading and sound.
+- **Consequences:** Renderer tuning is split into `tuning/{playback,scene,camera,broadcast,overlay,audio}.ts`.
+  Clay seed 42: the match timeline is 33:26 (M2: 32:23, the difference is ADR-008's longer pauses and new contact
+  times); the full programme adds 7:12 of replays, 10 s of Hawk-Eye and the 4 s intro, 40:52 in all. Key points run
+  12:05, highlights 31:45, result 12 s.
