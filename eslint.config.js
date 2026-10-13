@@ -34,4 +34,32 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // ADR-001: the renderer consumes events through the engine's public index and knows nothing about ui/.
+    files: ['renderer/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['**/engine/**', '@tennis/engine/*'], message: "Import from '@tennis/engine' only." },
+            { group: ['**/ui/**', '@tennis/ui', '@tennis/ui/*'], message: 'The renderer must not depend on ui/.' },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['ui/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*'], message: 'Import workspace packages by name.' },
+          ],
+        },
+      ],
+    },
+  },
 );

@@ -12,6 +12,13 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'renderer',
+          include: ['renderer/tests/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'stats',
           include: ['engine/tests/**/*.slow.test.ts'],
           testTimeout: 300_000,

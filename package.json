@@ -3,18 +3,24 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "engine"
+    "engine",
+    "renderer",
+    "ui"
   ],
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "test": "vitest run --project engine",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run --project engine --project renderer",
     "test:engine": "vitest run --project engine",
+    "test:renderer": "vitest run --project renderer",
     "test:stats": "vitest run --project stats",
     "coverage": "vitest run --project engine --coverage",
     "sim": "tsx engine/cli/sim.ts",
-    "typecheck": "tsc -p engine/tsconfig.json --noEmit",
+    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit",
     "lint": "eslint ."
   },
   "devDependencies": {
@@ -25,6 +31,7 @@
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
+    "vite": "8.3.4",
     "vitest": "5.0.4"
   }
 }
