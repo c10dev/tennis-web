@@ -23,8 +23,7 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number, ball: Ve
   const dt = RIG_MOTION.speedSampleSec;
   const before = positionAt(timeline, id, Math.max(0, t - dt));
   const after = positionAt(timeline, id, Math.min(timeline.totalSec, t + dt));
-  const sameSide = Math.sign(before.y) === Math.sign(after.y);
-  const speed = sameSide ? Math.hypot(after.x - before.x, after.y - before.y) / (2 * dt) : 0;
+  const speed = Math.hypot(after.x - before.x, after.y - before.y) / (2 * dt);
   return { pos, facing: facing(pos, ball), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t) };
 }
 

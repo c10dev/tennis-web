@@ -48,16 +48,20 @@ describe('ballAt', () => {
   });
 
   it('stays on or above the ground and moves without jumps between 60 fps frames', () => {
+    let lowest = Infinity;
+    let biggestStep = 0;
     for (const { p, surface } of points) {
       let prev = null as ReturnType<typeof ballAt>;
       const endTau = p.durationSec + 0.1;
       for (let tau = -PLAYBACK.tossLeadSec; tau <= endTau; tau += 1 / 60) {
         const b = ballAt(p, tau, surface);
-        if (b) expect(b.z).toBeGreaterThanOrEqual(-1e-9);
-        if (b && prev) expect(Math.hypot(b.x - prev.x, b.y - prev.y, b.z - prev.z)).toBeLessThan(1.2);
+        if (b) lowest = Math.min(lowest, b.z);
+        if (b && prev) biggestStep = Math.max(biggestStep, Math.hypot(b.x - prev.x, b.y - prev.y, b.z - prev.z));
         prev = b;
       }
     }
+    expect(lowest).toBeGreaterThanOrEqual(-1e-9);
+    expect(biggestStep).toBeLessThan(1.2);
   });
 
   it('drops a net ball at the net on the hitter\'s side and leaves it there', () => {

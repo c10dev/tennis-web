@@ -152,3 +152,30 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** Replays play from engine output or from saved JSON alone (GDD §3); v1 JSON is rejected. The
   fingerprints shown in Chromium matched the Node CLI for clay 42, grass 7, hard 123 and a loaded clay 99 file
   (TD-005). The production bundle is one ~600 kB chunk, mostly Three.js.
+
+## ADR-008: Realistic contact geometry without touching results
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The M2 replay showed players running up to 14.9 m/s (TD-006) and balls stalling after the bounce
+  (TD-011): contact was placed 1.5–3.5 m past the bounce, 0.45 s later, whatever the ball's speed. Hawk-Eye (M3) also
+  needs balls that land near lines, which the landing ranges never produced (good balls stopped 10–30 cm inside,
+  misses started 5 cm outside).
+- **Decision:**
+  - A ball is met on its incoming line past the bounce (`point/chase.ts`), at a distance its post-bounce speed
+    covers in 0.25–0.9 s (`GEOMETRY.bounceRetain`: hard 0.62, clay 0.55, grass 0.7 of the ground speed). The player
+    prefers their own depth, stepped in or back; returns are struck around the baseline. If that spot cannot be
+    reached at 5.5 m/s from the last recorded position, the nearest reachable point on the line is used, and failing
+    that the player lunges as far as they can. Recovery after a shot is limited the same way. Players stay within
+    4.5 m of the singles court's lines.
+  - Good serves may land on the lines (x up to 4.115, depth up to 6.40) and good rally balls up to the baseline and
+    sidelines; misses start 5 mm outside.
+  - Every RNG draw keeps its place: `chase` draws two numbers like the old `chasePosition`, `contactPoint` three, and no
+    branch skips or adds a draw. `engine/tests/outcome-golden.test.ts`, pinned on the old code, hashes 24 matches
+    without positions and times but with speeds, spins and net clearances, and still passes.
+  - The renderer eases moves with a trapezoid speed profile (peak 1.25× the average, smoothstep's is 1.5×) and walks
+    players round the net post on the umpire's side at a change of ends, in separate lanes. Changeover and set-end
+    pauses grow to 8 s and 10 s to leave time for the walk.
+- **Consequences:** 10,000-match reports on hard, clay and grass, the rating ladder and the big-server run are
+  byte-identical before and after. Rendered running speed over 20 matches: p50 0.49, p90 3.34, p99 5.06, max 6.88 m/s
+  (was max 14.9). The fingerprint golden for clay seed 42 is now `d351eb07`. Replay JSON written before and after this
+  change is equally valid v2: same fields, different positions and times.

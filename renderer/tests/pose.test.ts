@@ -4,7 +4,7 @@ import { ballAt } from '../src/playback/ball.ts';
 import { positionAt } from '../src/playback/movement.ts';
 import { playerPose } from '../src/playback/pose.ts';
 import { buildTimeline, segmentAt, type Timeline } from '../src/playback/timeline.ts';
-import { RIG_MOTION } from '../src/tuning.ts';
+import { COURT_DRAW, RIG_MOTION } from '../src/tuning.ts';
 import { SAMPLE, match } from './fixtures.ts';
 
 const IDS: PlayerId[] = ['A', 'B'];
@@ -30,28 +30,49 @@ describe('positionAt', () => {
     }
   });
 
-  it('moves without teleporting, except for the cut when players change ends', () => {
+  it('moves without teleporting, and walks round the net post to change ends (TD-010)', () => {
     for (const r of SAMPLE.slice(0, 3)) {
       const tl = buildTimeline(r);
       for (const id of IDS) {
         let prev = positionAt(tl, id, 0);
-        let cuts = 0;
+        let crossings = 0;
         for (let t = 1 / 60; t < tl.totalSec; t += 1 / 60) {
           const p = positionAt(tl, id, t);
-          if (Math.sign(p.y) !== Math.sign(prev.y)) cuts++;
-          else expect(dist(p, prev)).toBeLessThan(RIG_MOTION.maxStepPerFrame);
+          expect(dist(p, prev)).toBeLessThan(RIG_MOTION.maxStepPerFrame);
+          if (Math.sign(p.y) !== Math.sign(prev.y)) {
+            crossings++;
+            expect(Math.abs(p.x)).toBeGreaterThan(COURT_DRAW.doublesHalfWidth + COURT_DRAW.postOutside);
+          }
           prev = p;
         }
-        // The side a player starts each point on, read from the serve event; every change is one cut.
+        // The side a player starts each point on, read from the serve event; every change is one walk across.
         const sides = tl.segments.map((seg) => {
           const serve = seg.point.shots[0]!;
           return Math.sign(serve.hitter === id ? serve.hitterPos.y : serve.receiverPos.y);
         });
         const swaps = sides.filter((side, i) => i > 0 && side !== sides[i - 1]).length;
         expect(swaps).toBeGreaterThan(0);
-        expect(cuts).toBe(swaps);
+        expect(crossings).toBe(swaps);
       }
     }
+  });
+
+  it('keeps rendered running speeds plausible (TD-006): p99 under 7 m/s, never above 8.5 m/s', () => {
+    const speeds: number[] = [];
+    for (const r of SAMPLE) {
+      const tl = buildTimeline(r);
+      for (const id of IDS) {
+        let prev = positionAt(tl, id, 0);
+        for (let t = 1 / 30; t < tl.totalSec; t += 1 / 30) {
+          const p = positionAt(tl, id, t);
+          speeds.push(dist(p, prev) * 30);
+          prev = p;
+        }
+      }
+    }
+    speeds.sort((a, b) => a - b);
+    expect(speeds[Math.floor(0.99 * (speeds.length - 1))]!).toBeLessThan(7);
+    expect(speeds.at(-1)!).toBeLessThan(8.5);
   });
 
   it('walks to the next point\'s starting spot during the pause', () => {

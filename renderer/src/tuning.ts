@@ -6,8 +6,8 @@ export const PLAYBACK = {
   /** Toss before each serve: the ball leaves the hand this long before contact. */
   tossLeadSec: 1.0,
   pointGapSec: 2.5,
-  changeoverSec: 6,
-  setEndSec: 8,
+  changeoverSec: 8,
+  setEndSec: 10,
   matchEndHoldSec: 3,
   speeds: [0.25, 0.5, 1, 2, 4] as const,
   /** Longest real-time step one tick may advance; a stalled or hidden tab resumes instead of jumping. */
@@ -46,8 +46,13 @@ export const RIG_MOTION = {
   reactionSec: 1.8,
   /** Window for the finite-difference running speed. */
   speedSampleSec: 0.05,
-  /** No player moves further than this between two 60 fps frames, except the cut at a change of ends. */
-  maxStepPerFrame: 0.5,
+  /** Share of each move spent speeding up and slowing down. */
+  easeRamp: 0.2,
+  /** At a change of ends players walk round the net post on the umpire's side (−x), A on the inner lane. */
+  changeEndsLaneGap: 0.9,
+  changeEndsLaneOffset: 0.7,
+  /** No player moves further than this between two 60 fps frames (8.5 m/s). */
+  maxStepPerFrame: 0.142,
 } as const;
 
 /** Court dimensions the engine does not need (ITF): doubles alleys, run-off, line widths. */
