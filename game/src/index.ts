@@ -13,7 +13,7 @@ export type { CareerPlayer, World } from './types.ts';
 export { generateWorld } from './world/generate.ts';
 export { aiChoice, aiTactic } from './season/ai.ts';
 export { averageMetrics, seasonMetrics, SEASON_TARGETS, spearman, type SeasonMetrics } from './season/metrics.ts';
-export { pendingUserMatch, playRound, quickRecipe, type PendingMatch } from './season/round.ts';
+export { pendingUserMatch, playOut, playRound, quickRecipe, type PendingMatch } from './season/round.ts';
 export { simulateSeason } from './season/run.ts';
 export {
   currentRanking, newSeason, playerById, type MatchRecord, type SeasonState, type Standing, type TournamentRecord, type TournamentState, type UserChoice,
@@ -21,3 +21,9 @@ export {
 export { beginWeek, closeWeek, seasonOver, weekPreview, type WeekPreview } from './season/week.ts';
 export { fromSave, SAVE_VERSION, toSave, type SaveFile, type SaveSummary } from './save/format.ts';
 export { checkSlot, MemoryStore, SLOTS, type SaveStore, type Slot, type SlotSummary } from './save/store.ts';
+export { fatigueLabel, money, ordinal, resultLabel, roundName, STYLE_LABEL, SURFACE_LABEL } from './views/format.ts';
+export { homeView, type HomeView, type Option } from './views/home.ts';
+export { playerView } from './views/player.ts';
+export { rankingsView } from './views/rankings.ts';
+export { savesView } from './views/saves.ts';
+export { historyView, tournamentView, type MatchRow } from './views/tournament.ts';

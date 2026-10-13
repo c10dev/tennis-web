@@ -4,6 +4,7 @@ import { PLAYBACK, type ClockAction, type ClockState, type Frame, type Programme
 export interface Controls {
   setProgramme(programme: Programme): void;
   update(clock: ClockState, frame: Frame): void;
+  dispose(): void;
 }
 
 const clockText = (sec: number) => {
@@ -32,7 +33,6 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
   seek.step = '0.1';
   let dragging = false;
   seek.addEventListener('pointerdown', () => { dragging = true; });
-  window.addEventListener('pointerup', () => { dragging = false; });
   seek.addEventListener('input', () => dispatch({ type: 'seek', t: Number(seek.value) }));
   const time = document.createElement('span');
   time.className = 'time';
@@ -57,14 +57,19 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
     button('⏮', 'Previous point (←)', () => dispatch({ type: 'prevPoint' })), play,
     button('⏭', 'Next point (→)', () => dispatch({ type: 'nextPoint' })), seek, time, point, ...speeds, modeGroup,
   );
-  window.addEventListener('keydown', (e) => {
+  const onKey = (e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement && e.target.type !== 'range') return;
     const action: ClockAction | null = e.code === 'Space' ? { type: 'toggle' }
       : e.code === 'ArrowLeft' ? { type: 'prevPoint' } : e.code === 'ArrowRight' ? { type: 'nextPoint' } : null;
     if (!action) return;
     e.preventDefault();
     dispatch(action);
-  });
+  };
+  window.addEventListener('keydown', onKey);
+  const onUp = () => {
+    dragging = false;
+  };
+  window.addEventListener('pointerup', onUp);
 
   let total = 0;
   let points = 0;
@@ -83,6 +88,10 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
       time.textContent = `${clockText(clock.t)} / ${clockText(total)}`;
       point.textContent = `Point ${frame.pointIndex + 1}/${points}`;
       for (const b of speeds) b.classList.toggle('active', Number(b.dataset.speed) === clock.speed);
+    },
+    dispose() {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerup', onUp);
     },
   };
 }

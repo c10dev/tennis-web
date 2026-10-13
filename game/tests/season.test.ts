@@ -4,7 +4,7 @@ import { CALENDAR } from '../src/calendar/schedule.ts';
 import { pointsFor, TIERS } from '../src/calendar/tiers.ts';
 import { createPlayer, defaultAllocation, USER_ID } from '../src/player/create.ts';
 import { aiChoice } from '../src/season/ai.ts';
-import { pendingUserMatch, playRound, quickRecipe } from '../src/season/round.ts';
+import { pendingUserMatch, playOut, playRound, quickRecipe } from '../src/season/round.ts';
 import { simulateSeason } from '../src/season/run.ts';
 import { currentRanking, newSeason, type SeasonState } from '../src/season/state.ts';
 import { beginWeek, closeWeek, weekPreview } from '../src/season/week.ts';
@@ -100,6 +100,21 @@ describe('a tournament week', () => {
 
   it('will not close a week with matches still to play', () => {
     expect(() => closeWeek(beginWeek(fresh(), { kind: 'enter' }))).toThrow(/still/);
+  });
+});
+
+describe('playOut', () => {
+  it('plays the AI rounds of a tournament the user is not in, so the week can close', () => {
+    const s = beginWeek(fresh(), { kind: 'train', focus: 'serve', intensity: 'normal' });
+    expect(s.tournament!.done).toBe(false);
+    const done = playOut(s);
+    expect(done.tournament!.done).toBe(true);
+    expect(() => closeWeek(done)).not.toThrow();
+  });
+
+  it('stops at the user\'s next match', () => {
+    const s = playOut(beginWeek(toAcceptedWeek(), { kind: 'enter' }));
+    expect(pendingUserMatch(s)).not.toBeNull();
   });
 });
 

@@ -26,11 +26,18 @@ async function seek(page: Page, t: number) {
 
 const dataset = (page: Page) => page.evaluate(() => ({ ...document.body.dataset }));
 
+/** The replay page loads its code after the document: wait until a match is on screen. */
+async function open(page: Page, url: string) {
+  await page.goto(url);
+  await expect(page.locator('#fingerprint')).toHaveText(/^[0-9a-f]{8}$/);
+  await expect(page.locator('body')).toHaveAttribute('data-t', /\d/);
+}
+
 test.describe('replay page', () => {
   for (const [surface, seed] of [['hard', 123], ['clay', 42], ['grass', 7]] as [Surface, number][]) {
     test(`plays ${surface} seed ${seed} with the same events as Node (TD-005)`, async ({ page }) => {
       const errors = watchErrors(page);
-      await page.goto(`/?seed=${seed}&surface=${surface}`);
+      await open(page, `/?seed=${seed}&surface=${surface}`);
       const expected = fingerprint(simulateMatch(exhibitionConfig(surface), seed));
       await expect(page.locator('#fingerprint')).toHaveText(expected);
       await expect(page.locator('.score-bug tr')).toHaveCount(2);
@@ -40,7 +47,7 @@ test.describe('replay page', () => {
 
   test('plays, speeds up and jumps between points', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/?seed=42&surface=clay');
+    await open(page, '/?seed=42&surface=clay');
     await page.keyboard.press('Space');
     await page.locator('[data-speed="4"]').click();
     await page.waitForTimeout(1500);
@@ -56,7 +63,7 @@ test.describe('replay page', () => {
 
   test('cuts between all five cameras where the director says', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/?seed=42&surface=clay');
+    await open(page, '/?seed=42&surface=clay');
     const programme = buildProgramme(buildTimeline(simulateMatch(exhibitionConfig('clay'), 42)), 'full');
     const seen = new Set<CameraId>();
     for (const camera of ['main', 'serve', 'reaction', 'side', 'hawkeye'] as CameraId[]) {
@@ -71,7 +78,7 @@ test.describe('replay page', () => {
 
   test('switches viewing modes, ending on the result and the match stats', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/?seed=42&surface=clay');
+    await open(page, '/?seed=42&surface=clay');
     await page.locator('[data-mode="highlights"]').click();
     await expect(page.locator('[data-mode="highlights"]')).toHaveClass(/active/);
     await page.locator('[data-mode="result"]').click();
@@ -84,7 +91,7 @@ test.describe('replay page', () => {
 
   test('loads replay JSON without the engine, and refuses an old schema', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/?seed=1&surface=hard');
+    await open(page, '/?seed=1&surface=hard');
     const result = simulateMatch(exhibitionConfig('grass'), 99);
     const good = join(tmpdir(), `replay-${process.pid}.json`);
     const old = join(tmpdir(), `replay-v1-${process.pid}.json`);
@@ -100,7 +107,7 @@ test.describe('replay page', () => {
 
   test('turns sound on and plays with it without errors', async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto('/?seed=42&surface=clay');
+    await open(page, '/?seed=42&surface=clay');
     await page.locator('.sound-toggle').click();
     await expect(page.locator('.sound-toggle')).toContainText('Sound on');
     await expect(page.locator('#sound .sliders input')).toHaveCount(4);

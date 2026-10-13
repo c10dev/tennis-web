@@ -85,3 +85,10 @@ export function playRound(s: SeasonState, userRecipe?: MatchRecipe): SeasonState
   const bracket = advanceBracket(t.bracket, (x, y) => winners.get(`${x}|${y}`) ?? winners.get(`${y}|${x}`)!);
   return { ...s, tournament: { ...t, bracket, matches: [...t.matches, ...matches], setsPlayed, done: champion(bracket) !== null } };
 }
+
+/** Plays rounds until the tournament is over or the user's next match is due (nothing to do in a quiet week). */
+export function playOut(s: SeasonState): SeasonState {
+  let next = s;
+  while (next.tournament && !next.tournament.done && !pendingUserMatch(next)) next = playRound(next);
+  return next;
+}
