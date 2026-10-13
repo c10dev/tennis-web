@@ -53,9 +53,18 @@ export function tournamentScreen(ctx: Ctx): Screen {
     ctx.note ? h('p', { class: 'note-banner', id: 'note' }, ctx.note) : null,
     h('h2', null, v.name, h('span', { class: 'muted' }, ` · ${v.tier} · ${v.surface}`)),
     actions,
-    h('div', { class: 'draw', id: 'draw' }, v.rounds.map((r) => h('div', { class: 'round' }, h('h4', null, r.name),
-      r.matches.map((m) => h('div', { class: `match${m.isUser ? ' user' : ''}` },
+    // Each round is a list named by its heading, each match an item named with its winner (bold alone says nothing
+    // to a screen reader).
+    h('div', { class: 'draw', id: 'draw' }, v.rounds.map((r, k) => h('div', { class: 'round' }, h('h4', { id: `round-${k}` }, r.name),
+      h('div', { role: 'list', 'aria-labelledby': `round-${k}` }, r.matches.map((m) => h('div', { class: `match${m.isUser ? ' user' : ''}`, role: 'listitem', 'aria-label': matchLabel(m) },
         h('span', { class: m.winner === 'a' ? 'won' : '' }, m.a), h('span', { class: 'vs' }, ' v '), h('span', { class: m.winner === 'b' ? 'won' : '' }, m.b),
-        m.score ? h('span', { class: 'score' }, m.score) : null))))));
+        m.score ? h('span', { class: 'score' }, m.score) : null)))))));
   return { element };
+}
+
+/** "Alex Kim beat Garek Ashic 6-3 6-4", or "A v B" before it is played. */
+function matchLabel(m: { a: string; b: string; winner: 'a' | 'b' | null; score: string }): string {
+  if (!m.winner) return `${m.a} v ${m.b}`;
+  const [w, l] = m.winner === 'a' ? [m.a, m.b] : [m.b, m.a];
+  return `${w} beat ${l}${m.score ? ` ${m.score}` : ''}`;
 }

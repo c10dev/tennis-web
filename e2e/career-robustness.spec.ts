@@ -106,4 +106,16 @@ test.describe('career robustness', () => {
     await expect(page.locator('#quick-match')).toBeVisible();
     await expect(page.locator('#new-career')).toBeVisible();
   });
+
+  test('names the training choices and reads the draw match by match, winners included', async ({ page }) => {
+    await newCareer(page);
+    await expect(page.getByRole('combobox', { name: 'Training focus' })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Training intensity' })).toBeVisible();
+    await page.locator('#enter').click();
+    await page.locator('#quick').click();
+    const rounds = page.getByRole('list', { name: /Round of 32/ });
+    await expect(rounds.getByRole('listitem')).toHaveCount(16);
+    await expect(rounds.getByRole('listitem').filter({ hasText: 'Alex Kim' })).toHaveAccessibleName(/^(Alex Kim beat|.+ beat Alex Kim) .+ \d/);
+  });
 });
+

@@ -8,8 +8,8 @@ const FOCUS_LABEL: Record<Focus, string> = { serve: 'Serve', groundstrokes: 'Gro
 export function homeScreen(ctx: Ctx): Screen {
   const s = ctx.state!;
   const v = homeView(s);
-  const focus = h('select', { id: 'focus' }, (Object.keys(FOCUS_RATINGS) as Focus[]).map((f) => h('option', { value: f }, FOCUS_LABEL[f])));
-  const intensity = h('select', { id: 'intensity' }, (['light', 'normal', 'hard'] as Intensity[]).map((i) => h('option', { value: i, selected: i === 'normal' }, i[0]!.toUpperCase() + i.slice(1))));
+  const focus = h('select', { id: 'focus', 'aria-label': 'Training focus' }, (Object.keys(FOCUS_RATINGS) as Focus[]).map((f) => h('option', { value: f }, FOCUS_LABEL[f])));
+  const intensity = h('select', { id: 'intensity', 'aria-label': 'Training intensity' }, (['light', 'normal', 'hard'] as Intensity[]).map((i) => h('option', { value: i, selected: i === 'normal' }, i[0]!.toUpperCase() + i.slice(1))));
   const train = async () => {
     const f = focus.value as Focus;
     const i = intensity.value as Intensity;
