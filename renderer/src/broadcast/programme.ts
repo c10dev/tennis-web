@@ -13,7 +13,7 @@ export interface Insert {
 }
 export type Inserts = (timeline: Timeline, index: number) => Insert | null;
 
-export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts): Programme {
+export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts, options: { intro?: boolean } = {}): Programme {
   const clips: Clip[] = [];
   const pointStarts: number[] = [];
   let t = 0;
@@ -26,7 +26,7 @@ export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inse
     push({ kind: 'result', duration: BROADCAST.resultSec, matchFrom: timeline.totalSec, rate: 0, camera: 'side', pointIndex: last });
     return { mode, clips, totalSec: t, pointStarts: [0], timeline };
   }
-  push({ kind: 'intro', duration: BROADCAST.introSec, matchFrom: 0, rate: 0, camera: 'side', pointIndex: 0 });
+  if (options.intro !== false) push({ kind: 'intro', duration: BROADCAST.introSec, matchFrom: 0, rate: 0, camera: 'side', pointIndex: 0 });
   const track = cameraTrack(timeline);
   const live = (from: number, to: number, pointIndex: number) => {
     for (const shot of shotsBetween(track, from, to)) {

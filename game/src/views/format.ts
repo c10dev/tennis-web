@@ -31,3 +31,9 @@ export function fatigueLabel(f: number): string {
 export const STYLE_LABEL = {
   big_server: 'Big server', baseliner: 'Baseliner', counter_puncher: 'Counter-puncher', serve_and_volley: 'Serve & volley', all_court: 'All-court',
 } as const;
+
+export const RATING_LABEL: Record<string, string> = {
+  servePower: 'Serve power', serveAccuracy: 'Serve accuracy', secondServe: 'Second serve', forehand: 'Forehand', backhand: 'Backhand',
+  consistency: 'Consistency', return: 'Return', movement: 'Movement', agility: 'Agility', stamina: 'Stamina', composure: 'Composure',
+  concentration: 'Concentration', decision: 'Decision', aggression: 'Aggression',
+};

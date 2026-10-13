@@ -55,6 +55,12 @@ describe('buildProgramme', () => {
     }
   });
 
+  it('can leave out the introduction, for quick matches that start straight away', () => {
+    const p = buildProgramme(tl, 'full', () => null, { intro: false });
+    expect(p.clips[0]).toMatchObject({ kind: 'live', matchFrom: 0, start: 0 });
+    expect(p.clips.some((c) => c.kind === 'intro' || c.kind === 'replay')).toBe(false);
+  });
+
   it('is one result clip in result mode', () => {
     const p = buildProgramme(tl, 'result');
     expect(p.clips).toHaveLength(1);

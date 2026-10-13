@@ -4,7 +4,7 @@ import { USER_ID } from '../player/create.ts';
 import { overall } from '../player/overall.ts';
 import { playerById, type SeasonState } from '../season/state.ts';
 import type { Rated } from '../tuning.ts';
-import { fatigueLabel, resultLabel, STYLE_LABEL } from './format.ts';
+import { fatigueLabel, RATING_LABEL as LABELS, resultLabel, STYLE_LABEL } from './format.ts';
 
 const GROUPS: [string, Rated[]][] = [
   ['Serve', ['servePower', 'serveAccuracy', 'secondServe']],
@@ -14,11 +14,6 @@ const GROUPS: [string, Rated[]][] = [
   ['Mental', ['composure', 'concentration', 'decision', 'aggression']],
 ];
 
-const LABELS: Record<string, string> = {
-  servePower: 'Serve power', serveAccuracy: 'Serve accuracy', secondServe: 'Second serve', forehand: 'Forehand', backhand: 'Backhand',
-  consistency: 'Consistency', return: 'Return', movement: 'Movement', agility: 'Agility', stamina: 'Stamina', composure: 'Composure',
-  concentration: 'Concentration', decision: 'Decision', aggression: 'Aggression',
-};
 
 export function playerView(s: SeasonState, id: string) {
   const p = playerById(s, id);

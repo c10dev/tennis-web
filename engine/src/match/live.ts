@@ -3,6 +3,7 @@
 import { normalizeAttributes } from '../player/attributes.ts';
 import { addFatigue, pressureIndex, recover, runtime, type PlayerRuntime } from '../player/condition.ts';
 import type { Side } from '../point/court.ts';
+import { cardStrength } from '../point/cards.ts';
 import { simulatePoint } from '../point/simulatePoint.ts';
 import { createRng, type Rng } from '../rng/mulberry32.ts';
 import { pointTags } from '../scoring/context.ts';
@@ -10,7 +11,8 @@ import { applyPoint, cloneScore, initialScoring, type ScoringState } from '../sc
 import { isFinalSet } from '../scoring/rules.ts';
 import { FATIGUE } from '../tuning.ts';
 import {
-  SCHEMA_VERSION, type MatchConfig, type MatchEvent, type MatchRecipe, type MatchResult, type PlayerId, type PointCards, type PointEvent, type Tactic,
+  SCHEMA_VERSION, type Card, type MatchConfig, type MatchEvent, type MatchRecipe, type MatchResult, type PlayerId, type PointCards, type PointEvent,
+  type PointTag, type ScoreState, type Tactic,
 } from '../types.ts';
 import { computeStats } from './stats.ts';
 
@@ -155,8 +157,27 @@ function validate(config: MatchConfig): void {
   }
 }
 
-/** What a caller may know between points: who serves next, each player's fatigue, points played. */
-export function liveStatus(live: LiveMatch): { server: PlayerId; fatigue: Record<PlayerId, number>; pointsPlayed: number; over: boolean } {
+export interface LiveStatus {
+  server: PlayerId;
+  score: ScoreState;
+  /** Tags the next point will carry (break point, set point…). */
+  nextTags: PointTag[];
+  fatigue: Record<PlayerId, number>;
+  pointsPlayed: number;
+  over: boolean;
+}
+
+/** What a caller may know between points. */
+export function liveStatus(live: LiveMatch): LiveStatus {
   const s = live.state;
-  return { server: s.scoring.score.server, fatigue: { ...s.fatigue }, pointsPlayed: s.points.length, over: isOver(live) };
+  return {
+    server: s.scoring.score.server, score: cloneScore(s.scoring.score), nextTags: s.scoring.winner === null ? pointTags(s.scoring) : [],
+    fatigue: { ...s.fatigue }, pointsPlayed: s.points.length, over: isOver(live),
+  };
+}
+
+/** How much `player` would get out of `card` on the next point, as they are now (ratings, style, fatigue). */
+export function liveCardStrength(live: LiveMatch, player: PlayerId, card: Card): number {
+  const s = live.state;
+  return cardStrength(card, { ...s.base[player], fatigue: s.fatigue[player] });
 }

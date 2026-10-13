@@ -32,3 +32,6 @@ export { finishQuick, ladderOrder, newLadder, nextOpponent, pointsToNext, rankOf
 export { matchOver, playPoint, startQuick, userRole, type QuickMatch } from './quick/match.ts';
 export { cardReward } from './quick/rewards.ts';
 export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './quick/save.ts';
+export { broadcastSeconds, clipFor, decisive } from './quick/pace.ts';
+export { QUICK_PACE } from './tuning.ts';
+export { cardChoices, pointSituation, quickHomeView, quickResultView, revealView } from './views/quick.ts';
