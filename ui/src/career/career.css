@@ -64,3 +64,11 @@ td.down { color: var(--loss); }
   padding: 6px 10px; background: var(--panel-bg); border-radius: 10px; }
 .match-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4; min-width: 320px; padding: 16px 20px; }
 .match-panel[hidden] { display: none; }
+/* Phones: brand and status share the first row, the links scroll sideways on the second. */
+@media (max-width: 640px) {
+  header.top { flex-wrap: wrap; gap: 6px 12px; padding: 8px 12px; }
+  header.top .brand { font-size: 20px; }
+  header.top .status { order: 1; font-size: 13px; }
+  header.top nav { order: 2; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  header.top nav a { flex: none; padding: 3px 10px; }
+}

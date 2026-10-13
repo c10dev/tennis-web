@@ -138,6 +138,16 @@ test.describe('career', () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
+  test('keeps the header to two short rows on a phone, every link reachable', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await newCareer(page);
+    const header = (await page.locator('header.top').boundingBox())!;
+    expect(header.height).toBeLessThan(100);
+    await page.locator('#nav-saves').scrollIntoViewIfNeeded();
+    await page.locator('#nav-saves').click();
+    await expect(page).toHaveURL(/#\/saves/);
+  });
+
   test('loads the career screens without Three.js', async ({ page }) => {
     const scripts: string[] = [];
     page.on('response', (r) => {
