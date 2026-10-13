@@ -27,6 +27,7 @@ uniform vec3 colour;
 varying float vAlpha;
 void main() {
   gl_FragColor = vec4(colour, vAlpha);
+  #include <colorspace_fragment>
 }`;
 
 export interface TrailView {

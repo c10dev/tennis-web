@@ -76,3 +76,13 @@ describe('outlines on the stage', () => {
     expect(all.length).toBeLessThanOrEqual(LOOK.outline.maxDraws);
   });
 });
+
+describe('custom shaders (TD-041)', () => {
+  it('convert their colour to the output colour space, like the built-in materials', () => {
+    const stage = createStage(buildTimeline(match(1)));
+    const shaders: ShaderMaterial[] = [];
+    stage.scene.traverse((o) => { if (o instanceof Mesh && o.material instanceof ShaderMaterial && !shaders.includes(o.material)) shaders.push(o.material); });
+    expect(shaders.length).toBeGreaterThanOrEqual(2);
+    for (const m of shaders) expect(m.fragmentShader).toContain('#include <colorspace_fragment>');
+  });
+});

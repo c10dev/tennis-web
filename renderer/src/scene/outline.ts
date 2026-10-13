@@ -19,6 +19,7 @@ const FRAGMENT = /* glsl */ `
 uniform vec3 colour;
 void main() {
   gl_FragColor = vec4(colour, 1.0);
+  #include <colorspace_fragment>
 }`;
 
 /** Metres the hull is pushed out at view depth `depth` with projection term `yy` (1 / tan(fov / 2)). */
