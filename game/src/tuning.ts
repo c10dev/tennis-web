@@ -53,3 +53,10 @@ export const CREATION = {
   injuryProneness: 10,
   surfaceAffinity: 13,
 } as const;
+
+export const RANKING = {
+  /** Last season's points for the top player at the start of the season, fading linearly to 0 by its end. */
+  carryoverTop: 4000,
+  /** Carryover falls by a factor e every this many ranking places. */
+  carryoverScale: 14,
+} as const;
