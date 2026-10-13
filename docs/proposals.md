@@ -15,8 +15,8 @@ aggression 0.2 → 0.8 the win rate rises from 47% to 53%. The other tactic fiel
 **Options.**
 - **A. The engine gives risk a best level per matchup (recommended after B failed).** Errors from aggression cost
   more against strong defenders (counter-punchers, high defence ratings), so aggressive pays against weak defenders and
-  defensive pays against big hitters. This is closest to real tennis. But it is an engine change: the season balance (M4) and the M1 batch
-  targets need a re-check, and the engine goldens change.
+  defensive pays against big hitters. This is closest to real tennis. But it is an engine change: the season balance
+  (M4) and the M1 batch targets need a re-check, and the engine goldens change.
 - **B. The plan carries into the big points.** Each plan also scales the user's card strengths at
   decision points. Aggressive: Attack ×1.15 and Defend/Counter ×0.9. Defensive: the reverse. Balanced: no change.
   The extra points that aggressive wins without cards are then paid back by weaker Defend and Counter when the
