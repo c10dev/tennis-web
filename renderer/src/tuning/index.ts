@@ -6,3 +6,4 @@ export * from './camera.ts';
 export * from './overlay.ts';
 export * from './playback.ts';
 export * from './scene.ts';
+export * from './look.ts';

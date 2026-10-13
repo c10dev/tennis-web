@@ -12,46 +12,57 @@ export const COURT_DRAW = {
   surroundHalfWidth: 13,
   surroundHalfLength: 21,
   grassStripes: 12,
+  netTapeRadius: 0.025,
 } as const;
 
+/** Rally Pop palette (ADR-019, docs/design-references.md §3): yellow-green belongs to the ball alone. */
 export const COLOURS = {
-  background: 0x1f2630,
-  ground: 0x2a3037,
-  lines: 0xffffff,
+  ground: 0x5f665a,
+  /** Slightly off-white, so the white trail and the paper UI stay the brightest things on screen. */
+  lines: 0xf3f0e6,
   net: 0x161616,
-  post: 0x2f4f3a,
-  ball: 0xdcf24a,
+  post: 0x1d2a44,
+  ball: 0xd6f53a,
   /** Skid mark a bounce leaves, shown on Hawk-Eye close-ups. */
   mark: 0x2b2b2b,
   shadow: 0x000000,
   surface: {
-    hard: { court: 0x3a6ea5, surround: 0x4a7f5a },
-    clay: { court: 0xc4673f, surround: 0xb35d39 },
-    grass: { court: 0x5f9e4a, surround: 0x56913f, stripe: 0x6aab53 },
+    hard: { court: 0x3470b8, surround: 0x22508f },
+    clay: { court: 0xb8552e, surround: 0xa34a28 },
+    grass: { court: 0x2f7a45, surround: 0x2a6d3e, stripe: 0x37874f },
   },
-  players: { A: 0xd8433b, B: 0xf1f1ee },
+  /** Per-surface kits: A wears the colour, B the light kit. No red/orange on clay, no green on grass, no blue on hard. */
+  kits: {
+    hard: { A: 0xe0473b, B: 0xf4f3ee },
+    clay: { A: 0x1f6fd6, B: 0xf4f3ee },
+    grass: { A: 0x2c5fd4, B: 0xf4f3ee },
+  },
   skin: 0xd9a77f,
-  shorts: 0x2a2d35,
+  shorts: 0x1d2333,
   shoes: 0xf2f2f2,
   racket: 0x26282c,
+  /** The racket head reads as a pale string bed with an ink rim (its outline), not a black paddle. */
+  strings: 0xe6e1d3,
   visor: 0x20242a,
 } as const;
 
 /** Mannequin rig sizes in metres and its pose angles in radians (ADR-007, ADR-009). */
 export const RIG = {
-  /** Thigh and shin each; hips stand at twice this. */
-  legSegment: 0.45,
-  legRadius: 0.07,
-  hipHalfWidth: 0.11,
-  torsoRadius: 0.19,
-  torsoLength: 0.4,
-  headRadius: 0.13,
+  /** Thigh and shin each; hips stand at twice this. Rally Pop (ADR-019): shorter, thicker limbs, a bigger head and
+   * racket; the M3 figure had 0.45 legs, 0.13 head, 0.6 arms and a 0.14 racket head. */
+  legSegment: 0.43,
+  legRadius: 0.08,
+  hipHalfWidth: 0.12,
+  torsoRadius: 0.21,
+  torsoLength: 0.38,
+  headRadius: 0.19,
   /** Shoulders above the hips. */
-  shoulderHeight: 0.55,
-  shoulderOffset: 0.2,
-  armLength: 0.6,
-  handleLength: 0.28,
-  racketHeadRadius: 0.14,
+  shoulderHeight: 0.56,
+  shoulderOffset: 0.22,
+  armLength: 0.56,
+  armRadius: 0.055,
+  handleLength: 0.27,
+  racketHeadRadius: 0.19,
   /** Racket direction is set by a roll (down +, up −) then a yaw sweep (0 = out to the right, + towards the front). */
   idle: { yaw: 0.4, roll: 0.7 },
   forehand: { from: -1.6, to: 2.6, roll: 0.15 },
@@ -85,7 +96,7 @@ export const VENUE = {
   boardHeight: 0.9,
   umpireChairX: -7.3,
   umpireChairHeight: 2.2,
-  seats: { hard: 0x24406e, clay: 0x2e5a3b, grass: 0x40305e },
-  boards: { hard: 0x1f4fa0, clay: 0x1c5a32, grass: 0x2d5d2a },
+  seats: { hard: 0x5664b0, clay: 0x3a8160, grass: 0x6e52a3 },
+  boards: { hard: 0x15306b, clay: 0x1f5a3a, grass: 0x24502f },
   chair: 0x3b4048,
 } as const;

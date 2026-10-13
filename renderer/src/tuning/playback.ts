@@ -20,8 +20,6 @@ export const NET = { centerHeight: 0.914, postHeight: 1.07 } as const;
 
 export const BALL = {
   radius: 0.0335,
-  /** Drawn radius: about twice the real one, so the ball reads from the main camera ~30 m away. */
-  visualRadius: 0.06,
   gravity: 9.81,
   /** Height of the tossing hand when a serve's toss starts. */
   tossStartHeight: 1.1,

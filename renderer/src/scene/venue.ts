@@ -1,8 +1,9 @@
 // Stands, ad boards and the umpire chair: something for the Side and Reaction cameras to frame (ADR-009).
 // Stands are stepped blocks, one per tier, built from the same profile `standHeightAt` describes.
-import { BoxGeometry, Group, Mesh, MeshLambertMaterial } from 'three';
+import { BoxGeometry, Group, Mesh } from 'three';
 import type { Surface } from '@tennis/engine';
 import { COURT_DRAW, VENUE } from '../tuning/index.ts';
+import { lit } from './materials.ts';
 
 /** Height of the stands at court position (x, y), 0 where there are none. */
 export function standHeightAt(x: number, y: number): number {
@@ -19,7 +20,7 @@ export function standHeightAt(x: number, y: number): number {
 function stand(name: string, axis: 'x' | 'z', sign: 1 | -1, inner: number, length: number, colour: number): Group {
   const group = new Group();
   group.name = name;
-  const material = new MeshLambertMaterial({ color: colour });
+  const material = lit(colour);
   for (let k = 0; k < VENUE.tiers; k++) {
     const h = (k + 1) * VENUE.tierRise;
     const across = sign * (inner + VENUE.tierDepth * (k + 0.5));
@@ -33,7 +34,7 @@ function stand(name: string, axis: 'x' | 'z', sign: 1 | -1, inner: number, lengt
 }
 
 function board(name: string, width: number, depth: number, x: number, z: number, colour: number): Mesh {
-  const mesh = new Mesh(new BoxGeometry(width, VENUE.boardHeight, depth), new MeshLambertMaterial({ color: colour }));
+  const mesh = new Mesh(new BoxGeometry(width, VENUE.boardHeight, depth), lit(colour));
   mesh.position.set(x, VENUE.boardHeight / 2, z);
   mesh.name = name;
   return mesh;
@@ -42,7 +43,7 @@ function board(name: string, width: number, depth: number, x: number, z: number,
 function umpireChair(): Group {
   const chair = new Group();
   chair.name = 'umpire-chair';
-  const material = new MeshLambertMaterial({ color: VENUE.chair });
+  const material = lit(VENUE.chair);
   const legs = new Mesh(new BoxGeometry(0.6, VENUE.umpireChairHeight - 0.4, 0.6), material);
   legs.position.y = (VENUE.umpireChairHeight - 0.4) / 2;
   const seat = new Mesh(new BoxGeometry(0.8, 0.4, 0.8), material);

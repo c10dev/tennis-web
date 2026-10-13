@@ -550,3 +550,58 @@ Format: one entry per decision, newest at the bottom.
   - **Phase 3:** rig proportions or a CC0 chunky body (TD-012).
 - **Consequences:** the M3 default of a realistic Mesh2Motion body no longer fits; TD-012 is decided in phase 3.
   `e2e/quick-colours.spec.ts` guards phase 0.
+
+
+## ADR-019: Art direction B "Rally Pop", phase 2 (renderer)
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The user picked direction B "Rally Pop", a sunny club court in a toy box (docs/design-references.md
+  §5 B, §6 phase 2). The M3 scene was Lambert-shaded primitives under a dark sky, a small Lambert ball (about 3.7 px
+  across at the far baseline at 720p), player A in red on a clay court of nearly the same hue, and no outlines.
+  Phase 2 is renderer-only: no UI CSS or fonts (phase 1 follows the M6 merges), no new rigs or assets, no new
+  dependencies, no post-processing.
+- **Decision:**
+  - **Materials.** `scene/materials.ts` hands out one material per colour: `MeshToonMaterial` on a shared 3×1
+    `DataTexture` gradient (bands 150 / 205 / 255, nearest filtering; a darker shadow band went muddy on backlit close-ups), or the old `MeshLambertMaterial` when
+    `LOOK.toon` is false, so the two looks can be compared from tuning. Court, venue and players use it.
+  - **Outlines.** Inverted hulls (`scene/outline.ts`): a back-face copy of a part with seams welded
+    (`mergeVertices`) and normals smoothed, pushed out in the vertex shader by
+    `px · 2 · depth / (projection[1][1] · 720)`, so a line is `LOOK.outline.px` (1.5) pixels of a 720-pixel-tall
+    view at any distance and field of view. Uniform scaling was rejected: it gives a torso a line four times as thick
+    as an arm and moves off-centre parts. Only players (body, head, racket head, arms, thighs, shins: 9 each), the
+    net (two posts, and the tape, now a thin tube so it can carry one; a plane cannot) and the ball are outlined:
+    22 extra draws, capped at 24 by a test. No `OutlineEffect` or composer pass.
+  - **Ball.** Unlit `MeshBasicMaterial` in optic `#d6f53a`, `toneMapped` and `fog` off, radius 0.11 m (3.3× real):
+    at least 6 px across at the far baseline from the main camera at 720p (unit-tested by projection), drawn at
+    0.45× on serve/reaction/Hawk-Eye close-ups and 0.8× on the side camera. Ink outline, blob shadow always under it.
+    A 1.3× scale pop at contact eases out over 0.07 s. The trail is one camera-facing ribbon (12 samples, a small
+    `ShaderMaterial`: the CPU lays the centre line, width and opacity, the vertex shader turns it to the camera),
+    white, tapering in width and opacity over 0.2 s of match time, 0.1 s in half-speed replays. Trail and pop are
+    pure functions of point time (`scene/ballMotion.ts`, sampling `ballAt`), cut at the last contact: a seek or a
+    replay draws exactly what live play drew. `Line2`/`LineMaterial` was not used: it has one width and opacity per
+    line (no taper) and needs its resolution set from `viewer.ts` on every resize.
+  - **Broadcast frames.** A `BroadcastFrame`'s `t` is programme time; the stage keys trail and pop off `matchT`
+    (and `camera`, `clip`) when present. `StageFrame` gained those optional fields; `viewer.ts` is unchanged.
+  - **Daylight.** A warm directional sun (2.0) over a sky/ground hemisphere (1.0); the ambient light is gone because
+    flat ambient fills the toon bands. A vertex-coloured sky dome (radius 200, inside the 400 m far plane) blends
+    horizon `#d3e8f2` to zenith `#4f9de0`; `Fog(horizon, 50, 200)` hazes the far stands into it and leaves the
+    court clear (the far baseline is ~44 m from the main camera). **No tone mapping:** the palette is chosen in
+    sRGB against WCAG-style contrast with the ball, and AgX/ACES/Neutral desaturate and darken it and would need
+    every light retuned; the ball must stay exactly optic.
+  - **Palette and kits.** Courts hard `#3470b8`, clay `#b8552e`, grass `#2f7a45`; lines off-white `#f3f0e6`.
+    `COLOURS.kits[surface]`: A wears the colour (red on hard, blue on clay and grass), B the light kit everywhere.
+    Tests: no shirt within 40° of hue of its court or surround; on clay no red/orange, on grass no green; nothing but
+    the ball within 25° of the ball's hue at saturation ≥ 0.4. Racket heads are a pale string bed with an ink rim.
+  - **Proportions.** Chunkier mannequin from tuning alone: head radius 0.13 → 0.19, racket head 0.14 → 0.19, legs
+    0.45 → 0.43 per segment and thicker, arms 0.6 → 0.56 and thicker, a wider torso. The racket still reaches a serve
+    struck at 2.6 m and up (engine serve contact: 2.60–2.95 m, median 2.79).
+- **Consequences:** Draw calls at the main camera on the replay page (1280×720, seed 42, key points):
+  hard and clay 86 → 110, grass 92 → 116 (+22 outlines, +1 trail, +1 sky); triangles 2.9k → 5.9k (hulls copy their
+  parts). Headless Chromium uses software WebGL, so fps is indicative only (TD-024) and was measured on a loaded
+  machine, alternating the two builds: 25–31 fps before, 20–24 after (−20 to −25%). Turning parts off one at a
+  time: without the sky dome +3–4 fps (it is now drawn after the opaque meshes), without rig outlines +0.5–1,
+  Lambert instead of toon no change. The software rasteriser is fill-bound. On a desktop GPU (Chrome on Windows,
+  RTX 5060, i5-14600KF, canvas 3841×1849 at DPR 1.75, clay main camera) both builds hold the 60 fps refresh cap and
+  the frame callback takes 0.5 → 0.6 ms median (p95 0.8 → 1.0 ms). Screenshots before and after (main, serve, side, reaction on each surface) are in
+  `docs/screenshots/rally-pop/` (not committed). Phone performance, the GLTF/CC0 rig, the umpire chair in the side replay
+  camera and the polish left out are open (TD-038–TD-041).

@@ -1,17 +1,20 @@
 // The whole Three.js scene for one match; applyFrame() moves everything to a Frame. No WebGL here (ADR-007).
-import { AmbientLight, CircleGeometry, Color, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial, Scene } from 'three';
+import { CircleGeometry, Mesh, MeshBasicMaterial, Scene } from 'three';
 import type { LineCall } from '../broadcast/hawkeye.ts';
+import type { CameraId, ClipKind } from '../broadcast/types.ts';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
-import { BALL, COLOURS } from '../tuning/index.ts';
-import { createBall } from './ball.ts';
+import { BALL, BALL_LOOK, COLOURS } from '../tuning/index.ts';
+import { createBall, type BallLook } from './ball.ts';
+import { ballPop, lastContact, trailPoints } from './ballMotion.ts';
 import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
+import { addDaylight } from './daylight.ts';
 import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
 
-/** A frame, plus the Hawk-Eye call when one is on screen. */
-export type StageFrame = Frame & { hawkeye?: LineCall | null };
+/** A frame, plus what a broadcast frame adds: the Hawk-Eye call, camera, clip kind and match second (its t is programme time). */
+export type StageFrame = Frame & { hawkeye?: LineCall | null; camera?: CameraId; clip?: ClipKind; matchT?: number };
 
 export interface Stage {
   readonly scene: Scene;
@@ -20,12 +23,10 @@ export interface Stage {
 
 export function createStage(timeline: Timeline): Stage {
   const scene = new Scene();
-  scene.background = new Color(COLOURS.background);
-  const sun = new DirectionalLight(0xffffff, 1.6);
-  sun.position.set(-20, 40, 15);
-  scene.add(new HemisphereLight(0xdfe8ff, 0x3a4030, 1.1), new AmbientLight(0xffffff, 0.25), sun);
+  addDaylight(scene);
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
-  const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(COLOURS.players.A), B: new MannequinRig(COLOURS.players.B) };
+  const kit = COLOURS.kits[timeline.surface];
+  const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(kit.A), B: new MannequinRig(kit.B) };
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';
   const ball = createBall();
@@ -40,9 +41,20 @@ export function createStage(timeline: Timeline): Stage {
     applyFrame(frame) {
       rigs.A.apply(frame.players.A);
       rigs.B.apply(frame.players.B);
-      ball.apply(frame.ball);
+      ball.apply(frame.ball, ballLook(timeline, frame));
       mark.visible = !!frame.hawkeye;
       if (frame.hawkeye) mark.position.copy(groundToThree(frame.hawkeye.mark, 0.006));
     },
   };
+}
+
+/** Camera scale, contact pop and trail for the ball in this frame. */
+function ballLook(timeline: Timeline, frame: StageFrame): BallLook {
+  const scale = BALL_LOOK.cameraScale[frame.camera ?? 'main'];
+  const trailSec = BALL_LOOK.trail.sec * (frame.clip === 'replay' ? BALL_LOOK.trail.replayShare : 1);
+  const seg = timeline.segments[frame.pointIndex];
+  if (!seg || !frame.ball) return { scale, pop: 1, trail: [], trailSec };
+  const tau = (frame.matchT ?? frame.t) - seg.zero;
+  const contact = lastContact(seg.point, tau);
+  return { scale, pop: ballPop(contact === null ? null : tau - contact), trail: trailPoints(seg.point, tau, timeline.surface, trailSec), trailSec };
 }

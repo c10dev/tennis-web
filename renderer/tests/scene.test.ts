@@ -6,7 +6,7 @@ import { groundToThree, toThree } from '../src/scene/coords.ts';
 import { createStage } from '../src/scene/stage.ts';
 import { matchFrameAt } from '../src/playback/frame.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
-import { BALL, NET } from '../src/tuning/index.ts';
+import { BALL_LOOK, NET } from '../src/tuning/index.ts';
 import { match } from './fixtures.ts';
 
 const box = (o: Object3D) => new Box3().setFromObject(o);
@@ -82,7 +82,7 @@ describe('stage.applyFrame', () => {
     expect(ball.visible).toBe(true);
     expect(ball.position.x).toBeCloseTo(f.ball!.x, 9);
     expect(ball.position.z).toBeCloseTo(-f.ball!.y, 9);
-    expect(ball.position.y).toBeCloseTo(f.ball!.z + BALL.visualRadius, 9);
+    expect(ball.position.y).toBeCloseTo(f.ball!.z + BALL_LOOK.radius, 9);
     expect(shadow.position.x).toBeCloseTo(ball.position.x, 9);
     expect(shadow.position.z).toBeCloseTo(ball.position.z, 9);
     expect(shadow.position.y).toBeLessThan(0.01);
