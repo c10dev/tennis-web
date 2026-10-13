@@ -207,7 +207,10 @@ export const QUICK_PLAN = {
 
 /** Opponent personas, tells and rival memory. */
 export const QUICK_PERSONA = {
+  /** Chance the tell points at the card the opponent really plays. */
   tellAccuracy: 0.7,
+  /** Chance the opponent plays its habit card when its habit applies (the rest follows its style mix). */
+  habitShare: 0.68,
 } as const;
 
 /** The result screen's rewards. */

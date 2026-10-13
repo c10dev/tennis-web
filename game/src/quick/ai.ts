@@ -1,7 +1,9 @@
 // The quick-match card AI (ADR-016): readable but not predictable. It plays its style's habits, leans towards the
 // card that beats the user's recent habit, and never plays one card more than QUICK_AI.maxShare of the time.
-import type { Card, PlayStyle, Rng } from '@tennis/engine';
-import { QUICK_AI } from '../tuning.ts';
+import { createRng, type Card, type PlayStyle, type Rng } from '@tennis/engine';
+import { QUICK_AI, QUICK_PERSONA } from '../tuning.ts';
+import { habitCard } from './persona.ts';
+import { drawTell } from './tells.ts';
 import type { AiDecision, DecisionContext } from './types.ts';
 
 export const CARDS: readonly Card[] = ['attack', 'defend', 'counter'];
@@ -65,19 +67,29 @@ export function cardEntropy(cards: readonly Card[]): number {
   return h + 0;
 }
 
-/** The AI's chances at a decision point (ADR-017). For now: the style mix, read against the user's decision cards. */
+/** The AI's chances at a decision point (ADR-017): its habit card `habitShare` of the time when its habit applies,
+ *  the rest in its style mix's proportions; otherwise the style mix, read against the user's decision cards. */
 export function decisionOdds(ctx: Omit<DecisionContext, 'rng'>): [number, number, number] {
   const last = ctx.decisions.at(-1);
-  return cardOdds({ style: ctx.style, role: ctx.role, history: ctx.decisions.map((d) => d.user), fatigue: ctx.fatigue, ...(last ? { lastOwn: last.own } : {}) });
+  const mix = cardOdds({ style: ctx.style, role: ctx.role, history: ctx.decisions.map((d) => d.user), fatigue: ctx.fatigue, ...(last ? { lastOwn: last.own } : {}) });
+  const habit = habitCard(ctx);
+  if (!habit) return mix;
+  const h = CARDS.indexOf(habit);
+  const rest = 1 - mix[h]!;
+  return mix.map((x, i) => (i === h ? QUICK_PERSONA.habitShare : ((1 - QUICK_PERSONA.habitShare) * x) / rest)) as [number, number, number];
 }
 
-/** The AI's card at a decision point and the tell the user sees. For now: no tell. */
+/** The AI's card at a decision point, then the tell the user sees, from a stream of its own seeded after the card. */
 export function aiDecision(ctx: DecisionContext): AiDecision {
   const p = decisionOdds(ctx);
   let r = ctx.rng.next();
+  let card = CARDS[2]!;
   for (let i = 0; i < 3; i++) {
     r -= p[i]!;
-    if (r < 0) return { card: CARDS[i]!, tell: null };
+    if (r < 0) {
+      card = CARDS[i]!;
+      break;
+    }
   }
-  return { card: CARDS[2]!, tell: null };
+  return { card, tell: drawTell(card, ctx.persona.tellAccuracy, createRng(Math.floor(ctx.rng.next() * 2 ** 32))) };
 }
