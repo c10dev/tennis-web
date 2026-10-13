@@ -30,9 +30,12 @@ ul.recent .lost { color: var(--loss); }
 .sound-pill { position: fixed; top: 12px; right: 16px; z-index: 40; display: inline-flex; align-items: center; gap: 6px;
   padding: 5px 12px; font-size: 14px; border-radius: 999px; }
 .sound-pill .icon { flex: none; }
+/* Room for the pill at the header's right end, where a career's week and rank sit. */
+body:has(.sound-pill) header.top { padding-right: 150px; }
 @media (max-width: 640px) {
   .plan-btn { min-width: 0; padding: 7px 4px; }
   .sound-pill { padding: 6px 8px; }
+  body:has(.sound-pill) header.top { padding-right: 64px; }
   .sound-pill .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .quick-start .style-blurb { margin: 4px 0 8px; font-size: 14px; }

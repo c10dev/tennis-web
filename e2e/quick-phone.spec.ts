@@ -21,8 +21,9 @@ test.describe('quick screens on a phone', () => {
   test('keeps the sound toggle clear of the header links', async ({ page }) => {
     await startLadder(page, 3);
     expect(overlaps(await box(page.locator('#sound-toggle')), await box(page.locator('#nav-quick')))).toBe(false);
-    // Narrow screens show the icon only; the name stays for screen readers.
-    await expect(page.locator('#sound-toggle')).toHaveAccessibleName(/Sound on/);
+    // Narrow screens show the icon only; the name stays for screen readers, the state is aria-pressed.
+    await expect(page.locator('#sound-toggle')).toHaveAccessibleName('Sound');
+    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'true');
     const header = await box(page.locator('header.top'));
     const pill = await box(page.locator('#sound-toggle'));
     expect(pill.y + pill.height).toBeLessThanOrEqual(header.y + header.height);
