@@ -37,7 +37,8 @@ export function quickResult(ctx: Ctx): Screen {
     h('ol', { id: 'play-by-play', class: ctx.fastMode ? '' : 'compact' }, lines),
     h('p', { id: 'decisive-line', class: v.decisive.won ? 'you' : 'them' }, v.decisive.line));
   const count = h('strong', { 'aria-hidden': 'true' }, signed(v.delta));
-  const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`));
+  const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`),
+    v.promotedTo ? h('p', { class: 'promoted', id: 'promoted' }, h('strong', null, `Promoted to Division ${v.promotedTo}`)) : null);
   const gains = step('gains', 'gains',
     h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
     h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} `, glyph('arrow-right', '→'), ` #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),

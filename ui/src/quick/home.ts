@@ -23,7 +23,7 @@ export function quickHome(ctx: Ctx): Screen {
   if (!ctx.fastMode) prefetch3d();
   const element = h('section', { class: 'quick-home' },
     h('div', { class: 'card rank-card', id: 'ladder' },
-      h('div', { class: 'rank' }, h('span', { class: 'muted' }, v.name), h('span', { class: 'rank-badge' }, icon('trophy', 36), h('strong', { id: 'quick-rank' }, `#${v.rank}`))),
+      h('div', { class: 'rank' }, h('span', { class: 'muted' }, v.name, h('span', { class: 'division', id: 'division' }, ` · Division ${v.division}`)), h('span', { class: 'rank-badge' }, icon('trophy', 36), h('strong', { id: 'quick-rank' }, `#${v.rank}`))),
       h('div', { class: 'to-next' },
         h('div', { class: 'bar' }, h('span', { class: 'fill', style: `width:${Math.round(v.progress * 100)}%` })),
         h('span', { class: 'muted', id: 'to-next' }, v.rank === 1 ? 'Top of the ladder' : `${v.toNext} pts to #${v.rank - 1}`),

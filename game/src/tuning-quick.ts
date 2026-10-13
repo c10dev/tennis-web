@@ -117,3 +117,7 @@ export const QUICK_REWARD = {
    *  goal locks in lockSec after it shows. */
   reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 1, replaySpeed: 1.25, staggerSec: 0.12, tickSec: 0.25, lockSec: 0.2 },
 } as const;
+
+/** Divisions (proposal P5, option A): a match that ends in the top `promoteTop`, once the division has had
+ *  `minMatches`, moves the user up to a new world whose AI levels sit `levelStep` higher per division. */
+export const QUICK_DIVISION = { promoteTop: 8, minMatches: 10, levelStep: 1 } as const;

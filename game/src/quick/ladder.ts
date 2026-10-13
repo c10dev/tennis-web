@@ -6,7 +6,7 @@ import { overall } from '../player/overall.ts';
 import { adjust } from '../player/week.ts';
 import { rankingOrder } from '../ranking.ts';
 import { pick, stream, streamSeed } from '../rng.ts';
-import { QUICK, TIEBREAK_RULES, type Rated } from '../tuning.ts';
+import { QUICK, QUICK_DIVISION, TIEBREAK_RULES, type Rated } from '../tuning.ts';
 import { profileOf } from '../player/profile.ts';
 import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
@@ -33,6 +33,10 @@ export interface QuickRecord {
   decisions?: DecisionRecord[];
   /** Players the user passed this match, the first passed first; absent in M5 records. */
   overtakes?: Overtake[];
+  /** The opponent's name, kept because a promotion replaces the world (proposal P5); absent in older records. */
+  opponentName?: string;
+  /** The division this match promoted the user to, if it did (proposal P5). */
+  promotedTo?: number;
 }
 
 export interface QuickState {
@@ -46,13 +50,29 @@ export interface QuickState {
   /** A match left in the middle: its plan and the cards chosen so far, enough to rebuild it exactly (leaving must not
    *  dodge a loss). Absent between matches and in older saves. */
   live?: { plan: GamePlan; cards: Card[] };
+  /** The division (proposal P5): absent means the first, and the match number it began at (absent: 0). */
+  division?: number;
+  divisionStart?: number;
+}
+
+/** Starting ladder points: the strongest first, falling away exponentially. */
+function startPoints(world: World): Record<string, number> {
+  const order = rankingOrder(world.players.map((p) => ({ id: p.id, points: 0, level: overall(p) })));
+  return Object.fromEntries(order.map((id, i) => [id, Math.round(QUICK.startTop * Math.exp(-i / QUICK.startScale))]));
 }
 
 export function newLadder(seed: number, user: CareerPlayer): QuickState {
   const world = generateWorld(seed, user);
-  const order = rankingOrder(world.players.map((p) => ({ id: p.id, points: 0, level: overall(p) })));
-  const points = Object.fromEntries(order.map((id, i) => [id, Math.round(QUICK.startTop * Math.exp(-i / QUICK.startScale))]));
-  return { seed, matchNo: 0, world, points, history: [], rivals: {} };
+  return { seed, matchNo: 0, world, points: startPoints(world), history: [], rivals: {} };
+}
+
+/** Moves the user up a division (proposal P5): a new, stronger world from the ladder's seed; the user, their ratings
+ *  and the history come along, rivals start over. */
+export function promote(s: QuickState): QuickState {
+  const division = (s.division ?? 1) + 1;
+  const user = s.world.players.find((p) => p.id === USER_ID)!;
+  const world = generateWorld(streamSeed(s.seed, 'division', division), user, { shift: QUICK_DIVISION.levelStep * (division - 1), idPrefix: `d${division}` });
+  return { ...s, world, points: startPoints(world), rivals: {}, division, divisionStart: s.matchNo };
 }
 
 const levelOf = (s: QuickState) => new Map(s.world.players.map((p) => [p.id, overall(p)]));
@@ -110,11 +130,15 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
     matchNo: s.matchNo, opponent: m.opponent, opponentRank, won, score, pointsDelta, rankBefore, rankAfter: rankOf(next),
     fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
     decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })), overtakes: overtakesBetween(ladderOrder(s), ladderOrder(next), next),
+    opponentName: s.world.players.find((p) => p.id === m.opponent)!.name,
   };
   const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
   const done: QuickState = { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
   delete done.live;
-  return done;
+  const promotes = record.rankAfter <= QUICK_DIVISION.promoteTop && done.matchNo - (s.divisionStart ?? 0) >= QUICK_DIVISION.minMatches;
+  if (!promotes) return done;
+  record.promotedTo = (s.division ?? 1) + 1;
+  return promote(done);
 }
 
 /** "7-5" for a one-tiebreak match (the user first), set scores for anything else. */

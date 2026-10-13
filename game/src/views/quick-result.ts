@@ -33,7 +33,7 @@ export function quickResultView(s: QuickState) {
     return { key: p.key, label: RATING_LABEL[p.key] ?? p.key, before, after, rose, fill: share(p.after, after), fillBefore: rose ? 0 : share(p.before, before) };
   }).sort((x, y) => Number(y.rose) - Number(x.rose));
   return {
-    won: r.won, headline: `${r.won ? 'You won' : 'You lost'} ${r.score}`, opponent: playerName(s, r.opponent), delta: r.pointsDelta,
+    won: r.won, headline: `${r.won ? 'You won' : 'You lost'} ${r.score}`, opponent: r.opponentName ?? playerName(s, r.opponent), delta: r.pointsDelta, promotedTo: r.promotedTo ?? null,
     rankBefore: r.rankBefore, rankAfter: r.rankAfter, toNext: pointsToNext(s), points: s.points[USER_ID]!,
     decisive, playByPlay: playByPlay(point, decisive), overtakes: r.overtakes ?? [], ratings, goal,
     goalLine: goal.winsNeeded === 0 ? goal.label : `${goal.winsNeeded} ${goal.winsNeeded === 1 ? 'win' : 'wins'} to ${goal.label}`,

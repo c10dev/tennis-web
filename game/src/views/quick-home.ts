@@ -20,6 +20,7 @@ export function quickHomeView(s: QuickState) {
       id: oppId, name: opp.name, rank: rankOf(s, oppId), style: STYLE_LABEL[opp.style], level: Math.round(overall(opp) * 10) / 10,
       surface: SURFACE_LABEL[QUICK.surfaces[s.matchNo % QUICK.surfaces.length]!],
     },
-    recent: s.history.slice(-5).reverse().map((r) => ({ won: r.won, opponent: playerName(s, r.opponent), score: r.score, delta: r.pointsDelta })),
+    recent: s.history.slice(-5).reverse().map((r) => ({ won: r.won, opponent: r.opponentName ?? playerName(s, r.opponent), score: r.score, delta: r.pointsDelta })),
+    division: s.division ?? 1,
   };
 }
