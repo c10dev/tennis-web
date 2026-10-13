@@ -130,7 +130,8 @@ export function replayMatch(recipe: MatchRecipe): MatchResult {
   const live = startMatch(recipe.config, recipe.seed);
   let sets = 0;
   while (!isOver(live)) {
-    for (const c of recipe.tacticChanges) if (c.afterSet === sets && sets > 0) setTactic(live, c.player, c.tactic);
+    // Only while the match waits between sets: point by point (cards), `sets` stays the same for the whole next set.
+    if (live.state.betweenSets) for (const c of recipe.tacticChanges) if (c.afterSet === sets && sets > 0) setTactic(live, c.player, c.tactic);
     if (recipe.cards) {
       const cards = recipe.cards[live.state.points.length];
       advance(live, 'point', cards ? { cards } : {});

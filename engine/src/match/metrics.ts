@@ -33,7 +33,10 @@ export function matchMetrics(result: MatchResult, server?: PlayerId): Metrics {
   m.winsA = result.winner === 'A' ? 1 : 0;
   let lastServer: PlayerId = result.config.firstServer;
   let inTiebreak = false;
+  let tiebreakSets = 0;
   for (const e of result.events) {
+    // A set decided in a tiebreak: its last point was played in one (7-6, Fast4's 4-3, every one-tiebreak set).
+    if (e.type === 'set_end' && inTiebreak) tiebreakSets += 1;
     if (e.type === 'point') {
       lastServer = e.server;
       inTiebreak = e.scoreBefore.tiebreak;
@@ -56,7 +59,7 @@ export function matchMetrics(result: MatchResult, server?: PlayerId): Metrics {
       if (!e.isBreak) m.holds += 1;
     } else if (e.type === 'match_end') {
       m.sets = e.score.sets.length;
-      m.tiebreakSets = e.score.sets.filter(([a, b]) => a + b === 13).length;
+      m.tiebreakSets = tiebreakSets;
     }
   }
   return m;
