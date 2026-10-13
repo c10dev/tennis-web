@@ -30,7 +30,7 @@ export { historyView, tournamentView, type MatchRow } from './views/tournament.t
 export { QUICK_PACE, QUICK_REWARD } from './tuning.ts';
 export { aiCard, aiDecision, BEATEN_BY, CARDS, cardEntropy, cardOdds, decisionOdds, type CardContext } from './quick/ai.ts';
 export { finalScore, finishQuick, ladderOrder, newLadder, nextOpponent, pointsToNext, rankOf, type QuickRecord, type QuickState } from './quick/ladder.ts';
-export { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, userRole, type QuickMatch, type QuickMatchInit } from './quick/match.ts';
+export { autoPlay, createQuickMatch, decide, decisionContext, matchOver, resumeQuick, startQuick, userRole, withLive, type QuickMatch, type QuickMatchInit } from './quick/match.ts';
 export { isDecisionPoint } from './quick/moments.ts';
 export { habitCard, HABITS, personaOf } from './quick/persona.ts';
 export { recordRival, type Meeting } from './quick/rivals.ts';

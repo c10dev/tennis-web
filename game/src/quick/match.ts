@@ -99,3 +99,22 @@ export function decide(m: QuickMatch, card: Card): { cards: PointCards; point: P
   m.pending = null;
   return { cards, point };
 }
+
+/** The ladder noting the match in progress (its plan and the cards chosen so far), saved after each decision. */
+export function withLive(s: QuickState, m: QuickMatch): QuickState {
+  return { ...s, live: { plan: m.plan, cards: m.decisions.map((d) => d.user) } };
+}
+
+/** The match left in the middle, rebuilt exactly from the ladder's note and played on to its next decision; null when
+ *  there is none. Matches are deterministic, so the same cards give the same match. */
+export function resumeQuick(s: QuickState): QuickMatch | null {
+  if (!s.live) return null;
+  const m = startQuick(s, s.live.plan);
+  for (const card of s.live.cards) {
+    autoPlay(m);
+    if (matchOver(m)) return m;
+    decide(m, card);
+  }
+  autoPlay(m);
+  return m;
+}

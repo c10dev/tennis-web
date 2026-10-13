@@ -20,6 +20,8 @@ export interface Ctx {
   fastMode: boolean;
   /** Replace the ladder, save it, and go to `path`. */
   setQuick(state: QuickState, path?: string): Promise<void>;
+  /** Replace the ladder and save it quietly, without redrawing (a match noting its progress). */
+  keepQuick(state: QuickState): void;
   /** One-line message for the next screen ("Week 4: trained serve"). */
   readonly note: string | null;
   /** The tactic the user set for their next match. */

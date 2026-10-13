@@ -74,6 +74,10 @@ const ctx: Ctx = {
     if (path) go(path);
     else void render();
   },
+  keepQuick(next) {
+    quick = next;
+    ctx.store.saveQuick(toQuickSave(next, stamp())).catch((e: Error) => console.warn(`Quick ladder not saved: ${e.message}`));
+  },
   tactic: { ...DEFAULT_TACTIC },
   go,
   redirect: replace,

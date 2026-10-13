@@ -4,8 +4,8 @@
 import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
-  autoPlay, CARD_LABEL, cardChoices, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
-  tickerView, type QuickMatch,
+  autoPlay, CARD_LABEL, cardChoices, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, resumeQuick, revealView,
+  scoreLine, tickerView, withLive, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { announce } from '../lib/announce.ts';
@@ -25,11 +25,15 @@ const pipRow = (m: QuickMatch, p: PointEvent | undefined, popNew = false) => h('
 const lastPoint = (m: QuickMatch) => m.live.events.findLast((e): e is PointEvent => e.type === 'point');
 
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
-  const qm = ctx.quickMatch;
+  // The match in memory, or the one left in the middle and saved (a reload), rebuilt exactly.
+  const qm = ctx.quickMatch ?? (ctx.quick ? resumeQuick(ctx.quick) : null);
   if (!qm || matchOver(qm)) {
     ctx.redirect('#/quick');
     return { element: h('div') };
   }
+  ctx.quickMatch = qm;
+  // Note the match in the ladder, so Back or a reload resumes it instead of dodging its result.
+  ctx.keepQuick(withLive(ctx.quick!, qm));
   const stage = h('div');
   // Focusable, so a decision can move focus here: the next Tab lands on the first card (keys 1/2/3 work anywhere).
   const panel = h('div', { class: 'quick-panel', id: 'quick-panel', tabindex: -1 });
@@ -114,6 +118,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     busy = true;
     choosing = false;
     const { cards, point } = decide(qm!, card);
+    ctx.keepQuick(withLive(ctx.quick!, qm!));
     const r = revealView(cards, point);
     stopDeals();
     retireHint();

@@ -1,6 +1,6 @@
 // The quick-match ladder (ADR-016): 64 players by points, the next opponent just above, points for every win,
 // AI matches in the background so the ladder never stands still.
-import { createConfig, finish, fingerprint, simulateMatch, type MatchRecipe, type MatchResult, type PointEvent, type Surface } from '@tennis/engine';
+import { createConfig, finish, fingerprint, simulateMatch, type Card, type MatchRecipe, type MatchResult, type PointEvent, type Surface } from '@tennis/engine';
 import { USER_ID } from '../player/create.ts';
 import { overall } from '../player/overall.ts';
 import { adjust } from '../player/week.ts';
@@ -14,7 +14,7 @@ import type { QuickMatch } from './match.ts';
 import { matchReward } from './rewards.ts';
 import { overtakesBetween } from './overtakes.ts';
 import { recordRival } from './rivals.ts';
-import type { DecisionRecord, Overtake, RivalRecord } from './types.ts';
+import type { DecisionRecord, GamePlan, Overtake, RivalRecord } from './types.ts';
 
 export interface QuickRecord {
   matchNo: number;
@@ -43,6 +43,9 @@ export interface QuickState {
   history: QuickRecord[];
   /** What the user has seen of each opponent met so far (ADR-017, quick save v2). */
   rivals: Record<string, RivalRecord>;
+  /** A match left in the middle: its plan and the cards chosen so far, enough to rebuild it exactly (leaving must not
+   *  dodge a loss). Absent between matches and in older saves. */
+  live?: { plan: GamePlan; cards: Card[] };
 }
 
 export function newLadder(seed: number, user: CareerPlayer): QuickState {
@@ -109,7 +112,9 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
     decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })), overtakes: overtakesBetween(ladderOrder(s), ladderOrder(next), next),
   };
   const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
-  return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
+  const done: QuickState = { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
+  delete done.live;
+  return done;
 }
 
 /** "7-5" for a one-tiebreak match (the user first), set scores for anything else. */

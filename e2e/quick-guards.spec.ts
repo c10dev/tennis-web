@@ -75,5 +75,30 @@ test.describe('quick flow guards', () => {
     await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
     expect(await page.evaluate(() => document.querySelector('#quick-result')!.classList.contains('is-skipped'))).toBe(false);
   });
+
+  test('resumes a match left in the middle, after Back or a reload, so leaving cannot dodge a loss', async ({ page }) => {
+    const errors = watchErrors(page);
+    await startLadder(page, 2);
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    await page.keyboard.press('Digit1');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions)).toBe('1');
+    await page.goBack();
+    await expect(page.locator('#quick-play')).toHaveText('Resume match');
+    await page.reload();
+    await expect(page.locator('#quick-play')).toHaveText('Resume match');
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions), { timeout: 30_000 }).toBe('1');
+    let i = 1;
+    while (!page.url().includes('#/quick/result')) {
+      if (await page.evaluate(() => document.body.dataset.quickPhase === 'choose')) await page.keyboard.press(`Digit${i++ % 3 + 1}`);
+      await page.waitForTimeout(40);
+    }
+    await page.locator('#to-ladder').click();
+    await expect(page.locator('#quick-play')).toHaveText('Play');
+    await expect(page.locator('#recent li')).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
 });
 

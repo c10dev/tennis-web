@@ -1,5 +1,5 @@
 // The ladder: where you stand, how far the next place is, who is next. One button to play.
-import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, startQuick, STYLE_BLURB, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
+import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, resumeQuick, startQuick, STYLE_BLURB, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { icon } from '../lib/icons.ts';
@@ -12,8 +12,10 @@ export function quickHome(ctx: Ctx): Screen {
   const v = quickHomeView(ctx.quick);
   const picker = planPicker();
   const scout = opponentScouting(ctx.quick, v.opponent.id);
+  // A match left in the middle resumes (its own plan); otherwise a new one starts on the picked plan.
+  const resuming = !!ctx.quick.live;
   const play = () => {
-    ctx.quickMatch = startQuick(ctx.quick!, picker.plan());
+    ctx.quickMatch = resuming ? resumeQuick(ctx.quick!) : startQuick(ctx.quick!, picker.plan());
     ctx.go('#/quick/match');
   };
   const fast = h('input', { type: 'checkbox', id: 'fast-mode', checked: ctx.fastMode, onchange: (e: Event) => { ctx.fastMode = (e.target as HTMLInputElement).checked; } });
@@ -33,7 +35,7 @@ export function quickHome(ctx: Ctx): Screen {
       h('p', { class: 'scouting', id: 'home-scouting' }, icon('eye', 18), h('span', { class: 'muted' }, 'Scouting: '), scout.habit),
       scout.rival ? h('p', { class: 'rival', id: 'home-rival' }, scout.rival) : null,
       picker.element,
-      h('button', { class: 'primary big', id: 'quick-play', onclick: play }, 'Play'),
+      h('button', { class: 'primary big', id: 'quick-play', onclick: play }, resuming ? 'Resume match' : 'Play'),
       h('label', { class: 'muted fast' }, fast, ' Fast mode (no 3D)')),
     v.recent.length ? h('div', { class: 'card' }, h('h3', null, 'Recent'),
       h('ul', { class: 'recent', id: 'recent' }, v.recent.map((r) => h('li', { class: r.won ? 'won' : 'lost' },
