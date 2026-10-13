@@ -74,10 +74,13 @@ one the player can see at once.
 
 **Options.**
 - **A. A fixed first opponent (recommended).** The first ladder match is always against a `big_point_attack` persona.
-  At each decision the tip names what the habit predicts ("They attack at match point; Defend beats Attack"). It is
+  At each decision the tip names what the habit predicts ("Their habit says attack here: Counter beats Attack"). It is
   shown for that match only. The match is still played and still counts.
 - **B. A separate tutorial match** before the ladder, with scripted points. More control, more code, and it delays the
   first real match.
 - **C. Keep the tip as it is.**
 
 **Default:** A.
+
+**Built for review** on the local branch `proposal/p4-guided-first-match` (not merged): a fixed first-opponent habit
+(`QuickState.tutor`, optional), the prediction at every decision of match one, tests and refreshed baselines.
