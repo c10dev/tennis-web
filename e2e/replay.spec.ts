@@ -144,6 +144,16 @@ test.describe('replay page', () => {
     await expect(page.locator('.sound-toggle')).toContainText('Sound on');
   });
 
+  test('names its controls and score for screen readers', async ({ page }) => {
+    await open(page, '/?seed=42&surface=clay');
+    for (const name of ['Previous point', 'Play', 'Next point']) await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Match time' })).toHaveAttribute('aria-valuetext', /^\d+:\d\d \/ \d+:\d\d$/);
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Score' })).toBeVisible();
+    await expect(page.getByRole('table', { name: 'Score' })).toContainText('serving');
+  });
+
   test('turns sound on and plays with it without errors', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '/?seed=42&surface=clay');

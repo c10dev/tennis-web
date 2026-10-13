@@ -13,11 +13,13 @@ const clockText = (sec: number) => {
   return (hms[0] ? `${hms[0]}:${String(hms[1]).padStart(2, '0')}` : String(hms[1])) + `:${String(hms[2]).padStart(2, '0')}`;
 };
 
-function button(label: string, title: string, onClick: () => void): HTMLButtonElement {
+/** `name` is the accessible name for a button whose label is a symbol (⏮ ▶ ⏭). */
+function button(label: string, title: string, onClick: () => void, name?: string): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button';
   b.textContent = label;
   b.title = title;
+  if (name) b.setAttribute('aria-label', name);
   b.addEventListener('click', onClick);
   return b;
 }
@@ -25,10 +27,11 @@ function button(label: string, title: string, onClick: () => void): HTMLButtonEl
 const MODES: [ViewMode, string][] = [['full', 'Full'], ['key', 'Key points'], ['highlights', 'Highlights'], ['result', 'Result']];
 
 export function createControls(root: HTMLElement, dispatch: (action: ClockAction) => void, onMode: (mode: ViewMode) => void): Controls {
-  const play = button('▶', 'Play / pause (Space)', () => dispatch({ type: 'toggle' }));
+  const play = button('▶', 'Play / pause (Space)', () => dispatch({ type: 'toggle' }), 'Play');
   const seek = document.createElement('input');
   seek.type = 'range';
   seek.className = 'seek';
+  seek.setAttribute('aria-label', 'Match time');
   seek.min = '0';
   seek.step = '0.1';
   let dragging = false;
@@ -54,8 +57,8 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
   modeGroup.className = 'modes';
   modeGroup.append(...modes);
   root.append(
-    button('⏮', 'Previous point (←)', () => dispatch({ type: 'prevPoint' })), play,
-    button('⏭', 'Next point (→)', () => dispatch({ type: 'nextPoint' })), seek, time, point, ...speeds, modeGroup,
+    button('⏮', 'Previous point (←)', () => dispatch({ type: 'prevPoint' }), 'Previous point'), play,
+    button('⏭', 'Next point (→)', () => dispatch({ type: 'nextPoint' }), 'Next point'), seek, time, point, ...speeds, modeGroup,
   );
   const onKey = (e: KeyboardEvent) => {
     // Only from the page itself, the canvas or the seek bar: Space on a focused button presses it, arrows move a slider.
@@ -87,8 +90,13 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
     },
     update(clock, frame) {
       play.textContent = clock.playing ? '❚❚' : '▶';
+      play.setAttribute('aria-label', clock.playing ? 'Pause' : 'Play');
       if (!dragging) seek.value = String(clock.t);
-      time.textContent = `${clockText(clock.t)} / ${clockText(total)}`;
+      const text = `${clockText(clock.t)} / ${clockText(total)}`;
+      if (time.textContent !== text) {
+        time.textContent = text;
+        seek.setAttribute('aria-valuetext', text);
+      }
       point.textContent = `Point ${frame.pointIndex + 1}/${points}`;
       for (const b of speeds) b.classList.toggle('active', Number(b.dataset.speed) === clock.speed);
     },
