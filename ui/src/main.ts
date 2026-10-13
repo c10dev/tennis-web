@@ -2,8 +2,7 @@
 import { exhibitionConfig, fingerprint, simulateMatch, type MatchResult, type Surface } from '@tennis/engine';
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, overlayAt,
-  type ClockAction, type ClockState,
-  type Programme, type Viewer,
+  programmeTimeFor, type ClockAction, type ClockState, type Programme, type Viewer, type ViewMode,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createPanel } from './panel.ts';
@@ -17,6 +16,8 @@ const canvas = el('view') as HTMLCanvasElement;
 const params = new URLSearchParams(location.search);
 const surface: Surface = (['hard', 'clay', 'grass'] as const).find((s) => s === params.get('surface')) ?? 'hard';
 const seed = Number.parseInt(params.get('seed') ?? '42', 10) >>> 0;
+const MODES: ViewMode[] = ['full', 'key', 'highlights', 'result'];
+let mode: ViewMode = MODES.find((m) => m === params.get('mode')) ?? 'full';
 
 let session: Session | null = null;
 const scoreBug = createScoreBug();
@@ -26,7 +27,15 @@ el('graphics').append(overlays.element);
 const dispatch = (action: ClockAction) => {
   if (session) session.clock = clockReducer(session.programme, session.clock, action);
 };
-const controls = createControls(el('controls'), dispatch);
+const controls = createControls(el('controls'), dispatch, (next) => {
+  mode = next;
+  if (!session) return;
+  // Keep the place: the new programme starts at (or just after) the match moment on screen now.
+  const matchT = broadcastFrameAt(session.programme, session.clock.t).matchT;
+  session.programme = buildProgramme(session.programme.timeline, mode);
+  session.clock = { ...session.clock, t: programmeTimeFor(session.programme, matchT) };
+  controls.setProgramme(session.programme);
+});
 const sound = createSound(el('sound'));
 const panel = createPanel(el('panel'), { seed, surface }, (json, name) => start(json as MatchResult, name), () => session?.result ?? null);
 
@@ -41,7 +50,7 @@ function start(result: MatchResult, source: string): void {
   session?.viewer.dispose();
   const viewer = createViewer(canvas, timeline);
   viewer.resize(canvas.clientWidth, canvas.clientHeight);
-  const programme = buildProgramme(timeline, 'full');
+  const programme = buildProgramme(timeline, mode);
   session = { result, programme, viewer, clock: createClock() };
   controls.setProgramme(programme);
   const [a, b] = timeline.names;

@@ -91,3 +91,5 @@ button:hover { background: #36425a; }
 #sound label { display: flex; gap: 8px; align-items: center; justify-content: flex-end; color: var(--muted); }
 #sound input[type='range'] { width: 110px; padding: 0; }
 @media (max-width: 640px) { #sound { top: auto; bottom: 230px; } }
+#controls .modes { display: flex; gap: 4px; margin-left: auto; }
+#controls .mode.active { background: #e8ecf3; color: #10141c; border-color: #e8ecf3; }

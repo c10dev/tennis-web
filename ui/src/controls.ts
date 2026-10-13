@@ -1,5 +1,5 @@
 // Transport bar: play/pause, previous/next point, seek bar, speeds, time and point readout, keyboard shortcuts.
-import { PLAYBACK, type ClockAction, type ClockState, type Frame, type Programme } from '@tennis/renderer';
+import { PLAYBACK, type ClockAction, type ClockState, type Frame, type Programme, type ViewMode } from '@tennis/renderer';
 
 export interface Controls {
   setProgramme(programme: Programme): void;
@@ -21,7 +21,9 @@ function button(label: string, title: string, onClick: () => void): HTMLButtonEl
   return b;
 }
 
-export function createControls(root: HTMLElement, dispatch: (action: ClockAction) => void): Controls {
+const MODES: [ViewMode, string][] = [['full', 'Full'], ['key', 'Key points'], ['highlights', 'Highlights'], ['result', 'Result']];
+
+export function createControls(root: HTMLElement, dispatch: (action: ClockAction) => void, onMode: (mode: ViewMode) => void): Controls {
   const play = button('▶', 'Play / pause (Space)', () => dispatch({ type: 'toggle' }));
   const seek = document.createElement('input');
   seek.type = 'range';
@@ -42,9 +44,18 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
     b.dataset.speed = String(speed);
     return b;
   });
+  const modes = MODES.map(([mode, label]) => {
+    const b = button(label, `Viewing mode: ${label}`, () => onMode(mode));
+    b.className = 'mode';
+    b.dataset.mode = mode;
+    return b;
+  });
+  const modeGroup = document.createElement('div');
+  modeGroup.className = 'modes';
+  modeGroup.append(...modes);
   root.append(
     button('⏮', 'Previous point (←)', () => dispatch({ type: 'prevPoint' })), play,
-    button('⏭', 'Next point (→)', () => dispatch({ type: 'nextPoint' })), seek, time, point, ...speeds,
+    button('⏭', 'Next point (→)', () => dispatch({ type: 'nextPoint' })), seek, time, point, ...speeds, modeGroup,
   );
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement && e.target.type !== 'range') return;
@@ -57,10 +68,13 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
 
   let total = 0;
   let points = 0;
+  let current: ViewMode = 'full';
   return {
     setProgramme(programme) {
       total = programme.totalSec;
       points = programme.timeline.segments.length;
+      current = programme.mode;
+      for (const b of modes) b.classList.toggle('active', b.dataset.mode === current);
       seek.max = String(total);
     },
     update(clock, frame) {
