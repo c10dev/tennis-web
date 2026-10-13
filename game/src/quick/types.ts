@@ -36,6 +36,8 @@ export interface RivalRecord {
   losses: number;
   /** The opponent's cards at big points in earlier meetings, oldest first. */
   seen: Card[];
+  /** The user's cards at those big points, oldest first: what the opponent remembers (proposal P2). Older saves have none. */
+  yours?: Card[];
 }
 
 /** Everything the AI weighs at a decision. Roles and scores are from the AI's (B's) side. */

@@ -111,7 +111,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
     fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
     decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })), overtakes: overtakesBetween(ladderOrder(s), ladderOrder(next), next),
   };
-  const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
+  const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai), userCards: m.decisions.map((d) => d.user) });
   const done: QuickState = { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
   delete done.live;
   return done;

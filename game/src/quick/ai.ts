@@ -64,7 +64,9 @@ export function cardEntropy(cards: readonly Card[]): number {
 /** The AI's chances at a decision point (ADR-017): its habit card `habitShare` of the time when its habit applies,
  *  the rest in its style mix's proportions; otherwise the style mix, read against the user's decision cards. */
 export function decisionOdds(ctx: Omit<DecisionContext, 'rng'>): [number, number, number] {
-  const mix = cardOdds({ style: ctx.style, role: ctx.role, history: ctx.decisions.map((d) => d.user), fatigue: ctx.fatigue });
+  // A rival also remembers the cards the user played against it before (proposal P2), oldest first.
+  const history = [...(ctx.rival?.yours ?? []), ...ctx.decisions.map((d) => d.user)];
+  const mix = cardOdds({ style: ctx.style, role: ctx.role, history, fatigue: ctx.fatigue });
   const habit = habitCard(ctx);
   if (!habit) return mix;
   const h = CARDS.indexOf(habit);

@@ -23,13 +23,23 @@ export const habitLine = (name: string, habit: Habit): string => `${name.split('
 
 const scoutingLine = (name: string, style: PlayStyle, habit: Habit) => `${name} · ${STYLE_LABEL[style]} — ${habitLine(name, habit)}`;
 
+const PLURAL: Record<Card, string> = { attack: 'attacks', defend: 'defends', counter: 'counters' };
+
+/** "; remembers your counters" once the user has leaned on one card against this rival (proposal P2). */
+function memoryClause(r: RivalRecord): string {
+  const yours = r.yours ?? [];
+  if (yours.length < 3) return '';
+  const top = (['attack', 'defend', 'counter'] as const).map((c) => [c, yours.filter((x) => x === c).length] as const).reduce((a, b) => (b[1] > a[1] ? b : a));
+  return top[1] / yours.length >= 0.5 ? `; remembers your ${PLURAL[top[0]]}` : '';
+}
+
 /** "Head to head 2-1 to you; they attacked 3 of 4 big points". */
 export function rivalLine(r: RivalRecord): string {
   const h2h = `Head to head ${r.wins}-${r.losses}${r.wins === r.losses ? '' : r.wins > r.losses ? ' to you' : ' to them'}`;
   if (!r.seen.length) return h2h;
   const counts = (['attack', 'defend', 'counter'] as const).map((c) => [c, r.seen.filter((x) => x === c).length] as const);
   const [card, n] = counts.reduce((a, b) => (b[1] > a[1] ? b : a));
-  return `${h2h}; they ${PLAYED[card]} ${n} of ${r.seen.length} big point${r.seen.length === 1 ? '' : 's'}`;
+  return `${h2h}; they ${PLAYED[card]} ${n} of ${r.seen.length} big point${r.seen.length === 1 ? '' : 's'}${memoryClause(r)}`;
 }
 
 export function opponentRead(m: QuickMatch): OpponentRead {
