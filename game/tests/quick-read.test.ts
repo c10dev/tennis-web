@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRng, type Card } from '@tennis/engine';
 import { aiDecision, CARDS, cardOdds, decisionOdds } from '../src/quick/ai.ts';
+import { habitBot, scoutBot, type BotView } from '../src/quick/bots.ts';
 import { habitCard, HABITS, personaOf } from '../src/quick/persona.ts';
 import { TELL_TEXTS } from '../src/quick/tells.ts';
 import { QUICK_PERSONA } from '../src/tuning.ts';
@@ -24,18 +25,20 @@ describe('habitCard', () => {
     expect(habitCard(at('counter_after_loss', { lastPointWinner: 'user' }))).toBe('counter');
     expect(habitCard(at('counter_after_loss', { lastPointWinner: 'ai' }))).toBeNull();
 
-    expect(habitCard(at('repeat_winner', { decisions: [won] }))).toBe('counter');
-    expect(habitCard(at('repeat_winner', { decisions: [lost] }))).toBeNull();
-    expect(habitCard(at('repeat_winner'))).toBeNull();
+    expect(habitCard(at('repeat_card', { decisions: [lost, won] }))).toBe('counter');
+    expect(habitCard(at('repeat_card', { decisions: [won, lost] }))).toBe('attack');
+    expect(habitCard(at('repeat_card'))).toBeNull();
 
-    expect(habitCard(at('defend_when_ahead', { score: [6, 5] }))).toBe('defend');
-    expect(habitCard(at('defend_when_ahead', { score: [5, 5] }))).toBeNull();
+    expect(habitCard(at('defend_unless_behind', { score: [6, 5] }))).toBe('defend');
+    expect(habitCard(at('defend_unless_behind', { score: [5, 5] }))).toBe('defend');
+    expect(habitCard(at('defend_unless_behind', { score: [5, 6] }))).toBeNull();
 
     expect(habitCard(at('copy_user', { decisions: [lost] }))).toBe('counter');
     expect(habitCard(at('copy_user'))).toBeNull();
 
-    expect(habitCard(at('safe_on_match_point', { score: [5, 6], tags: ['match_point', 'tiebreak'] }))).toBe('defend');
-    expect(habitCard(at('safe_on_match_point', { score: [6, 5], tags: ['match_point', 'tiebreak'] }))).toBeNull();
+    expect(habitCard(at('beat_user_last', { decisions: [lost] }))).toBe('defend');
+    expect(habitCard(at('beat_user_last', { decisions: [won] }))).toBe('counter');
+    expect(habitCard(at('beat_user_last'))).toBeNull();
   });
 
   it('gives every opponent one habit, the same for the same seed and player, and uses every habit', () => {
@@ -92,5 +95,22 @@ describe('aiDecision and its tell', () => {
       expect(new Set(ds.filter((d) => d.tell!.card === card).map((d) => d.tell!.text)).size).toBe(TELL_TEXTS[card].length);
       for (const t of TELL_TEXTS[card]) expect(t.length).toBeLessThan(50);
     }
+  });
+});
+
+describe('reading bots', () => {
+  const view = (ai: Situation, seed = 1): BotView => ({ ai, tell: null, rng: createRng(seed) });
+
+  it('habitBot answers the habit card when the habit applies, and plays any card otherwise', () => {
+    expect(habitBot(view(at('counter_after_loss', { lastPointWinner: 'user' })))).toBe('defend');
+    expect(habitBot(view(at('copy_user', { decisions: [won] })))).toBe('counter');
+    const free = at('copy_user');
+    expect(new Set(Array.from({ length: 60 }, (_, i) => habitBot(view(free, i)))).size).toBe(3);
+  });
+
+  it('scoutBot also knows the style: outside the habit it answers the style\'s favourite card', () => {
+    expect(scoutBot(view(at('copy_user', { style: 'baseliner' })))).toBe('attack');
+    expect(scoutBot(view(at('copy_user', { style: 'counter_puncher', role: 'return' })))).toBe('defend');
+    expect(scoutBot(view(at('big_point_attack', { tags: ['match_point'] })))).toBe('counter');
   });
 });
