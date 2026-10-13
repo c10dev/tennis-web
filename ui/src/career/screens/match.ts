@@ -75,8 +75,10 @@ export async function matchScreen(ctx: Ctx, params: string[]): Promise<Screen> {
     const won = result.winner === 'A';
     panel.replaceChildren(h('div', { id: 'match-result' },
       h('h3', null, won ? `You beat ${opponent}` : `${opponent} wins`),
-      h('div', { class: 'actions' }, h('button', { class: 'primary', id: 'back-to-tournament', onclick: () => {
-        ctx.set(playRound(ctx.state!, { ...recipe, tacticChanges: changes }), undefined, '#/tournament');
+      h('div', { class: 'actions' }, h('button', { class: 'primary', id: 'back-to-tournament', onclick: (e: Event) => {
+        // Once, from the season this match belongs to: a second click must not play another round.
+        (e.currentTarget as HTMLButtonElement).disabled = true;
+        if (ctx.state === s) ctx.set(playRound(s, { ...recipe, tacticChanges: changes }), undefined, '#/tournament');
       } }, 'Back to the tournament'))));
     panel.hidden = false;
   }

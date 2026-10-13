@@ -15,13 +15,19 @@ export class IndexedDbStore implements SaveStore {
   private db: Promise<IDBDatabase> | null = null;
 
   private open(): Promise<IDBDatabase> {
-    this.db ??= new Promise((resolve, reject) => {
+    if (this.db) return this.db;
+    const opening = new Promise<IDBDatabase>((resolve, reject) => {
       const r = indexedDB.open(DB, 1);
       r.onupgradeneeded = () => r.result.createObjectStore(STORE);
       r.onsuccess = () => resolve(r.result);
       r.onerror = () => reject(r.error ?? new Error('Cannot open the save database'));
+    }).catch((e: unknown) => {
+      // Forget a failed open, so the next call tries again instead of failing forever.
+      this.db = null;
+      throw e;
     });
-    return this.db;
+    this.db = opening;
+    return opening;
   }
 
   private async store(mode: IDBTransactionMode): Promise<IDBObjectStore> {

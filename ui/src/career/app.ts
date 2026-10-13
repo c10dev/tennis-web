@@ -82,6 +82,8 @@ const ctx: Ctx = {
     state = closeWeek(playOut(s));
     const hurt = playerById(state, USER_ID).injuryWeeks;
     note = hurt > 0 && playerById(s, USER_ID).injuryWeeks === 0 ? `${message} Injured: out for ${hurt} week${hurt === 1 ? '' : 's'}.` : message;
+    // The week is closed: the old page must not act while the autosave is written.
+    app.inert = true;
     await ctx.store.save('auto', toSave(state, stamp()));
     go('#/home');
   },
@@ -105,7 +107,7 @@ function header(): HTMLElement {
   }
   const v = homeView(state);
   const link = (path: string, label: string, id: string) =>
-    h('a', { href: path, id, class: currentRoute().name === path.slice(2) ? 'active' : '' }, label);
+    h('a', { href: path, id, class: location.hash === path || currentRoute().name === path.slice(2) ? 'active' : '' }, label);
   return h('header', { class: 'top' },
     h('a', { href: '#/', class: 'brand' }, 'TennisSim'),
     h('nav', null, link('#/home', 'Home', 'nav-home'), state.tournament ? link('#/tournament', 'Tournament', 'nav-tournament') : null,
@@ -125,13 +127,22 @@ async function render(): Promise<void> {
   const token = ++renders;
   current?.dispose?.();
   current = null;
-  const screen = await (SCREENS[route.name] ?? titleScreen)(ctx, route.params);
+  // The old page stays up while the next one loads; it must not act on a season that has moved on (a second click
+  // would play a round again).
+  app.inert = true;
+  let screen: Screen;
+  try {
+    screen = await (SCREENS[route.name] ?? titleScreen)(ctx, route.params);
+  } catch (e) {
+    screen = { element: h('section', { class: 'card' }, h('p', { class: 'error', id: 'screen-error' }, `This screen could not open: ${(e as Error).message}`)) };
+  }
   if (token !== renders) {
     screen.dispose?.();
     return;
   }
   current = screen;
   app.replaceChildren(...(screen.bare ? [screen.element] : [header(), h('main', { class: 'career' }, screen.element)]));
+  app.inert = false;
   // A new screen opens at its top; a re-render of the same screen (after an action) keeps the place.
   if (path !== shownPath) window.scrollTo(0, 0);
   shownPath = path;

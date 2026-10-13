@@ -4,9 +4,13 @@ import { h } from '../../lib/h.ts';
 import type { Ctx, Screen } from '../context.ts';
 
 export async function titleScreen(ctx: Ctx): Promise<Screen> {
-  const saves = await ctx.store.list();
-  const auto = saves.find((s) => s.slot === 'auto');
   const error = h('p', { class: 'error', id: 'error' });
+  // A browser that blocks storage (or a bad slot) must not hide the title: the quick ladder and a new career still work.
+  const saves = await ctx.store.list().catch((e: Error) => {
+    error.textContent = `Saved careers are unavailable here: ${e.message}`;
+    return [];
+  });
+  const auto = saves.find((s) => s.slot === 'auto');
   const ladder = ctx.quick ? quickHomeView(ctx.quick) : null;
   const element = h('section', { class: 'title' },
     h('h1', null, 'TennisSim'),

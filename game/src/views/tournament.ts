@@ -45,6 +45,8 @@ export function tournamentView(s: SeasonState) {
     done: t.done,
     champion: winner ? name(winner) : null,
     userIn: t.bracket.rounds[0]!.includes(USER_ID),
+    /** Still in the draw: in the latest round (a match to play, or through on a bye), not knocked out. */
+    userAlive: t.bracket.rounds.at(-1)!.includes(USER_ID),
   };
 }
 

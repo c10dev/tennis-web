@@ -6,7 +6,7 @@ import type { Ctx, Screen } from '../context.ts';
 export function historyScreen(ctx: Ctx, params: string[]): Screen {
   const s = ctx.state!;
   const index = Number(params[0]);
-  if (!(index >= 0 && index < s.history.length)) {
+  if (!(Number.isInteger(index) && index >= 0 && index < s.history.length)) {
     ctx.go('#/home');
     return { element: h('div') };
   }

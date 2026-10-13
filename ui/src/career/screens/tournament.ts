@@ -40,7 +40,7 @@ export function tournamentScreen(ctx: Ctx): Screen {
     : v.done
       ? h('div', { class: 'card', id: 'tournament-done' }, h('h3', null, `Champion: ${v.champion}`),
         h('button', { class: 'primary', id: 'finish-week', onclick: () => void ctx.finishWeek(s, weekNote()) }, 'Finish the week'))
-      : h('div', { class: 'card' }, h('p', null, v.userIn ? 'You are out of the tournament.' : 'The tournament goes on.'),
+      : h('div', { class: 'card' }, h('p', null, v.userIn && !v.userAlive ? 'You are out of the tournament.' : 'The tournament goes on.'),
         h('div', { class: 'actions' },
           h('button', { class: 'primary', id: 'play-round', onclick: () => ctx.set(playRound(s)) }, 'Play the next round'),
           h('button', { id: 'play-all', onclick: () => ctx.set(playOut(s)) }, 'Play to the end')));

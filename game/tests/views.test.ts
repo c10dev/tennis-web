@@ -110,6 +110,20 @@ describe('tournamentView', () => {
     expect(after.rounds[0]!.matches.some((m) => m.isUser && m.winner !== null)).toBe(true);
   });
 
+  it('tells a user still in the draw (a match to play, or a bye) from one knocked out', () => {
+    let s = start();
+    while (!weekPreview(s).entry?.accepted) s = closeWeek(finish(beginWeek(s, { kind: 'rest' })));
+    s = beginWeek(s, { kind: 'enter' });
+    expect(tournamentView(s)!.userAlive).toBe(true);
+    while (s.tournament && !s.tournament.done && tournamentView(s)!.userAlive) {
+      const p = pendingUserMatch(s);
+      s = playRound(s, p ? quickRecipe(p) : undefined);
+    }
+    const v = tournamentView(s)!;
+    if (!v.done) expect(v.userAlive).toBe(false);
+    expect(v.userIn).toBe(true);
+  });
+
   it('turns a finished tournament into a history card with replayable user matches', () => {
     let s = start();
     while (!weekPreview(s).entry?.accepted) s = closeWeek(finish(beginWeek(s, { kind: 'rest' })));

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_TACTIC, fingerprint, replayMatch, type MatchRecipe } from '@tennis/engine';
-import { beginWeek, createPlayer, defaultAllocation, newSeason, pendingUserMatch, quickRecipe } from '@tennis/game';
+import { beginWeek, createPlayer, defaultAllocation, newSeason, pendingUserMatch, playRound, quickRecipe, tournamentView } from '@tennis/game';
 import { watchErrors } from './helpers.ts';
 
 const SEED = 4;
@@ -107,10 +107,13 @@ test.describe('career', () => {
     const pending = firstMatch();
     const expected = replayMatch({ ...quickRecipe(pending, DEFAULT_TACTIC), tacticChanges: changes });
     await expect(page.locator('body')).toHaveAttribute('data-fingerprint', fingerprint(expected));
-    await page.locator('#back-to-tournament').click();
+    // A double click must play the round once: the old page cannot act again while the tournament loads.
+    await page.locator('#back-to-tournament').dblclick();
     const end = expected.events.at(-1)!;
     if (end.type !== 'match_end') throw new Error('Node match did not finish');
     await expect(page.locator('#draw .match.user').first()).toContainText(end.score.sets.map(([a, b]) => `${a}-${b}`).join(' '));
+    const s = playRound(beginWeek(newSeason(SEED, createPlayer({ name: 'Alex Kim', style: 'baseliner', allocation: defaultAllocation('baseliner') }, SEED)), { kind: 'enter' }), { ...quickRecipe(pending, DEFAULT_TACTIC), tacticChanges: changes });
+    await expect(page.locator('#draw .round')).toHaveCount(tournamentView(s)!.rounds.length);
     expect(errors).toEqual([]);
   });
 
@@ -146,6 +149,36 @@ test.describe('career', () => {
     await page.locator('#nav-saves').scrollIntoViewIfNeeded();
     await page.locator('#nav-saves').click();
     await expect(page).toHaveURL(/#\/saves/);
+  });
+
+  test('confirms a save on the Saves screen, and marks My player in the header', async ({ page }) => {
+    const errors = watchErrors(page);
+    await newCareer(page);
+    await page.locator('#nav-saves').click();
+    await page.locator('tr[data-slot="slot1"] button.save').click();
+    await expect(page.locator('#saves-message')).toHaveText('Saved to Slot 1.');
+    await page.waitForTimeout(500);
+    await expect(page.locator('#saves-message')).toHaveText('Saved to Slot 1.');
+    await page.locator('#nav-player').click();
+    await expect(page.locator('#nav-player')).toHaveClass(/active/);
+    expect(errors).toEqual([]);
+  });
+
+  test('sends a malformed history link home instead of crashing', async ({ page }) => {
+    const errors = watchErrors(page);
+    await newCareer(page);
+    await page.goto('/#/history/0.5');
+    await expect(page).toHaveURL(/#\/home/);
+    expect(errors).toEqual([]);
+  });
+
+  test('still opens the title screen when the browser refuses save storage', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'indexedDB', { get: () => { throw new Error('storage blocked'); } });
+    });
+    await page.goto('/#/');
+    await expect(page.locator('#quick-match')).toBeVisible();
+    await expect(page.locator('#new-career')).toBeVisible();
   });
 
   test('loads the career screens without Three.js', async ({ page }) => {
