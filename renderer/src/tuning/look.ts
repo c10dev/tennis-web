@@ -4,7 +4,7 @@ export const LOOK = {
   /** Cel shading on court, venue and players; false brings back the M3 Lambert look for comparison. */
   toon: true,
   /** Light level of each cel band (shadow, mid, lit), 0–255: what MeshToonMaterial's gradient map holds. */
-  toonBands: [110, 190, 255],
+  toonBands: [150, 205, 255],
   /** Inverted-hull ink outlines on players, net and ball only: one extra draw per outlined part. */
   outline: {
     colour: 0x15171e,
