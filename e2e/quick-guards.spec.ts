@@ -18,7 +18,13 @@ test.describe('quick flow guards', () => {
 
   test('lets Back leave the ladder after a match instead of trapping it on #/quick', async ({ page }) => {
     await playToResult(page, 3, true);
-    for (let i = 0; i < 6 && !(await page.locator('#quick-match').isVisible()); i++) await page.goBack();
+    // Step back one entry at a time, letting each screen settle (a redirect replaces its entry asynchronously), and
+    // stop at the title: it must be reachable.
+    for (let i = 0; i < 6; i++) {
+      if (await page.evaluate(() => location.hash) === '#/') break;
+      await page.goBack();
+      await page.waitForTimeout(500);
+    }
     await expect(page.locator('#quick-match')).toBeVisible();
   });
 
