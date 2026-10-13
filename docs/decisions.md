@@ -520,6 +520,18 @@ Format: one entry per decision, newest at the bottom.
     from the old share) and the next goal, each fading in; click or space skips to the end and [Play again] takes
     focus. All final texts are in the page from the start (①'s e2e reads them at once). Fast mode reveals in about 5 s.
 
+  - **Follow-up after integration (2026-10-13, approved by the user):**
+    - *Decision cap:* `QUICK_MOMENTS.maxDecisions` = 6. A marathon tiebreak plays on without cards after the sixth
+      decision (was a 90th percentile of 7 and 20+ in marathons). New target: most decisions in a match ≤ 6.
+    - *Tells:* accuracy 0.7 → 0.6. At 0.7 following the tells (68.5%) beat reading the habit (65.3%), so players could
+      ignore the scouting line. At 0.6: tells 62.3%, habit and style 63.2%, random 50.3%, fixed cards 46.7–48.4%.
+    - *Habit target 65% → 62%:* the cap costs about 2 pp of reads. Deciding from 4 points would restore 66%, but at
+      a median of 5 decisions a match, against the playtest's "too many choices"; raising the card edge to +27 pp
+      gave only 64.4% and broke the stat-scaling check, so it was reverted.
+    - *Losses reward too:* the nearest rating behind the decisive card moves by up to `QUICK_REWARD.lossStep` (0.1,
+      half a shown point). 53% of lost matches now show a whole-number rise (new target 40–80%); wins stay at 100%.
+      Ladder climb 20.5 in 30 matches.
+
 ## ADR-018: Art direction B "Rally Pop"
 - **Date:** 2026-10-13
 - **Status:** Accepted

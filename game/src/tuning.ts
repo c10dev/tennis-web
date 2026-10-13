@@ -195,6 +195,8 @@ export const TIEBREAK_RULES = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', se
  *  Over 4,000 tiebreaks of average players: median 3 decisions, at least 2 in every match (5-all gave median 2). */
 export const QUICK_MOMENTS = {
   fromPoints: 5,
+  /** No more stops after this many decisions: a marathon tiebreak plays on (the playtest's fatigue, TD-030). */
+  maxDecisions: 6,
 } as const;
 
 /** The user's game plan as the tactic for the points played without cards. */
@@ -207,7 +209,7 @@ export const QUICK_PLAN = {
 /** Opponent personas, tells and rival memory. */
 export const QUICK_PERSONA = {
   /** Chance the tell points at the card the opponent really plays. */
-  tellAccuracy: 0.7,
+  tellAccuracy: 0.6,
   /** Chance the opponent plays its habit card when its habit applies (the rest follows its style mix). */
   habitShare: 0.72,
   /** A rival record keeps the opponent's cards at this many latest decision points. */
@@ -218,6 +220,9 @@ export const QUICK_PERSONA = {
 export const QUICK_REWARD = {
   /** Shown rating = floor((rating + progress) × displayScale): 1–20 becomes 5–100. */
   displayScale: 5,
+  /** A loss moves the nearest rating behind the decisive card by at most this (half a shown point): it rises a whole
+   *  number when that close, otherwise creeps on. A win always takes it to the next whole number. */
+  lossStep: 0.1,
   /** On a win without a decision, the cards whose ratings the game plan trains. */
   planCards: { aggressive: ['attack'], balanced: ['attack', 'defend', 'counter'], defensive: ['defend'] },
   /** Ladder goals shown after a match: the first one above the user's rank (1 is "#1"). */

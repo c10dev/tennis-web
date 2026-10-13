@@ -107,9 +107,31 @@ describe('matchReward', () => {
   const gains = (p: ReturnType<typeof me>, reward: Partial<Record<Rated, number>>) =>
     (Object.entries(reward) as [Rated, number][]).filter(([k, x]) => displayRating(value(p, k) + x) > displayRating(value(p, k)));
 
-  it('pays a loss the card training only', () => {
-    const decisions = [d(10, [5, 5], 'attack', 'counter', 'B'), d(11, [5, 6], 'counter', 'counter', 'B')];
-    expect(matchReward(me(), { won: false, decisions, plan: 'balanced' })).toEqual(cardReward(['attack', 'counter'], false));
+  // A loss moves at half the win's pace: at most QUICK_REWARD.lossStep (half a shown point), so a rating that close to
+  // its next whole number rises and the others creep on (the M6 follow-up to TD-036).
+  const lost = [d(10, [5, 5], 'counter', 'defend', 'B')];
+  const atStat = (p: ReturnType<typeof me>, values: Partial<Record<Rated, number>>) => {
+    for (const [k, v] of Object.entries(values) as [Rated, number][]) { p.attributes[k] = Math.floor(v); p.progress[k] = v - Math.floor(v); }
+    return p;
+  };
+
+  it('on a loss, lifts the rating behind the decisive card to its next whole number when it is within half a step', () => {
+    const p = atStat(me(), { return: 12.15, decision: 12, agility: 12 });
+    const reward = matchReward(p, { won: false, decisions: lost, plan: 'balanced' });
+    const base = cardReward(['counter'], false);
+    expect(reward.return! - base.return!).toBeLessThanOrEqual(QUICK_REWARD.lossStep + 1e-9);
+    expect(gains(p, reward).map(([k]) => k)).toEqual(['return']);
+    expect(reward.decision).toBe(base.decision);
+  });
+
+  it('on a loss, only moves a rating on by half a step when none is that close', () => {
+    const p = atStat(me(), { return: 12, decision: 12, agility: 12 });
+    const reward = matchReward(p, { won: false, decisions: lost, plan: 'balanced' });
+    const base = cardReward(['counter'], false);
+    const extra = (Object.keys(reward) as Rated[]).filter((k) => Math.abs(reward[k]! - (base[k] ?? 0)) > 1e-12);
+    expect(extra).toHaveLength(1);
+    expect(reward[extra[0]!]! - base[extra[0]!]!).toBeCloseTo(QUICK_REWARD.lossStep, 9);
+    expect(gains(p, reward)).toEqual([]);
   });
 
   it('lifts a rating behind the decisive card to its next whole number on a win', () => {

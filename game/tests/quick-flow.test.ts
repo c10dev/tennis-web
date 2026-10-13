@@ -5,7 +5,7 @@ import { isDecisionPoint } from '../src/quick/moments.ts';
 import { autoPlay, createQuickMatch, decide, matchOver, type QuickMatch } from '../src/quick/match.ts';
 import { personaOf } from '../src/quick/persona.ts';
 import { planTactic } from '../src/quick/plan.ts';
-import { TIEBREAK_RULES } from '../src/tuning.ts';
+import { QUICK_MOMENTS, TIEBREAK_RULES } from '../src/tuning.ts';
 import type { GamePlan } from '../src/quick/types.ts';
 
 const CYCLE: Card[] = ['attack', 'defend', 'counter'];
@@ -45,6 +45,24 @@ describe('planTactic', () => {
   it('turns the plan into how much risk the user takes on points without cards', () => {
     expect(planTactic('aggressive').aggression).toBeGreaterThan(planTactic('balanced').aggression);
     expect(planTactic('balanced').aggression).toBeGreaterThan(planTactic('defensive').aggression);
+  });
+});
+
+describe('the decision cap (ADR-017 follow-up)', () => {
+  it('stops for cards at most QUICK_MOMENTS.maxDecisions times; a marathon tiebreak plays on without cards after that', () => {
+    let marathons = 0;
+    for (let seed = 1; seed <= 400; seed++) {
+      const m = quick(seed);
+      playOut(m);
+      expect(m.decisions.length).toBeLessThanOrEqual(QUICK_MOMENTS.maxDecisions);
+      if (m.decisions.length === QUICK_MOMENTS.maxDecisions) {
+        const last = m.decisions.at(-1)!.point;
+        const after = pointsOf(m).filter((p) => p.index > last);
+        if (after.length) marathons++;
+        for (const p of after) expect(p.cards).toBeUndefined();
+      }
+    }
+    expect(marathons).toBeGreaterThan(0);
   });
 });
 

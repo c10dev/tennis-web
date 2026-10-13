@@ -3,6 +3,7 @@ import { winRate } from '../src/quick/balance.ts';
 import { fixedBot, randomBot, scoutBot, tellBot } from '../src/quick/bots.ts';
 import { readStats } from '../src/quick/read-balance.ts';
 import { QUICK_TARGETS } from '../src/quick/targets.ts';
+import { QUICK_PERSONA } from '../src/tuning.ts';
 
 // Guards the opponent-read targets of ADR-017 with 600 matches per bot: `npm run test:quick`.
 const T = QUICK_TARGETS.read;
@@ -33,9 +34,9 @@ describe('quick-match opponent balance (ADR-017)', () => {
     expect(s.win).toBeGreaterThan(0.53);
   });
 
-  it('rewards following the tells: right about 70% of the time, so most matchups won', () => {
+  it('rewards following the tells: right tellAccuracy of the time, so most matchups won', () => {
     const s = readStats(tellBot, N, 7);
-    expect(s.beat).toBeGreaterThan(0.65);
+    expect(s.beat).toBeGreaterThan(QUICK_PERSONA.tellAccuracy - 0.03);
     expect(s.win).toBeGreaterThan(T.tellWin.min - 0.03);
   });
 });

@@ -7,7 +7,7 @@ import {
 import { USER_ID } from '../player/create.ts';
 import { profileOf } from '../player/profile.ts';
 import { stream, streamSeed } from '../rng.ts';
-import { QUICK, TIEBREAK_RULES } from '../tuning.ts';
+import { QUICK, QUICK_MOMENTS, TIEBREAK_RULES } from '../tuning.ts';
 import { aiDecision } from './ai.ts';
 import { nextOpponent, type QuickState } from './ladder.ts';
 import { isDecisionPoint } from './moments.ts';
@@ -76,7 +76,7 @@ export function autoPlay(m: QuickMatch): PointEvent[] {
   const played: PointEvent[] = [];
   while (!m.pending && !isOver(m.live)) {
     const st = liveStatus(m.live);
-    if (isDecisionPoint(st.score, st.nextTags)) {
+    if (m.decisions.length < QUICK_MOMENTS.maxDecisions && isDecisionPoint(st.score, st.nextTags)) {
       m.pending = aiDecision(decisionContext(m));
       break;
     }

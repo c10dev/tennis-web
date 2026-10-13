@@ -7,6 +7,8 @@ export const QUICK_TARGETS = {
     medianDecisions: { min: 3, max: 5 },
     /** Share of matches with at least two decisions. */
     twoOrMoreDecisions: { min: 0.9, max: 1 },
+    /** The most decisions in any match: the cap that keeps marathon tiebreaks from tiring the player. */
+    maxDecisions: { min: 0, max: 6 },
     /** Seconds on screen per match, decisions aside. */
     medianSeconds: { min: 0, max: 60 },
     /** Point-win shift for a won matchup at a decision point, average players. */
@@ -15,7 +17,9 @@ export const QUICK_TARGETS = {
   },
   read: {
     /** Knows the opponent's habit, against equal ratings. */
-    habitWin: { min: 0.65, max: 1 },
+    /** Was 0.65. The 6-decision cap (fewer reads in marathon tiebreaks) costs about 2 pp; deciding from 4 points
+     *  would win it back but at a median of 5 decisions, against the playtest's "too many choices". */
+    habitWin: { min: 0.62, max: 1 },
     tellWin: { min: 0.57, max: 1 },
     randomWin: { min: 0.45, max: 0.55 },
     /** One card always, across every opponent: no card may dominate. */
@@ -26,6 +30,8 @@ export const QUICK_TARGETS = {
   result: {
     /** Won matches where a rating shown on the 0–100 scale goes up. */
     visibleGainOnWin: { min: 0.8, max: 1 },
+    /** Lost matches where one does: half the win's pace, so something still rises after most defeats. */
+    visibleGainOnLoss: { min: 0.4, max: 0.8 },
     /** Matches with decisions where the result screen finds the decisive one. */
     decisiveFound: { min: 1, max: 1 },
   },

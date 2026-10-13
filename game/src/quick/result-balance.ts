@@ -12,8 +12,9 @@ import { displayRating } from './rewards.ts';
 export interface ResultStats {
   matches: number;
   wins: number;
-  /** Won matches where a shown (0–100) rating rose. */
+  /** Won and lost matches where a shown (0–100) rating rose. */
   visibleWins: number;
+  visibleLosses: number;
   withDecision: number;
   decisiveFound: number;
   overtakes: number;
@@ -25,7 +26,7 @@ export const visibleGain = (r: QuickRecord): number => r.progress.reduce((sum, p
 
 /** Plays `runs` ladders of `matches` matches with `bot` (the same ladders as `ladderPace`) and counts the result measures. */
 export function resultStats(bot: Bot, runs: number, matches: number, seed: number): ResultStats {
-  const out: ResultStats = { matches: 0, wins: 0, visibleWins: 0, withDecision: 0, decisiveFound: 0, overtakes: 0, shownGain: 0 };
+  const out: ResultStats = { matches: 0, wins: 0, visibleWins: 0, visibleLosses: 0, withDecision: 0, decisiveFound: 0, overtakes: 0, shownGain: 0 };
   for (let r = 0; r < runs; r++) {
     const s0 = streamSeed(seed, 'ladder', r);
     let s = newLadder(s0, createPlayer({ name: 'Bot', style: 'all_court', allocation: defaultAllocation('all_court') }, s0));
@@ -38,6 +39,7 @@ export function resultStats(bot: Bot, runs: number, matches: number, seed: numbe
       out.overtakes += rec.overtakes?.length ?? 0;
       if (rec.won) out.wins++;
       if (rec.won && gain > 0) out.visibleWins++;
+      if (!rec.won && gain > 0) out.visibleLosses++;
       if (rec.decisions?.length) {
         out.withDecision++;
         if (decisiveMoment(rec)) out.decisiveFound++;

@@ -9,7 +9,7 @@ import type { DecisionContext, Habit } from '../src/quick/types.ts';
 
 type Situation = Omit<DecisionContext, 'rng'>;
 const base: Situation = {
-  style: 'baseliner', persona: { habit: 'big_point_attack', tellAccuracy: 0.7 }, role: 'serve', score: [5, 5], tags: ['tiebreak'],
+  style: 'baseliner', persona: { habit: 'big_point_attack', tellAccuracy: QUICK_PERSONA.tellAccuracy }, role: 'serve', score: [5, 5], tags: ['tiebreak'],
   lastPointWinner: null, decisions: [], rival: null, fatigue: 0,
 };
 const at = (habit: Habit, over: Partial<Situation> = {}): Situation => ({ ...base, ...over, persona: { ...base.persona, habit } });

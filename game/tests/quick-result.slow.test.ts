@@ -14,6 +14,12 @@ describe('quick-match result balance (ADR-017)', () => {
     expect(r.visibleWins / r.wins).toBeGreaterThanOrEqual(T.visibleGainOnWin.min);
   });
 
+  it('shows one after most lost matches too, at half the pace', () => {
+    const share = r.visibleLosses / (r.matches - r.wins);
+    expect(share).toBeGreaterThanOrEqual(T.visibleGainOnLoss.min - 0.05);
+    expect(share).toBeLessThanOrEqual(T.visibleGainOnLoss.max + 0.05);
+  });
+
   it('finds the decisive moment in every match with a decision', () => {
     expect(r.withDecision).toBeGreaterThan(0);
     expect(r.decisiveFound).toBe(r.withDecision);

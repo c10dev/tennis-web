@@ -12,6 +12,7 @@ export function resultRows(seed: number, ladders: number): Row[] {
   const r = resultStats(readerBot, ladders, 30, seed);
   return [
     check('Won matches with a visible rating gain', r.visibleWins / r.wins, T.visibleGainOnWin, '%'),
+    check('Lost matches with a visible rating gain', r.visibleLosses / (r.matches - r.wins), T.visibleGainOnLoss, '%'),
     check('Decisive moment found', r.decisiveFound / r.withDecision, T.decisiveFound, '%'),
     info('Shown rating points per match (mean)', (r.shownGain / r.matches).toFixed(2)),
     info('Players passed per match (mean)', (r.overtakes / r.matches).toFixed(2)),
