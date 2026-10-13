@@ -68,3 +68,11 @@ export async function playToResult(page: Page, seed: number, fast: boolean): Pro
     } else await page.waitForTimeout(30);
   }
 }
+
+/** Starts a season-mode career with `seed` (the start form's defaults) and waits for its first week. */
+export async function newCareer(page: Page, seed = 4): Promise<void> {
+  await page.goto('/#/new');
+  await page.locator('#seed').fill(String(seed));
+  await page.locator('#start').click();
+  await expect(page.locator('#this-week')).toContainText('Week 1');
+}
