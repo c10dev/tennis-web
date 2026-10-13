@@ -27,3 +27,4 @@ export { playerView } from './views/player.ts';
 export { rankingsView } from './views/rankings.ts';
 export { savesView } from './views/saves.ts';
 export { historyView, tournamentView, type MatchRow } from './views/tournament.ts';
+export { aiCard, BEATEN_BY, CARDS, cardEntropy, cardOdds, type CardContext } from './quick/ai.ts';

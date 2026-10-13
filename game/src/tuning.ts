@@ -122,3 +122,24 @@ export const AI = {
   /** Aggression by style; everything else is the engine's default tactic. */
   aggression: { big_server: 0.65, baseliner: 0.5, counter_puncher: 0.35, serve_and_volley: 0.6, all_court: 0.5 },
 } as const;
+
+/** The quick-match card AI (ADR-016): a style's habits, a read of the user's habits, and some unpredictability. */
+export const QUICK_AI = {
+  /** Base card weights by style and role (attack, defend, counter). */
+  base: {
+    big_server: { serve: [0.5, 0.2, 0.3], return: [0.4, 0.3, 0.3] },
+    baseliner: { serve: [0.3, 0.4, 0.3], return: [0.3, 0.42, 0.28] },
+    counter_puncher: { serve: [0.25, 0.3, 0.45], return: [0.2, 0.33, 0.47] },
+    serve_and_volley: { serve: [0.5, 0.2, 0.3], return: [0.42, 0.25, 0.33] },
+    all_court: { serve: [0.34, 0.33, 0.33], return: [0.34, 0.33, 0.33] },
+  },
+  /** How many of the user's recent cards (in the same role) the AI looks at, and how often it acts on a read. */
+  window: 6,
+  adapt: 0.4,
+  /** No card is played more often than this: the mix is pulled towards even until it holds (≥ 1.3 bits). */
+  maxShare: 0.58,
+  /** A read only counts when one card is clearly the habit: its share above an even third, scaled to 0–1. */
+  habitFloor: 1 / 3,
+  /** Attack weight falls by this share per unit of fatigue. */
+  fatigueAttack: 0.5,
+} as const;
