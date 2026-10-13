@@ -23,6 +23,7 @@ export interface Timeline {
   totalSec: number;
   names: [string, string];
   surface: Surface;
+  noAd: boolean;
   winner: PlayerId;
   finalScore: ScoreState;
 }
@@ -55,7 +56,7 @@ export function buildTimeline(result: MatchResult): Timeline {
   const config = result.config;
   return {
     segments, totalSec: t, names: [config.players[0].name, config.players[1].name], surface: config.surface,
-    winner: result.winner, finalScore,
+    noAd: config.rules.noAd, winner: result.winner, finalScore,
   };
 }
 
