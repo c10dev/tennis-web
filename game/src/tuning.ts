@@ -216,4 +216,10 @@ export const QUICK_REWARD = {
   displayScale: 5,
   /** On a win without a decision, the cards whose ratings the game plan trains. */
   planCards: { aggressive: ['attack'], balanced: ['attack', 'defend', 'counter'], defensive: ['defend'] },
+  /** Ladder goals shown after a match: the first one above the user's rank (1 is "#1"). */
+  milestones: [50, 32, 16, 8, 1],
+  /** Wins are estimated against the opponent this many places above (the next opponent is one of the three above). */
+  placesAbove: 2,
+  /** Estimates stop here ("50+ wins"). */
+  maxWins: 50,
 } as const;

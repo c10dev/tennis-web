@@ -41,5 +41,7 @@ export { broadcastSeconds, clipFor, decisive } from './quick/pace.ts';
 export type * from './quick/types.ts';
 export { quickHomeView } from './views/quick-home.ts';
 export { CARD_LABEL, cardChoices, decisionSituation, revealView, scoreLine } from './views/quick-match.ts';
-export { quickResultView } from './views/quick-result.ts';
+export { quickResultView, type RatingView } from './views/quick-result.ts';
+export { playByPlay } from './views/quick-play-by-play.ts';
+export { nextGoal, overtakesBetween } from './quick/standing.ts';
 export { opponentRead } from './views/quick-scout.ts';
