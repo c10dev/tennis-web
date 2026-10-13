@@ -18,6 +18,8 @@ export function tiebreakWon(points: readonly [number, number], i: 0 | 1, target:
 }
 
 const fast4 = (rules: MatchRules) => rules.setFormat === 'fast4';
+/** Sets that are a tiebreak and nothing else (ADR-017). */
+export const tiebreakSets = (rules: MatchRules): boolean => rules.setFormat === 'tiebreak';
 
 /** Games that win a set, and the games-all score that brings a tiebreak. */
 export const setGames = (rules: MatchRules): number => (fast4(rules) ? 4 : 6);

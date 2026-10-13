@@ -11,11 +11,11 @@ const live = startMatch(config, 21);
 advance(live, 'set');
 const firstSet: ReplayInput = { schemaVersion: 3, config: live.config, events: [...live.events] };
 
-describe('replays of schema v2 and v3', () => {
-  it('plays both, and refuses anything else', () => {
+describe('replays of schema v2 to v5', () => {
+  it('plays them, and refuses anything else', () => {
     expect(() => buildTimeline({ ...full, schemaVersion: 2 } as unknown as MatchResult)).not.toThrow();
     expect(() => buildTimeline(full)).not.toThrow();
-    expect(() => buildTimeline({ ...full, schemaVersion: 5 } as unknown as MatchResult)).toThrow(/schema version 5/);
+    expect(() => buildTimeline({ ...full, schemaVersion: 6 } as unknown as MatchResult)).toThrow(/schema version 6/);
   });
 });
 

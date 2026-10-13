@@ -54,7 +54,7 @@ describe('point-by-point play', () => {
     expect(counts.at(-1)).toBeLessThanOrEqual(6 * 7 + 9);
   });
 
-  it('writes schema version 4', () => {
-    expect(SCHEMA_VERSION).toBe(4);
+  it('writes schema version 5', () => {
+    expect(SCHEMA_VERSION).toBe(5);
   });
 });

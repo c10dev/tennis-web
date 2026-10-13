@@ -83,7 +83,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 
   const players = s.world.players.map((p) => (p.id === USER_ID ? { ...p, attributes: { ...p.attributes }, progress: { ...p.progress } } : p));
   const me = players.find((p) => p.id === USER_ID)!;
-  const cards = m.recipe.cards.map((c) => c.A);
+  const cards = m.recipe.cards.flatMap((c) => (c ? [c.A] : []));
   const progress = Object.entries(cardReward(cards, won)).map(([k, d]) => {
     const key = k as Rated;
     const before = me.attributes[key] + (me.progress[key] ?? 0);

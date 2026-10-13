@@ -1,7 +1,7 @@
 // Event and data schema shared by the engine and its consumers (GDD §7).
 // Changing anything here means bumping SCHEMA_VERSION and recording an ADR (CLAUDE.md rule 6).
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export type PlayerId = 'A' | 'B';
 export type Surface = 'hard' | 'clay' | 'grass';
@@ -62,8 +62,9 @@ export interface Tactic {
 /** 'tiebreak10': at 6-6 in the final set a 10-point tiebreak by 2 (the Grand Slam rule). */
 export type FinalSetMode = 'tiebreak7' | 'tiebreak10' | 'advantage';
 
-/** 'fast4': sets to four games, a tiebreak at 3-3 to five points with a deciding point at 4-4 (schema v4). */
-export type SetFormat = 'standard' | 'fast4';
+/** 'fast4': sets to four games, a tiebreak at 3-3 to five points with a deciding point at 4-4 (schema v4).
+ *  'tiebreak': every set is one tiebreak from 0-0, to seven two clear (ten with `finalSet: 'tiebreak10'`), and reads 1-0 (schema v5). */
+export type SetFormat = 'standard' | 'fast4' | 'tiebreak';
 
 export interface MatchRules {
   bestOf: 1 | 3 | 5;
@@ -95,8 +96,8 @@ export interface MatchRecipe {
   config: MatchConfig;
   seed: number;
   tacticChanges: TacticChange[];
-  /** Cards by point index, for matches played with cards (schema v4). */
-  cards?: PointCards[];
+  /** Cards by point index, for matches played with cards (schema v4); null for a point played without (schema v5). */
+  cards?: (PointCards | null)[];
 }
 
 export interface ShotEvent {

@@ -98,7 +98,7 @@ describe('live match API', () => {
     expect(() => simulateMatch(bad, 1)).toThrow(/fatigue/);
   }, 30_000);
 
-  it('writes schema version 3', () => {
-    expect(SCHEMA_VERSION).toBe(4);
+  it('writes schema version 5', () => {
+    expect(SCHEMA_VERSION).toBe(5);
   });
 });
