@@ -1,14 +1,14 @@
 // Where each player stands at replay time t: eased between the positions the shot events record.
 import type { PlayerId, PointEvent, Vec2 } from '@tennis/engine';
+import { lerp, smoothstep } from '../math.ts';
 import { PLAYBACK } from '../tuning.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
 interface Key { tau: number; pos: Vec2 }
 
-const smoothstep = (u: number) => u * u * (3 - 2 * u);
 const ease = (a: Vec2, b: Vec2, u: number): Vec2 => {
-  const k = smoothstep(Math.min(1, Math.max(0, u)));
-  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+  const k = smoothstep(u);
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) };
 };
 
 /** Point-time keyframes for one player: the serve's starting spot, then their position at every shot. */

@@ -4,6 +4,7 @@ import {
   CapsuleGeometry, CircleGeometry, CylinderGeometry, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, SphereGeometry, type Object3D,
 } from 'three';
 import type { PlayerPose } from '../playback/pose.ts';
+import { lerp } from '../math.ts';
 import { COLOURS, RIG } from '../tuning.ts';
 import { groundToThree, yawFor } from './coords.ts';
 
@@ -13,7 +14,6 @@ export interface PlayerRig {
 }
 
 const lambert = (color: number) => new MeshLambertMaterial({ color });
-const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 
 /**
  * Capsule body, sphere head with a cap visor (it shows which way the player faces) and a racket in the right hand.

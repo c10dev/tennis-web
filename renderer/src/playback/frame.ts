@@ -1,5 +1,6 @@
 // Everything drawn at replay time t, as plain data: the renderer's single source of truth (ADR-007).
 import type { PlayerId, Vec3 } from '@tennis/engine';
+import { clamp } from '../math.ts';
 import { scoreBugModel, type ScoreBugModel } from '../overlay/scoreBug.ts';
 import { ballAt } from './ball.ts';
 import { playerPose, type PlayerPose } from './pose.ts';
@@ -16,7 +17,7 @@ export interface Frame {
 }
 
 export function frameAt(timeline: Timeline, time: number): Frame {
-  const t = Math.min(timeline.totalSec, Math.max(0, time));
+  const t = clamp(time, 0, timeline.totalSec);
   const pointIndex = segmentAt(timeline, t);
   const seg = timeline.segments[pointIndex]!;
   const ball = ballAt(seg.point, t - seg.zero, timeline.surface);

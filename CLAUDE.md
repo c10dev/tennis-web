@@ -5,7 +5,7 @@ Tennis management sim (Football Manager-style) with TV-broadcast-style 3D match 
 - `engine/` — headless, deterministic TypeScript sim → emits `MatchEvent[]` (point/shot level)
 - `renderer/` — Three.js replay of events (broadcast cams, replays, score bug, audio)
 - `ui/` — menus, management screens, DOM overlays
-- Full design: `GDD.md` (Korean). Current milestone: **M1 (engine + tests)**.
+- Full design: `GDD.md` (Korean). Current milestone: **M3 (broadcast polish)**; M1 and M2 are done.
 
 ## Stack
 Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
@@ -13,10 +13,14 @@ Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
 ## Commands
 ```
 npm install
-npm run dev          # Vite dev server (renderer/ui)
-npm test             # Vitest (all)
+npm run dev          # Vite dev server: replay page, ?seed=42&surface=clay
+npm run build        # production build to dist/
+npm test             # Vitest: engine + renderer (npm run test:stats for the slow batch checks)
 npm run test:engine  # engine tests only
+npm run test:renderer
 npm run sim -- --n 10000 --seed 42 --surface hard   # batch sim stats report
+npm run sim -- --fingerprint --seed 42 --surface clay   # hash to compare with the replay page
+npm run -s sim -- --replay --seed 42 --surface clay > replay.json   # replay JSON for the page's loader
 npm run typecheck && npm run lint
 ```
 (Create these scripts if missing.)
@@ -24,8 +28,8 @@ npm run typecheck && npm run lint
 ## Folder map
 ```
 engine/    src/{rng,scoring,point,match,tuning.ts,types.ts} tests/
-renderer/  src/{scene,camera,playback,audio,overlay}
-ui/        src/
+renderer/  src/{playback,scene,camera,overlay,tuning.ts,viewer.ts} tests/
+ui/        index.html src/   (Vite root)
 docs/      decisions.md, tech-debt.md
 GDD.md     game design doc
 ```

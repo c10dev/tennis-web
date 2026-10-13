@@ -1,4 +1,5 @@
 // Replay clock as a pure reducer: play/pause, speed, seek and point jumps (GDD §8.3). The UI only dispatches.
+import { clamp } from '../math.ts';
 import { PLAYBACK } from '../tuning.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
@@ -23,7 +24,6 @@ export function createClock(): ClockState {
 }
 
 export function clockReducer(timeline: Timeline, state: ClockState, action: ClockAction): ClockState {
-  const clamp = (t: number) => Math.min(timeline.totalSec, Math.max(0, t));
   switch (action.type) {
     case 'play':
       return state.t >= timeline.totalSec ? { ...state, t: 0, playing: true } : { ...state, playing: true };
@@ -34,10 +34,10 @@ export function clockReducer(timeline: Timeline, state: ClockState, action: Cloc
     case 'setSpeed':
       return (PLAYBACK.speeds as readonly number[]).includes(action.speed) ? { ...state, speed: action.speed } : state;
     case 'seek':
-      return { ...state, t: clamp(action.t) };
+      return { ...state, t: clamp(action.t, 0, timeline.totalSec) };
     case 'tick': {
       if (!state.playing) return state;
-      const t = state.t + Math.min(PLAYBACK.maxTickSec, Math.max(0, action.dt)) * state.speed;
+      const t = state.t + clamp(action.dt, 0, PLAYBACK.maxTickSec) * state.speed;
       return t >= timeline.totalSec ? { ...state, t: timeline.totalSec, playing: false } : { ...state, t };
     }
     case 'nextPoint': {

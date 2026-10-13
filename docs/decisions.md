@@ -124,3 +124,31 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** 10,000-match batch reports on all three surfaces are byte-identical before and after the change.
   v1 replay JSON is rejected by the renderer rather than migrated: nothing has stored v1 files. The golden fingerprint
   for clay seed 42 is `4c42dc1d`; any change to the event stream must update it on purpose.
+
+## ADR-007: M2 replay architecture
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** GDD §10 M2 asks for a Three.js court per surface, capsule players, ball arcs with bounces, a main
+  camera, a basic score bug and play / pause / speed. The user accepted every default in the M2 clarification round
+  and chose primitive players with code-driven swings (option b).
+- **Decision:**
+  - Packages: `@tennis/renderer` (playback logic, Three.js scene, camera, overlays) and `ui/` (the Vite dev page).
+    Both import the engine only through `@tennis/engine`; the renderer never imports `ui/`. ESLint enforces this.
+    Pinned: vite 8.3.4 (the copy vitest already used), three 0.186.1, @types/three 0.186.0.
+  - Playback is pure: `buildTimeline(result)` lays the match on one clock, `frameAt(timeline, t)` returns ball, poses
+    and score bug as plain data, and `clockReducer` handles play, pause, 0.25–4x, seek and point jumps. Seek and speed
+    are just a different `t`. All of it, plus the Three scene graph (`createStage().applyFrame`), is tested in Node;
+    only `viewer.ts` (WebGLRenderer), `scoreBugDom.ts` and `ui/` need a browser.
+  - `Frame` is in engine coordinates. `scene/coords.ts` alone maps them to Three: (x, y, z) → (x, z, −y).
+  - Pauses are compressed: 2.5 s between points, 6 s at a changeover, 8 s after a set, 3 s hold at the end, and a
+    1 s toss before each serve. Renderer constants live in `renderer/src/tuning.ts`; they cannot change results.
+  - Ball: the flight height is a quadratic through contact height, net clearance and the bounce, flattened to a
+    line when it would bend upwards (never in 4,381 sampled shots). The next contact follows under gravity. Balls
+    that end a rally hop once at a per-surface height; net balls drop in front of the tape.
+  - Players: positions eased between the per-shot positions in the events; walks to the next point's start in the
+    pause; a cut at a change of ends. `PlayerRig` (`apply(pose)`) is the swap point: M2 ships `CapsuleRig`, M3 can add
+    a skinned GLTF rig without touching playback.
+  - Main Cam: fixed behind the A starting end (it does not swap at changeovers) and pans gently with the ball.
+- **Consequences:** Replays play from engine output or from saved JSON alone (GDD §3); v1 JSON is rejected. The
+  fingerprints shown in Chromium matched the Node CLI for clay 42, grass 7, hard 123 and a loaded clay 99 file
+  (TD-005). The production bundle is one ~600 kB chunk, mostly Three.js.
