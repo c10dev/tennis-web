@@ -30,6 +30,6 @@ export function matchFrameAt(timeline: Timeline, time: number, scoreTime = time)
     pointIndex,
     ball,
     players: { A: playerPose(timeline, 'A', t, ball), B: playerPose(timeline, 'B', t, ball) },
-    scoreBug: scoreBugModel(scoreAt(timeline, shownAt), timeline.names, { noAd: timeline.noAd, winner: over ? timeline.winner : null }),
+    scoreBug: scoreBugModel(scoreAt(timeline, shownAt), timeline.names, { noAd: timeline.noAd, winner: over ? timeline.winner : null, games: !timeline.tiebreakOnly }),
   };
 }

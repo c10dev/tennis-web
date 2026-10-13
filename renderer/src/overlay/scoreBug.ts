@@ -5,7 +5,7 @@ export interface ScoreBugRow {
   name: string;
   /** Games in every finished set. */
   sets: number[];
-  /** Games in the current set; null once the match is over. */
+  /** Games in the current set; null once the match is over, and in one-tiebreak matches. */
   games: number | null;
   /** "0", "15", "30", "40", "AD", "" or a tiebreak count. */
   points: string;
@@ -32,14 +32,14 @@ function calls(score: ScoreState, noAd: boolean): [string, string] {
 }
 
 export function scoreBugModel(
-  score: ScoreState, names: [string, string], options: { noAd: boolean; winner: PlayerId | null },
+  score: ScoreState, names: [string, string], options: { noAd: boolean; winner: PlayerId | null; games?: boolean },
 ): ScoreBugModel {
   const final = options.winner !== null;
   const points = final ? ['', ''] : calls(score, options.noAd);
   const row = (i: 0 | 1, id: PlayerId): ScoreBugRow => ({
     name: names[i],
     sets: score.sets.map((set) => set[i]),
-    games: final ? null : score.games[i],
+    games: final || options.games === false ? null : score.games[i],
     points: points[i]!,
     serving: !final && score.server === id,
     winner: options.winner === id,

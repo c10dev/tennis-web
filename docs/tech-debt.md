@@ -31,7 +31,7 @@
 | TD-026 | game/quick | Ladder points only grow on average (wins pay more than losses cost) and never decay; rank is relative, so this is harmless for a single ladder but inflates numbers over time. | L | 2026-10-13 | Seasonal reset or decay with M6 multi-season/league work | open |
 | TD-027 | ui/quick | No onboarding: the card rules are one line on the start screen and a "beats X" label on each card; the AI's tells (style habits, repeating its last card) are never explained. | M | 2026-10-13 | Short tutorial match before the ladder | open |
 | TD-028 | game/quick | Reward pace (+0.8% of a rating per card, ~+10% per match per trained rating) and the climb rate (23.5 places in 30 matches) are design targets, untested with players. | M | 2026-10-13 | Playtest the short loop | open |
-| TD-029 | renderer/overlay | In a one-tiebreak match (ADR-017) the score bug still has a games column (0-0 throughout) and the finished set reads 1-0 instead of the tiebreak score; it is correct, just not how a match tiebreak is usually shown. | L | 2026-10-13 | Hide games and show the tiebreak count as the set when `setFormat` is 'tiebreak' | open |
+| TD-029 | renderer/overlay | In a one-tiebreak match (ADR-017) the score bug still has a games column (0-0 throughout) and the finished set reads 1-0 instead of the tiebreak score; it is correct, just not how a match tiebreak is usually shown. | L | 2026-10-13 | Closed 2026-10-13: `Timeline.tiebreakOnly`; the score bug drops games and shows each set's tiebreak count, also in the result caption | closed |
 
 ## Refactor passes
 - (record date + what was cleaned up)

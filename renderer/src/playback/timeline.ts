@@ -21,6 +21,8 @@ export interface PointSegment {
   /** The point finished a game, and that game was a break of serve. */
   endsGame: boolean;
   isBreak: boolean;
+  /** One-tiebreak sets only: the tiebreak count of every set finished in the match, shown in place of 1-0. */
+  tiebreakSets?: [number, number][];
 }
 
 export interface Timeline {
@@ -32,6 +34,8 @@ export interface Timeline {
   styles: [PlayStyle, PlayStyle];
   surface: Surface;
   noAd: boolean;
+  /** Every set is one tiebreak (ADR-017): the score bug drops games and shows each set's tiebreak count. */
+  tiebreakOnly: boolean;
   /** False while the match is still being played (no match_end yet): then there is no winner or final score. */
   complete: boolean;
   winner: PlayerId | null;
@@ -74,11 +78,24 @@ export function buildTimeline(result: ReplayInput): Timeline {
   });
   if (segments.length === 0) throw new Error('Replay has no points.');
   const config = result.config;
+  const tiebreakOnly = config.rules.setFormat === 'tiebreak';
+  if (tiebreakOnly) {
+    const counts = setCounts(segments);
+    finalScore = finalScore && { ...(finalScore as ScoreState), sets: counts };
+    for (const s of segments) s.tiebreakSets = counts;
+  }
   return {
     segments, totalSec: t, pointStarts: segments.map((s) => s.start), names: [config.players[0].name, config.players[1].name],
     styles: [config.players[0].style, config.players[1].style], surface: config.surface,
-    noAd: config.rules.noAd, complete: finalScore !== null, winner, finalScore,
+    noAd: config.rules.noAd, tiebreakOnly, complete: finalScore !== null, winner, finalScore,
   };
+}
+
+/** The tiebreak count that ended each set: the points before the set's last point, plus that point. */
+function setCounts(segments: PointSegment[]): [number, number][] {
+  return segments.filter((s) => s.point.scoreAfter.sets.length > s.point.scoreBefore.sets.length).map(({ point: p }) => [
+    p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0), p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0),
+  ]);
 }
 
 /** What the point at `index` finished (a game, a changeover, a set, the match), which sets the pause after it. */
@@ -111,6 +128,7 @@ export function segmentAt(timeline: Timeline, t: number): number {
 export function scoreAt(timeline: Timeline, t: number): ScoreState {
   const i = segmentAt(timeline, t);
   const seg = timeline.segments[i]!;
-  if (t < seg.end) return seg.point.scoreBefore;
-  return i === timeline.segments.length - 1 && timeline.finalScore ? timeline.finalScore : seg.point.scoreAfter;
+  if (i === timeline.segments.length - 1 && t >= seg.end && timeline.finalScore) return timeline.finalScore;
+  const score = t < seg.end ? seg.point.scoreBefore : seg.point.scoreAfter;
+  return seg.tiebreakSets ? { ...score, sets: seg.tiebreakSets.slice(0, score.sets.length) } : score;
 }
