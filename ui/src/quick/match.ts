@@ -8,6 +8,7 @@ import {
   tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
+import { announce } from '../lib/announce.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
 import { stagger } from '../lib/motion.ts';
@@ -29,7 +30,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     return { element: h('div') };
   }
   const stage = h('div');
-  const panel = h('div', { class: 'quick-panel', id: 'quick-panel' });
+  // Focusable, so a decision can move focus here: the next Tab lands on the first card (keys 1/2/3 work anywhere).
+  const panel = h('div', { class: 'quick-panel', id: 'quick-panel', tabindex: -1 });
   const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel);
   const sound = appSound();
   const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
@@ -61,6 +63,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('div', { class: 'tick-line' }, h('strong', { id: 'score-line', class: 'tick-score' }, v.score),
           h('span', { class: `tick-point ${v.winner}` }, `${v.winner === 'you' ? 'Your point' : 'Their point'} · ${v.how}`)),
         pipRow(qm!, p, true)));
+      announce(`${v.score}. ${v.winner === 'you' ? 'Your point' : 'Their point'}, ${v.how}.`);
       phase('auto');
       await sleep(QUICK_PACE.autoSec * 1000);
     }
@@ -88,6 +91,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('span', { class: 'strength', title: 'How well this card suits you right now' }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
     deals = [0, 1, 2].map((i) => setTimeout(() => sound.ui({ kind: 'deal', i }), 120 + 60 * i));
+    announce(`${sit.moment}, ${scoreLine(qm!)}. ${sit.line}. Choose 1 Attack, 2 Defend or 3 Counter.`);
+    panel.focus({ preventScroll: true });
     phase('choose');
   }
 
@@ -116,7 +121,9 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       await playClip(point, QUICK_PACE.speed);
     }
     if (disposed) return;
-    panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, `${r.how} · ${r.winner === 'you' ? 'your point' : 'their point'} · ${scoreLine(qm!)}`));
+    const outcome = `${r.how} · ${r.winner === 'you' ? 'your point' : 'their point'} · ${scoreLine(qm!)}`;
+    panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, outcome));
+    announce(outcome);
     phase('outcome');
     await sleep(QUICK_PACE.scoreSec * 1000);
     busy = false;

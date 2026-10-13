@@ -3,6 +3,8 @@
 .quick-panel { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; width: min(780px, calc(100vw - 32px));
   background: rgba(18, 58, 140, 0.95); border: var(--outline); border-radius: 18px; padding: 14px 18px 18px; box-shadow: 0 6px 0 var(--ink); }
 .quick-match.fast .quick-panel { bottom: auto; top: 24vh; }
+/* Focus moves to the panel at a decision (for the next Tab); the cards show their own focus ring. */
+.quick-panel:focus { outline: none; }
 .situation { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
 .situation .versus { color: var(--muted); }
 /* The moment: a gold sticker tilted a little (rotate, so a transform animation still composes). */
