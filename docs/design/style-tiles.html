@@ -1,0 +1,502 @@
+<meta charset="utf-8">
+<title>TennisSim Style Tiles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Lilita+One&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: one frame page; three stacked direction tiles, each a fixed-look "world" (its own palette) inside a quiet themed frame. */
+:root {
+  --bg: #eef0f4; --surface: #ffffff; --fg: #161a22; --muted: #586174; --line: #d5dae3; --focus: #1f6fd6;
+  --f-frame: "Barlow", system-ui, sans-serif; --f-frame-d: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1218; --surface: #171c25; --fg: #e9edf4; --muted: #9aa4b6; --line: #2a3140; --focus: #6fb0ff; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0f1218; --surface: #171c25; --fg: #e9edf4; --muted: #9aa4b6; --line: #2a3140; --focus: #6fb0ff; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.5 var(--f-frame); padding-inline: 16px; padding-block: 24px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--f-frame-d); font-weight: 700; line-height: 1.05; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(36px, 6vw, 60px); letter-spacing: 0.01em; }
+h2 { font-size: clamp(28px, 4vw, 40px); }
+h3 { font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--focus); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.intro { display: grid; gap: 12px; }
+.intro .lede { color: var(--muted); font-size: 18px; }
+nav.jump { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.jump a { font-family: var(--f-frame-d); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg); background: var(--surface); }
+nav.jump a.rec { border-color: var(--focus); }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; }
+.finding .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.trio { display: flex; gap: 6px; } .trio i { width: 34px; height: 34px; border-radius: 6px; display: block; }
+.finding small { color: var(--muted); }
+
+section.dir { display: grid; gap: 18px; padding-top: 8px; border-top: 1px solid var(--line); }
+.dir-head { display: grid; gap: 6px; }
+.dir-head .tag { font-family: var(--f-frame-d); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-size: 14px; }
+.dir-head .tag b { color: var(--focus); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.sw { display: grid; gap: 2px; font-size: 12px; }
+.sw i { display: block; height: 44px; border-radius: 6px; border: 1px solid rgba(127,127,127,0.25); }
+.sw b { font-weight: 600; } .sw code { font: 500 11px/1.2 "JetBrains Mono", ui-monospace, monospace; color: var(--muted); }
+.notes { display: grid; gap: 6px; font-size: 15px; } .notes div { display: grid; grid-template-columns: 86px 1fr; gap: 10px; }
+.notes dt { font-family: var(--f-frame-d); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-size: 13px; padding-top: 2px; }
+.notes dd { margin: 0; min-width: 0; }
+.replay-btn { justify-self: start; font: 600 14px var(--f-frame-d); letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 14px;
+  border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+
+/* ---------- shared mock skeleton (each world restyles it) ---------- */
+.stage { position: relative; border-radius: 12px; overflow: hidden; min-width: 0; }
+.stage svg.court { display: block; width: 100%; height: auto; }
+.mock { display: grid; gap: 12px; padding: 14px; }
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.banner .moment { padding: 3px 10px; }
+.read { display: grid; gap: 6px; font-size: 14px; }
+.read .hist { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
+.pip svg, .card svg { width: 1em; height: 1em; flex: none; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.card { display: grid; gap: 4px; align-content: start; padding: 10px; min-width: 0; position: relative; }
+.card .key { font-size: 12px; opacity: 0.8; }
+.card .nm { display: flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.card .nm svg { width: 22px; height: 22px; }
+.card .sub, .card .beats { font-size: 12px; }
+.reveal { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; text-align: center; }
+.verdict { width: 100%; text-align: center; }
+.res { display: grid; gap: 12px; padding: 16px; }
+.res .decisive { display: grid; gap: 4px; }
+.res .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.res .tile { display: grid; gap: 2px; padding: 10px; text-align: center; min-width: 0; }
+.res .tile .n { font-variant-numeric: tabular-nums; line-height: 1; }
+.res .passed { display: flex; flex-wrap: wrap; gap: 6px; }
+.res .stat { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; font-variant-numeric: tabular-nums; }
+.res .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; overflow: hidden; }
+.res .bar i { display: block; height: 100%; width: var(--w); }
+.res .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.res .actions .goal { flex: 1 1 160px; font-size: 14px; }
+.res .play { padding: 10px 18px; border: 0; cursor: default; }
+
+/* ---------- Direction A: Night Session ---------- */
+.A { --ink: #0A1220; --panel: #121C2E; --panel2: #1A2740; --rule: #2A3A57; --text: #F3F6FB; --muted: #93A1B8;
+  --gold: #F2C94C; --ball: #D9F24B; --atk: #FF7A45; --def: #4AA3FF; --ctr: #3FD3B0;
+  background: var(--ink); color: var(--text); font-family: "Barlow", system-ui, sans-serif; }
+.A .disp { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.A .mock, .A .res { background: linear-gradient(180deg, rgba(10,18,32,0) 0%, var(--ink) 30%); }
+.A .banner .vs { color: var(--muted); font-size: 14px; }
+.A .banner .moment { background: var(--gold); color: var(--ink); font: 700 15px "Barlow Condensed", sans-serif; letter-spacing: 0.14em; clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); padding-right: 16px; }
+.A .banner .sc { font: 600 15px "Barlow Condensed", sans-serif; letter-spacing: 0.06em; }
+.A .read { color: var(--muted); } .A .read b { color: var(--text); font-weight: 600; }
+.A .pip { background: var(--panel2); border-radius: 3px; font-family: "Barlow Condensed", sans-serif; letter-spacing: 0.06em; text-transform: uppercase; }
+.A .tell { border-left: 3px solid var(--gold); padding-left: 8px; color: var(--text); }
+.A .card { background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid currentColor; border-radius: 4px; }
+.A .card .nm { font: 700 22px "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: 0.04em; }
+.A .card .sub { color: var(--text); } .A .card .beats { color: var(--muted); }
+.A .reveal .pip { font-size: 14px; padding: 4px 10px; }
+.A .verdict { font: 700 26px "Barlow Condensed", sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.A .res .tile { background: var(--panel); border-radius: 4px; }
+.A .res .tile .n { font: 700 34px "Barlow Condensed", sans-serif; }
+.A .res .tile .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; }
+.A .res .passed span { background: var(--panel2); padding: 2px 8px; border-radius: 3px; font-size: 13px; }
+.A .res .bar { background: var(--panel2); } .A .res .bar i { background: var(--gold); }
+.A .res .play { background: var(--gold); color: var(--ink); font: 700 18px "Barlow Condensed", sans-serif; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 3px; }
+.A .res .goal { color: var(--muted); } .A .res .goal b { color: var(--text); }
+.A .bug { position: absolute; top: 10px; left: 10px; display: grid; font: 600 13px "Barlow Condensed", sans-serif; letter-spacing: 0.04em; }
+.A .bug div { display: grid; grid-template-columns: 10px 92px 26px; align-items: center; background: rgba(10,18,32,0.92); }
+.A .bug span { padding: 2px 6px; } .A .bug .p { background: var(--gold); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
+.A .bug .s { color: var(--gold); font-size: 9px; padding-left: 4px; }
+
+/* ---------- Direction B: Rally Pop ---------- */
+.B { --court: #123A8C; --court2: #1B4DB3; --paper: #FFFFFF; --ink: #15171E; --inkm: #5A6172; --optic: #D6F53A; --gold: #FFC21A;
+  --atk: #F2552C; --def: #1F7AE0; --ctr: #14A88A; --atkT: #C23A1C; --defT: #1565C8; --ctrT: #0B7F6A;
+  background: var(--court); color: #fff; font-family: "Nunito", system-ui, sans-serif; font-weight: 600; }
+.B .disp { font-family: "Lilita One", "Arial Rounded MT Bold", sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+.B .mock, .B .res { background: linear-gradient(180deg, rgba(18,58,140,0) 0%, var(--court) 28%); }
+.B .banner .vs { color: #BFD0F2; font-size: 14px; }
+.B .banner .moment { background: var(--optic); color: var(--ink); font: 400 20px "Lilita One", sans-serif; border-radius: 8px; border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink); transform: rotate(-2deg); }
+.B .banner .sc { font: 400 18px "Lilita One", sans-serif; }
+.B .read { color: #DCE6FA; } .B .read b { color: #fff; }
+.B .pip { background: var(--paper); color: var(--ink); border-radius: 999px; border: 2px solid var(--ink); }
+.B .pip.atk svg { color: var(--atkT); } .B .pip.def svg { color: var(--defT); } .B .pip.ctr svg { color: var(--ctrT); }
+.B .tell { background: rgba(255,255,255,0.12); border-radius: 10px; padding: 6px 10px; color: #fff; }
+.B .card { background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 0 5px 0 var(--ink); padding-top: 34px; }
+.B .card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 26px; background: var(--c); border-radius: 10px 10px 0 0; border-bottom: 3px solid var(--ink); }
+.B .card .key { position: absolute; top: 3px; right: 8px; font: 400 15px "Lilita One", sans-serif; color: #fff; opacity: 1; }
+.B .card .nm { font: 400 22px "Lilita One", sans-serif; color: var(--t); }
+.B .card .beats { color: var(--inkm); }
+.B .card.atk { --c: var(--atk); --t: var(--atkT); } .B .card.def { --c: var(--def); --t: var(--defT); } .B .card.ctr { --c: var(--ctr); --t: var(--ctrT); }
+.B .reveal .pip { font: 400 18px "Lilita One", sans-serif; padding: 4px 12px; border-width: 3px; }
+.B .verdict { font: 400 34px "Lilita One", sans-serif; color: var(--optic); -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; text-shadow: 0 4px 0 var(--ink); }
+.B .res .tile { background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 0 4px 0 var(--ink); }
+.B .res .tile .n { font: 400 34px "Lilita One", sans-serif; }
+.B .res .tile.gold { background: var(--gold); }
+.B .res .tile .l { color: var(--inkm); font-size: 12px; } .B .res .tile.gold .l { color: var(--ink); }
+.B .res .passed span { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; padding: 1px 10px; font-size: 13px; }
+.B .res .bar { background: rgba(255,255,255,0.18); border: 2px solid var(--ink); height: 12px; border-radius: 999px; } .B .res .bar i { background: var(--optic); }
+.B .res .play { background: var(--optic); color: var(--ink); font: 400 22px "Lilita One", sans-serif; border-radius: 14px; border: 3px solid var(--ink); box-shadow: 0 5px 0 var(--ink); }
+.B .res .goal { color: #DCE6FA; } .B .res .goal b { color: #fff; }
+.B .bug { position: absolute; top: 10px; left: 10px; display: grid; font: 600 13px "Barlow Condensed", sans-serif; border: 2px solid var(--ink); border-radius: 6px; overflow: hidden; }
+.B .bug div { display: grid; grid-template-columns: 10px 92px 26px; align-items: center; background: var(--ink); color: #fff; }
+.B .bug span { padding: 2px 6px; } .B .bug .p { background: var(--optic); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
+.B .bug .s { color: var(--optic); font-size: 9px; padding-left: 4px; }
+
+/* ---------- Direction C: Tactics Board ---------- */
+.C { --board: #0F3B2E; --board2: #164A3A; --chalk: #F1F4EC; --chalkm: #A9C2B4; --ball: #E4F53F; --atk: #FF8A50; --def: #7CC4FF; --ctr: #5FE0C0;
+  background: var(--board); color: var(--chalk); font-family: "Archivo", system-ui, sans-serif; font-variation-settings: "wdth" 100; }
+.C .disp { font-family: "Archivo", sans-serif; font-weight: 800; font-stretch: 125%; font-variation-settings: "wdth" 125; text-transform: uppercase; letter-spacing: 0.02em; }
+.C .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.C .mock, .C .res { background: linear-gradient(180deg, rgba(15,59,46,0) 0%, var(--board) 30%); }
+.C .banner .vs { color: var(--chalkm); font-size: 13px; }
+.C .banner .moment { border: 2px solid var(--ball); color: var(--ball); font: 800 14px "Archivo", sans-serif; font-variation-settings: "wdth" 125; letter-spacing: 0.1em; }
+.C .banner .sc { font: 500 13px "JetBrains Mono", monospace; }
+.C .read { color: var(--chalkm); } .C .read b { color: var(--chalk); }
+.C .pip { border: 1.5px dashed currentColor; border-radius: 4px; font: 500 12px "JetBrains Mono", monospace; }
+.C .tell { color: var(--chalk); font-style: italic; }
+.C .card { border: 2px solid currentColor; border-radius: 6px; background: var(--board2); }
+.C .card .nm { font: 800 17px "Archivo", sans-serif; font-variation-settings: "wdth" 125; text-transform: uppercase; }
+.C .card .sub { color: var(--chalk); } .C .card .beats { color: var(--chalkm); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+.C .card .key { font-family: "JetBrains Mono", monospace; }
+.C .verdict { font: 800 24px "Archivo", sans-serif; font-variation-settings: "wdth" 125; text-transform: uppercase; color: var(--ball); }
+.C .res .tile { border: 1.5px solid var(--chalkm); border-radius: 6px; }
+.C .res .tile .n { font: 800 32px "Archivo", sans-serif; font-variation-settings: "wdth" 70; }
+.C .res .tile .l { color: var(--chalkm); font: 500 11px "JetBrains Mono", monospace; }
+.C .res .passed span { border-bottom: 1.5px dashed var(--chalkm); font-size: 13px; padding: 0 2px; }
+.C .res .bar { background: var(--board2); } .C .res .bar i { background: repeating-linear-gradient(90deg, var(--ball) 0 6px, transparent 6px 9px); }
+.C .res .play { background: var(--ball); color: var(--board); font: 800 16px "Archivo", sans-serif; font-variation-settings: "wdth" 125; text-transform: uppercase; border-radius: 4px; }
+.C .res .goal { color: var(--chalkm); } .C .res .goal b { color: var(--chalk); }
+.C .bug { position: absolute; top: 10px; left: 10px; display: grid; font: 500 12px "JetBrains Mono", monospace; border: 1.5px solid var(--chalk); }
+.C .bug div { display: grid; grid-template-columns: 10px 92px 26px; align-items: center; background: rgba(15,59,46,0.9); }
+.C .bug span { padding: 2px 6px; } .C .bug .p { color: var(--ball); text-align: center; border-left: 1.5px solid var(--chalk); }
+.C .bug .s { color: var(--ball); font-size: 9px; padding-left: 4px; }
+
+.atk { color: var(--atk); } .def { color: var(--def); } .ctr { color: var(--ctr); }
+.A .pip.atk, .C .pip.atk { color: var(--atk); } .A .pip.def, .C .pip.def { color: var(--def); } .A .pip.ctr, .C .pip.ctr { color: var(--ctr); }
+.B .card.atk, .B .card.def, .B .card.ctr { color: var(--ink); }
+
+/* ---------- motion: reveal and count-up (replayed by the button) ---------- */
+.play-on .card { animation: deal var(--deal-d) var(--deal-e) both; }
+.play-on .card:nth-child(2) { animation-delay: var(--stagger); } .play-on .card:nth-child(3) { animation-delay: calc(var(--stagger) * 2); }
+.play-on .reveal .pip { animation: flip var(--flip-d) var(--flip-e) both; animation-delay: var(--hold); }
+.play-on .verdict { animation: pop var(--pop-d) var(--pop-e) both; animation-delay: calc(var(--hold) + var(--flip-d)); }
+.play-on .tile { animation: rise 360ms cubic-bezier(0.05, 0.7, 0.1, 1) both; }
+.play-on .tile:nth-child(2) { animation-delay: 120ms; } .play-on .tile:nth-child(3) { animation-delay: 240ms; }
+.A { --deal-d: 240ms; --deal-e: cubic-bezier(0.2, 0, 0, 1); --stagger: 50ms; --hold: 450ms; --flip-d: 220ms; --flip-e: cubic-bezier(0.2, 0, 0, 1); --pop-d: 260ms; --pop-e: cubic-bezier(0.05, 0.7, 0.1, 1); }
+.B { --deal-d: 380ms; --deal-e: cubic-bezier(0.34, 1.56, 0.64, 1); --stagger: 70ms; --hold: 650ms; --flip-d: 300ms; --flip-e: cubic-bezier(0.34, 1.56, 0.64, 1); --pop-d: 420ms; --pop-e: cubic-bezier(0.34, 1.8, 0.64, 1); }
+.C { --deal-d: 300ms; --deal-e: cubic-bezier(0.2, 0, 0, 1); --stagger: 60ms; --hold: 500ms; --flip-d: 260ms; --flip-e: linear; --pop-d: 300ms; --pop-e: cubic-bezier(0.2, 0, 0, 1); }
+@keyframes deal { from { transform: translateY(24px) scale(0.96); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@keyframes flip { 0% { transform: rotateY(90deg); } 100% { transform: none; } }
+@keyframes pop { 0% { transform: scale(0.6); opacity: 0.3; } 100% { transform: none; opacity: 1; } }
+@keyframes rise { from { transform: translateY(12px); opacity: 0.3; } to { transform: none; opacity: 1; } }
+.C.play-on .court .arrow { stroke-dasharray: 240; animation: draw 500ms cubic-bezier(0.2, 0, 0, 1) both; }
+@keyframes draw { from { stroke-dashoffset: 240; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .play-on * { animation: none !important; } }
+
+.rec-box { background: var(--surface); border: 2px solid var(--focus); border-radius: 12px; padding: 18px; display: grid; gap: 10px; }
+.rec-box ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 72ch; }
+footer { color: var(--muted); font-size: 14px; display: grid; gap: 6px; }
+@media (max-width: 520px) {
+  .card .nm { font-size: 17px !important; } .card .nm svg { width: 16px; height: 16px; } .card .sub { display: none; }
+  .res .tile .n { font-size: 26px !important; } .notes div { grid-template-columns: 1fr; gap: 0; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Card icons drawn for this page (simple original strokes in the spirit of Lucide: zap / shield / rotate) -->
+  <symbol id="i-atk" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-def" viewBox="0 0 24 24"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-ctr" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 3.5v5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+</svg>
+
+<main class="wrap">
+  <header class="intro">
+    <h1>TennisSim style tiles</h1>
+    <p class="lede">Three art directions for the casual quick match (ADR-017), each shown on the same two screens: the decision point with the card reveal, and the result. Everything here is drawn for this page, with no copied images. The full write-up with references and licences is <code>docs/design-references.md</code>.</p>
+    <nav class="jump" aria-label="Directions">
+      <a href="#night">A · Night Session</a><a href="#pop" class="rec">B · Rally Pop (recommended)</a><a href="#board">C · Tactics Board</a><a href="#pick">Recommendation</a>
+    </nav>
+  </header>
+
+  <aside class="finding" aria-label="Colour finding">
+    <h3>Fix in any direction: card colours</h3>
+    <div class="row">
+      <div><small>Today</small><div class="trio"><i style="background:#ff8a6b"></i><i style="background:#6aa8ff"></i><i style="background:#c9a0ff"></i></div></div>
+      <div><small>Proposed</small><div class="trio"><i style="background:#FF7A45"></i><i style="background:#4AA3FF"></i><i style="background:#3FD3B0"></i></div></div>
+      <p style="flex:1 1 280px">Under simulated protanopia, today's Defend blue and Counter purple are almost the same colour (smallest ΔE 2). Moving Counter to teal raises the smallest gap to 38 (protan) and 53 (deutan). Every card also gets its own icon and keeps its 1/2/3 key, so colour is never the only cue.</p>
+    </div>
+  </aside>
+
+  <!-- ================= A ================= -->
+  <section class="dir" id="night">
+    <div class="dir-head">
+      <span class="tag">Direction A</span>
+      <h2>Night Session</h2>
+      <p>The current look done properly: a floodlit evening session on TV. Score bug, lower-thirds and camera cuts lead; the UI is the broadcast package. Calm, credible, cheapest to build.</p>
+    </div>
+    <div class="grid2">
+      <div class="stage A" data-tile>
+        <svg class="court" viewBox="0 0 400 190" role="img" aria-label="Night session court sketch: floodlit blue hard court on a navy surround">
+          <rect width="400" height="190" fill="#0A1220"/><rect y="0" width="400" height="60" fill="#0E1830"/>
+          <rect x="0" y="52" width="400" height="10" fill="#1E3A70"/><rect x="40" y="56" width="70" height="4" fill="#F2C94C" opacity=".7"/><rect x="250" y="56" width="90" height="4" fill="#4AA3FF" opacity=".6"/>
+          <polygon points="60,190 340,190 288,66 112,66" fill="#1B5FA8"/><polygon points="88,190 312,190 272,74 128,74" fill="#2167B5"/>
+          <polygon points="88,190 312,190 272,74 128,74" fill="none" stroke="#F3F6FB" stroke-width="1.5"/><line x1="113" y1="116" x2="287" y2="116" stroke="#F3F6FB" stroke-width="2.2"/>
+          <line x1="200" y1="74" x2="200" y2="190" stroke="#F3F6FB" stroke-width="1"/><circle cx="232" cy="98" r="3.4" fill="#D9F24B"/><circle cx="232" cy="98" r="7" fill="#D9F24B" opacity=".18"/>
+          <ellipse cx="160" cy="171" rx="9" ry="3" fill="#000" opacity=".35"/><rect x="155" y="148" width="10" height="22" rx="5" fill="#E2E8F2"/><circle cx="160" cy="143" r="5" fill="#C99A78"/>
+          <ellipse cx="236" cy="81" rx="6" ry="2" fill="#000" opacity=".35"/><rect x="233" y="67" width="6" height="14" rx="3" fill="#FF7A45"/><circle cx="236" cy="64" r="3" fill="#C99A78"/>
+        </svg>
+        <div class="bug"><div><span class="s">●</span><span>KIM</span><span class="p">6</span></div><div><span></span><span>TORTON</span><span class="p">5</span></div></div>
+        <div class="mock">
+          <div class="banner"><span class="vs">You v Nilin Torton</span><span class="moment">Match point</span><span class="sc">Your serve · 6–5</span></div>
+          <div class="read">
+            <div class="hist">Their cards: <span class="pip atk"><svg><use href="#i-atk"/></svg>Atk</span><span class="pip atk"><svg><use href="#i-atk"/></svg>Atk</span><span class="pip def"><svg><use href="#i-def"/></svg>Def</span> · <b>Habit: attacks on big points</b></div>
+            <div class="tell">Tell: he's crowding the baseline. <b>Looks like Attack.</b></div>
+          </div>
+          <div class="cards">
+            <div class="card atk"><span class="key">1</span><span class="nm"><svg><use href="#i-atk"/></svg>Attack</span><span class="sub">Big serve</span><span class="beats">beats Defend</span></div>
+            <div class="card def"><span class="key">2</span><span class="nm"><svg><use href="#i-def"/></svg>Defend</span><span class="sub">Safe serve</span><span class="beats">beats Counter</span></div>
+            <div class="card ctr"><span class="key">3</span><span class="nm"><svg><use href="#i-ctr"/></svg>Counter</span><span class="sub">Bait the return</span><span class="beats">beats Attack</span></div>
+          </div>
+          <div class="reveal"><span class="pip ctr"><svg><use href="#i-ctr"/></svg>You · Counter</span><span>v</span><span class="pip atk"><svg><use href="#i-atk"/></svg>Attack · Torton</span><div class="verdict">You read it</div></div>
+        </div>
+      </div>
+
+      <div class="stage A" data-tile>
+        <div class="res">
+          <div class="decisive"><span class="disp" style="font-size:40px;line-height:1">You won 7–5</span><span style="color:var(--muted)">Decisive point · 6–5, match point: <b style="color:var(--text)">your counter beat their attack</b></span></div>
+          <div class="tiles">
+            <div class="tile"><span class="n" data-count="24" data-prefix="+">+24</span><span class="l">Ladder pts</span></div>
+            <div class="tile"><span class="n">#42</span><span class="l">From #45</span></div>
+            <div class="tile"><span class="n">2</span><span class="l">Wins to top 40</span></div>
+          </div>
+          <div class="passed"><span>Passed R. Okafor</span><span>M. Lindqvist</span><span>J. Ferreira</span></div>
+          <div class="stat"><span>Serve</span><span><b data-count="62" data-from="61">62</b> <span style="color:var(--gold)">+1</span></span><div class="bar"><i style="--w:62%"></i></div>
+            <span>Return</span><span><b>55</b> <span style="color:var(--gold)">+1</span></span><div class="bar"><i style="--w:55%"></i></div></div>
+          <div class="actions"><span class="goal">Next: <b>beat #41 S. Haddad</b> for the top 40</span><button class="play" tabindex="-1">Play again</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Palette</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#0A1220"></i><b>Ink</b><code>#0A1220</code></div>
+          <div class="sw"><i style="background:#121C2E"></i><b>Panel</b><code>#121C2E</code></div>
+          <div class="sw"><i style="background:#F3F6FB"></i><b>Text</b><code>#F3F6FB · 17.3</code></div>
+          <div class="sw"><i style="background:#93A1B8"></i><b>Muted</b><code>#93A1B8 · 6.5</code></div>
+          <div class="sw"><i style="background:#F2C94C"></i><b>Gold</b><code>#F2C94C · ink 11.8</code></div>
+          <div class="sw"><i style="background:#D9F24B"></i><b>Ball</b><code>#D9F24B</code></div>
+          <div class="sw"><i style="background:#FF7A45"></i><b>Attack</b><code>#FF7A45 · 6.6</code></div>
+          <div class="sw"><i style="background:#4AA3FF"></i><b>Defend</b><code>#4AA3FF · 6.5</code></div>
+          <div class="sw"><i style="background:#3FD3B0"></i><b>Counter</b><code>#3FD3B0 · 9.1</code></div>
+        </div>
+        <small style="color:var(--muted)">Numbers are WCAG contrast ratios against Panel (or the named pair).</small>
+      </div>
+      <div class="panel">
+        <h3>Type, 3D, motion</h3>
+        <dl class="notes">
+          <div><dt>Type</dt><dd><span style="font:700 26px 'Barlow Condensed';text-transform:uppercase;letter-spacing:.04em">Match point 6–5</span><br><span style="font:400 15px Barlow">Barlow Condensed 600/700 for bug, banners and numbers; Barlow 400/500 for text.</span></dd></div>
+          <div><dt>3D</dt><dd>Current meshes, night grade: tone mapping on, dark stands, lit court, emissive ball with a short trail, LED boards in the accent colours.</dd></div>
+          <div><dt>Motion</dt><dd>Broadcast wipes. 240 ms in, 180 ms out, standard easing, no overshoot. Reveal hold 450 ms.</dd></div>
+          <div><dt>Risk</dt><dd>Reads like today's game. The primitive players look unfinished next to a realistic broadcast frame. Rewards need extra work to land.</dd></div>
+        </dl>
+        <button class="replay-btn" data-replay="night">Replay motion</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="dir" id="pop">
+    <div class="dir-head">
+      <span class="tag">Direction B · <b>recommended</b></span>
+      <h2>Rally Pop</h2>
+      <p>A sunny, toy-like tennis world with sticker-style cards. Ink outlines and chunky shapes make the primitive players look intentional. The broadcast grammar stays (score bug, MATCH POINT callout, replays), but the reveal and the rewards get real juice.</p>
+    </div>
+    <div class="grid2">
+      <div class="stage B" data-tile>
+        <svg class="court" viewBox="0 0 400 190" role="img" aria-label="Rally pop court sketch: bright toon court with ink outlines">
+          <rect width="400" height="190" fill="#7FD3F7"/><rect y="40" width="400" height="30" fill="#2E9E5B" stroke="#15171E" stroke-width="3"/>
+          <circle cx="60" cy="52" r="14" fill="#3CB86B" stroke="#15171E" stroke-width="3"/><circle cx="340" cy="50" r="16" fill="#3CB86B" stroke="#15171E" stroke-width="3"/>
+          <polygon points="40,190 360,190 296,70 104,70" fill="#2E8F5E" stroke="#15171E" stroke-width="3"/>
+          <polygon points="74,190 326,190 280,78 120,78" fill="#2A62C9" stroke="#15171E" stroke-width="3"/>
+          <polygon points="80,186 320,186 276,82 124,82" fill="none" stroke="#fff" stroke-width="3"/><line x1="103" y1="122" x2="297" y2="122" stroke="#15171E" stroke-width="5"/><line x1="103" y1="122" x2="297" y2="122" stroke="#fff" stroke-width="2"/>
+          <line x1="200" y1="82" x2="200" y2="186" stroke="#fff" stroke-width="2"/>
+          <ellipse cx="160" cy="176" rx="14" ry="4" fill="#15171E" opacity=".35"/><rect x="150" y="146" width="20" height="28" rx="10" fill="#F2552C" stroke="#15171E" stroke-width="3"/><circle cx="160" cy="138" r="10" fill="#F5C9A0" stroke="#15171E" stroke-width="3"/>
+          <ellipse cx="174" cy="150" rx="7" ry="9" fill="#FFC21A" stroke="#15171E" stroke-width="2.5"/>
+          <ellipse cx="238" cy="88" rx="9" ry="3" fill="#15171E" opacity=".35"/><rect x="232" y="70" width="12" height="17" rx="6" fill="#14A88A" stroke="#15171E" stroke-width="2.5"/><circle cx="238" cy="64" r="6" fill="#B07850" stroke="#15171E" stroke-width="2.5"/>
+          <circle cx="214" cy="102" r="6" fill="#D6F53A" stroke="#15171E" stroke-width="2.5"/><path d="M196 112 Q205 108 210 104" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+        </svg>
+        <div class="bug"><div><span class="s">●</span><span>KIM</span><span class="p">6</span></div><div><span></span><span>TORTON</span><span class="p">5</span></div></div>
+        <div class="mock">
+          <div class="banner"><span class="moment">MATCH POINT!</span><span class="sc">Your serve · 6–5</span><span class="vs">v Nilin Torton</span></div>
+          <div class="read">
+            <div class="hist">Torton played: <span class="pip atk"><svg><use href="#i-atk"/></svg>Attack</span><span class="pip atk"><svg><use href="#i-atk"/></svg>Attack</span><span class="pip def"><svg><use href="#i-def"/></svg>Defend</span></div>
+            <div class="tell"><svg style="width:1em;height:1em;vertical-align:-2px"><use href="#i-eye"/></svg> <b>Tell:</b> he's crowding the baseline… <b>Attack?</b> <span style="opacity:.75">Habit: attacks on big points</span></div>
+          </div>
+          <div class="cards">
+            <div class="card atk"><span class="key">1</span><span class="nm"><svg><use href="#i-atk"/></svg>Attack</span><span class="sub">Big serve</span><span class="beats">beats Defend</span></div>
+            <div class="card def"><span class="key">2</span><span class="nm"><svg><use href="#i-def"/></svg>Defend</span><span class="sub">Safe serve</span><span class="beats">beats Counter</span></div>
+            <div class="card ctr"><span class="key">3</span><span class="nm"><svg><use href="#i-ctr"/></svg>Counter</span><span class="sub">Bait the return</span><span class="beats">beats Attack</span></div>
+          </div>
+          <div class="reveal"><span class="pip ctr"><svg><use href="#i-ctr"/></svg>Counter</span><span>vs</span><span class="pip atk"><svg><use href="#i-atk"/></svg>Attack</span><div class="verdict">You read it!</div></div>
+        </div>
+      </div>
+
+      <div class="stage B" data-tile>
+        <div class="res">
+          <div class="decisive"><span class="disp" style="font-size:42px;line-height:1">You won 7–5!</span><span style="color:#DCE6FA">6–5, match point: <b style="color:#fff">your Counter beat their Attack</b></span></div>
+          <div class="tiles">
+            <div class="tile gold"><span class="n" data-count="24" data-prefix="+">+24</span><span class="l">ladder points</span></div>
+            <div class="tile"><span class="n">#42</span><span class="l">up 3 places</span></div>
+            <div class="tile"><span class="n">2</span><span class="l">wins to top 40</span></div>
+          </div>
+          <div class="passed"><span>▲ R. Okafor</span><span>▲ M. Lindqvist</span><span>▲ J. Ferreira</span></div>
+          <div class="stat"><span>Serve</span><span><b data-count="62" data-from="61">62</b> <span style="color:var(--optic)">▲1</span></span><div class="bar"><i style="--w:62%"></i></div>
+            <span>Return</span><span><b>55</b> <span style="color:var(--optic)">▲1</span></span><div class="bar"><i style="--w:55%"></i></div></div>
+          <div class="actions"><span class="goal">Next: <b>beat #41 S. Haddad</b></span><button class="play" tabindex="-1">Play again</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Palette</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#123A8C"></i><b>Court</b><code>#123A8C · white 10.4</code></div>
+          <div class="sw"><i style="background:#FFFFFF"></i><b>Paper</b><code>#FFFFFF</code></div>
+          <div class="sw"><i style="background:#15171E"></i><b>Ink</b><code>#15171E · 17.9</code></div>
+          <div class="sw"><i style="background:#D6F53A"></i><b>Optic</b><code>#D6F53A · ink 14.5</code></div>
+          <div class="sw"><i style="background:#FFC21A"></i><b>Gold</b><code>#FFC21A · ink 11.1</code></div>
+          <div class="sw"><i style="background:#F2552C"></i><b>Attack</b><code>#F2552C · text #C23A1C 5.4</code></div>
+          <div class="sw"><i style="background:#1F7AE0"></i><b>Defend</b><code>#1F7AE0 · text #1565C8 5.6</code></div>
+          <div class="sw"><i style="background:#14A88A"></i><b>Counter</b><code>#14A88A · text #0B7F6A 4.9</code></div>
+          <div class="sw"><i style="background:#5A6172"></i><b>Ink muted</b><code>#5A6172 · 6.2</code></div>
+        </div>
+        <small style="color:var(--muted)">Card fills carry the colour; card names use the darker text tone so they pass 4.5:1 on white.</small>
+      </div>
+      <div class="panel">
+        <h3>Type, 3D, motion</h3>
+        <dl class="notes">
+          <div><dt>Type</dt><dd><span style="font:400 28px 'Lilita One'">Match point!</span><br><span style="font:600 15px Nunito">Lilita One for banners, card names and big numbers; Nunito 600/800 for text; Barlow Condensed stays in the score bug.</span></dd></div>
+          <div><dt>3D</dt><dd>Toon shading (3-band gradient), ink outlines on players, net and ball only, chunkier proportions, daylight, oversized optic ball with a white trail.</dd></div>
+          <div><dt>Motion</dt><dd>Springy. Cards deal in with a 70 ms stagger and slight overshoot. The reveal holds 650 ms, both cards flip together, the verdict pops. Count-ups tick upward.</dd></div>
+          <div><dt>Risk</dt><dd>Costs the most to build: material swap, outline meshes, a rig in this proportion. Can tip into childish if the copy stays jokey. Lilita One has no Hangul.</dd></div>
+        </dl>
+        <button class="replay-btn" data-replay="pop">Replay motion</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="dir" id="board">
+    <div class="dir-head">
+      <span class="tag">Direction C</span>
+      <h2>Tactics Board</h2>
+      <p>The coach's whiteboard. Chalk lines on a deep green board, with the tell drawn as an arrow on the court. Manager-flavoured and very readable, but quieter in the moments that should feel good.</p>
+    </div>
+    <div class="grid2">
+      <div class="stage C" data-tile>
+        <svg class="court" viewBox="0 0 400 190" role="img" aria-label="Tactics board court sketch: chalk court lines on green with an arrow showing the tell">
+          <rect width="400" height="190" fill="#0F3B2E"/>
+          <polygon points="88,190 312,190 272,74 128,74" fill="#13473A"/>
+          <polygon points="88,190 312,190 272,74 128,74" fill="none" stroke="#F1F4EC" stroke-width="1.5"/><line x1="113" y1="116" x2="287" y2="116" stroke="#F1F4EC" stroke-width="2" stroke-dasharray="4 3"/>
+          <line x1="200" y1="74" x2="200" y2="190" stroke="#F1F4EC" stroke-width="1"/>
+          <circle cx="160" cy="166" r="9" fill="none" stroke="#5FE0C0" stroke-width="2"/><text x="160" y="170" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#5FE0C0">K</text>
+          <circle cx="236" cy="84" r="7" fill="none" stroke="#FF8A50" stroke-width="2"/><text x="236" y="87.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8" fill="#FF8A50">T</text>
+          <path class="arrow" d="M236 92 C 228 118, 196 140, 172 158" fill="none" stroke="#FF8A50" stroke-width="2.4" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 10 5 0 10z" fill="#FF8A50"/></marker></defs>
+          <text x="250" y="132" font-family="JetBrains Mono, monospace" font-size="10" fill="#FF8A50">attack? ~70%</text>
+        </svg>
+        <div class="bug"><div><span class="s">●</span><span>KIM</span><span class="p">6</span></div><div><span></span><span>TORTON</span><span class="p">5</span></div></div>
+        <div class="mock">
+          <div class="banner"><span class="moment">Match point</span><span class="sc">SRV KIM · 6–5</span><span class="vs">v N. Torton</span></div>
+          <div class="read">
+            <div class="hist"><span class="mono">HIST</span> <span class="pip atk">ATK</span><span class="pip atk">ATK</span><span class="pip def">DEF</span> <b>habit: attacks on big points</b></div>
+            <div class="tell">"Crowding the baseline." Likely attack.</div>
+          </div>
+          <div class="cards">
+            <div class="card atk"><span class="key">[1]</span><span class="nm"><svg><use href="#i-atk"/></svg>Attack</span><span class="sub">Big serve</span><span class="beats">&gt; DEF</span></div>
+            <div class="card def"><span class="key">[2]</span><span class="nm"><svg><use href="#i-def"/></svg>Defend</span><span class="sub">Safe serve</span><span class="beats">&gt; CTR</span></div>
+            <div class="card ctr"><span class="key">[3]</span><span class="nm"><svg><use href="#i-ctr"/></svg>Counter</span><span class="sub">Bait the return</span><span class="beats">&gt; ATK</span></div>
+          </div>
+          <div class="reveal"><span class="pip ctr">KIM · CTR</span><span>×</span><span class="pip atk">ATK · TORTON</span><div class="verdict">Read correctly</div></div>
+        </div>
+      </div>
+
+      <div class="stage C" data-tile>
+        <div class="res">
+          <div class="decisive"><span class="disp" style="font-size:34px;line-height:1">Won 7–5</span><span style="color:var(--chalkm)">Point 12 · 6–5 MP: <b style="color:var(--chalk)">your counter beat their attack</b></span></div>
+          <div class="tiles">
+            <div class="tile"><span class="n" data-count="24" data-prefix="+">+24</span><span class="l">LADDER PTS</span></div>
+            <div class="tile"><span class="n">#42</span><span class="l">FROM #45</span></div>
+            <div class="tile"><span class="n">2</span><span class="l">WINS → TOP 40</span></div>
+          </div>
+          <div class="passed"><span>Okafor</span><span>Lindqvist</span><span>Ferreira</span></div>
+          <div class="stat"><span>Serve</span><span class="mono"><b data-count="62" data-from="61">62</b> +1</span><div class="bar"><i style="--w:62%"></i></div>
+            <span>Return</span><span class="mono"><b>55</b> +1</span><div class="bar"><i style="--w:55%"></i></div></div>
+          <div class="actions"><span class="goal">Next: <b>#41 Haddad</b></span><button class="play" tabindex="-1">Play again</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Palette</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#0F3B2E"></i><b>Board</b><code>#0F3B2E</code></div>
+          <div class="sw"><i style="background:#164A3A"></i><b>Board 2</b><code>#164A3A</code></div>
+          <div class="sw"><i style="background:#F1F4EC"></i><b>Chalk</b><code>#F1F4EC · 11.2</code></div>
+          <div class="sw"><i style="background:#A9C2B4"></i><b>Chalk muted</b><code>#A9C2B4 · 6.6</code></div>
+          <div class="sw"><i style="background:#E4F53F"></i><b>Ball</b><code>#E4F53F · board 10.3</code></div>
+          <div class="sw"><i style="background:#FF8A50"></i><b>Attack</b><code>#FF8A50 · 5.3</code></div>
+          <div class="sw"><i style="background:#7CC4FF"></i><b>Defend</b><code>#7CC4FF · 6.6</code></div>
+          <div class="sw"><i style="background:#5FE0C0"></i><b>Counter</b><code>#5FE0C0 · 7.7</code></div>
+        </div>
+        <small style="color:var(--muted)">Ratios are against Board.</small>
+      </div>
+      <div class="panel">
+        <h3>Type, 3D, motion</h3>
+        <dl class="notes">
+          <div><dt>Type</dt><dd><span style="font:800 24px Archivo;font-variation-settings:'wdth' 125;text-transform:uppercase">Match point</span><br><span style="font:400 15px Archivo">Archivo (variable width: wide for headings, narrow for numbers) with JetBrains Mono for stats and tells.</span></dd></div>
+          <div><dt>3D</dt><dd>Flat-shaded low-poly, muted surround, top-down tactical camera at decision points with chalk arrows drawn on the court.</dd></div>
+          <div><dt>Motion</dt><dd>Drawn-on strokes (arrows and lines draw in over 500 ms), linear flips, little bounce. Count-ups as tally marks.</dd></div>
+          <div><dt>Risk</dt><dd>Feels like homework at exactly the moments the playtest said were flat (reveal, rewards). Arrow overlays need a new camera mode.</dd></div>
+        </dl>
+        <button class="replay-btn" data-replay="board">Replay motion</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="rec-box" id="pick">
+    <h2>Recommendation: Rally Pop, built in phases</h2>
+    <ul>
+      <li><b>Casual:</b> it looks like a game you play in two minutes, not a manager you study. That matches the brief and the playtest.</li>
+      <li><b>Readable tells:</b> big icon + colour + key on every card, a colour-blind-safe trio, and the opponent's card history as chunky pips.</li>
+      <li><b>Rewards that land:</b> springy motion, gold for points, optic for "up". It is built for count-ups and overtakes.</li>
+      <li><b>1–2 minute loop:</b> nothing to read twice. The banner, three cards and one verdict carry the decision.</li>
+      <li><b>Cost:</b> phase 1 is CSS tokens, fonts, icons and motion (after the M6 streams merge). Phase 2 swaps renderer materials to toon and adds outlines. Phase 3 picks the rig proportions (TD-012).</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Fonts: Barlow, Barlow Condensed, Lilita One, Nunito, Archivo, JetBrains Mono (all SIL OFL 1.1, from Google Fonts). Icons drawn for this page. Court sketches are original. Contrast ratios computed with the WCAG 2 formula; the colour-blind check uses Machado et al. (2009) simulation matrices.</p>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const countUp = (el, dur) => {
+    const to = +el.dataset.count, from = +(el.dataset.from || 0), pre = el.dataset.prefix || '';
+    if (reduce) { el.textContent = pre + to; return; }
+    const t0 = performance.now();
+    const step = now => { const t = Math.min(1, (now - t0) / dur); el.textContent = pre + Math.round(from + (to - from) * ease(t)); if (t < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  };
+  const play = sec => {
+    sec.querySelectorAll('[data-tile]').forEach(tile => { tile.classList.remove('play-on'); void tile.offsetWidth; tile.classList.add('play-on'); });
+    const dur = sec.id === 'pop' ? 1200 : sec.id === 'night' ? 900 : 1000;
+    sec.querySelectorAll('[data-count]').forEach(el => countUp(el, dur));
+  };
+  document.querySelectorAll('[data-replay]').forEach(btn => btn.addEventListener('click', () => play(document.getElementById(btn.dataset.replay))));
+})();
+</script>
