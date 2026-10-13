@@ -5,14 +5,16 @@ import type { Card } from '@tennis/engine';
 import type { UiCue } from '@tennis/renderer/audio';
 import { CARD_LABEL, QUICK_PACE, type revealView } from '@tennis/game';
 import { h } from '../lib/h.ts';
-import { cardIcon } from '../lib/icons.ts';
+import { cardIcon, glyph, type IconName } from '../lib/icons.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
 
 const P = QUICK_PACE.reveal;
 const sleep = (sec: number) => new Promise((r) => setTimeout(r, sec * 1000));
 type Reveal = ReturnType<typeof revealView>;
 
-const VERDICT: Record<Reveal['matchup'], string> = { won: '✓ You read it!', lost: '✗ They read you', even: '= Same card' };
+const VERDICT: Record<Reveal['matchup'], [IconName, string, string]> = {
+  won: ['check', '✓', ' You read it!'], lost: ['x', '✗', ' They read you'], even: ['equal', '=', ' Same card'],
+};
 
 /** A card that can flip: a plain back, and the front chip (icon, name). */
 const flipCard = (side: 'yours' | 'theirs', card: Card, text: string, winner: boolean) =>
@@ -31,7 +33,7 @@ export function revealElement(r: Reveal, opponent: string): HTMLElement {
     h('span', { class: 'vs' }, 'v'),
     flipCard('theirs', r.theirs, ` ${CARD_LABEL[r.theirs]} · ${opponent}`, r.matchup === 'lost'),
     h('span', { class: 'flash', 'aria-hidden': 'true' })),
-  h('strong', { class: 'verdict', 'aria-live': 'polite' }, VERDICT[r.matchup]));
+  h('strong', { class: 'verdict', 'aria-live': 'polite' }, glyph(VERDICT[r.matchup][0], VERDICT[r.matchup][1]), VERDICT[r.matchup][2]));
 }
 
 /** Hold face down, flip both, pop the verdict. Same waits with reduced motion: the flip and the pop are then cuts.

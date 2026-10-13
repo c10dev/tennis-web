@@ -1,11 +1,12 @@
 // The ranking table.
 import { rankingsView } from '@tennis/game';
 import { h } from '../../lib/h.ts';
+import { glyph } from '../../lib/icons.ts';
 import type { Ctx, Screen } from '../context.ts';
 
 export function rankingsScreen(ctx: Ctx): Screen {
   const rows = rankingsView(ctx.state!);
-  const arrow = (c: number) => (c > 0 ? `▲${c}` : c < 0 ? `▼${-c}` : '');
+  const arrow = (c: number) => (c > 0 ? [glyph('chevron-up', '▲'), String(c)] : c < 0 ? [glyph('chevron-down', '▼'), String(-c)] : '');
   const element = h('section', null, h('h2', null, 'Rankings'),
     h('table', { class: 'rankings', id: 'rankings' },
       h('thead', null, h('tr', null, ['#', '', 'Player', 'Age', 'Level', 'Points'].map((x) => h('th', null, x)))),

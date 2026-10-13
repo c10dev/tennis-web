@@ -50,6 +50,8 @@ test.describe('quick result', () => {
     await expect(page.locator('#quick-result h1')).toHaveText(v.headline);
     await expect(page.locator('#points-delta strong')).toHaveText(`${v.delta >= 0 ? '+' : ''}${v.delta}`);
     await expect(page.locator('#rank-change strong')).toHaveText(`#${v.rankBefore} → #${v.rankAfter}`);
+    await expect(page.locator('#rank-change strong .glyph svg.icon-arrow-right')).toHaveCount(1);
+    await expect(page.locator('#rating-gains .rating-gain.rose .glyph svg.icon-chevrons-up')).toHaveCount(v.ratings.filter((r) => r.rose).length);
     await expect(page.locator('#overtakes .overtake')).toHaveText(v.overtakes.map((o) => `#${o.rank} ${o.name}`));
     await expect(page.locator('#rating-gains .rating-gain')).toHaveCount(v.ratings.length);
     await expect(page.locator('#rating-gains .rating-gain.rose')).toHaveCount(v.ratings.filter((r) => r.rose).length);

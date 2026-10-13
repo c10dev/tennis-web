@@ -85,3 +85,7 @@ body.broadcast-page { height: 100%; overflow: hidden; background: var(--ink); }
 #sound input[type='range'] { width: 110px; padding: 0; }
 @media (max-width: 640px) { #sound { top: auto; bottom: 230px; } }
 #controls .modes { display: flex; gap: 4px; margin-left: auto; }
+/* Text for screen readers only; and the icon marks that stand in for glyphs the fonts lack (TD-042). */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.glyph { display: inline-flex; align-items: center; vertical-align: -0.12em; }
+.glyph svg { width: 1em; height: 1em; stroke-width: 3; }

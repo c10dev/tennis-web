@@ -7,6 +7,7 @@ import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
+import { glyph } from '../lib/icons.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
 import { appSound } from '../lib/sound.ts';
 
@@ -36,7 +37,7 @@ export function quickResult(ctx: Ctx): Screen {
   const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`));
   const gains = step('gains', 'gains',
     h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
-    h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} → #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),
+    h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} `, glyph('arrow-right', '→'), ` #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),
     h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? 'Top!' : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : `pts to #${v.rankAfter - 1}`)));
   const overtakes = v.overtakes.length
     ? step('overtakes', 'overtakes', h('span', { class: 'kicker' }, 'Passed'), h('ul', null, v.overtakes.map((o) => h('li', { class: 'overtake' }, h('strong', null, `#${o.rank}`), ` ${o.name}`))))
@@ -45,7 +46,7 @@ export function quickResult(ctx: Ctx): Screen {
     v.ratings.map((r) => h('div', { class: `rating-gain${r.rose ? ' rose' : ''}` },
       h('span', { class: 'label' }, r.label),
       r.rose
-        ? h('span', { class: 'value' }, h('span', { class: 'from' }, String(r.before)), ' → ', h('span', { class: 'to' }, String(r.after)), h('span', { class: 'up tick' }, ' ▲'))
+        ? h('span', { class: 'value' }, h('span', { class: 'from' }, String(r.before)), ' ', glyph('arrow-right', '→'), ' ', h('span', { class: 'to' }, String(r.after)), glyph('chevrons-up', '▲', 'up tick'))
         : h('span', { class: 'value' }, String(r.after)),
       h('span', { class: 'bar' }, h('span', { class: 'fill', style: `--from:${pct(r.fillBefore)};--to:${pct(r.fill)}` })))));
   const goal = step('goal', 'next-goal', h('span', { class: 'kicker' }, 'Next goal'), h('strong', null, v.goalLine));

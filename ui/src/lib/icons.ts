@@ -1,6 +1,7 @@
 // Icons from Lucide v0.468.0 (ISC, see LICENSE-lucide.txt): zap, shield, rotate-ccw for the cards; eye (the tell),
-// trophy (the ladder), chevrons-up (a rise) and volume-2 / volume-x (the sound toggle). Copied path data, no package;
-// eye's circle is written as a path.
+// trophy (the ladder), chevrons-up (a rise), volume-2 / volume-x (the sound toggle), and check, x, equal, arrow-right,
+// chevron-up / chevron-down for the marks the fonts lack (TD-042). Copied path data, no package; eye's circle and
+// equal's lines are written as paths.
 import type { Card } from '@tennis/engine';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -12,6 +13,12 @@ const PATHS = {
   trophy: ['M6 9H4.5a2.5 2.5 0 0 1 0-5H6', 'M18 9h1.5a2.5 2.5 0 0 0 0-5H18', 'M4 22h16', 'M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22',
     'M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22', 'M18 2H6v7a6 6 0 0 0 12 0V2Z'],
   'chevrons-up': ['m17 11-5-5-5 5', 'm17 18-5-5-5 5'],
+  check: ['M20 6 9 17l-5-5'],
+  x: ['M18 6 6 18', 'm6 6 12 12'],
+  equal: ['M5 9h14', 'M5 15h14'],
+  'arrow-right': ['M5 12h14', 'm12 5 7 7-7 7'],
+  'chevron-up': ['m18 15-6-6-6 6'],
+  'chevron-down': ['m6 9 6 6 6-6'],
   'volume-2': ['M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z',
     'M16 9a5 5 0 0 1 0 6', 'M19.364 18.364a9 9 0 0 0 0-12.728'],
   'volume-x': ['M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z',
@@ -35,3 +42,15 @@ export function icon(name: IconName, size = 20): SVGSVGElement {
 
 /** The card's icon (the card's name is always written next to it). */
 export const cardIcon = (card: Card, size = 20): SVGSVGElement => icon(card, size);
+
+/** A mark the fonts lack (✓ ✗ = → ▲ ▼, TD-042): the icon at the text's size, the character kept for screen readers and
+ *  in the text content. */
+export function glyph(name: IconName, text: string, cls = ''): HTMLSpanElement {
+  const span = document.createElement('span');
+  span.className = `glyph${cls ? ` ${cls}` : ''}`;
+  const sr = document.createElement('span');
+  sr.className = 'sr-only';
+  sr.textContent = text;
+  span.append(icon(name), sr);
+  return span;
+}

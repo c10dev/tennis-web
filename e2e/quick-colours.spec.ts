@@ -58,6 +58,9 @@ test('marks every card with an icon and its key, uses the colour-blind-safe trio
   await page.locator('#card-attack').click();
   await expect(page.locator('#reveal .chip svg.icon')).toHaveCount(2);
   await expect(page.locator('#reveal .verdict')).toHaveText(/^(✓ You read it!|✗ They read you|= Same card)$/);
+  // The mark is a Lucide icon (TD-042: the fonts have no ✓ ✗ =); the character stays as text for screen readers.
+  await expect(page.locator('#reveal .verdict .glyph svg')).toHaveClass(/icon-(check|x|equal)/);
+  await expect(page.locator('#reveal .verdict .glyph .sr-only')).toHaveText(/^[✓✗=]$/);
 });
 
 // Rally Pop phase 1a (ADR-020): the self-hosted faces load (a wrong path would only fall back silently).
