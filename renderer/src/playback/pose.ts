@@ -82,8 +82,6 @@ function swing(timeline: Timeline, id: PlayerId, t: number): PlayerPose['swing']
 
 function reaction(timeline: Timeline, id: PlayerId, t: number): Reaction {
   const seg = timeline.segments[segmentAt(timeline, t)]!;
-  const last = seg.point.shots.at(-1)!;
-  const landed = seg.zero + last.t + last.flightSec;
-  if (t < landed || t >= Math.min(landed + RIG_MOTION.reactionSec, seg.next)) return 'none';
+  if (t < seg.landed || t >= Math.min(seg.landed + RIG_MOTION.reactionSec, seg.next)) return 'none';
   return seg.point.winner === id ? 'celebrate' : 'dejected';
 }

@@ -5,11 +5,6 @@ import { lineCall } from './hawkeye.ts';
 import type { Insert } from './programme.ts';
 import type { Clip } from './types.ts';
 
-const landedAt = (s: PointSegment) => {
-  const last = s.point.shots.at(-1)!;
-  return s.zero + last.t + last.flightSec;
-};
-
 /** The point's last bounce was within the Hawk-Eye margin of a line. */
 export function isCloseCall(s: PointSegment): boolean {
   const call = lineCall(s.point, s.point.shots.at(-1)!);
@@ -30,7 +25,7 @@ export function wantsReplay(s: PointSegment): boolean {
 export function replayInserts(timeline: Timeline, index: number): Insert | null {
   const s = timeline.segments[index]!;
   if (!wantsReplay(s)) return null;
-  const landed = landedAt(s);
+  const { landed } = s;
   const at = Math.min(landed + BROADCAST.reactionSec, s.next - BROADCAST.serveCamLeadSec);
   const from = Math.max(s.start, landed - BROADCAST.replayLeadSec);
   const to = landed + BROADCAST.replayTailSec;

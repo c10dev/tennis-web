@@ -11,6 +11,8 @@ export interface PointSegment {
   start: number;
   /** Replay second of point time 0 (first serve contact); point time τ = t − zero. */
   zero: number;
+  /** Replay second the point's last ball lands (or hits the net): where reactions, replays and applause key off. */
+  landed: number;
   /** Replay second the point's data ends (zero + durationSec). */
   end: number;
   /** Replay second the next segment starts (end + the pause). */
@@ -55,7 +57,8 @@ export function buildTimeline(result: MatchResult): Timeline {
     const zero = t + PLAYBACK.tossLeadSec;
     const end = zero + e.durationSec;
     const next = end + GAP_SEC[gap];
-    segments.push({ point: e, start: t, zero, end, next, gap, endsGame, isBreak });
+    const last = e.shots.at(-1)!;
+    segments.push({ point: e, start: t, zero, landed: zero + last.t + last.flightSec, end, next, gap, endsGame, isBreak });
     t = next;
   });
   if (segments.length === 0 || finalScore === null) throw new Error('Replay has no points or no match_end event.');

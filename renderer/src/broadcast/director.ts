@@ -3,6 +3,7 @@
 // after aces, winners and big points, Serve Cam before big points and the first point of each game.
 import type { Timeline } from '../playback/timeline.ts';
 import { BROADCAST } from '../tuning/index.ts';
+import { BIG_POINTS } from './modes.ts';
 import type { CameraShot } from './types.ts';
 
 export interface TrackShot extends CameraShot {
@@ -11,7 +12,6 @@ export interface TrackShot extends CameraShot {
   to: number;
 }
 
-const BIG = new Set(['break_point', 'set_point', 'match_point']);
 
 export function cameraTrack(timeline: Timeline): TrackShot[] {
   let track: TrackShot[] = [{ from: 0, to: timeline.totalSec, camera: 'main' }];
@@ -25,15 +25,13 @@ export function cameraTrack(timeline: Timeline): TrackShot[] {
   }
   for (const s of timeline.segments) {
     const p = s.point;
-    if (!(p.endedBy === 'ace' || p.endedBy === 'winner' || p.tags.some((t) => BIG.has(t)))) continue;
-    const last = p.shots.at(-1)!;
-    const landed = s.zero + last.t + last.flightSec;
-    lay({ from: landed, to: Math.min(landed + BROADCAST.reactionSec, s.next), camera: 'reaction', focus: p.winner });
+    if (!(p.endedBy === 'ace' || p.endedBy === 'winner' || p.tags.some((t) => BIG_POINTS.has(t)))) continue;
+    lay({ from: s.landed, to: Math.min(s.landed + BROADCAST.reactionSec, s.next), camera: 'reaction', focus: p.winner });
   }
   for (const s of timeline.segments) {
     const p = s.point;
     const opener = p.scoreBefore.points[0] === 0 && p.scoreBefore.points[1] === 0;
-    if (!(opener || p.tags.some((t) => BIG.has(t)))) continue;
+    if (!(opener || p.tags.some((t) => BIG_POINTS.has(t)))) continue;
     lay({ from: s.start - BROADCAST.serveCamLeadSec, to: s.zero + BROADCAST.serveCamTailSec, camera: 'serve', focus: p.server });
   }
   return merge(track);

@@ -16,6 +16,8 @@ describe('buildTimeline', () => {
       for (const s of tl.segments) {
         expect(s.zero).toBeCloseTo(s.start + PLAYBACK.tossLeadSec, 9);
         expect(s.end).toBeCloseTo(s.zero + s.point.durationSec, 9);
+        const last = s.point.shots.at(-1)!;
+        expect(s.landed).toBeCloseTo(s.zero + last.t + last.flightSec, 9);
         expect(s.next).toBeGreaterThan(s.end);
       }
       for (let i = 1; i < tl.segments.length; i++) expect(tl.segments[i]!.start).toBe(tl.segments[i - 1]!.next);

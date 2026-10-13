@@ -1,12 +1,14 @@
 // Viewing modes (GDD §8.5): which points a programme shows.
+import type { PointTag } from '@tennis/engine';
 import type { Timeline, PointSegment } from '../playback/timeline.ts';
 import { BROADCAST } from '../tuning/index.ts';
 import type { ViewMode } from './types.ts';
 
-const BIG = new Set(['break_point', 'set_point', 'match_point', 'tiebreak']);
+/** Points that can decide a game, set or match. */
+export const BIG_POINTS: ReadonlySet<PointTag> = new Set(['break_point', 'set_point', 'match_point']);
 
 /** Break, set and match points, tiebreak points, and every point that ends a game. */
-export const isKeyPoint = (s: PointSegment): boolean => s.endsGame || s.point.tags.some((t) => BIG.has(t));
+export const isKeyPoint = (s: PointSegment): boolean => s.endsGame || s.point.tags.some((t) => BIG_POINTS.has(t) || t === 'tiebreak');
 
 export function selectPoints(timeline: Timeline, mode: ViewMode): number[] {
   const all = timeline.segments.map((_, i) => i);

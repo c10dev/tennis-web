@@ -84,8 +84,7 @@ const matchStats = (tl: Timeline) => cached(tl, 'match', () => computeStats(tl.s
 function statsPanel(tl: Timeline, index: number, T: number): OverlayModel['stats'] {
   const seg = tl.segments[index]!;
   if (seg.gap !== 'set_end' && seg.gap !== 'match_end') return null;
-  const last = seg.point.shots.at(-1)!;
-  if (T < seg.zero + last.t + last.flightSec + BROADCAST.reactionSec || T >= seg.next) return null;
+  if (T < seg.landed + BROADCAST.reactionSec || T >= seg.next) return null;
   if (seg.gap === 'match_end') return { title: 'MATCH STATS', stats: matchStats(tl) };
   const set = seg.point.scoreBefore.sets.length;
   const stats = cached(tl, `set${set}`, () => computeStats(tl.segments.filter((s) => s.point.scoreBefore.sets.length === set).map((s) => s.point)));

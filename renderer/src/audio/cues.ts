@@ -41,8 +41,7 @@ function pointCues(tl: Timeline, s: PointSegment): Timed[] {
     const out_ = shot.outcome === 'unforced_error' || shot.outcome === 'forced_error';
     if (fault || out_) out.push({ T: land + AUDIO.callDelaySec, cue: { kind: 'call', text: fault ? 'Fault' : 'Out' } });
   }
-  const last = s.point.shots.at(-1)!;
-  out.push({ T: s.zero + last.t + last.flightSec + AUDIO.crowdDelaySec, cue: { kind: 'crowd', intensity: crowdIntensity(s) } });
+  out.push({ T: s.landed + AUDIO.crowdDelaySec, cue: { kind: 'crowd', intensity: crowdIntensity(s) } });
   const ctx = { server: s.point.server, winner: s.point.winner, endsGame: s.endsGame, gap: s.gap, noAd: tl.noAd };
   out.push({ T: s.end + AUDIO.scoreCallDelaySec, cue: { kind: 'call', text: scoreCall(s.point.scoreAfter, ctx, tl.names) } });
   return out;
