@@ -38,11 +38,15 @@ export function quickResult(ctx: Ctx): Screen {
     h('p', { id: 'decisive-line', class: v.decisive.won ? 'you' : 'them' }, v.decisive.line));
   const count = h('strong', { 'aria-hidden': 'true' }, signed(v.delta));
   const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`),
-    v.won && v.streak.current >= 2 ? h('p', { class: `streak${v.streak.milestone ? ' is-milestone' : ''}`, id: 'streak' }, icon('flame', 20), h('strong', null, `${v.streak.current} wins in a row`)) : null);
+    v.won && v.streak.current >= 2 ? h('p', { class: `streak${v.streak.milestone ? ' is-milestone' : ''}`, id: 'streak' }, icon('flame', 20), h('strong', null, `${v.streak.current} wins in a row`)) : null,
+    v.promotedTo ? h('p', { class: 'promoted', id: 'promoted' }, h('strong', null, `Promoted to Division ${v.promotedTo}`)) : null);
   const gains = step('gains', 'gains',
     h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
     h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} `, glyph('arrow-right', '→'), ` #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),
-    h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? 'Top!' : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : `pts to #${v.rankAfter - 1}`)));
+    // After a promotion the next place belongs to the new division: show the division instead of a mixed-up count.
+    v.promotedTo
+      ? h('div', { class: 'gain', id: 'next-place' }, h('strong', null, `Division ${v.promotedTo}`), h('span', { class: 'muted' }, 'new division'))
+      : h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? 'Top!' : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : `pts to #${v.rankAfter - 1}`)));
   const overtakes = v.overtakes.length
     ? step('overtakes', 'overtakes', h('span', { class: 'kicker' }, 'Passed'), h('ul', null, v.overtakes.map((o) => h('li', { class: 'overtake' }, h('strong', null, `#${o.rank}`), ` ${o.name}`))))
     : null;
@@ -132,7 +136,8 @@ export function quickResult(ctx: Ctx): Screen {
     showAll();
     phase('done');
     // The whole result in one line for screen readers, once the reveal has ended (or been skipped).
-    announce(`${v.headline} against ${v.opponent}. ${signed(v.delta)} points, now #${v.rankAfter}. Next goal: ${v.goalLine}.`);
+    const standing = v.promotedTo ? `promoted to Division ${v.promotedTo}` : `now #${v.rankAfter}`;
+    announce(`${v.headline} against ${v.opponent}. ${signed(v.delta)} points, ${standing}. Next goal: ${v.goalLine}.`);
     requestAnimationFrame(() => element.querySelector<HTMLButtonElement>('#play-again')?.focus());
   }
 

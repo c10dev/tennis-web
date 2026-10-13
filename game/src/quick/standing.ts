@@ -1,6 +1,6 @@
 // The user's next ladder goal after a match (ADR-017).
 import { USER_ID } from '../player/create.ts';
-import { QUICK, QUICK_REWARD } from '../tuning.ts';
+import { QUICK, QUICK_DIVISION, QUICK_REWARD } from '../tuning.ts';
 import { ladderOrder, rankOf, type QuickState } from './ladder.ts';
 import type { NextGoal } from './types.ts';
 
@@ -21,5 +21,6 @@ export function nextGoal(s: QuickState): NextGoal {
     points += QUICK.win + QUICK.perRankAbove * Math.min(QUICK_REWARD.placesAbove, r - 1);
     wins++;
   }
-  return { label: goal === 1 ? '#1' : `Top ${goal}`, winsNeeded: Math.max(1, wins) };
+  // The top of the division is promotion (proposal P5).
+  return { label: goal === 1 ? '#1' : goal === QUICK_DIVISION.promoteTop ? `Top ${goal} · promotion` : `Top ${goal}`, winsNeeded: Math.max(1, wins) };
 }

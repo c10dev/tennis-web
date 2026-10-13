@@ -47,3 +47,6 @@
 /* A win streak (proposal P3): a gold pill under the headline, stamped at 3, 5 and 10 (motion.css). */
 .quick-result .streak { display: inline-flex; align-items: center; gap: 6px; justify-self: center; margin: 6px 0 0; padding: 3px 12px;
   background: var(--gold); color: var(--ink); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 0 3px 0 var(--ink); }
+/* A promotion (proposal P5): a gold sticker under the headline. */
+.quick-result .promoted { justify-self: center; margin: 6px 0 0; padding: 4px 14px; background: var(--gold); color: var(--ink);
+  border: var(--outline); border-radius: 12px; box-shadow: var(--lift); font: 400 20px/1.2 var(--font-display); rotate: -2deg; }

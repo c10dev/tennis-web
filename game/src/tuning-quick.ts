@@ -124,3 +124,7 @@ export const QUICK_STREAK = { milestones: [3, 5, 10] } as const;
  *  Defend-unless-behind applies at 52% of first decisions and 59% of all (big_point_attack: 0% and 45%), and the score
  *  on screen shows when it does. */
 export const QUICK_GUIDE = { habit: 'defend_unless_behind' } as const;
+
+/** Divisions (proposal P5, option A): a match that ends in the top `promoteTop`, once the division has had
+ *  `minMatches`, moves the user up to a new world whose AI levels sit `levelStep` higher per division. */
+export const QUICK_DIVISION = { promoteTop: 8, minMatches: 10, levelStep: 1 } as const;

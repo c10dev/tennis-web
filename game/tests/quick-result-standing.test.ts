@@ -24,7 +24,7 @@ describe('nextGoal', () => {
     expect(rankOf(atRank(40))).toBe(40);
     expect(nextGoal(atRank(40)).label).toBe('Top 32');
     expect(nextGoal(atRank(17)).label).toBe('Top 16');
-    expect(nextGoal(atRank(9)).label).toBe('Top 8');
+    expect(nextGoal(atRank(9)).label).toBe('Top 8 · promotion');
     expect(nextGoal(atRank(5)).label).toBe('#1');
   });
 
