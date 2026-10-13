@@ -123,7 +123,7 @@ export function quickResult(ctx: Ctx): Screen {
   function finish() {
     showAll();
     phase('done');
-    element.querySelector<HTMLButtonElement>('#play-again')?.focus();
+    requestAnimationFrame(() => element.querySelector<HTMLButtonElement>('#play-again')?.focus());
   }
 
   const skip = () => {
@@ -141,8 +141,12 @@ export function quickResult(ctx: Ctx): Screen {
   };
   window.addEventListener('click', onClick);
   window.addEventListener('keydown', onKey);
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) skip();
-  else void run();
+  // From the first frame, so the screen is in the page: the first step fades in and focus can land.
+  requestAnimationFrame(() => {
+    if (element.classList.contains('done')) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) skip();
+    else void run();
+  });
   return {
     element,
     dispose: () => {

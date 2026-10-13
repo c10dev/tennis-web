@@ -43,5 +43,6 @@ export { quickHomeView } from './views/quick-home.ts';
 export { CARD_LABEL, cardChoices, decisionSituation, revealView, scoreLine } from './views/quick-match.ts';
 export { quickResultView, type RatingView } from './views/quick-result.ts';
 export { playByPlay } from './views/quick-play-by-play.ts';
-export { nextGoal, overtakesBetween } from './quick/standing.ts';
+export { overtakesBetween } from './quick/overtakes.ts';
+export { nextGoal } from './quick/standing.ts';
 export { opponentRead } from './views/quick-scout.ts';

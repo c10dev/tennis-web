@@ -12,7 +12,7 @@ import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
 import { matchReward } from './rewards.ts';
-import { overtakesBetween } from './standing.ts';
+import { overtakesBetween } from './overtakes.ts';
 import type { DecisionRecord, Overtake } from './types.ts';
 
 export interface QuickRecord {
