@@ -41,3 +41,5 @@ body:has(.sound-pill) header.top { padding-right: 150px; }
 .quick-start .style-blurb { margin: 4px 0 8px; font-size: 14px; }
 .quick-start .advanced summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 800; }
 .quick-start .advanced label { margin-top: 8px; }
+.home-streak { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 14px; }
+.home-streak .icon { color: var(--atk-text); }

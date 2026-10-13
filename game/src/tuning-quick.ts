@@ -117,3 +117,6 @@ export const QUICK_REWARD = {
    *  goal locks in lockSec after it shows. */
   reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 1, replaySpeed: 1.25, staggerSec: 0.12, tickSec: 0.25, lockSec: 0.2 },
 } as const;
+
+/** Win streaks (proposal P3, option A): shown, never paid; a stamp when a streak reaches one of these. */
+export const QUICK_STREAK = { milestones: [3, 5, 10] } as const;
