@@ -106,5 +106,40 @@ test.describe('quick flow guards', () => {
     await expect(page.locator('#recent li')).toHaveCount(1);
     expect(errors).toEqual([]);
   });
+
+  test('records a match left after its last card instead of locking the ladder on "Resume match"', async ({ page }) => {
+    const decisions = nodePlayNext(nodeLadder(7)).history[0]!.decisions!.length;
+    await startLadder(page, 7);
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    for (let i = 0; i < decisions; i++) {
+      await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+      await page.keyboard.press(`Digit${i % 3 + 1}`);
+      await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions)).toBe(String(i + 1));
+    }
+    await page.goBack();
+    await expect(page.locator('#quick-play')).toHaveText('Resume match');
+    await page.locator('#quick-play').click();
+    await expect(page).toHaveURL(/#\/quick\/result/);
+    await page.keyboard.press('Enter');
+    await page.locator('#to-ladder').click();
+    await expect(page.locator('#quick-play')).toHaveText('Play');
+    await expect(page.locator('#recent li')).toHaveCount(1);
+  });
+
+  test('resumes from the result page too: Play again cannot restart a match in progress', async ({ page }) => {
+    await playToResult(page, 3, true);
+    await page.keyboard.press('Enter');
+    await page.locator('#play-again').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    await page.keyboard.press('Digit1');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions)).toBe('1');
+    await page.goBack();
+    await expect(page).toHaveURL(/#\/quick\/result/);
+    await page.keyboard.press('Enter');
+    await page.locator('#play-again').click();
+    // The resumed match comes back to its second decision, its first card already played (a ringed pip).
+    await expect(page.locator('#quick-panel.stop #point-pips .pip.decision')).toHaveCount(1, { timeout: 30_000 });
+  });
 });
 

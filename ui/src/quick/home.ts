@@ -34,7 +34,8 @@ export function quickHome(ctx: Ctx): Screen {
       h('p', { class: 'muted' }, `#${v.opponent.rank} · ${v.opponent.style} · level ${v.opponent.level.toFixed(1)} · ${v.opponent.surface} · tiebreak to 7`),
       h('p', { class: 'scouting', id: 'home-scouting' }, icon('eye', 18), h('span', { class: 'muted' }, 'Scouting: '), scout.habit),
       scout.rival ? h('p', { class: 'rival', id: 'home-rival' }, scout.rival) : null,
-      picker.element,
+      // A match in progress resumes on its own plan: the picker is for the next new match.
+      resuming ? h('p', { class: 'muted', id: 'resume-note' }, 'A match is in progress: resume it to play on.') : picker.element,
       h('button', { class: 'primary big', id: 'quick-play', onclick: play }, resuming ? 'Resume match' : 'Play'),
       h('label', { class: 'muted fast' }, fast, ' Fast mode (no 3D)')),
     v.recent.length ? h('div', { class: 'card' }, h('h3', null, 'Recent'),

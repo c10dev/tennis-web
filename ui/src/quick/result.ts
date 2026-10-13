@@ -3,7 +3,7 @@
 // Motion (ADR-021): the tiles rise 120 ms apart, the points count up with an ease-out, the names passed slide in, each
 // rating that rose ticks up, the goal locks in. Click, space or Enter skips to the end; reduced motion starts there.
 // Every final text is in the page from the start; the reveal only shows it.
-import { QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
+import { QUICK_REWARD, quickResultView, resumeQuick, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { glyph } from '../lib/icons.ts';
@@ -26,8 +26,9 @@ export function quickResult(ctx: Ctx): Screen {
   }
   const v = quickResultView(ctx.quick);
   const record = ctx.quick.history.at(-1)!;
+  // A match in progress (left with Back) resumes; only a finished one makes room for a new match.
   const again = () => {
-    ctx.quickMatch = startQuick(ctx.quick!, savedPlan());
+    ctx.quickMatch = resumeQuick(ctx.quick!) ?? startQuick(ctx.quick!, savedPlan());
     ctx.go('#/quick/match');
   };
   const step = (cls: string, id: string, ...children: Parameters<typeof h>[2][]) => h('div', { class: `step ${cls}`, id }, ...children);

@@ -27,6 +27,12 @@ const lastPoint = (m: QuickMatch) => m.live.events.findLast((e): e is PointEvent
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   // The match in memory, or the one left in the middle and saved (a reload), rebuilt exactly.
   const qm = ctx.quickMatch ?? (ctx.quick ? resumeQuick(ctx.quick) : null);
+  // A match left after its last card is over but not recorded yet: record it now and show its result.
+  if (qm && matchOver(qm) && ctx.quick?.live) {
+    ctx.quickMatch = null;
+    await ctx.setQuick(finishQuick(ctx.quick, qm), '#/quick/result');
+    return { element: h('div') };
+  }
   if (!qm || matchOver(qm)) {
     ctx.redirect('#/quick');
     return { element: h('div') };
