@@ -79,6 +79,7 @@ body.broadcast-page { height: 100%; overflow: hidden; background: var(--ink); }
 
 #sound { position: fixed; top: 196px; right: 16px; display: grid; gap: 6px; justify-items: end; padding: 8px 10px;
   background: var(--panel-bg); border-radius: 10px; font-size: 13px; }
+#sound .sound-toggle { display: inline-flex; align-items: center; gap: 4px; }
 #sound .sliders { display: grid; gap: 4px; }
 #sound .sliders[hidden] { display: none; }
 #sound label { display: flex; gap: 8px; align-items: center; justify-content: flex-end; color: var(--muted); }

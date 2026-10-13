@@ -1,5 +1,6 @@
 // Sound toggle and mixer sliders. Audio starts on the first click (browser autoplay policy) and stays off until then.
 import { createMixer, type Bus, type Mixer } from '@tennis/renderer';
+import { icon } from '../lib/icons.ts';
 
 export interface Sound {
   /** The mixer while sound is on; null when off or never started. */
@@ -15,7 +16,9 @@ export function createSound(root: HTMLElement): Sound {
   const toggle = document.createElement('button');
   toggle.type = 'button';
   toggle.className = 'sound-toggle';
-  toggle.textContent = '🔇 Sound off';
+  // The Lucide volume icons with a word, as on the quick screens (ADR-018), not emoji.
+  const draw = (on: boolean) => toggle.replaceChildren(icon(on ? 'volume-2' : 'volume-x', 16), on ? ' Sound on' : ' Sound off');
+  draw(false);
   const sliders = document.createElement('div');
   sliders.className = 'sliders';
   sliders.hidden = true;
@@ -25,7 +28,7 @@ export function createSound(root: HTMLElement): Sound {
       for (const [bus, label] of BUSES) sliders.append(slider(mixer, bus, label));
     } else mixer.setMuted(!mixer.muted);
     const on = !mixer.muted;
-    toggle.textContent = on ? '🔊 Sound on' : '🔇 Sound off';
+    draw(on);
     sliders.hidden = !on;
   });
   root.append(toggle, sliders);
