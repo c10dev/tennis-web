@@ -80,6 +80,24 @@ test.describe('replay page', () => {
     expect(errors).toEqual([]);
   });
 
+  test('comes back from the result to the point it was showing, not the introduction (TD-018)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/?seed=42&surface=clay');
+    const programme = buildProgramme(buildTimeline(simulateMatch(exhibitionConfig('clay'), 42)), 'full');
+    const clip = programme.clips.filter((c) => c.kind === 'live')[40]!;
+    await seek(page, clip.start + clip.duration / 2);
+    const point = (await dataset(page)).point;
+    expect(Number(point)).toBeGreaterThan(0);
+    await page.locator('[data-mode="result"]').click();
+    await expect.poll(async () => (await dataset(page)).clip).toBe('result');
+    await page.locator('[data-mode="full"]').click();
+    await expect.poll(async () => (await dataset(page)).clip).not.toBe('result');
+    const back = await dataset(page);
+    expect(back.point).toBe(point);
+    expect(back.clip).not.toBe('intro');
+    expect(errors).toEqual([]);
+  });
+
   test('loads replay JSON without the engine, and refuses an old schema', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '/?seed=1&surface=hard');

@@ -53,6 +53,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const sound = options.sound ?? createSound(soundRoot);
 
   let mode = options.mode;
+  /** The match moment last shown outside the result card, where a switch away from Result picks up (TD-018). */
+  let liveMatchT = 0;
   let programme: Programme | null = null;
   let viewer: Viewer | null = null;
   let warming: Promise<void> = Promise.resolve();
@@ -66,8 +68,10 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const controls = options.controls === false ? null : createControls(controlsRoot, dispatch, (next) => {
     mode = next;
     if (!programme) return;
-    // Keep the place: the new programme starts at (or just after) the match moment on screen now.
-    const matchT = broadcastFrameAt(programme, clock.t).matchT;
+    // Keep the place: the new programme starts at (or just after) the match moment on screen now; the result card
+    // stands after the last point, so leaving it goes back to where the match was.
+    const shown = broadcastFrameAt(programme, clock.t);
+    const matchT = shown.clip === 'result' ? liveMatchT : shown.matchT;
     programme = build(programme.timeline);
     clock = { ...clock, t: programmeTimeFor(programme, matchT) };
     controls?.setProgramme(programme);
@@ -103,6 +107,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         if (sound.mixer && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) sound.mixer.play(cue);
       }
       const frame = broadcastFrameAt(programme, clock.t);
+      if (frame.clip !== 'result') liveMatchT = frame.matchT;
       viewer.render(frame, dt);
       // Read by the e2e tests and handy when debugging the director.
       Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
