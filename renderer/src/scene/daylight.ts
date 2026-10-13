@@ -19,7 +19,8 @@ function skyDome(): Mesh {
   geometry.setAttribute('color', new BufferAttribute(colours, 3));
   const sky = new Mesh(geometry, new MeshBasicMaterial({ vertexColors: true, side: BackSide, fog: false, depthWrite: false }));
   sky.name = 'sky';
-  sky.renderOrder = -1;
+  // Drawn after the other opaque meshes, so the depth test skips every pixel the stands and court already cover.
+  sky.renderOrder = 1;
   return sky;
 }
 

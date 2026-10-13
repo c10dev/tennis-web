@@ -34,6 +34,8 @@ describe('daylight', () => {
     expect(r).toBeLessThan(400);
     expect(r).toBeGreaterThan(VENUE.endStandY + VENUE.tiers * VENUE.tierDepth + 40);
     expect((sky.material as Material & { fog: boolean }).fog).toBe(false);
+    // Drawn after the other opaque meshes, so it only fills what they leave uncovered.
+    expect(sky.renderOrder).toBeGreaterThan(0);
     const colours = sky.geometry.getAttribute('color');
     const pos = sky.geometry.getAttribute('position');
     let top = 0;
