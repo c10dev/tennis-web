@@ -4,7 +4,7 @@ import { ballAt } from '../src/playback/ball.ts';
 import { positionAt } from '../src/playback/movement.ts';
 import { playerPose } from '../src/playback/pose.ts';
 import { buildTimeline, segmentAt, type Timeline } from '../src/playback/timeline.ts';
-import { COURT_DRAW, RIG_MOTION } from '../src/tuning/index.ts';
+import { COURT_DRAW, PLAYBACK, RIG_MOTION } from '../src/tuning/index.ts';
 import { SAMPLE, match } from './fixtures.ts';
 
 const IDS: PlayerId[] = ['A', 'B'];
@@ -137,5 +137,45 @@ describe('playerPose', () => {
     const pose = playerPose(tl, s.hitter, mid, null);
     expect(pose.speed).toBeGreaterThan(0);
     expect(playerPose(tl, 'A', tl.totalSec, null).speed).toBe(0);
+  });
+});
+
+describe('playerPose body language (mannequin rig)', () => {
+  const tl = buildTimeline(match(2, 'clay'));
+  const seg = tl.segments.find((s) => s.point.shots.filter((x) => x.outcome !== 'fault').length >= 5)!;
+  const rally = seg.point.shots.filter((x) => x.outcome !== 'fault');
+  const at = (id: PlayerId, tau: number) => playerPose(tl, id, seg.zero + tau, null);
+
+  it('walks or runs with a gait that grows with speed and stops when standing', () => {
+    const still = playerPose(tl, 'A', tl.totalSec, null);
+    expect(still.gait.amount).toBe(0);
+    const moving = [...Array(200).keys()].map((k) => at(rally[2]!.hitter, rally[1]!.t + (k / 200) * (rally[2]!.t - rally[1]!.t)));
+    const fastest = moving.reduce((a, b) => (b.speed > a.speed ? b : a));
+    expect(fastest.gait.amount).toBeGreaterThan(0.3);
+    expect(fastest.gait.amount).toBeCloseTo(Math.min(1, fastest.speed / RIG_MOTION.fullRunSpeed), 9);
+    expect(at('A', 1).gait.phase).not.toBe(at('A', 1.1).gait.phase);
+  });
+
+  it('bends the knees into each groundstroke, most at contact', () => {
+    const s = rally[2]!;
+    expect(at(s.hitter, s.t).crouch).toBeCloseTo(1, 6);
+    expect(at(s.hitter, s.t - RIG_MOTION.crouchSec * 0.5).crouch).toBeCloseTo(0.5, 6);
+    expect(at(s.hitter, s.t + RIG_MOTION.crouchSec + 0.05).crouch).toBe(0);
+    expect(at(other(s.hitter), s.t).crouch).toBe(0);
+  });
+
+  it('split-steps as the opponent strikes', () => {
+    const s = rally[2]!;
+    expect(at(other(s.hitter), s.t).splitStep).toBeCloseTo(1, 6);
+    expect(at(other(s.hitter), s.t + RIG_MOTION.splitStepSec + 0.05).splitStep).toBe(0);
+    expect(at(s.hitter, s.t).splitStep).toBe(0);
+  });
+
+  it('raises the tossing arm through the serve toss and drops it after contact', () => {
+    const serve = seg.point.shots[0]!;
+    expect(at(serve.hitter, serve.t - 0.2).toss).toBe(1);
+    expect(at(serve.hitter, serve.t - PLAYBACK.tossLeadSec).toss).toBe(0);
+    expect(at(serve.hitter, serve.t + 0.5).toss).toBe(0);
+    expect(at(other(serve.hitter), serve.t - 0.2).toss).toBe(0);
   });
 });

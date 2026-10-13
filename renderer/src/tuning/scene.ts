@@ -31,16 +31,23 @@ export const COLOURS = {
   },
   players: { A: 0xd8433b, B: 0xf1f1ee },
   skin: 0xd9a77f,
+  shorts: 0x2a2d35,
+  shoes: 0xf2f2f2,
   racket: 0x26282c,
   visor: 0x20242a,
 } as const;
 
-/** Capsule rig sizes in metres and its pose angles in radians (ADR-007). */
+/** Mannequin rig sizes in metres and its pose angles in radians (ADR-007, ADR-009). */
 export const RIG = {
-  bodyRadius: 0.22,
-  bodyLength: 1.1,
+  /** Thigh and shin each; hips stand at twice this. */
+  legSegment: 0.45,
+  legRadius: 0.07,
+  hipHalfWidth: 0.11,
+  torsoRadius: 0.19,
+  torsoLength: 0.4,
   headRadius: 0.13,
-  shoulderHeight: 1.4,
+  /** Shoulders above the hips. */
+  shoulderHeight: 0.55,
   shoulderOffset: 0.2,
   armLength: 0.6,
   handleLength: 0.28,
@@ -52,6 +59,13 @@ export const RIG = {
   serve: { rollFrom: 0.6, rollContact: -1.5, rollEnd: 0.5, yawEnd: 2.4 },
   celebrate: { yaw: 0.2, roll: -1.3 },
   dejectedLean: 0.3,
+  /** How far the hips drop at full crouch, the split-step hop, and the leg swing of a full stride. */
+  crouchDrop: 0.22,
+  splitStepHop: 0.12,
+  gaitSwing: 0.6,
+  gaitKnee: 0.5,
+  /** Tossing arm roll: hanging at the side, and straight up. */
+  leftArm: { down: -1.4, up: 1.35, forward: -0.3 },
   /** Forward lean when running flat out, and the speed (m/s) that counts as flat out. */
   runLean: 0.22,
   runLeanSpeed: 8,

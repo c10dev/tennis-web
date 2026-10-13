@@ -45,6 +45,14 @@ export const RIG_MOTION = {
   reactionSec: 1.8,
   /** Window for the finite-difference running speed. */
   speedSampleSec: 0.05,
+  /** Running gait: stride cycles per second, and the speed (m/s) at which the stride is full. */
+  gaitHz: 1.4,
+  fullRunSpeed: 6,
+  /** Knees bend this long either side of a groundstroke's contact; split steps this long either side of the opponent's. */
+  crouchSec: 0.3,
+  splitStepSec: 0.15,
+  /** The tossing arm reaches the top this far into the toss. */
+  tossRiseShare: 0.4,
   /** Share of each move spent speeding up and slowing down. */
   easeRamp: 0.2,
   /** At a change of ends players walk round the net post on the umpire's side (−x), A on the inner lane. */

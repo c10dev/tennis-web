@@ -7,7 +7,7 @@ import { BALL, COLOURS } from '../tuning/index.ts';
 import { createBall } from './ball.ts';
 import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
-import { CapsuleRig, type PlayerRig } from './rig.ts';
+import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
 
 /** A frame, plus the Hawk-Eye call when one is on screen. */
@@ -25,7 +25,7 @@ export function createStage(timeline: Timeline): Stage {
   sun.position.set(-20, 40, 15);
   scene.add(new HemisphereLight(0xdfe8ff, 0x3a4030, 1.1), new AmbientLight(0xffffff, 0.25), sun);
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
-  const rigs: Record<'A' | 'B', PlayerRig> = { A: new CapsuleRig(COLOURS.players.A), B: new CapsuleRig(COLOURS.players.B) };
+  const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(COLOURS.players.A), B: new MannequinRig(COLOURS.players.B) };
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';
   const ball = createBall();

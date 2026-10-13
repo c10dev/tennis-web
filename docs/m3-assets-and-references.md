@@ -44,10 +44,12 @@ No CC0 recording of tennis calls exists (Kenney's Voiceover Pack has numbers and
 | C. ElevenLabs MCP | Best quality | Free plan forbids commercial use ([help centre](https://elevenlabs.io/docs/help-center/legal/can-i-publish-the-content-i-generate-on-the-platform)); paid plan and API key needed |
 | D. "Fault" / "Out" only | Smallest | Drops score calls from §8.4 |
 
-Piper voice licenses (model cards on `huggingface.co/rhasspy/piper-voices`):
-- `en_GB-cori-medium` — **public domain** (LibriVox). British female. Usable.
-- `en_GB-jenny_dioco-medium` — dataset license allows commercial use; attribution not required for distributed
-  clips. Usable.
+Piper voice licenses (model cards on `huggingface.co/rhasspy/piper-voices` and the dataset links they point to):
+- `en_GB-cori-medium` — **public domain** (LibriVox). British female. Usable. Tried locally: "Fifteen love" is
+  1.3 s, 8 KB as Opus 48 kbps; "Game, set and match, Flint" 2.6 s, 16 KB; "Fault" 0.7 s, 4.5 KB. About 40 clips
+  come to roughly 300 KB. Check Safari's Ogg Opus decoding and keep an MP3 fallback if it fails.
+- `en_GB-jenny_dioco-medium` — dataset license allows commercial use; pre-generated clips need no credit (runtime
+  synthesis in the app would).
 - `en_GB-northern_english_male-medium` — CC-BY-SA 4.0. Avoid (share-alike on outputs is unclear).
 - `en_GB-alan-medium` — Mycroft "All Rights Reserved". **Avoid.**
 
