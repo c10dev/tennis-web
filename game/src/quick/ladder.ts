@@ -1,17 +1,18 @@
 // The quick-match ladder (ADR-016): 64 players by points, the next opponent just above, points for every win,
 // AI matches in the background so the ladder never stands still.
-import { createConfig, finish, fingerprint, simulateMatch, type MatchRecipe, type Surface } from '@tennis/engine';
+import { createConfig, finish, fingerprint, simulateMatch, type MatchRecipe, type MatchResult, type PointEvent, type Surface } from '@tennis/engine';
 import { USER_ID } from '../player/create.ts';
 import { overall } from '../player/overall.ts';
 import { adjust } from '../player/week.ts';
 import { rankingOrder } from '../ranking.ts';
 import { pick, stream, streamSeed } from '../rng.ts';
-import { FAST4_RULES, QUICK, type Rated } from '../tuning.ts';
+import { QUICK, TIEBREAK_RULES, type Rated } from '../tuning.ts';
 import { profileOf } from '../player/profile.ts';
 import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
 import { cardReward } from './rewards.ts';
+import type { DecisionRecord } from './types.ts';
 
 export interface QuickRecord {
   matchNo: number;
@@ -26,6 +27,8 @@ export interface QuickRecord {
   recipe: MatchRecipe;
   /** Ratings that moved: value + progress before and after. */
   progress: { key: Rated; before: number; after: number }[];
+  /** The points the user chose a card on (ADR-017); absent in M5 records. */
+  decisions?: DecisionRecord[];
 }
 
 export interface QuickState {
@@ -83,7 +86,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 
   const players = s.world.players.map((p) => (p.id === USER_ID ? { ...p, attributes: { ...p.attributes }, progress: { ...p.progress } } : p));
   const me = players.find((p) => p.id === USER_ID)!;
-  const cards = m.recipe.cards.flatMap((c) => (c ? [c.A] : []));
+  const cards = m.decisions.map((d) => d.user);
   const progress = Object.entries(cardReward(cards, won)).map(([k, d]) => {
     const key = k as Rated;
     const before = me.attributes[key] + (me.progress[key] ?? 0);
@@ -93,16 +96,26 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 
   const next: QuickState = { ...s, world: { ...s.world, players }, points };
   background(next, s.matchNo);
-  const end = result.events.at(-1)!;
-  const score = end.type === 'match_end' ? end.score.sets.map(([a, b]) => `${a}-${b}`).join(' ') : '';
+  const score = finalScore(result);
   const record: QuickRecord = {
     matchNo: s.matchNo, opponent: m.opponent, opponentRank, won, score, pointsDelta, rankBefore, rankAfter: rankOf(next),
     fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
+    decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })),
   };
   return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record] };
 }
 
-/** AI neighbours on the ladder play each other (Fast4, no cards), mutating `s.points`. */
+/** "7-5" for a one-tiebreak match (the user first), set scores for anything else. */
+export function finalScore(result: MatchResult): string {
+  const end = result.events.at(-1)!;
+  if (end.type !== 'match_end') return '';
+  if (result.config.rules.setFormat !== 'tiebreak') return end.score.sets.map(([a, b]) => `${a}-${b}`).join(' ');
+  const last = result.events.filter((e): e is PointEvent => e.type === 'point').at(-1)!;
+  const [a, b] = last.scoreBefore.points;
+  return last.winner === 'A' ? `${a + 1}-${b}` : `${a}-${b + 1}`;
+}
+
+/** AI neighbours on the ladder play each other (one tiebreak, no cards), mutating `s.points`. */
 function background(s: QuickState, matchNo: number): void {
   const rng = stream(s.seed, 'background', matchNo);
   const byId = new Map(s.world.players.map((p) => [p.id, p]));
@@ -112,7 +125,7 @@ function background(s: QuickState, matchNo: number): void {
     const [a, b] = [order[k]!, order[k + 1]!];
     const config = createConfig([profileOf(byId.get(a)!), profileOf(byId.get(b)!)], {
       surface: QUICK.surfaces[(matchNo + i) % QUICK.surfaces.length] as Surface,
-      rules: { ...FAST4_RULES },
+      rules: { ...TIEBREAK_RULES },
     });
     const won = simulateMatch(config, streamSeed(s.seed, 'background-match', matchNo, i)).winner === 'A';
     const [ra, rb] = [k + 1, k + 2];

@@ -3,7 +3,7 @@ import { fingerprint, replayMatch, type Card } from '@tennis/engine';
 import { createPlayer, defaultAllocation, USER_ID } from '../src/player/create.ts';
 import { finishQuick, ladderOrder, newLadder, nextOpponent, pointsToNext, type QuickState } from '../src/quick/ladder.ts';
 import { cardReward } from '../src/quick/rewards.ts';
-import { matchOver, playPoint, startQuick, userRole } from '../src/quick/match.ts';
+import { autoPlay, decide, matchOver, startQuick, userRole } from '../src/quick/match.ts';
 import { fromQuickSave, QUICK_VERSION, toQuickSave } from '../src/quick/save.ts';
 import { QUICK } from '../src/tuning.ts';
 
@@ -14,7 +14,7 @@ const rank = (s: QuickState, id = USER_ID) => ladderOrder(s).indexOf(id) + 1;
 function play(s: QuickState, choose: (i: number, role: 'serve' | 'return') => Card = (i) => (['attack', 'defend', 'counter'] as const)[i % 3]!) {
   const qm = startQuick(s);
   let i = 0;
-  while (!matchOver(qm)) playPoint(qm, choose(i++, userRole(qm)));
+  for (autoPlay(qm); !matchOver(qm); autoPlay(qm)) decide(qm, choose(i++, userRole(qm)));
   return { qm, next: finishQuick(s, qm) };
 }
 
@@ -46,16 +46,21 @@ describe('nextOpponent', () => {
 });
 
 describe('a quick match', () => {
-  it('is Fast4 with the user as A, asks for a card each point, and records a recipe that replays it exactly', () => {
+  it('is one tiebreak with the user as A, and records its decisions and a recipe that replays it exactly', () => {
     const s = fresh();
     const { qm, next } = play(s);
-    expect(qm.recipe.config.rules).toMatchObject({ bestOf: 1, setFormat: 'fast4', noAd: true });
+    expect(qm.recipe.config.rules).toMatchObject({ bestOf: 1, setFormat: 'tiebreak' });
     expect(qm.recipe.config.players[0].name).toBe('Alex Kim');
     const record = next.history.at(-1)!;
     const replay = replayMatch(record.recipe);
     expect(replay.winner === 'A').toBe(record.won);
     expect(fingerprint(replay)).toBe(record.fingerprint);
     expect(record.recipe.cards!.length).toBe(replay.events.filter((e) => e.type === 'point').length);
+    expect(record.decisions).toEqual(qm.decisions);
+    expect(record.score).toMatch(/^\d+-\d+$/);
+    const [a, b] = record.score.split('-').map(Number) as [number, number];
+    expect(Math.max(a, b)).toBeGreaterThanOrEqual(7);
+    expect(a > b).toBe(record.won);
   });
 
   it('pays a win with points that grow with the opponent\'s rank, and a loss with a small deduction', () => {
@@ -100,8 +105,10 @@ describe('cardReward', () => {
 
   it('shows up on the player after the match', () => {
     const s = fresh();
-    const { next } = play(s, () => 'attack');
+    let { next } = play(s, () => 'attack');
+    for (let k = 0; next.history.at(-1)!.decisions!.length === 0; k++) next = play(next, () => 'attack').next;
     const me = next.world.players.find((p) => p.id === USER_ID)!;
+    expect(next.history.every((r) => r.decisions!.every((d) => d.user === 'attack'))).toBe(true);
     const before = s.world.players.find((p) => p.id === USER_ID)!;
     const gained = (me.attributes.servePower + (me.progress.servePower ?? 0)) - (before.attributes.servePower + (before.progress.servePower ?? 0));
     expect(gained).toBeGreaterThan(0);

@@ -1,69 +1,81 @@
-// The quick-match balance measures (ADR-016): length, no dominant card, reading pays, AI variety, skill, ladder pace.
+// The quick-match balance harness (ADR-017): bots play one-tiebreak matches against the AI, deciding only at the
+// decision points, exactly as the UI does (autoPlay, then decide).
 import {
-  advance, averagePlayer, createConfig, finish, isOver, liveStatus, ratedPlayer, startMatch, type Card, type MatchConfig, type MatchResult,
-  type PlayerProfile, type PlayStyle, type PointEvent, type Surface,
+  averagePlayer, createConfig, finish, liveStatus, ratedPlayer, type Card, type MatchConfig, type MatchResult, type PlayerProfile,
+  type PlayStyle, type PointEvent, type Surface,
 } from '@tennis/engine';
 import { createPlayer, defaultAllocation } from '../player/create.ts';
 import { stream, streamSeed } from '../rng.ts';
-import { FAST4_RULES } from '../tuning.ts';
-import { aiCard, cardEntropy } from './ai.ts';
-import { randomBot, type Bot } from './bots.ts';
+import { TIEBREAK_RULES } from '../tuning.ts';
+import { cardEntropy } from './ai.ts';
+import { randomBot, type Bot, type BotView } from './bots.ts';
 import { finishQuick, newLadder, rankOf } from './ladder.ts';
-import { matchOver, playPoint, startQuick, userRole } from './match.ts';
+import { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, type QuickMatch } from './match.ts';
 import { broadcastSeconds } from './pace.ts';
+import { personaOf } from './persona.ts';
+import { planTactic } from './plan.ts';
+import type { DecisionRecord, GamePlan, Persona } from './types.ts';
 
-const STYLES: PlayStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
+export const STYLES: PlayStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
 const SURFACES: Surface[] = ['hard', 'clay', 'grass'];
 
-export const fast4 = (a: PlayerProfile, b: PlayerProfile, i: number): MatchConfig =>
-  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...FAST4_RULES }, firstServer: i % 2 ? 'B' : 'A' });
+export const tiebreakConfig = (a: PlayerProfile, b: PlayerProfile, i: number, plan: GamePlan = 'balanced'): MatchConfig =>
+  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...TIEBREAK_RULES }, tactics: [planTactic(plan), planTactic('balanced')], firstServer: i % 2 ? 'B' : 'A' });
 
-/** A plays `bot`; B is the adaptive AI (or `opponent` if given). Returns the match and B's cards. */
-export function cardMatch(config: MatchConfig, seed: number, bot: Bot, opponent?: Bot): { result: MatchResult; aiCards: Card[] } {
-  const live = startMatch(config, seed);
-  const seen: Record<'serve' | 'return', Card[]> = { serve: [], return: [] };
-  const aiCards: Card[] = [];
-  while (!isOver(live)) {
-    const st = liveStatus(live);
-    const role = st.server === 'A' ? 'serve' : 'return';
-    const ctx = {
-      style: config.players[1].style, role: role === 'serve' ? 'return' as const : 'serve' as const, history: seen[role], fatigue: st.fatigue.B,
-      ...(aiCards.length ? { lastOwn: aiCards.at(-1)! } : {}),
-    };
-    const mine = bot({ ...ctx, rng: stream(seed, 'bot', st.pointsPlayed) });
-    const theirs = (opponent ?? aiCard)({ ...ctx, rng: stream(seed, 'card', st.pointsPlayed) });
-    advance(live, 'point', { cards: { A: mine, B: theirs } });
-    seen[role].push(mine);
-    aiCards.push(theirs);
+/** What `bot` sees at the pending decision of `m`. */
+export function botView(m: QuickMatch, rngSeed: number): BotView {
+  return { ai: decisionContext(m), tell: m.pending!.tell, rng: stream(rngSeed, 'bot', liveStatus(m.live).pointsPlayed) };
+}
+
+/** Plays a whole match: `bot` decides for A at every decision point; `opponent` (if given) replaces the AI's card. */
+export function playMatch(m: QuickMatch, bot: Bot, botSeed: number, opponent?: Bot): QuickMatch {
+  for (;;) {
+    autoPlay(m);
+    if (matchOver(m)) return m;
+    const view = botView(m, botSeed);
+    if (opponent) m.pending = { card: opponent({ ...view, rng: stream(botSeed, 'opponent', liveStatus(m.live).pointsPlayed) }), tell: null };
+    decide(m, bot(view));
   }
-  return { result: finish(live), aiCards };
+}
+
+export function botMatch(config: MatchConfig, seed: number, bot: Bot, opts: { persona?: Persona; opponent?: Bot } = {}): { result: MatchResult; decisions: DecisionRecord[] } {
+  const m = createQuickMatch({ config, seed, matchNo: 0, opponent: 'ai', plan: 'balanced', persona: opts.persona ?? personaOf(seed, 'ai'), rival: null });
+  playMatch(m, bot, seed, opts.opponent);
+  return { result: finish(m.live), decisions: m.decisions };
 }
 
 const styled = (style: PlayStyle) => ({ ...averagePlayer('AI'), style });
 
-/** Win rate of `bot` (as an average player) against an average adaptive AI of every style. */
-export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): { win: number; aiCards: Card[]; points: number[]; seconds: number[] } {
-  let wins = 0;
-  const aiCards: Card[] = [];
-  const points: number[] = [];
-  const seconds: number[] = [];
-  for (let i = 0; i < n; i++) {
-    const { result, aiCards: cards } = cardMatch(fast4(averagePlayer('Bot'), styled(STYLES[i % 4]!), i), streamSeed(seed, 'm', i), bot, opponent);
-    if (result.winner === 'A') wins++;
-    aiCards.push(...cards);
-    const pts = result.events.filter((e): e is PointEvent => e.type === 'point');
-    points.push(pts.length);
-    seconds.push(broadcastSeconds(pts));
-  }
-  return { win: wins / n, aiCards, points, seconds };
+export interface WinRate {
+  win: number;
+  aiCards: Card[];
+  points: number[];
+  decisions: number[];
+  seconds: number[];
 }
 
-/** Win rates of players rated 11–15 everywhere (random cards) against an average adaptive AI. */
+/** Win rate of `bot` (an average player) against an average AI of every style and persona. */
+export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): WinRate {
+  const out: WinRate = { win: 0, aiCards: [], points: [], decisions: [], seconds: [] };
+  for (let i = 0; i < n; i++) {
+    const { result, decisions } = botMatch(tiebreakConfig(averagePlayer('Bot'), styled(STYLES[i % 4]!), i), streamSeed(seed, 'm', i), bot, opponent ? { opponent } : {});
+    if (result.winner === 'A') out.win++;
+    out.aiCards.push(...decisions.map((d) => d.ai));
+    const pts = result.events.filter((e): e is PointEvent => e.type === 'point');
+    out.points.push(pts.length);
+    out.decisions.push(decisions.length);
+    out.seconds.push(broadcastSeconds(pts));
+  }
+  out.win /= n;
+  return out;
+}
+
+/** Win rates of players rated 11–15 everywhere (random cards) against an average AI. */
 export function skillLadder(n: number, seed: number): number[] {
   return [11, 12, 13, 14, 15].map((r, k) => {
     let wins = 0;
     for (let i = 0; i < n; i++) {
-      if (cardMatch(fast4(ratedPlayer('R', r), styled(STYLES[i % 4]!), i), streamSeed(seed, 'skill', k, i), randomBot).result.winner === 'A') wins++;
+      if (botMatch(tiebreakConfig(ratedPlayer('R', r), styled(STYLES[i % 4]!), i), streamSeed(seed, 'skill', k, i), randomBot).result.winner === 'A') wins++;
     }
     return wins / n;
   });
@@ -76,23 +88,12 @@ export function ladderPace(bot: Bot, runs: number, matches: number, seed: number
     const s0 = streamSeed(seed, 'ladder', r);
     let s = newLadder(s0, createPlayer({ name: 'Bot', style: 'all_court', allocation: defaultAllocation('all_court') }, s0));
     const start = rankOf(s);
-    for (let m = 0; m < matches; m++) {
-      const qm = startQuick(s);
-      while (!matchOver(qm)) {
-        const st = liveStatus(qm.live);
-        const role = userRole(qm);
-        const ctx = {
-          style: qm.recipe.config.players[1].style, role: role === 'serve' ? 'return' as const : 'serve' as const, history: qm.userCards[role],
-          fatigue: st.fatigue.B, ...(qm.recipe.cards.length ? { lastOwn: qm.recipe.cards.at(-1)!.B } : {}),
-        };
-        playPoint(qm, bot({ ...ctx, rng: stream(s0, 'user', m, st.pointsPlayed) }));
-      }
-      s = finishQuick(s, qm);
-    }
+    for (let m = 0; m < matches; m++) s = finishQuick(s, playMatch(startQuick(s), bot, streamSeed(s0, 'user', m)));
     climbed += start - rankOf(s);
   }
   return climbed / runs;
 }
 
 export const median = (xs: readonly number[]): number => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+export const share = (xs: readonly number[], ok: (x: number) => boolean): number => xs.filter(ok).length / xs.length;
 export { cardEntropy };

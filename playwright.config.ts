@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 // Browser tests for the replay page (TD-005, TD-013). Not part of `npm test`: run `npm run test:e2e`.
-const PORT = 5179;
+// E2E_PORT lets parallel worktrees run their suites side by side (ADR-017).
+const PORT = Number(process.env.E2E_PORT ?? 5179);
 
 export default defineConfig({
   testDir: 'e2e',

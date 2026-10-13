@@ -37,7 +37,7 @@ game/      src/{world,player,calendar,tournament,season,save,quick,views,tuning.
 renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts} tests/
 ui/        index.html src/{career,quick,replay,lib,storage}   (Vite root)
 e2e/       Playwright specs (playwright.config.ts at the root)
-docs/      decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD)
+docs/      decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), m6-workstreams.md
 GDD.md     game design doc
 ```
 

@@ -1,0 +1,14 @@
+/* The quick result screen (ADR-017): owned by the result workstream. */
+.quick-result { max-width: 640px; margin: 0 auto; text-align: center; }
+.quick-result h1 { font-size: 40px; margin-bottom: 0; }
+.quick-result.won h1 { color: #6fe08a; } .quick-result.lost h1 { color: #ff9a8f; }
+.gains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+.gain { display: grid; gap: 4px; background: #19212c; border: 1px solid #2a3443; border-radius: 8px; padding: 12px; }
+.gain strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+.rating-gain { display: grid; grid-template-columns: 1fr 50px 140px 70px; gap: 8px; align-items: center; text-align: left; margin: 5px 0; }
+.rating-gain .plus { color: var(--bug-accent); font-variant-numeric: tabular-nums; font-size: 13px; }
+.rating-gain .bar { display: flex; height: 8px; background: #2a3443; border-radius: 4px; overflow: hidden; }
+.rating-gain .before { background: #6aa8ff; } .rating-gain .gained { background: var(--bug-accent); }
+.rating-gain.level-up .value { color: var(--bug-accent); font-weight: 700; }
+.quick-result .actions { justify-content: center; }
+@media (max-width: 640px) { .gains { grid-template-columns: 1fr; } }

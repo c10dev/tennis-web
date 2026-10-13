@@ -2,6 +2,7 @@
 // card that beats the user's recent habit, and never plays one card more than QUICK_AI.maxShare of the time.
 import type { Card, PlayStyle, Rng } from '@tennis/engine';
 import { QUICK_AI } from '../tuning.ts';
+import type { AiDecision, DecisionContext } from './types.ts';
 
 export const CARDS: readonly Card[] = ['attack', 'defend', 'counter'];
 /** The card that beats each card: attack > defend > counter > attack. */
@@ -62,4 +63,21 @@ export function cardEntropy(cards: readonly Card[]): number {
     return p > 0 ? sum - p * Math.log2(p) : sum;
   }, 0);
   return h + 0;
+}
+
+/** The AI's chances at a decision point (ADR-017). For now: the style mix, read against the user's decision cards. */
+export function decisionOdds(ctx: Omit<DecisionContext, 'rng'>): [number, number, number] {
+  const last = ctx.decisions.at(-1);
+  return cardOdds({ style: ctx.style, role: ctx.role, history: ctx.decisions.map((d) => d.user), fatigue: ctx.fatigue, ...(last ? { lastOwn: last.own } : {}) });
+}
+
+/** The AI's card at a decision point and the tell the user sees. For now: no tell. */
+export function aiDecision(ctx: DecisionContext): AiDecision {
+  const p = decisionOdds(ctx);
+  let r = ctx.rng.next();
+  for (let i = 0; i < 3; i++) {
+    r -= p[i]!;
+    if (r < 0) return { card: CARDS[i]!, tell: null };
+  }
+  return { card: CARDS[2]!, tell: null };
 }

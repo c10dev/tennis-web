@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { Card } from '@tennis/engine';
-import { createPlayer, defaultAllocation, finishQuick, matchOver, newLadder, playPoint, startQuick } from '@tennis/game';
+import { autoPlay, createPlayer, decide, defaultAllocation, finishQuick, matchOver, newLadder, startQuick } from '@tennis/game';
 
 const SEED = 3;
 const CYCLE: Card[] = ['attack', 'defend', 'counter'];
@@ -10,7 +10,7 @@ function nodeFirstMatch() {
   const s = newLadder(SEED, createPlayer({ name: 'Alex Kim', style: 'big_server', allocation: defaultAllocation('big_server') }, SEED));
   const qm = startQuick(s);
   let i = 0;
-  while (!matchOver(qm)) playPoint(qm, CYCLE[i++ % 3]!);
+  for (autoPlay(qm); !matchOver(qm); autoPlay(qm)) decide(qm, CYCLE[i++ % 3]!);
   return finishQuick(s, qm).history[0]!;
 }
 
@@ -31,7 +31,7 @@ async function startLadder(page: Page) {
   await expect(page.locator('#quick-play')).toBeVisible();
 }
 
-/** Picks cards in the CYCLE order until the match ends; `keys` uses 1/2/3 instead of clicks. */
+/** Picks cards in the CYCLE order at every decision point until the match ends; `keys` uses 1/2/3 instead of clicks. */
 async function playThrough(page: Page, keys = false, limit = Infinity) {
   let i = 0;
   while (!page.url().includes('#/quick/result') && i < limit) {
@@ -41,7 +41,7 @@ async function playThrough(page: Page, keys = false, limit = Infinity) {
       if (keys) await page.keyboard.press(`Digit${i % 3 + 1}`);
       else await page.locator(`#card-${card}`).click();
       i++;
-      await expect.poll(() => page.evaluate(() => document.body.dataset.quickPoints)).toBe(String(i));
+      await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions)).toBe(String(i));
     } else await page.waitForTimeout(30);
   }
   return i;
@@ -50,19 +50,22 @@ async function playThrough(page: Page, keys = false, limit = Infinity) {
 test.describe('quick match', () => {
   test.setTimeout(180_000);
 
-  test('plays a fast-mode match with cards and lands on the result the engine computes in Node', async ({ page }) => {
+  test('plays a fast-mode match, stopping for cards only at decision points, and lands on the result the engine computes in Node', async ({ page }) => {
     const errors = watchErrors(page);
     await startLadder(page);
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();
-    await expect(page.locator('#situation')).toContainText('· 0-0 · Games 0-0');
-    const points = await playThrough(page);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toBe('auto');
+    await expect(page.locator('#situation')).toHaveText(/(Your|Their) serve · \d+-\d+/, { timeout: 15_000 });
+    await expect(page.locator('#opponent-read #scouting')).toBeVisible();
+    const decisions = await playThrough(page);
     const expected = nodeFirstMatch();
-    expect(points).toBe(expected.recipe.cards!.length);
+    expect(decisions).toBe(expected.decisions!.length);
+    expect(decisions).toBeLessThan(expected.recipe.cards!.length);
     await expect(page.locator('#quick-result h1')).toHaveText(`${expected.won ? 'You won' : 'You lost'} ${expected.score}`);
     await expect(page.locator('#points-delta')).toContainText(`${expected.pointsDelta >= 0 ? '+' : ''}${expected.pointsDelta}`);
     await expect(page.locator('#rank-change')).toContainText(`#${expected.rankBefore} → #${expected.rankAfter}`);
-    await expect(page.locator('#rating-gains .rating-gain')).toHaveCount(8);
+    await expect(page.locator('#rating-gains .rating-gain')).toHaveCount(expected.progress.length);
     expect(errors).toEqual([]);
   });
 
@@ -74,7 +77,7 @@ test.describe('quick match', () => {
     await playThrough(page, true);
     const rank = (await page.locator('#rank-change strong').textContent())!.split('→ ')[1]!.trim();
     await page.locator('#play-again').click();
-    await expect(page.locator('#situation')).toContainText('Games 0-0');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toMatch(/auto|choose/);
     await page.reload();
     await page.goto('/#/quick');
     await expect(page.locator('#quick-rank')).toHaveText(rank);
@@ -84,11 +87,11 @@ test.describe('quick match', () => {
     expect(errors).toEqual([]);
   });
 
-  test('shows each point in 3D: reveal, then a clip on a sized canvas', async ({ page }) => {
+  test('shows a decision point in 3D: reveal, then a clip on a sized canvas', async ({ page }) => {
     const errors = watchErrors(page);
     await startLadder(page);
     await page.locator('#quick-play').click();
-    await playThrough(page, false, 3);
+    await playThrough(page, false, 1);
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toMatch(/clip|outcome|choose/);
     await expect.poll(() => page.locator('#view').evaluate((c) => (c as HTMLCanvasElement).width >= c.clientWidth && c.clientWidth > 300)).toBe(true);
     await expect(page.locator('#score .score-bug')).toBeVisible();

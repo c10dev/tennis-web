@@ -28,7 +28,7 @@ export default defineConfig({
       {
         test: {
           name: 'quick',
-          include: ['game/tests/quick.slow.test.ts'],
+          include: ['game/tests/quick-*.slow.test.ts'],
           testTimeout: 600_000,
         },
       },

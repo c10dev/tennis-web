@@ -1,0 +1,29 @@
+/* The quick match screen (ADR-017): owned by the match-flow workstream. */
+.quick-match.fast { min-height: 100vh; background: radial-gradient(circle at 50% 30%, #23324a, #151b24); }
+.quick-panel { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; width: min(760px, calc(100vw - 32px));
+  background: rgba(16, 21, 30, 0.92); border: 1px solid #34425a; border-radius: 10px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.quick-match.fast .quick-panel { bottom: auto; top: 30vh; }
+.situation { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+.situation .versus { color: var(--muted); }
+.situation .moment { background: var(--bug-accent); color: #10141c; padding: 2px 8px; border-radius: 3px; font-weight: 700; letter-spacing: 0.08em; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.card-btn { display: grid; gap: 4px; text-align: left; padding: 12px; border-radius: 8px; border-width: 2px; background: #1c2431; }
+.card-btn .key { color: var(--muted); font-size: 12px; }
+.card-btn strong { font-size: 20px; }
+.card-btn .flavour, .card-btn .rule { color: var(--muted); font-size: 13px; }
+.card-btn .strength { height: 5px; background: #2a3443; border-radius: 3px; overflow: hidden; }
+.card-btn .strength .fill { display: block; height: 100%; background: currentColor; }
+.card-btn.attack { color: #ff8a6b; border-color: #6b3328; }
+.card-btn.defend { color: #6aa8ff; border-color: #283f6b; }
+.card-btn.counter { color: #c9a0ff; border-color: #4a326b; }
+.card-btn strong, .card-btn .key { color: var(--text); }
+.card-btn:hover { background: #253044; }
+.reveal { display: grid; gap: 8px; justify-items: center; text-align: center; }
+.reveal .pair { display: flex; gap: 10px; align-items: center; }
+.reveal .chip { padding: 6px 12px; border-radius: 6px; font-weight: 700; background: #253044; }
+.chip.attack { color: #ff8a6b; } .chip.defend { color: #6aa8ff; } .chip.counter { color: #c9a0ff; }
+.reveal .verdict { font-size: 22px; }
+.reveal.won .verdict { color: #6fe08a; } .reveal.lost .verdict { color: #ff9a8f; }
+.outcome { margin: 0; font-size: 16px; }
+.outcome.you { color: #6fe08a; } .outcome.them { color: #ff9a8f; }
+@media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }

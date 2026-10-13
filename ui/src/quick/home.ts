@@ -23,7 +23,7 @@ export function quickHome(ctx: Ctx): Screen {
     h('div', { class: 'card opponent', id: 'next-opponent' },
       h('span', { class: 'muted' }, 'Next opponent'),
       h('h2', null, v.opponent.name),
-      h('p', { class: 'muted' }, `#${v.opponent.rank} · ${v.opponent.style} · level ${v.opponent.level.toFixed(1)} · ${v.opponent.surface} · Fast4`),
+      h('p', { class: 'muted' }, `#${v.opponent.rank} · ${v.opponent.style} · level ${v.opponent.level.toFixed(1)} · ${v.opponent.surface} · tiebreak to 7`),
       h('button', { class: 'primary big', id: 'quick-play', onclick: play }, 'Play'),
       h('label', { class: 'muted fast' }, fast, ' Fast mode (no 3D)')),
     v.recent.length ? h('div', { class: 'card' }, h('h3', null, 'Recent'),
@@ -48,7 +48,7 @@ function startForm(ctx: Ctx): Screen {
   };
   const element = h('section', { class: 'card quick-start' },
     h('h2', null, 'Quick match ladder'),
-    h('p', { class: 'muted' }, 'Fast4 matches against the players just above you. Pick a card before every point: attack beats defend, defend beats counter, counter beats attack.'),
+    h('p', { class: 'muted' }, 'One tiebreak to seven against the players just above you. At the big points you pick a card: attack beats defend, defend beats counter, counter beats attack.'),
     h('div', { class: 'form-row' }, h('label', null, 'Name', name), h('label', null, 'Style', style), h('label', null, 'Seed', seed)),
     error,
     h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'quick-start', onclick: start }, 'Start the ladder')));

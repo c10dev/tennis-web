@@ -186,3 +186,29 @@ export const QUICK_PACE = {
   /** Even a key point shows at most its last this-many seconds (a long point with a second serve runs 20 s+). */
   keyMaxSec: 8,
 } as const;
+
+// ---- M6 (ADR-017). Each block belongs to one workstream: flow (TIEBREAK_RULES, QUICK_MOMENTS, QUICK_PLAN),
+// opponent read (QUICK_PERSONA), result (QUICK_REWARD). Change only your own block.
+
+/** A quick match is one tiebreak to seven, two clear. */
+export const TIEBREAK_RULES = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
+
+/** Where a quick match stops for cards: from this many points all, and at any set or match point. */
+export const QUICK_MOMENTS = {
+  fromAll: 5,
+} as const;
+
+/** The user's game plan as the tactic for the points played without cards. */
+export const QUICK_PLAN = {
+  aggressive: { aggression: 0.8 },
+  balanced: { aggression: 0.5 },
+  defensive: { aggression: 0.2 },
+} as const;
+
+/** Opponent personas, tells and rival memory. */
+export const QUICK_PERSONA = {
+  tellAccuracy: 0.7,
+} as const;
+
+/** The result screen's rewards. */
+export const QUICK_REWARD = {} as const;

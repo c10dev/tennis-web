@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createRng, simulateMatch, createConfig, averagePlayer, type Card, type PointEvent } from '@tennis/engine';
-import { cardOdds } from '../src/quick/ai.ts';
-import { exploitBot, fixedBot, randomBot, readerBot } from '../src/quick/bots.ts';
+import { createRng, simulateMatch, createConfig, averagePlayer, type PointEvent, type Rng } from '@tennis/engine';
+import { decisionOdds } from '../src/quick/ai.ts';
+import { exploitBot, fixedBot, randomBot, readerBot, tellBot, type BotView } from '../src/quick/bots.ts';
 import { broadcastSeconds, clipFor, decisive } from '../src/quick/pace.ts';
 import { QUICK_PACE } from '../src/tuning.ts';
 
@@ -38,23 +38,31 @@ describe('quick-match pacing', () => {
 });
 
 describe('bots', () => {
-  const ctx = { style: 'big_server' as const, role: 'serve' as const, history: [] as Card[], fatigue: 0 };
+  const ai: BotView['ai'] = {
+    style: 'big_server', persona: { habit: 'big_point_attack', tellAccuracy: 0.7 }, role: 'serve', score: [5, 5], tags: ['tiebreak'],
+    lastPointWinner: null, decisions: [], rival: null, fatigue: 0,
+  };
+  const view = (rng: Rng, tell: BotView['tell'] = null): BotView => ({ ai, tell, rng });
 
   it('plays the same card, any card, or the answer to what the AI most likely plays', () => {
-    expect(fixedBot('counter')({ ...ctx, rng: createRng(1) })).toBe('counter');
+    expect(fixedBot('counter')(view(createRng(1)))).toBe('counter');
     const rng = createRng(2);
-    const seen = new Set(Array.from({ length: 60 }, () => randomBot({ ...ctx, rng })));
+    const seen = new Set(Array.from({ length: 60 }, () => randomBot(view(rng))));
     expect(seen.size).toBe(3);
-    const odds = cardOdds(ctx);
+    const odds = decisionOdds(ai);
     const likely = (['attack', 'defend', 'counter'] as const)[odds.indexOf(Math.max(...odds))]!;
     const answer = { attack: 'counter', defend: 'attack', counter: 'defend' }[likely];
-    expect(exploitBot({ ...ctx, rng: createRng(3) })).toBe(answer);
+    expect(exploitBot(view(createRng(3)))).toBe(answer);
+  });
+
+  it('believes a tell: plays the card that beats the card it points at', () => {
+    expect(tellBot(view(createRng(1), { card: 'defend', text: '' }))).toBe('attack');
   });
 
   it('reads the AI half of the time as an average user would', () => {
     const rng = createRng(4);
-    const cards = Array.from({ length: 4000 }, () => readerBot({ ...ctx, rng }));
-    const answer = exploitBot({ ...ctx, rng: createRng(5) });
+    const cards = Array.from({ length: 4000 }, () => readerBot(view(rng)));
+    const answer = exploitBot(view(createRng(5)));
     const share = cards.filter((c) => c === answer).length / cards.length;
     expect(share).toBeGreaterThan(0.55);
     expect(share).toBeLessThan(0.75);

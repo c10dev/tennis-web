@@ -4,6 +4,9 @@ import { quickHome } from './home.ts';
 import { quickMatchScreen } from './match.ts';
 import { quickResult } from './result.ts';
 import './quick.css';
+import './quick-match.css';
+import './quick-result.css';
+import './quick-scout.css';
 
 export function quickScreen(ctx: Ctx, params: string[]): Screen | Promise<Screen> {
   if (params[0] === 'match') return quickMatchScreen(ctx);
