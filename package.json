@@ -1,0 +1,30 @@
+{
+  "name": "tennis-web",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "engine"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "vitest run --project engine",
+    "test:engine": "vitest run --project engine",
+    "test:stats": "vitest run --project stats",
+    "coverage": "vitest run --project engine --coverage",
+    "sim": "tsx engine/cli/sim.ts",
+    "typecheck": "tsc -p engine/tsconfig.json --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "@vitest/coverage-v8": "5.0.4",
+    "eslint": "10.12.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.4"
+  }
+}
