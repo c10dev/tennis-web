@@ -1,9 +1,9 @@
 // Report section owned by the match-flow workstream (ADR-017): length, decisions, pace, matchup weight, skill, ladder.
 import type { Row } from '../../engine/cli/report.ts';
-import { ladderPace, median, share, skillLadder, type WinRate } from '../src/quick/balance.ts';
+import { ladderPace, matchupEdge, median, share, skillLadder, type WinRate } from '../src/quick/balance.ts';
 import { readerBot } from '../src/quick/bots.ts';
 import { QUICK_TARGETS } from '../src/quick/targets.ts';
-import { check, notYet } from './quick-rows.ts';
+import { check } from './quick-rows.ts';
 
 const T = QUICK_TARGETS.flow;
 
@@ -14,7 +14,7 @@ export function flowRows(random: WinRate, n: number, seed: number, ladders: numb
     check('Decisions per match (median)', median(random.decisions), T.medianDecisions),
     check('Matches with 2+ decisions', share(random.decisions, (d) => d >= 2), T.twoOrMoreDecisions, '%'),
     check('Seconds on screen per match (median)', median(random.seconds), T.medianSeconds, 's'),
-    notYet('Won matchup at a decision point (pp)', T.matchupEdge, '%'),
+    check('Won matchup at a decision point (pp)', matchupEdge(Math.max(300, Math.floor(n / 2)), seed), T.matchupEdge, '%'),
     { label: 'Win % by rating 11..15 vs 13', value: skill.map((w) => `${(w * 100).toFixed(0)}`).join('/'), range: 'rising', status: skill.every((w, i) => i === 0 || w > skill[i - 1]!) ? 'PASS' : 'FAIL' },
     check('Places climbed in 30 matches', ladderPace(readerBot, ladders, 30, seed), T.ladderClimb30),
   ];

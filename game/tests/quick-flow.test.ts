@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { averagePlayer, bigServer, createConfig, fingerprint, finish, replayMatch, type Card, type PointEvent, type ScoreState } from '@tennis/engine';
+import { matchupEdge } from '../src/quick/balance.ts';
 import { isDecisionPoint } from '../src/quick/moments.ts';
 import { autoPlay, createQuickMatch, decide, matchOver, type QuickMatch } from '../src/quick/match.ts';
 import { personaOf } from '../src/quick/persona.ts';
@@ -102,5 +103,14 @@ describe('a quick match flow (ADR-017)', () => {
     }).sort((x, y) => x - y);
     expect(counts[0]).toBeGreaterThanOrEqual(2);
     expect(counts[50]).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('matchupEdge', () => {
+  it('measures how much a won matchup at the decision points is worth, the same for the same seed', () => {
+    const edge = matchupEdge(60, 3);
+    expect(edge).toBeGreaterThan(0.12);
+    expect(edge).toBeLessThan(0.4);
+    expect(matchupEdge(60, 3)).toBe(edge);
   });
 });

@@ -7,8 +7,8 @@ import {
 import { createPlayer, defaultAllocation } from '../player/create.ts';
 import { stream, streamSeed } from '../rng.ts';
 import { TIEBREAK_RULES } from '../tuning.ts';
-import { cardEntropy } from './ai.ts';
-import { randomBot, type Bot, type BotView } from './bots.ts';
+import { BEATEN_BY, CARDS, cardEntropy } from './ai.ts';
+import { fixedBot, randomBot, type Bot, type BotView } from './bots.ts';
 import { finishQuick, newLadder, rankOf } from './ladder.ts';
 import { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, type QuickMatch } from './match.ts';
 import { broadcastSeconds } from './pace.ts';
@@ -79,6 +79,26 @@ export function skillLadder(n: number, seed: number): number[] {
     }
     return wins / n;
   });
+}
+
+/** User point-win share at the decision points of `n` matches between average players, each playing one card. */
+function decisionWin(mine: Card, theirs: Card, n: number, seed: number): number {
+  let won = 0;
+  let played = 0;
+  for (let i = 0; i < n; i++) {
+    // The same seeds for every pair of cards, so the pairs differ only by the cards.
+    const { decisions } = botMatch(tiebreakConfig(averagePlayer('Bot'), averagePlayer('AI'), i), streamSeed(seed, 'edge', i), fixedBot(mine), { opponent: fixedBot(theirs) });
+    won += decisions.filter((d) => d.winner === 'A').length;
+    played += decisions.length;
+  }
+  return won / played;
+}
+
+/** What a won matchup at a decision point is worth (ADR-017): the user's point-win share with the card that beats
+ *  the opponent's, minus with the same card as the opponent; average players, both roles, the three pairs each. */
+export function matchupEdge(n: number, seed: number): number {
+  const mean = (f: (c: Card) => number) => CARDS.reduce((a, c) => a + f(c), 0) / CARDS.length;
+  return mean((c) => decisionWin(BEATEN_BY[c], c, n, seed)) - mean((c) => decisionWin(c, c, n, seed));
 }
 
 /** Places climbed in `matches` quick matches by a user bot, averaged over `runs` ladders. */

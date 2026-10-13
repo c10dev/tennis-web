@@ -36,18 +36,18 @@ const base = run(null, null).serverWins;
 /** A fixed, even-handed scramble of the three cards: the 'random opponent'. */
 const pick = (seed: number) => (i: number) => CARDS[(Math.imul(i + seed * 7919, 2654435761) >>> 0) % 3]!;
 
-describe('card matchups (ADR-015)', () => {
-  it('moves the point 8 to 17 points of percentage towards whoever wins the matchup', () => {
+describe('card matchups (ADR-015, weight from ADR-017)', () => {
+  it('moves the point 18 to 32 points of percentage towards whoever wins the matchup', () => {
     for (const s of CARDS) {
       for (const r of CARDS) {
         if (s === r) continue;
         const shift = run(s, r).serverWins - base;
         if (beats(s, r)) {
-          expect(shift).toBeGreaterThan(0.08);
-          expect(shift).toBeLessThan(0.17);
+          expect(shift).toBeGreaterThan(0.18);
+          expect(shift).toBeLessThan(0.32);
         } else {
-          expect(shift).toBeLessThan(-0.08);
-          expect(shift).toBeGreaterThan(-0.17);
+          expect(shift).toBeLessThan(-0.18);
+          expect(shift).toBeGreaterThan(-0.32);
         }
       }
     }

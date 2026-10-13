@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ladderPace, median, share, skillLadder, winRate } from '../src/quick/balance.ts';
+import { ladderPace, matchupEdge, median, share, skillLadder, winRate } from '../src/quick/balance.ts';
 import { randomBot, readerBot } from '../src/quick/bots.ts';
 import { QUICK_TARGETS } from '../src/quick/targets.ts';
 
@@ -23,7 +23,7 @@ describe('quick-match flow balance (ADR-017)', () => {
     within(median(random.decisions), T.medianDecisions, 0);
     within(share(random.decisions, (d) => d >= 2), T.twoOrMoreDecisions, 0.02);
   });
-  it.todo('makes a won matchup at a decision point worth 20-30 pp (flow workstream)');
+  it('makes a won matchup at a decision point worth 20-30 pp', () => within(matchupEdge(N / 2, 7), T.matchupEdge, 0.02));
 
   it('lets better players win more often', () => {
     const w = skillLadder(200, 7);

@@ -172,11 +172,12 @@ export const CARDS = {
   /** The second serve takes this share of the serve card's in % shift. */
   secondServeShare: 0.6,
   /** Winning the matchup: own rally errors × exp(−edgeError), winners +edgeWinner on the logit, serve +edgeAce and
-   *  +edgeQuality; losing it the reverse. A returner who wins it takes edgeQuality off the serve. */
-  edgeError: 0.25,
-  edgeWinner: 0.25,
-  edgeAce: 0.2,
-  edgeQuality: 0.03,
+   *  +edgeQuality; losing it the reverse. A returner who wins it takes edgeQuality off the serve. ADR-017 doubled the
+   *  weight (decisions are rare now): a won matchup is worth about +24 pp of point-win for average players. */
+  edgeError: 0.4,
+  edgeWinner: 0.5,
+  edgeAce: 0.6,
+  edgeQuality: 0.08,
   /** Ratings behind each card; strength = 1 + statWeight × (their mean − average). */
   stats: {
     attack: ['servePower', 'forehand', 'aggression'],
