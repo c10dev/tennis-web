@@ -2,7 +2,7 @@
 
 Design questions found while working autonomously (2026-10-14). Each one lists the options with a recommended
 default. Nothing here is on `main`: P2–P5 are prototyped on local `proposal/*` branches, each rebased on main and
-passing every check, and `proposal/all-defaults` merges all four with the conflicts resolved (538 unit tests, 61 e2e,
+passing every check, and `proposal/all-defaults` merges all four with the conflicts resolved (541 unit tests, 74 e2e,
 the quick report passing). Accepted proposals become ADRs in `decisions.md`.
 
 ## P1. Game plans that depend on the opponent (TD-031)
