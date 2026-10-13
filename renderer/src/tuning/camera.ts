@@ -23,7 +23,8 @@ export const CAMERAS = {
   /** Behind and to the centre side of the server, so they stand at one side of the frame. */
   serve: { fov: 40, behind: 5, height: 2.3, aside: 1.4, aimHeight: 0.5 },
   reaction: { fov: 32, distance: 4.2, height: 1.75, aside: 1, headHeight: 1.6 },
-  /** Wide side shot from beyond the umpire, set back along the court so the chair is not in the middle. */
-  side: { fov: 34, x: -19, y: -7, height: 9, replayX: -15, replayHeight: 4, replayFov: 30 },
+  /** Wide side shot from beyond the umpire, set back along the court so the chair is not in the middle. Replays track
+   *  the ball from the far side (replayX > 0): from the umpire's side the chair hid the ball in 3.8% of frames (TD-040). */
+  side: { fov: 34, x: -19, y: -7, height: 9, replayX: 15, replayHeight: 4, replayFov: 30 },
   hawkeye: { fov: 40, height: 1.3, back: 0.9 },
 } as const;

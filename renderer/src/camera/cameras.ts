@@ -46,7 +46,7 @@ function sideWide(): CamPose {
   return { position: three(c.x, c.y, c.height), target: three(0, 0, 0), fov: c.fov };
 }
 
-/** Replays: from the umpire's side, low, following the ball. */
+/** Replays: low, from the side away from the umpire chair (TD-040), following the ball. */
 function sideTracking(ball: Vec3): CamPose {
   const c = CAMERAS.side;
   return { position: three(c.replayX, ball.y * 0.4, c.replayHeight), target: three(ball.x, ball.y, ball.z), fov: c.replayFov };
