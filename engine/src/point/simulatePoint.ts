@@ -2,7 +2,7 @@
 import { returnSkill, strokeSkill, type PlayerRuntime } from '../player/condition.ts';
 import { chance, type Rng } from '../rng/mulberry32.ts';
 import { GEOMETRY, RALLY } from '../tuning.ts';
-import type { Outcome, PlayerId, ShotEvent, ShotType, Surface, Vec2, Wing } from '../types.ts';
+import type { Outcome, PlayerId, PointCards, ShotEvent, ShotType, Surface, Vec2, Wing } from '../types.ts';
 import { chase } from './chase.ts';
 import type { Side } from './court.ts';
 import * as geo from './geometry.ts';
@@ -22,6 +22,8 @@ export interface PointInput {
   sideOfA: Side;
   /** Serve to the deuce court (even number of points played in the game). */
   deuceCourt: boolean;
+  /** Cards played on this point, if any (ADR-015). */
+  cards?: PointCards;
 }
 
 export interface PointResult {

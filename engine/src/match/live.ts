@@ -10,7 +10,7 @@ import { applyPoint, cloneScore, initialScoring, type ScoringState } from '../sc
 import { isFinalSet } from '../scoring/rules.ts';
 import { FATIGUE } from '../tuning.ts';
 import {
-  SCHEMA_VERSION, type MatchConfig, type MatchEvent, type MatchRecipe, type MatchResult, type PlayerId, type PointEvent, type Tactic,
+  SCHEMA_VERSION, type MatchConfig, type MatchEvent, type MatchRecipe, type MatchResult, type PlayerId, type PointCards, type PointEvent, type Tactic,
 } from '../types.ts';
 import { computeStats } from './stats.ts';
 
@@ -59,9 +59,10 @@ export function startMatch(input: MatchConfig, seed: number): LiveMatch {
 
 export const isOver = (live: LiveMatch): boolean => live.state.scoring.winner !== null;
 
-/** Plays on to the end of the current set or of the match; returns the new events. */
-export function advance(live: LiveMatch, until: 'set' | 'match'): MatchEvent[] {
+/** Plays on to the end of the next point, the current set or the match; returns the new events. Cards apply to one point. */
+export function advance(live: LiveMatch, until: 'point' | 'set' | 'match', options: { cards?: PointCards } = {}): MatchEvent[] {
   if (isOver(live)) throw new Error('The match is over');
+  if (options.cards && until !== 'point') throw new Error('Cards are played for one point at a time');
   const s = live.state;
   const { surface, rules } = live.config;
   const from = live.events.length;
@@ -77,12 +78,14 @@ export function advance(live: LiveMatch, until: 'set' | 'match'): MatchEvent[] {
       pressure: pressureIndex(tags, isFinalSet(rules, scoreBefore.sets.length)),
       sideOfA: s.sideOfA,
       deuceCourt: (scoreBefore.points[0] + scoreBefore.points[1]) % 2 === 0,
+      ...(options.cards ? { cards: options.cards } : {}),
     }, s.rng);
     const applied = applyPoint(s.scoring, result.winner);
     const point: PointEvent = {
       type: 'point', index: s.points.length, server: scoreBefore.server, winner: result.winner, serveNumber: result.serveNumber,
       rallyLength: result.rallyLength, endedBy: result.endedBy, shots: result.shots, scoreBefore,
       scoreAfter: cloneScore(applied.state.score), tags, durationSec: result.durationSec,
+      ...(options.cards ? { cards: { ...options.cards } } : {}),
     };
     s.points.push(point);
     live.events.push(point, ...applied.events);
@@ -96,10 +99,8 @@ export function advance(live: LiveMatch, until: 'set' | 'match'): MatchEvent[] {
       }
     }
     s.scoring = applied.state;
-    if (setOver && until === 'set' && s.scoring.winner === null) {
-      s.betweenSets = true;
-      break;
-    }
+    if (setOver && until !== 'match' && s.scoring.winner === null) s.betweenSets = true;
+    if (until === 'point' || (setOver && until === 'set')) break;
   }
   if (s.scoring.winner !== null) {
     live.events.push({ type: 'match_end', winner: s.scoring.winner, score: cloneScore(s.scoring.score), stats: computeStats(s.points) });
@@ -122,14 +123,20 @@ export function finish(live: LiveMatch): MatchResult {
   return { schemaVersion: SCHEMA_VERSION, seed: live.seed, config: live.config, events: live.events, winner: end.winner, stats: end.stats };
 }
 
-/** Plays a recipe again: tactic changes are applied when their set has finished. */
+/** Plays a recipe again: tactic changes when their set has finished, cards point by point. */
 export function replayMatch(recipe: MatchRecipe): MatchResult {
   const live = startMatch(recipe.config, recipe.seed);
   let sets = 0;
   while (!isOver(live)) {
     for (const c of recipe.tacticChanges) if (c.afterSet === sets && sets > 0) setTactic(live, c.player, c.tactic);
-    advance(live, 'set');
-    sets++;
+    if (recipe.cards) {
+      const cards = recipe.cards[live.state.points.length];
+      advance(live, 'point', cards ? { cards } : {});
+      if (live.state.betweenSets || isOver(live)) sets++;
+    } else {
+      advance(live, 'set');
+      sets++;
+    }
   }
   return finish(live);
 }

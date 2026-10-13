@@ -325,3 +325,18 @@ Format: one entry per decision, newest at the bottom.
   stays as it is; multi-season play, finances and staff move to M6 or later.
 - **Consequences:** Balance targets for the short loop (length, no dominant card, reading the AI pays off, ladder
   pace) become measurable done criteria (ADR-016). Engine changes must keep card-free matches byte-identical.
+
+## ADR-015: Fast4, point-by-point play and cards (event schema v4)
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The casual quick match (ADR-014) is one Fast4 set with a card chosen before every point.
+- **Decision:**
+  - `MatchRules.bestOf` may be 1, and `setFormat: 'fast4'` plays sets to four games with a tiebreak at 3-3 to five
+    points, the point at 4-4 deciding it (No-Ad is the separate `noAd` flag). Absent means 'standard'.
+  - `advance(live, 'point', { cards })` plays one point; `Card` is `attack | defend | counter` and
+    `PointEvent.cards` records both players' cards. `MatchRecipe.cards` (by point index) replays such matches.
+  - `SCHEMA_VERSION` becomes 4; the renderer plays v2–v4 and draws card matches like any other.
+  - Card effects on the point model are numerical only and draw no random numbers (step 3 of M5).
+- **Consequences:** Matches without cards are unchanged: goldens hold and 10,000-match reports on all three surfaces
+  are byte-identical. A Fast4 set with No-Ad runs a median of 35 points (quartiles 29/35/40 over 1,000 matches), not
+  the 20–32 estimated when M5 was planned; the 1–2 minute target is met through short per-point clips (ADR-016).

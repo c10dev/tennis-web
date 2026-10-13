@@ -1,13 +1,17 @@
 // Event and data schema shared by the engine and its consumers (GDD §7).
 // Changing anything here means bumping SCHEMA_VERSION and recording an ADR (CLAUDE.md rule 6).
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export type PlayerId = 'A' | 'B';
 export type Surface = 'hard' | 'clay' | 'grass';
 export type ShotType = 'serve' | 'return' | 'drive' | 'slice' | 'lob' | 'drop' | 'volley' | 'overhead' | 'approach';
 export type Wing = 'forehand' | 'backhand';
 export type Outcome = 'in' | 'winner' | 'ace' | 'fault' | 'double_fault' | 'unforced_error' | 'forced_error' | 'net';
+/** Cards played before a point (schema v4, ADR-015): attack beats defend, defend beats counter, counter beats attack. */
+export type Card = 'attack' | 'defend' | 'counter';
+export type PointCards = Record<PlayerId, Card>;
+
 export type PlayStyle = 'big_server' | 'baseliner' | 'counter_puncher' | 'serve_and_volley' | 'all_court';
 
 /** Court coordinates in metres. Origin at the centre of the net, y along the court (A starts at y < 0). */
@@ -58,10 +62,15 @@ export interface Tactic {
 /** 'tiebreak10': at 6-6 in the final set a 10-point tiebreak by 2 (the Grand Slam rule). */
 export type FinalSetMode = 'tiebreak7' | 'tiebreak10' | 'advantage';
 
+/** 'fast4': sets to four games, a tiebreak at 3-3 to five points with a deciding point at 4-4 (schema v4). */
+export type SetFormat = 'standard' | 'fast4';
+
 export interface MatchRules {
-  bestOf: 3 | 5;
+  bestOf: 1 | 3 | 5;
   noAd: boolean;
   finalSet: FinalSetMode;
+  /** Absent = 'standard'. */
+  setFormat?: SetFormat;
 }
 
 export interface MatchConfig {
@@ -86,6 +95,8 @@ export interface MatchRecipe {
   config: MatchConfig;
   seed: number;
   tacticChanges: TacticChange[];
+  /** Cards by point index, for matches played with cards (schema v4). */
+  cards?: PointCards[];
 }
 
 export interface ShotEvent {
@@ -134,6 +145,8 @@ export interface PointEvent {
   scoreAfter: ScoreState;
   tags: PointTag[];
   durationSec: number;
+  /** The cards both players played on this point, when the match was played with cards (schema v4). */
+  cards?: PointCards;
 }
 
 export interface MatchStats {
@@ -148,7 +161,7 @@ export interface MatchStats {
 }
 
 export type MatchEvent =
-  | { type: 'match_start'; seed: number; surface: Surface; players: [string, string]; bestOf: 3 | 5 }
+  | { type: 'match_start'; seed: number; surface: Surface; players: [string, string]; bestOf: 1 | 3 | 5 }
   | PointEvent
   | { type: 'game_end'; winner: PlayerId; score: ScoreState; isBreak: boolean }
   | { type: 'set_end'; winner: PlayerId; score: ScoreState }

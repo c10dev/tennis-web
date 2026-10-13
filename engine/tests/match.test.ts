@@ -19,7 +19,7 @@ describe('simulateMatch', () => {
     const c = config();
     const r = simulateMatch(c, 7);
     expect(r.schemaVersion).toBe(SCHEMA_VERSION);
-    expect(SCHEMA_VERSION).toBe(3);
+    expect(SCHEMA_VERSION).toBe(4);
     expect(r.seed).toBe(7);
     expect(r.config).toEqual(c);
     expect(r.config).not.toBe(c);

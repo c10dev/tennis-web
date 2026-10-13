@@ -99,6 +99,6 @@ describe('live match API', () => {
   }, 30_000);
 
   it('writes schema version 3', () => {
-    expect(SCHEMA_VERSION).toBe(3);
+    expect(SCHEMA_VERSION).toBe(4);
   });
 });

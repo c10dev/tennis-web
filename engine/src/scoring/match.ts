@@ -1,7 +1,7 @@
 // Scoring as a pure state machine: applyPoint never mutates its input (GDD §6).
 import type { MatchEvent, MatchRules, PlayerId, ScoreState } from '../types.ts';
 import {
-  gameWon, index, isFinalSet, other, setsToWin, setWon, tiebreakAtSixAll, tiebreakServer, tiebreakTarget, tiebreakWon,
+  gameWon, index, isFinalSet, other, setsToWin, setWon, tiebreakAt, tiebreakAtSixAll, tiebreakServer, tiebreakTarget, tiebreakWinBy, tiebreakWon,
 } from './rules.ts';
 
 export type ScoringEvent = Extract<MatchEvent, { type: 'game_end' | 'set_end' | 'changeover' }>;
@@ -46,7 +46,7 @@ export function applyPoint(state: ScoringState, pointWinner: PlayerId): { state:
   s.points[i] += 1;
 
   const gameOver = s.tiebreak
-    ? tiebreakWon(s.points, i, tiebreakTarget(rules, finalSet))
+    ? tiebreakWon(s.points, i, tiebreakTarget(rules, finalSet), tiebreakWinBy(rules))
     : gameWon(s.points, i, rules.noAd);
 
   if (!gameOver) {
@@ -63,7 +63,7 @@ export function applyPoint(state: ScoringState, pointWinner: PlayerId): { state:
     s.points = [0, 0];
     s.tiebreak = false;
     tbFirst = null;
-    if (setWon(s.games, i, wasTiebreak)) {
+    if (setWon(s.games, i, wasTiebreak, rules)) {
       const setGames = s.games[0] + s.games[1];
       s.sets.push([s.games[0], s.games[1]]);
       s.games = [0, 0];
@@ -71,7 +71,8 @@ export function applyPoint(state: ScoringState, pointWinner: PlayerId): { state:
       if (s.sets.filter((g) => g[i]! > g[1 - i]!).length === setsToWin(rules)) winner = pointWinner;
       else if (setGames % 2 === 1) pending.push({ type: 'changeover' });
     } else {
-      if (s.games[0] === 6 && s.games[1] === 6 && tiebreakAtSixAll(rules, finalSet)) {
+      const at = tiebreakAt(rules);
+      if (s.games[0] === at && s.games[1] === at && tiebreakAtSixAll(rules, finalSet)) {
         s.tiebreak = true;
         tbFirst = nextServer;
       }
