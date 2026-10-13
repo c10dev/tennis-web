@@ -54,6 +54,11 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const overlays = createOverlays();
   graphics.append(overlays.element);
   const sound = options.sound ?? createSound(soundRoot);
+  // A button clicked with the mouse (controls, the sound toggle) gives focus back, so Space toggles play again; one
+  // pressed from the keyboard (detail 0) keeps focus for the next key.
+  root.addEventListener('click', (e) => {
+    if (e.detail > 0 && e.target instanceof HTMLElement) e.target.closest('button')?.blur();
+  });
 
   let mode = options.mode;
   /** The match moment last shown outside the result card, where a switch away from Result picks up (TD-018). */

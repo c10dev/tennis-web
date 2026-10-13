@@ -82,10 +82,16 @@ const ctx: Ctx = {
     state = closeWeek(playOut(s));
     const hurt = playerById(state, USER_ID).injuryWeeks;
     note = hurt > 0 && playerById(s, USER_ID).injuryWeeks === 0 ? `${message} Injured: out for ${hurt} week${hurt === 1 ? '' : 's'}.` : message;
-    // The week is closed: the old page must not act while the autosave is written.
+    // The week is closed: the old page must not act while the autosave is written. A failed save (blocked or full
+    // storage) must not freeze the page: the season goes on in memory and the note says the save failed.
     app.inert = true;
-    await ctx.store.save('auto', toSave(state, stamp()));
-    go('#/home');
+    try {
+      await ctx.store.save('auto', toSave(state, stamp()));
+    } catch (e) {
+      note = `${note} Autosave failed: ${(e as Error).message}.`;
+    } finally {
+      go('#/home');
+    }
   },
   async loadSlot(slot) {
     const file = await ctx.store.load(slot);

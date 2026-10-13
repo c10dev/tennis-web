@@ -212,6 +212,20 @@ test.describe('career', () => {
     expect(errors).toEqual([]);
   });
 
+  test('keeps playing when the autosave fails: the week closes, the page stays usable and says so', async ({ page }) => {
+    await newCareer(page);
+    // Storage breaks after the career started: every later write fails.
+    await page.evaluate(() => {
+      IDBObjectStore.prototype.put = () => { throw new Error('quota exceeded'); };
+    });
+    await page.locator('#rest').click();
+    await expect(page.locator('#note')).toContainText('Autosave failed');
+    await expect(page.locator('#status')).toContainText('Week 2 of 24');
+    expect(await page.evaluate(() => document.getElementById('app')!.inert)).toBe(false);
+    await page.locator('#nav-rankings').click();
+    await expect(page.locator('#rankings')).toBeVisible();
+  });
+
   test('still opens the title screen when the browser refuses save storage', async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(window, 'indexedDB', { get: () => { throw new Error('storage blocked'); } });

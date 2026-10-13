@@ -134,6 +134,16 @@ test.describe('replay page', () => {
     await expect(page.locator('link[rel="preload"][href*="lilita"]')).toHaveCount(1);
   });
 
+  test('gives Space back to play/pause after the sound toggle is clicked with the mouse', async ({ page }) => {
+    await open(page, '/?seed=42&surface=clay');
+    await page.locator('.sound-toggle').click();
+    await expect(page.locator('.sound-toggle')).toContainText('Sound on');
+    const t0 = Number((await dataset(page)).t);
+    await page.keyboard.press('Space');
+    await expect.poll(async () => Number((await dataset(page)).t)).toBeGreaterThan(t0);
+    await expect(page.locator('.sound-toggle')).toContainText('Sound on');
+  });
+
   test('turns sound on and plays with it without errors', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '/?seed=42&surface=clay');

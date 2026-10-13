@@ -68,11 +68,7 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
     dispatch(action);
   };
   window.addEventListener('keydown', onKey);
-  // A button clicked with the mouse gives focus back, so Space toggles play again; one pressed from the keyboard
-  // (detail 0) keeps focus for the next key.
-  root.addEventListener('click', (e) => {
-    if (e.detail > 0 && e.target instanceof HTMLElement) e.target.closest('button')?.blur();
-  });
+
   const onUp = () => {
     dragging = false;
   };
