@@ -28,7 +28,7 @@ npm run typecheck && npm run lint
 ## Folder map
 ```
 engine/    src/{rng,scoring,point,match,tuning.ts,types.ts} tests/
-renderer/  src/{playback,scene,camera,overlay,tuning.ts,viewer.ts} tests/
+renderer/  src/{playback,scene,camera,overlay,audio (M3),tuning.ts,viewer.ts} tests/
 ui/        index.html src/   (Vite root)
 docs/      decisions.md, tech-debt.md
 GDD.md     game design doc
