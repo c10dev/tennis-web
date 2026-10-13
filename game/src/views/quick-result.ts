@@ -11,6 +11,7 @@ import { QUICK_REWARD } from '../tuning.ts';
 import { RATING_LABEL } from './format.ts';
 import { playByPlay } from './quick-play-by-play.ts';
 import { playerName } from './quick-home.ts';
+import { winStreak } from '../quick/streak.ts';
 
 /** A shown rating: whole numbers, whether it rose, and the share of the way to the next one before and after. */
 export interface RatingView extends StatChange {
@@ -35,7 +36,7 @@ export function quickResultView(s: QuickState) {
   return {
     won: r.won, headline: `${r.won ? 'You won' : 'You lost'} ${r.score}`, opponent: playerName(s, r.opponent), delta: r.pointsDelta,
     rankBefore: r.rankBefore, rankAfter: r.rankAfter, toNext: pointsToNext(s), points: s.points[USER_ID]!,
-    decisive, playByPlay: playByPlay(point, decisive), overtakes: r.overtakes ?? [], ratings, goal,
+    decisive, playByPlay: playByPlay(point, decisive), overtakes: r.overtakes ?? [], ratings, goal, streak: winStreak(s.history),
     goalLine: goal.winsNeeded === 0 ? goal.label : `${goal.winsNeeded} ${goal.winsNeeded === 1 ? 'win' : 'wins'} to ${goal.label}`,
   };
 }

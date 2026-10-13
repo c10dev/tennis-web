@@ -6,7 +6,7 @@
 import { QUICK_REWARD, quickResultView, resumeQuick, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
-import { glyph } from '../lib/icons.ts';
+import { glyph, icon } from '../lib/icons.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger } from '../lib/motion.ts';
 import { announce } from '../lib/announce.ts';
 import { appSound } from '../lib/sound.ts';
@@ -37,7 +37,8 @@ export function quickResult(ctx: Ctx): Screen {
     h('ol', { id: 'play-by-play', class: ctx.fastMode ? '' : 'compact' }, lines),
     h('p', { id: 'decisive-line', class: v.decisive.won ? 'you' : 'them' }, v.decisive.line));
   const count = h('strong', { 'aria-hidden': 'true' }, signed(v.delta));
-  const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`));
+  const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`),
+    v.won && v.streak.current >= 2 ? h('p', { class: `streak${v.streak.milestone ? ' is-milestone' : ''}`, id: 'streak' }, icon('flame', 20), h('strong', null, `${v.streak.current} wins in a row`)) : null);
   const gains = step('gains', 'gains',
     h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
     h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} `, glyph('arrow-right', '→'), ` #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),

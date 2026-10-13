@@ -70,3 +70,13 @@ describe('play-by-play of a point without cards', () => {
     expect(v.decisive.line).toBe(rec.won ? 'Your plan carried it' : 'They closed it out');
   });
 });
+
+describe('win streak on the result and the ladder home (P3 option A)', () => {
+  it('shows the streak the history ends on, the same on both screens', async () => {
+    const { winStreak } = await import('../src/quick/streak.ts');
+    const { quickHomeView } = await import('../src/views/quick-home.ts');
+    const { next } = playLadderMatch(ladderWithDecision(freshLadder()));
+    expect(quickResultView(next).streak).toEqual(winStreak(next.history));
+    expect(quickHomeView(next).streak).toEqual(winStreak(next.history));
+  });
+});

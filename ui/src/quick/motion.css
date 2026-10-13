@@ -73,6 +73,8 @@
 .quick-result .goal.is-locked strong { display: inline-block; animation: goal-lock 420ms var(--ease-back); }
 .quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); transition: box-shadow var(--dur-short) ease-out; }
 @keyframes goal-lock { from { transform: scale(1.35); opacity: 0; } }
+/* A streak milestone (3, 5, 10 in a row) stamps in like the goal. */
+.quick-result .streak.is-milestone strong { display: inline-block; animation: goal-lock 420ms var(--ease-back); }
 /* Skipped: every transition and animation ends at once. */
 .quick-result.is-skipped, .quick-result.is-skipped *, .quick-result.is-skipped *::before, .quick-result.is-skipped *::after {
   animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; transition-delay: 0s !important; }

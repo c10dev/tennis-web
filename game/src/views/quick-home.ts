@@ -2,6 +2,7 @@
 import { USER_ID } from '../player/create.ts';
 import { overall } from '../player/overall.ts';
 import { ladderOrder, nextOpponent, pointsToNext, rankOf, type QuickState } from '../quick/ladder.ts';
+import { winStreak } from '../quick/streak.ts';
 import { QUICK } from '../tuning.ts';
 import { STYLE_LABEL, SURFACE_LABEL } from './format.ts';
 
@@ -15,7 +16,7 @@ export function quickHomeView(s: QuickState) {
   const opp = s.world.players.find((p) => p.id === oppId)!;
   return {
     name: playerName(s, USER_ID), rank, points: s.points[USER_ID]!, toNext: pointsToNext(s), progress: rank > 1 ? s.points[USER_ID]! / above : 1,
-    matches: s.matchNo,
+    matches: s.matchNo, streak: winStreak(s.history),
     opponent: {
       id: oppId, name: opp.name, rank: rankOf(s, oppId), style: STYLE_LABEL[opp.style], level: Math.round(overall(opp) * 10) / 10,
       surface: SURFACE_LABEL[QUICK.surfaces[s.matchNo % QUICK.surfaces.length]!],
