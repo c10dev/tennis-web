@@ -394,3 +394,45 @@ Format: one entry per decision, newest at the bottom.
   - **UI** (ADR-013 structure): the menu leads with the quick ladder; `ui/src/quick` has the ladder, the match
     (cards on keys 1/2/3, reveal, clip via `playWindow`) and the result; the ladder saves under the IndexedDB key
     `quick`, outside the season slots.
+
+## ADR-017: Playtest redesign — one tiebreak, decisions at big points, readable opponents, rewards that land
+- **Date:** 2026-10-13
+- **Status:** Accepted (numbers are filled in as the M6 streams land)
+- **Context:** The user played the M5 quick match and reported: a card before every point is tiring, a Fast4 set
+  feels like a full match, the AI cannot be read so it feels like rock-paper-scissors, and the result screen does not
+  land. In code, the choose screen only knew the score; the AI mixed cards per style at 1.58 bits (uniform to a
+  human); the result showed fractional rating progress. ADR-016's targets were tuned for the rejected design and are
+  replaced, not patched.
+- **Decision:**
+  - **Format:** `setFormat: 'tiebreak'` — a match is one tiebreak to seven, two clear, from 0-0 (event schema v5;
+    the set reads 1-0 at the end). Recipes store `null` for points played without cards.
+  - **Decisions:** the user picks a game plan (aggressive / balanced / defensive) before the match; points play on
+    with that tactic and no cards, quickly. The match stops for a card only at big points (from 5-5, and any set or
+    match point): three to five per match. At those points a won matchup is worth about +25 pp of point-win chance.
+  - **Readable opponents:** every opponent has a persona (a habit such as "attacks on big points" or "counters after
+    losing a point") derived from the seed and their id. A scouting line before the match names it; the choose
+    screen shows the opponent's cards this match and a tell drawn after the AI's card is fixed, right about 70% of the
+    time; a rival record carries over to the next meeting (quick save v2). Exploiting one opponent's habit is the
+    point; no card may dominate across all opponents.
+  - **Rewards:** the result replays the decisive point and names the choice ("6-6: your counter beat their attack"),
+    then counts up the ladder points, names the players passed, shows ratings as whole numbers on a 0–100 scale
+    rising, and the wins needed for the next goal.
+  - **Parallel work:** a contract commit (shared types, split view modules, reserved tuning blocks) lets three
+    sessions build the match flow, the opponent read and the result screen on disjoint files.
+- **Consequences:** targets (`game/src/quick/targets.ts`, `npm run quick`):
+
+  | Metric | Target |
+  |---|---|
+  | Points per match (median) | 10–14 |
+  | Decisions per match | median 3–5; ≥ 2 in 90% of matches |
+  | Seconds on screen per match (median, decisions aside) | ≤ 60 s |
+  | Won matchup at a big point (average players) | +20–30 pp point-win |
+  | Knows the habit, vs equal rating | ≥ 65% match wins |
+  | Follows the tells only | ≥ 57% |
+  | Random cards | 45–55% |
+  | One card always, across all opponents | ≤ 55% for each card |
+  | Habit card in its situation | 60–75% |
+  | Win % by rating | rising |
+  | Places climbed in 30 matches (reads half the time) | 10–25 |
+  | Won matches where a shown rating rises | ≥ 80% |
+  | Matches with decisions where a decisive moment is found | 100% |
