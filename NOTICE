@@ -1,0 +1,2 @@
+Third-party files keep their own licences: the fonts in ui/public/fonts/ (SIL Open Font License 1.1, see the OFL-*.txt
+files there) and the Lucide icon paths in ui/src/lib/icons.ts (ISC, see LICENSE-lucide.txt).
