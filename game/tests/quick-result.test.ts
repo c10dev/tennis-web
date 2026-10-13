@@ -2,6 +2,8 @@ import type { Card, PlayerId } from '@tennis/engine';
 import { replayMatch, type PointEvent } from '@tennis/engine';
 import { describe, expect, it } from 'vitest';
 import { decisiveMoment, highlightOf } from '../src/quick/highlight.ts';
+import { ladderOrder } from '../src/quick/ladder.ts';
+import { USER_ID } from '../src/player/create.ts';
 import type { DecisionRecord } from '../src/quick/types.ts';
 import { freshLadder, ladderWithDecision, playLadderMatch } from './quick-helpers.ts';
 
@@ -61,5 +63,28 @@ describe('highlightOf', () => {
     const last = replayMatch(r.recipe).events.filter((e): e is PointEvent => e.type === 'point').at(-1)!;
     expect(h).toMatchObject({ point: last.index, score: `${last.scoreBefore.points[0]}-${last.scoreBefore.points[1]}`, user: null, ai: null, won: r.won });
     expect(h.line).toBe(r.won ? 'Your plan carried it' : 'They closed it out');
+  });
+});
+
+describe('overtakes', () => {
+  it('records every player above the user before the match and below after it, by name and old rank', () => {
+    let s = freshLadder(5);
+    let seen = 0;
+    for (let i = 0; i < 12; i++) {
+      const { next } = playLadderMatch(s);
+      const r = next.history.at(-1)!;
+      const [before, after] = [ladderOrder(s), ladderOrder(next)];
+      const [ub, ua] = [before.indexOf(USER_ID), after.indexOf(USER_ID)];
+      const passed = before.filter((id, k) => k < ub && after.indexOf(id) > ua);
+      expect(r.overtakes!.map((o) => o.id).sort()).toEqual([...passed].sort());
+      for (const o of r.overtakes!) {
+        expect(o.rank).toBe(before.indexOf(o.id) + 1);
+        expect(o.name).toBe(next.world.players.find((p) => p.id === o.id)!.name);
+      }
+      expect(r.overtakes!.map((o) => o.rank)).toEqual([...r.overtakes!.map((o) => o.rank)].sort((a, b) => b - a));
+      seen += r.overtakes!.length;
+      s = next;
+    }
+    expect(seen).toBeGreaterThan(0);
   });
 });

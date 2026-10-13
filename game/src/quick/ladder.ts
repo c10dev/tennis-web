@@ -12,7 +12,8 @@ import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
 import { cardReward } from './rewards.ts';
-import type { DecisionRecord } from './types.ts';
+import { overtakesBetween } from './standing.ts';
+import type { DecisionRecord, Overtake } from './types.ts';
 
 export interface QuickRecord {
   matchNo: number;
@@ -29,6 +30,8 @@ export interface QuickRecord {
   progress: { key: Rated; before: number; after: number }[];
   /** The points the user chose a card on (ADR-017); absent in M5 records. */
   decisions?: DecisionRecord[];
+  /** Players the user passed this match, the first passed first; absent in M5 records. */
+  overtakes?: Overtake[];
 }
 
 export interface QuickState {
@@ -100,7 +103,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
   const record: QuickRecord = {
     matchNo: s.matchNo, opponent: m.opponent, opponentRank, won, score, pointsDelta, rankBefore, rankAfter: rankOf(next),
     fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
-    decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })),
+    decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })), overtakes: overtakesBetween(ladderOrder(s), ladderOrder(next), next),
   };
   return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record] };
 }
