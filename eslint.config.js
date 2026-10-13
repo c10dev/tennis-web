@@ -10,8 +10,8 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
   },
   {
-    // CLAUDE.md rules 1 and 2: the engine is deterministic and knows nothing about rendering.
-    files: ['engine/src/**/*.ts'],
+    // CLAUDE.md rules 1 and 2: the engine and the game layer are deterministic and know nothing about rendering.
+    files: ['engine/src/**/*.ts', 'game/src/**/*.ts'],
     rules: {
       'no-restricted-properties': [
         'error',
@@ -31,6 +31,21 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         { patterns: ['**/renderer/**', '**/ui/**', 'three', 'three/*', 'node:*', 'fs', 'path'] },
+      ],
+    },
+  },
+  {
+    // The game layer (ADR-011) uses the engine's public index only, and knows nothing about rendering or the UI.
+    files: ['game/src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['**/engine/**', '@tennis/engine/*'], message: "Import from '@tennis/engine' only." },
+            { group: ['**/renderer/**', '@tennis/renderer', '**/ui/**', '@tennis/ui', 'three', 'three/*', 'node:*', 'fs', 'path'], message: 'The game layer is headless and deterministic.' },
+          ],
+        },
       ],
     },
   },

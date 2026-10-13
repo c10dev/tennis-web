@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": [
     "engine",
+    "game",
     "renderer",
     "ui"
   ],
@@ -14,15 +15,18 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run --project engine --project renderer",
+    "test": "vitest run --project engine --project game --project renderer",
     "test:engine": "vitest run --project engine",
     "test:renderer": "vitest run --project renderer",
     "test:stats": "vitest run --project stats",
     "coverage": "vitest run --project engine --coverage",
     "sim": "tsx engine/cli/sim.ts",
-    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
+    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p game/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:game": "vitest run --project game",
+    "test:season": "vitest run --project season",
+    "season": "tsx game/cli/season.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

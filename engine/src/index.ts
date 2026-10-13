@@ -7,6 +7,6 @@ export { addMetrics, emptyMetrics, matchMetrics, runBatch, summarize, type Metri
 export { computeStats } from './match/stats.ts';
 export { averagePlayer, bigServer, playerWith, ratedPlayer } from './player/presets.ts';
 export { COURT } from './point/court.ts';
-export { createRng, deriveSeed } from './rng/mulberry32.ts';
+export { createRng, deriveSeed, type Rng } from './rng/mulberry32.ts';
 export { formatPoints, formatScore } from './scoring/format.ts';
 export * from './types.ts';

@@ -12,6 +12,21 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'game',
+          include: ['game/tests/**/*.test.ts'],
+          exclude: ['game/tests/**/*.slow.test.ts'],
+          testTimeout: 20_000,
+        },
+      },
+      {
+        test: {
+          name: 'season',
+          include: ['game/tests/**/*.slow.test.ts'],
+          testTimeout: 600_000,
+        },
+      },
+      {
+        test: {
           name: 'renderer',
           include: ['renderer/tests/**/*.test.ts'],
           environment: 'node',
