@@ -1,6 +1,6 @@
 // A match laid out on one replay clock: each point gets a segment (toss lead, the point, a pause after it).
-import type { MatchResult, PlayerId, PlayStyle, PointEvent, ScoreState, Surface } from '@tennis/engine';
-import { SUPPORTED_SCHEMA_VERSION } from '../version.ts';
+import type { MatchConfig, MatchEvent, MatchResult, PlayerId, PlayStyle, PointEvent, ScoreState, Surface } from '@tennis/engine';
+import { SUPPORTED_SCHEMA_VERSIONS } from '../version.ts';
 import { PLAYBACK } from '../tuning/index.ts';
 
 export type GapKind = 'point' | 'changeover' | 'set_end' | 'match_end';
@@ -32,9 +32,14 @@ export interface Timeline {
   styles: [PlayStyle, PlayStyle];
   surface: Surface;
   noAd: boolean;
-  winner: PlayerId;
-  finalScore: ScoreState;
+  /** False while the match is still being played (no match_end yet): then there is no winner or final score. */
+  complete: boolean;
+  winner: PlayerId | null;
+  finalScore: ScoreState | null;
 }
+
+/** A finished MatchResult, or a match in progress: its events so far. */
+export type ReplayInput = Pick<MatchResult, 'schemaVersion' | 'config'> & { events: MatchEvent[]; config: MatchConfig };
 
 const GAP_SEC: Record<GapKind, number> = {
   point: PLAYBACK.pointGapSec,
@@ -43,15 +48,16 @@ const GAP_SEC: Record<GapKind, number> = {
   match_end: PLAYBACK.matchEndHoldSec,
 };
 
-export function buildTimeline(result: MatchResult): Timeline {
-  if (result.schemaVersion !== SUPPORTED_SCHEMA_VERSION) {
-    throw new Error(`Replay has schema version ${String(result.schemaVersion)}; this renderer expects ${SUPPORTED_SCHEMA_VERSION}.`);
+export function buildTimeline(result: ReplayInput): Timeline {
+  if (!SUPPORTED_SCHEMA_VERSIONS.includes(result.schemaVersion)) {
+    throw new Error(`Replay has schema version ${String(result.schemaVersion)}; this renderer expects ${SUPPORTED_SCHEMA_VERSIONS.join(' or ')}.`);
   }
   const segments: PointSegment[] = [];
   let finalScore: ScoreState | null = null;
+  let winner: PlayerId | null = null;
   let t = 0;
   result.events.forEach((e, i) => {
-    if (e.type === 'match_end') finalScore = e.score;
+    if (e.type === 'match_end') ({ score: finalScore, winner } = e);
     if (e.type !== 'point') return;
     const { gap, endsGame, isBreak } = after(result, i);
     const zero = t + PLAYBACK.tossLeadSec;
@@ -61,17 +67,17 @@ export function buildTimeline(result: MatchResult): Timeline {
     segments.push({ point: e, start: t, zero, landed: zero + last.t + last.flightSec, end, next, gap, endsGame, isBreak });
     t = next;
   });
-  if (segments.length === 0 || finalScore === null) throw new Error('Replay has no points or no match_end event.');
+  if (segments.length === 0) throw new Error('Replay has no points.');
   const config = result.config;
   return {
     segments, totalSec: t, pointStarts: segments.map((s) => s.start), names: [config.players[0].name, config.players[1].name],
     styles: [config.players[0].style, config.players[1].style], surface: config.surface,
-    noAd: config.rules.noAd, winner: result.winner, finalScore,
+    noAd: config.rules.noAd, complete: finalScore !== null, winner, finalScore,
   };
 }
 
 /** What the point at `index` finished (a game, a changeover, a set, the match), which sets the pause after it. */
-function after(result: MatchResult, index: number): { gap: GapKind; endsGame: boolean; isBreak: boolean } {
+function after(result: ReplayInput, index: number): { gap: GapKind; endsGame: boolean; isBreak: boolean } {
   const kinds = new Set<string>();
   let isBreak = false;
   for (let j = index + 1; j < result.events.length && result.events[j]!.type !== 'point'; j++) {
@@ -101,5 +107,5 @@ export function scoreAt(timeline: Timeline, t: number): ScoreState {
   const i = segmentAt(timeline, t);
   const seg = timeline.segments[i]!;
   if (t < seg.end) return seg.point.scoreBefore;
-  return i === timeline.segments.length - 1 ? timeline.finalScore : seg.point.scoreAfter;
+  return i === timeline.segments.length - 1 && timeline.finalScore ? timeline.finalScore : seg.point.scoreAfter;
 }

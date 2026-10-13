@@ -219,3 +219,22 @@ Format: one entry per decision, newest at the bottom.
   Clay seed 42: the match timeline is 33:26 (M2: 32:23, the difference is ADR-008's longer pauses and new contact
   times); the full programme adds 7:12 of replays, 10 s of Hawk-Eye and the 4 s intro, 40:52 in all. Key points run
   12:05, highlights 31:45, result 12 s.
+
+## ADR-010: Matches played in steps, recipes and event schema v3
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** M4 lets the player change tactics between sets while watching (TD-003) and carry fatigue from week to
+  week into matches. Saves should not store whole event streams (TD-009).
+- **Decision:**
+  - `startMatch(config, seed)` → `LiveMatch`; `advance(live, 'set' | 'match')` plays on and returns the new events;
+    `setTactic(live, player, tactic)` is allowed only while stopped between sets and records a `tactic_change`
+    event; `finish(live)` gives the `MatchResult`. `simulateMatch` is now start + advance('match') + finish.
+  - `MatchRecipe { config, seed, tacticChanges: { afterSet, player, tactic }[] }` and `replayMatch(recipe)` play a
+    match again exactly.
+  - `MatchConfig.condition?: { fatigue: [a, b] }` sets each player's fatigue at the first point (0–1, absent = 0).
+  - `SCHEMA_VERSION` becomes 3. The renderer plays v2 and v3, and a match still in progress (events without
+    `match_end`): its timeline is a prefix of the finished match's, so playback can resume at the same second.
+- **Consequences:** With no tactic changes and no starting fatigue every result is unchanged: the outcome and
+  fingerprint goldens hold and 10,000-match reports on all three surfaces are byte-identical. Changing to
+  aggression 1 after set one raises a player's share of points ended by their own winner or unforced error by more
+  than 15% over 300 matches; starting at fatigue 0.8 costs more than 5 points of win rate over 400 matches.

@@ -1,7 +1,7 @@
 // Event and data schema shared by the engine and its consumers (GDD §7).
 // Changing anything here means bumping SCHEMA_VERSION and recording an ADR (CLAUDE.md rule 6).
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export type PlayerId = 'A' | 'B';
 export type Surface = 'hard' | 'clay' | 'grass';
@@ -70,6 +70,22 @@ export interface MatchConfig {
   rules: MatchRules;
   tactics: [Tactic, Tactic];
   firstServer: PlayerId;
+  /** How the players arrive (schema v3): fatigue 0–1 carried in from earlier matches and training. Absent = fresh. */
+  condition?: { fatigue: [number, number] };
+}
+
+/** A tactic set between sets: `afterSet` is the number of sets finished when it was given. */
+export interface TacticChange {
+  afterSet: number;
+  player: PlayerId;
+  tactic: Tactic;
+}
+
+/** Everything needed to play a match again exactly (schema v3): saves keep recipes, not events. */
+export interface MatchRecipe {
+  config: MatchConfig;
+  seed: number;
+  tacticChanges: TacticChange[];
 }
 
 export interface ShotEvent {

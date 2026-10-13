@@ -30,7 +30,7 @@ export function overlayAt(programme: Programme, frame: BroadcastFrame): OverlayM
     hawkeye: frame.hawkeye ? { call: frame.hawkeye.call, cm: Math.round(Math.abs(frame.hawkeye.marginM) * 1000) / 10 } : null,
     stats: isLive ? statsPanel(tl, frame.pointIndex, frame.matchT) : null,
   };
-  if (frame.clip === 'result') {
+  if (frame.clip === 'result' && tl.winner && tl.finalScore) {
     model.stats = { title: 'MATCH STATS', stats: matchStats(tl) };
     model.lowerThird = { title: 'GAME, SET AND MATCH', detail: `${tl.names[tl.winner === 'A' ? 0 : 1]} ${setScores(tl.finalScore, tl.winner)}` };
   }
