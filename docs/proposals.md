@@ -63,6 +63,9 @@ short-term chain.
 
 **Default:** A now, C with the server.
 
+**Built for review** on the local branch `proposal/p3-win-streak` (not merged): `winStreak` over the history (no save
+change), the pill on the result and the ladder home, stamps at 3 / 5 / 10, unit tests and an e2e (seed 9 wins twice).
+
 ## P4. A guided first match (rest of TD-027)
 
 **Finding.** A one-time tip now explains the cycle, the scouting line and the tell at the first decision. The first
