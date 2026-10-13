@@ -846,3 +846,10 @@ Format: one entry per decision, newest at the bottom.
     - Fast4 sudden death named the wrong match-point holder.
     - A bounce on a cut sounded twice.
   - P5 (divisions) was prototyped on `proposal/p5-divisions`; long ladders keep climbing (division 3.2 by match 300).
+  - **Accessibility pass on the career screens and the replay page:**
+    - The training selects are named, and the draw is a list per round with each match named by its winner.
+    - The replay controls are named (Previous point, Play/Pause, Next point, Match time with the clock as its value).
+    - The score bug is a table named Score that reads "serving" and "winner".
+    - The card strength bars read "Suits you N%".
+  - **A final review caught two regressions from these fixes:** a failed autosave left the career page `inert` for
+    good, and the blur rule missed the sound toggle. Both are fixed and covered by e2e.
