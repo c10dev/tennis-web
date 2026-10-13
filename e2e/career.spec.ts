@@ -95,6 +95,8 @@ test.describe('career', () => {
     await page.locator('#watch').click();
     await expect(page.locator('#view')).toBeVisible();
     await expect(page.locator('body')).toHaveAttribute('data-t', /\d/);
+    // The drawing buffer, not just the CSS box: a canvas mounted before it is in the document must still get a size.
+    await expect.poll(() => page.locator('#view').evaluate((c) => (c as HTMLCanvasElement).width >= c.clientWidth && c.clientWidth > 300)).toBe(true);
     const aggressive = { ...DEFAULT_TACTIC, aggression: 0.9 };
     const changes: MatchRecipe['tacticChanges'] = [];
     for (let set = 1; set <= 5; set++) {

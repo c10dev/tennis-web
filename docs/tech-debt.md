@@ -25,7 +25,7 @@
 | TD-020 | game | One season only: no next season, no 52-week rolling ranking, no retirements or new players; ages tick once at the end. | M | 2026-10-13 | M5: season rollover with rolling points | open |
 | TD-021 | game | AI scheduling is a fixed chance per tier plus a few rules; no player plans around surfaces, rest before Majors or ranking defence. | L | 2026-10-13 | Smarter schedules with the M5 world | open |
 | TD-022 | ui | Career screen DOM code has no unit tests; it is covered by the e2e suite only. The view models it draws are unit-tested. | L | 2026-10-13 | Keep logic in game/src/views | open |
-| TD-023 | ui | Leaving the match screen mid-match discards it (the match can be watched again from the start); there is no way to save in the middle of a match. | L | 2026-10-13 | Resume from the recipe so far if users ask for it | open |
+| TD-023 | ui | Autosave runs only when a week closes: leaving the match screen mid-match discards that match (it can be watched again from the start), and reloading the page mid-tournament returns to the start of the week with the rounds already played lost. | L | 2026-10-13 | Resume from the recipe so far if users ask for it | open |
 
 ## Refactor passes
 - (record date + what was cleaned up)
