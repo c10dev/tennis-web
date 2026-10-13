@@ -13,11 +13,11 @@ aggression 0.2 → 0.8 the win rate rises from 47% to 53%. The other tactic fiel
 49 / 50 / 52%) shrinks the gap but makes the choice meaningless, against the playtest's "my choice must matter".
 
 **Options.**
-- **A. The engine gives risk a best level per matchup.** Errors from aggression cost more against strong defenders
+- **A. The engine gives risk a best level per matchup (recommended after B failed).** Errors from aggression cost more against strong defenders
   (counter-punchers, high defence ratings), so aggressive pays against weak defenders and defensive pays against big
   hitters. This is closest to real tennis. But it is an engine change: the season balance (M4) and the M1 batch
   targets need a re-check, and the engine goldens change.
-- **B. The plan carries into the big points (recommended).** Each plan also scales the user's card strengths at
+- **B. The plan carries into the big points.** Each plan also scales the user's card strengths at
   decision points. Aggressive: Attack ×1.15 and Defend/Counter ×0.9. Defensive: the reverse. Balanced: no change.
   The extra points that aggressive wins without cards are then paid back by weaker Defend and Counter when the
   opponent's habit calls for them. The effect is readable: the strength bars on the cards already show it. Needs a
@@ -26,7 +26,15 @@ aggression 0.2 → 0.8 the win rate rises from 47% to 53%. The other tactic fiel
 - **C. Narrow the aggression levels.** No engine change, but the plans barely matter.
 - **D. Leave it** and say so on the plan line ("Aggressive: more winners, more errors").
 
-**Default:** B, with the target above, measured by `planWinRates` (already in `game/src/quick/balance.ts`).
+**Tried and measured: B does not work (2026-10-14).** A prototype added an engine `cardScale` (schema v6) and had the
+plans scale the user's cards. The card strengths changed as intended: aggressive Attack 1.36 / Defend 0.75 against
+balanced 1.18 / 0.88. Win rates barely moved, though. Over 6,000 matches per plan, the spread with random cards was
+5.7–5.8 pp (6.3 without), whether the plans traded Attack against Defend/Counter or scaled every card by ×0.8 to ×1.2.
+For the reader bot the spread was 3.6–3.9 pp. The reason is that card strength enlarges won and lost matchups alike, so
+it cancels for anyone who reads no better than chance. The prototype was dropped.
+
+**Default (revised):** A, the engine's risk model, because it is the only option that changes the cardless points
+where the gap comes from. It needs the season and M1 targets re-checked. Until then, D: say so on the plan line.
 
 ## P2. Opponents who remember you (TD-034)
 
