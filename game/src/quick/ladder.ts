@@ -46,13 +46,16 @@ export interface QuickState {
   /** A match left in the middle: its plan and the cards chosen so far, enough to rebuild it exactly (leaving must not
    *  dodge a loss). Absent between matches and in older saves. */
   live?: { plan: GamePlan; cards: Card[] };
+  /** The first opponent, whose habit is fixed so the first match can teach it (proposal P4); older saves have none. */
+  tutor?: string;
 }
 
 export function newLadder(seed: number, user: CareerPlayer): QuickState {
   const world = generateWorld(seed, user);
   const order = rankingOrder(world.players.map((p) => ({ id: p.id, points: 0, level: overall(p) })));
   const points = Object.fromEntries(order.map((id, i) => [id, Math.round(QUICK.startTop * Math.exp(-i / QUICK.startScale))]));
-  return { seed, matchNo: 0, world, points, history: [], rivals: {} };
+  const s: QuickState = { seed, matchNo: 0, world, points, history: [], rivals: {} };
+  return { ...s, tutor: nextOpponent(s) };
 }
 
 const levelOf = (s: QuickState) => new Map(s.world.players.map((p) => [p.id, overall(p)]));

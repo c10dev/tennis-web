@@ -11,7 +11,7 @@ import { QUICK, QUICK_MOMENTS, TIEBREAK_RULES } from '../tuning.ts';
 import { aiDecision } from './ai.ts';
 import { nextOpponent, type QuickState } from './ladder.ts';
 import { isDecisionPoint } from './moments.ts';
-import { personaOf } from './persona.ts';
+import { personaFor } from './persona.ts';
 import { planTactic } from './plan.ts';
 import type { AiDecision, DecisionContext, DecisionRecord, GamePlan, Persona, RivalRecord } from './types.ts';
 
@@ -48,7 +48,7 @@ export function startQuick(s: QuickState, plan: GamePlan = 'balanced'): QuickMat
     firstServer: streamSeed(s.seed, 'quick-toss', s.matchNo) % 2 === 0 ? 'A' : 'B',
   });
   const seed = streamSeed(s.seed, 'quick', s.matchNo);
-  return createQuickMatch({ config, seed, matchNo: s.matchNo, opponent, plan, persona: personaOf(s.seed, opponent), rival: s.rivals[opponent] ?? null });
+  return createQuickMatch({ config, seed, matchNo: s.matchNo, opponent, plan, persona: personaFor(s, opponent), rival: s.rivals[opponent] ?? null });
 }
 
 export const matchOver = (m: QuickMatch): boolean => isOver(m.live);

@@ -2,8 +2,10 @@
 // match's decisions, the tell, and the record of earlier meetings.
 import type { Card, PlayStyle } from '@tennis/engine';
 import type { QuickState } from '../quick/ladder.ts';
-import type { QuickMatch } from '../quick/match.ts';
-import { personaOf } from '../quick/persona.ts';
+import { BEATEN_BY } from '../quick/cards.ts';
+import { decisionContext, type QuickMatch } from '../quick/match.ts';
+import { habitCard, personaFor } from '../quick/persona.ts';
+import { QUICK_PERSONA } from '../tuning.ts';
 import type { Habit, OpponentRead, RivalRecord } from '../quick/types.ts';
 import { STYLE_LABEL } from './format.ts';
 
@@ -46,5 +48,17 @@ export function opponentRead(m: QuickMatch): OpponentRead {
 export function opponentScouting(s: QuickState, id: string): { habit: string; rival: string | null } {
   const p = s.world.players.find((x) => x.id === id)!;
   const rival = s.rivals[id];
-  return { habit: habitLine(p.name, personaOf(s.seed, id).habit), rival: rival ? rivalLine(rival) : null };
+  return { habit: habitLine(p.name, personaFor(s, id).habit), rival: rival ? rivalLine(rival) : null };
+}
+
+const LABEL: Record<Card, string> = { attack: 'Attack', defend: 'Defend', counter: 'Counter' };
+
+/** The guided first match (proposal P4): at each decision against the ladder's first opponent in match one, what their
+ *  habit predicts and what beats it, or that the tell is the read; null in every other match. `s` is the ladder before
+ *  the match. */
+export function guideLine(s: QuickState, m: QuickMatch): string | null {
+  if (s.matchNo !== 0 || m.opponent !== s.tutor) return null;
+  const card = habitCard(decisionContext(m));
+  if (!card) return `Their habit doesn't apply here: trust the tell, right ${Math.round(QUICK_PERSONA.tellAccuracy * 10)} times in 10.`;
+  return `Their habit says ${card} here: ${LABEL[BEATEN_BY[card]]} beats ${LABEL[card]}.`;
 }
