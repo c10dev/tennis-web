@@ -1,10 +1,10 @@
 // The court as flat low-poly meshes: surround, playing surface, ITF lines, net and posts (GDD §10 M2).
 import {
-  BufferGeometry, CylinderGeometry, DoubleSide, Group, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshLambertMaterial,
-  PlaneGeometry, Vector3,
+  BufferGeometry, CylinderGeometry, DoubleSide, Group, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, PlaneGeometry, Vector3,
 } from 'three';
 import { COURT, type Surface } from '@tennis/engine';
 import { COLOURS, COURT_DRAW, NET } from '../tuning/index.ts';
+import { lit } from './materials.ts';
 
 const { halfLength: L, halfWidth: W, serviceLine: S } = COURT;
 const D = COURT_DRAW.doublesHalfWidth;
@@ -13,7 +13,7 @@ const D = COURT_DRAW.doublesHalfWidth;
 function patch(name: string, width: number, depth: number, x: number, z: number, y: number, colour: number): Mesh {
   const geometry = new PlaneGeometry(width, depth);
   geometry.rotateX(-Math.PI / 2);
-  const mesh = new Mesh(geometry, new MeshLambertMaterial({ color: colour }));
+  const mesh = new Mesh(geometry, lit(colour));
   mesh.position.set(x, y, z);
   mesh.name = name;
   return mesh;
@@ -59,7 +59,7 @@ function net(): Group {
   const group = new Group();
   group.add(mesh, tape);
   for (const [side, x] of [['left', -half], ['right', half]] as const) {
-    const post = new Mesh(new CylinderGeometry(0.04, 0.04, NET.postHeight, 8), new MeshLambertMaterial({ color: COLOURS.post }));
+    const post = new Mesh(new CylinderGeometry(0.04, 0.04, NET.postHeight, 8), lit(COLOURS.post));
     post.position.set(x, NET.postHeight / 2, 0);
     post.name = `net-post-${side}`;
     group.add(post);
