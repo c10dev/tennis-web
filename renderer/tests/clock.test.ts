@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { clockReducer, createClock, type ClockAction, type ClockState } from '../src/playback/clock.ts';
+import { buildProgramme } from '../src/broadcast/programme.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
 import { PLAYBACK } from '../src/tuning/index.ts';
 import { match } from './fixtures.ts';
@@ -65,5 +66,21 @@ describe('playback clock', () => {
 
   it('keeps playing through point jumps and seeks', () => {
     expect(run([{ type: 'play' }, { type: 'nextPoint' }, { type: 'seek', t: 50 }]).playing).toBe(true);
+  });
+});
+
+describe('playback clock over a broadcast programme', () => {
+  const programme = buildProgramme(tl, 'key');
+  const step = (s: ClockState, a: ClockAction) => clockReducer(programme, s, a);
+
+  it('jumps between the points the programme shows, and stops at its end', () => {
+    const starts = programme.pointStarts;
+    expect(step({ t: starts[2]! + 0.5, playing: true, speed: 1 }, { type: 'nextPoint' }).t).toBe(starts[3]);
+    expect(step({ t: starts[2]! + 0.5, playing: true, speed: 1 }, { type: 'prevPoint' }).t).toBe(starts[1]);
+    expect(step({ t: 0, playing: false, speed: 1 }, { type: 'seek', t: 1e9 }).t).toBe(programme.totalSec);
+  });
+
+  it('starts at the introduction, before the first point', () => {
+    expect(step({ t: 0, playing: false, speed: 1 }, { type: 'nextPoint' }).t).toBe(programme.pointStarts[0]);
   });
 });

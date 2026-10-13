@@ -1,7 +1,13 @@
 // Replay clock as a pure reducer: play/pause, speed, seek and point jumps (GDD §8.3). The UI only dispatches.
 import { clamp } from '../math.ts';
 import { PLAYBACK } from '../tuning/index.ts';
-import { segmentAt, type Timeline } from './timeline.ts';
+
+/** Anything the clock can play: a match timeline or a broadcast programme. */
+export interface Seekable {
+  totalSec: number;
+  /** Ascending seconds at which each point starts. */
+  pointStarts: readonly number[];
+}
 
 export interface ClockState {
   t: number;
@@ -23,7 +29,7 @@ export function createClock(): ClockState {
   return { t: 0, playing: false, speed: 1 };
 }
 
-export function clockReducer(timeline: Timeline, state: ClockState, action: ClockAction): ClockState {
+export function clockReducer(timeline: Seekable, state: ClockState, action: ClockAction): ClockState {
   switch (action.type) {
     case 'play':
       return state.t >= timeline.totalSec ? { ...state, t: 0, playing: true } : { ...state, playing: true };
@@ -40,15 +46,14 @@ export function clockReducer(timeline: Timeline, state: ClockState, action: Cloc
       const t = state.t + clamp(action.dt, 0, PLAYBACK.maxTickSec) * state.speed;
       return t >= timeline.totalSec ? { ...state, t: timeline.totalSec, playing: false } : { ...state, t };
     }
-    case 'nextPoint': {
-      const next = timeline.segments[segmentAt(timeline, state.t) + 1];
-      return { ...state, t: next ? next.start : timeline.totalSec };
-    }
+    case 'nextPoint':
+      return { ...state, t: timeline.pointStarts.find((s) => s > state.t) ?? timeline.totalSec };
     case 'prevPoint': {
-      const i = segmentAt(timeline, state.t);
-      const seg = timeline.segments[i]!;
-      const target = state.t - seg.start > PLAYBACK.prevPointGraceSec || i === 0 ? seg : timeline.segments[i - 1]!;
-      return { ...state, t: target.start };
+      const starts = timeline.pointStarts;
+      const i = starts.findLastIndex((s) => s <= state.t);
+      if (i < 0) return { ...state, t: 0 };
+      const target = state.t - starts[i]! > PLAYBACK.prevPointGraceSec || i === 0 ? starts[i]! : starts[i - 1]!;
+      return { ...state, t: target };
     }
   }
 }

@@ -41,6 +41,19 @@ describe('buildTimeline', () => {
     expect([...kinds].sort()).toEqual(['changeover', 'match_end', 'point', 'set_end']);
   });
 
+  it('marks the points that end a game, those that break serve, and where each point starts', () => {
+    const r = match(3);
+    const tl = buildTimeline(r);
+    tl.segments.forEach((s) => {
+      const i = r.events.indexOf(s.point);
+      const gameEnd = r.events.slice(i + 1).find((e, k, rest) => e.type === 'game_end' && rest.slice(0, k).every((x) => x.type !== 'point'));
+      expect(s.endsGame).toBe(gameEnd !== undefined);
+      expect(s.isBreak).toBe(gameEnd?.type === 'game_end' && gameEnd.isBreak);
+    });
+    expect(tl.segments.some((s) => s.isBreak)).toBe(true);
+    expect(tl.pointStarts).toEqual(tl.segments.map((s) => s.start));
+  });
+
   it('keeps names and surface for the overlays', () => {
     const tl = buildTimeline(match(2, 'grass'));
     expect(tl.names).toEqual(['Flint', 'Rook']);

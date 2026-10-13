@@ -4,7 +4,7 @@ import { COURT } from '@tennis/engine';
 import { buildCourt } from '../src/scene/court.ts';
 import { groundToThree, toThree } from '../src/scene/coords.ts';
 import { createStage } from '../src/scene/stage.ts';
-import { frameAt } from '../src/playback/frame.ts';
+import { matchFrameAt } from '../src/playback/frame.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
 import { BALL, NET } from '../src/tuning/index.ts';
 import { match } from './fixtures.ts';
@@ -75,7 +75,7 @@ describe('stage.applyFrame', () => {
 
   it('puts the ball, raised by its radius, and its shadow under it', () => {
     const seg = tl.segments[3]!;
-    const f = frameAt(tl, seg.zero + seg.point.shots[1]!.t);
+    const f = matchFrameAt(tl, seg.zero + seg.point.shots[1]!.t);
     stage.applyFrame(f);
     const ball = named(stage.scene, 'ball');
     const shadow = named(stage.scene, 'ball-shadow');
@@ -90,13 +90,13 @@ describe('stage.applyFrame', () => {
 
   it('hides the ball and its shadow between points', () => {
     const seg = tl.segments[3]!;
-    stage.applyFrame(frameAt(tl, (seg.end + seg.next) / 2));
+    stage.applyFrame(matchFrameAt(tl, (seg.end + seg.next) / 2));
     expect(named(stage.scene, 'ball').visible).toBe(false);
     expect(named(stage.scene, 'ball-shadow').visible).toBe(false);
   });
 
   it('stands both players where the frame says', () => {
-    const f = frameAt(tl, 30);
+    const f = matchFrameAt(tl, 30);
     stage.applyFrame(f);
     for (const id of ['A', 'B'] as const) {
       const rig = named(stage.scene, `player-${id}`);

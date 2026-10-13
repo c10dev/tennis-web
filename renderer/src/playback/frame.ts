@@ -16,17 +16,20 @@ export interface Frame {
   scoreBug: ScoreBugModel;
 }
 
-export function frameAt(timeline: Timeline, time: number): Frame {
+/** The match at replay second `time`; the score bug may show another moment's score (a replay keeps the score after). */
+export function matchFrameAt(timeline: Timeline, time: number, scoreTime = time): Frame {
   const t = clamp(time, 0, timeline.totalSec);
   const pointIndex = segmentAt(timeline, t);
   const seg = timeline.segments[pointIndex]!;
   const ball = ballAt(seg.point, t - seg.zero, timeline.surface);
-  const over = pointIndex === timeline.segments.length - 1 && t >= seg.end;
+  const shownAt = clamp(scoreTime, 0, timeline.totalSec);
+  const last = timeline.segments.at(-1)!;
+  const over = shownAt >= last.end;
   return {
     t,
     pointIndex,
     ball,
     players: { A: playerPose(timeline, 'A', t, ball), B: playerPose(timeline, 'B', t, ball) },
-    scoreBug: scoreBugModel(scoreAt(timeline, t), timeline.names, { noAd: timeline.noAd, winner: over ? timeline.winner : null }),
+    scoreBug: scoreBugModel(scoreAt(timeline, shownAt), timeline.names, { noAd: timeline.noAd, winner: over ? timeline.winner : null }),
   };
 }

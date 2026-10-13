@@ -1,7 +1,7 @@
 // Dev replay page: simulate ?seed=&surface= with the engine, or load replay JSON, and play it with the renderer.
 import { exhibitionConfig, fingerprint, simulateMatch, type MatchResult, type Surface } from '@tennis/engine';
 import {
-  buildTimeline, clockReducer, createClock, createScoreBug, createViewer, frameAt, type ClockAction, type ClockState, type Timeline,
+  buildTimeline, clockReducer, createClock, createScoreBug, createViewer, matchFrameAt, type ClockAction, type ClockState, type Timeline,
   type Viewer,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
@@ -50,7 +50,7 @@ function loop(now: number): void {
   last = now;
   if (session) {
     session.clock = clockReducer(session.timeline, session.clock, { type: 'tick', dt });
-    const frame = frameAt(session.timeline, session.clock.t);
+    const frame = matchFrameAt(session.timeline, session.clock.t);
     session.viewer.render(frame, dt);
     scoreBug.update(frame.scoreBug);
     controls.update(session.clock, frame);

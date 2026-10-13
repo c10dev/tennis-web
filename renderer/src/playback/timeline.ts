@@ -16,11 +16,16 @@ export interface PointSegment {
   /** Replay second the next segment starts (end + the pause). */
   next: number;
   gap: GapKind;
+  /** The point finished a game, and that game was a break of serve. */
+  endsGame: boolean;
+  isBreak: boolean;
 }
 
 export interface Timeline {
   segments: PointSegment[];
   totalSec: number;
+  /** Replay second each point starts (what the clock's point jumps use). */
+  pointStarts: number[];
   names: [string, string];
   surface: Surface;
   noAd: boolean;
@@ -45,28 +50,32 @@ export function buildTimeline(result: MatchResult): Timeline {
   result.events.forEach((e, i) => {
     if (e.type === 'match_end') finalScore = e.score;
     if (e.type !== 'point') return;
-    const gap = gapAfter(result, i);
+    const { gap, endsGame, isBreak } = after(result, i);
     const zero = t + PLAYBACK.tossLeadSec;
     const end = zero + e.durationSec;
     const next = end + GAP_SEC[gap];
-    segments.push({ point: e, start: t, zero, end, next, gap });
+    segments.push({ point: e, start: t, zero, end, next, gap, endsGame, isBreak });
     t = next;
   });
   if (segments.length === 0 || finalScore === null) throw new Error('Replay has no points or no match_end event.');
   const config = result.config;
   return {
-    segments, totalSec: t, names: [config.players[0].name, config.players[1].name], surface: config.surface,
+    segments, totalSec: t, pointStarts: segments.map((s) => s.start), names: [config.players[0].name, config.players[1].name], surface: config.surface,
     noAd: config.rules.noAd, winner: result.winner, finalScore,
   };
 }
 
-/** The pause after the point at `index` depends on what the point finished: a game, a changeover, a set, the match. */
-function gapAfter(result: MatchResult, index: number): GapKind {
+/** What the point at `index` finished (a game, a changeover, a set, the match), which sets the pause after it. */
+function after(result: MatchResult, index: number): { gap: GapKind; endsGame: boolean; isBreak: boolean } {
   const kinds = new Set<string>();
-  for (let j = index + 1; j < result.events.length && result.events[j]!.type !== 'point'; j++) kinds.add(result.events[j]!.type);
-  if (kinds.has('match_end')) return 'match_end';
-  if (kinds.has('set_end')) return 'set_end';
-  return kinds.has('changeover') ? 'changeover' : 'point';
+  let isBreak = false;
+  for (let j = index + 1; j < result.events.length && result.events[j]!.type !== 'point'; j++) {
+    const e = result.events[j]!;
+    kinds.add(e.type);
+    if (e.type === 'game_end') isBreak = e.isBreak;
+  }
+  const gap: GapKind = kinds.has('match_end') ? 'match_end' : kinds.has('set_end') ? 'set_end' : kinds.has('changeover') ? 'changeover' : 'point';
+  return { gap, endsGame: kinds.has('game_end'), isBreak };
 }
 
 /** Index of the segment playing at replay time t (clamped to the match). */
