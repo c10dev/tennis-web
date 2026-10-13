@@ -832,3 +832,17 @@ Format: one entry per decision, newest at the bottom.
   TD-027, TD-041 and TD-042 are partial. Open design questions are P1–P5 in `docs/proposals.md`. P1 option B (plan
   card scaling) was prototyped and dropped: it left the plan gap at 5.7–5.8 pp. P2, P3 and P4 wait on their branches,
   rebased on main, each passing every check.
+- **Later the same session:** background review agents hunted bugs area by area, and each finding was fixed test-first.
+  - **Season mode:**
+    - A Saves confirmation never showed, and the old page stayed clickable while the next one loaded (now `inert`):
+      a second "Back to the tournament" click played another round.
+    - A blocked IndexedDB blanked the title screen.
+    - A bye was called "out", `#/history/0.5` crashed, and a loaded note landed on the wrong screen.
+  - **Replay page:** shortcuts stole Space and the arrow keys from focused buttons and sliders, and a muted mixer
+    leaked its AudioContext.
+  - **Broadcast:**
+    - Switching mode at the end of a replay restarted it.
+    - One-tiebreak matches made every point a key point.
+    - Fast4 sudden death named the wrong match-point holder.
+    - A bounce on a cut sounded twice.
+  - P5 (divisions) was prototyped on `proposal/p5-divisions`; long ladders keep climbing (division 3.2 by match 300).
