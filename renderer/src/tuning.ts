@@ -31,3 +31,15 @@ export const BALL = {
   /** A ball stopped by the net falls this far in front of it, on the hitter's side. */
   netDropOffset: 0.08,
 } as const;
+
+/** Player motion read off the events: swing windows around contact, reactions, sanity bound for tests. */
+export const RIG_MOTION = {
+  /** Seconds before and after contact a swing lasts; contact is half-way. A serve starts with the toss. */
+  swing: { stroke: { pre: 0.3, post: 0.3 }, serve: { pre: 0.6, post: 0.35 } },
+  /** Seconds a player celebrates or hangs their head after the last ball lands (cut short by the next point). */
+  reactionSec: 1.8,
+  /** Window for the finite-difference running speed. */
+  speedSampleSec: 0.05,
+  /** No player moves further than this between two 60 fps frames, except the cut at a change of ends. */
+  maxStepPerFrame: 0.5,
+} as const;
