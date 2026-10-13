@@ -1,0 +1,76 @@
+import { describe, expect, it } from 'vitest';
+import { Vector3, type Object3D } from 'three';
+import type { PlayerPose } from '../src/playback/pose.ts';
+import { CapsuleRig } from '../src/scene/rig.ts';
+
+const pose = (o: Partial<PlayerPose> = {}): PlayerPose => ({
+  pos: { x: 1, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', ...o,
+});
+const world = (o: Object3D) => {
+  o.updateWorldMatrix(true, false);
+  return new Vector3().setFromMatrixPosition(o.matrixWorld);
+};
+const head = (rig: CapsuleRig) => world(rig.object3d.getObjectByName('racket-head')!);
+
+describe('CapsuleRig', () => {
+  it('stands on the ground at the pose position, about 1.85 m tall', () => {
+    const rig = new CapsuleRig(0xff0000);
+    rig.apply(pose());
+    expect(rig.object3d.position.toArray()).toEqual([1, 0, 11]);
+    const top = world(rig.object3d.getObjectByName('head')!).y;
+    expect(top).toBeGreaterThan(1.6);
+    expect(top).toBeLessThan(1.8);
+  });
+
+  it('turns to face where the pose faces', () => {
+    const rig = new CapsuleRig(0xff0000);
+    rig.apply(pose({ facing: { x: 1, y: 0 } }));
+    const nose = world(rig.object3d.getObjectByName('visor')!);
+    expect(nose.x).toBeGreaterThan(1);
+    rig.apply(pose({ facing: { x: 0, y: 1 } }));
+    expect(world(rig.object3d.getObjectByName('visor')!).z).toBeLessThan(11);
+  });
+
+  it('holds the racket in the right hand: on +x when facing the far end from the near end', () => {
+    const rig = new CapsuleRig(0xff0000);
+    rig.apply(pose());
+    expect(head(rig).x).toBeGreaterThan(1.2);
+  });
+
+  it('sweeps the racket from behind to in front through a forehand, and the other way round for a backhand', () => {
+    const rig = new CapsuleRig(0xff0000);
+    const at = (kind: 'forehand' | 'backhand', phase: number) => {
+      rig.apply(pose({ swing: { kind, phase } }));
+      return head(rig);
+    };
+    // Facing −z (the far end): behind is +z relative to the player at z = 11.
+    expect(at('forehand', 0).z).toBeGreaterThan(11);
+    expect(at('forehand', 0.5).z).toBeLessThan(11);
+    expect(at('forehand', 0.5).x).toBeGreaterThan(1);
+    expect(at('backhand', 0).x).toBeLessThan(1);
+    expect(at('backhand', 0.5).z).toBeLessThan(11);
+  });
+
+  it('reaches up above the head at serve contact', () => {
+    const rig = new CapsuleRig(0xff0000);
+    rig.apply(pose({ swing: { kind: 'serve', phase: 0.5 } }));
+    expect(head(rig).y).toBeGreaterThan(2.2);
+    rig.apply(pose({ swing: { kind: 'serve', phase: 0 } }));
+    expect(head(rig).y).toBeLessThan(1.5);
+  });
+
+  it('raises the racket to celebrate, slumps when dejected, leans into a run', () => {
+    const rig = new CapsuleRig(0xff0000);
+    rig.apply(pose({ reaction: 'celebrate' }));
+    expect(head(rig).y).toBeGreaterThan(2);
+    const torso = rig.object3d.getObjectByName('torso')!;
+    rig.apply(pose({ reaction: 'dejected' }));
+    const slump = torso.rotation.x;
+    rig.apply(pose({ speed: 7 }));
+    const run = torso.rotation.x;
+    rig.apply(pose());
+    expect(torso.rotation.x).toBe(0);
+    expect(slump).toBeGreaterThan(0.1);
+    expect(run).toBeGreaterThan(0.1);
+  });
+});
