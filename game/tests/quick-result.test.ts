@@ -3,6 +3,8 @@ import { replayMatch, type PointEvent } from '@tennis/engine';
 import { describe, expect, it } from 'vitest';
 import { decisiveMoment, highlightOf } from '../src/quick/highlight.ts';
 import { ladderOrder } from '../src/quick/ladder.ts';
+import { cardReward, displayRating, matchReward } from '../src/quick/rewards.ts';
+import { QUICK, QUICK_REWARD, type Rated } from '../src/tuning.ts';
 import { USER_ID } from '../src/player/create.ts';
 import type { DecisionRecord } from '../src/quick/types.ts';
 import { freshLadder, ladderWithDecision, playLadderMatch } from './quick-helpers.ts';
@@ -86,5 +88,53 @@ describe('overtakes', () => {
       s = next;
     }
     expect(seen).toBeGreaterThan(0);
+  });
+});
+
+describe('ratings on the 0-100 scale', () => {
+  it('shows a rating with its progress as a whole number, five per rating point', () => {
+    expect(displayRating(12)).toBe(60);
+    expect(displayRating(12.19)).toBe(60);
+    expect(displayRating(12.6)).toBe(63);
+    expect(displayRating(12 + 0.008 * 25)).toBe(61);
+    expect(displayRating(20)).toBe(100);
+  });
+});
+
+describe('matchReward', () => {
+  const me = () => freshLadder().world.players.find((p) => p.id === USER_ID)!;
+  const value = (p: ReturnType<typeof me>, k: Rated) => p.attributes[k] + (p.progress[k] ?? 0);
+  const gains = (p: ReturnType<typeof me>, reward: Partial<Record<Rated, number>>) =>
+    (Object.entries(reward) as [Rated, number][]).filter(([k, x]) => displayRating(value(p, k) + x) > displayRating(value(p, k)));
+
+  it('pays a loss the card training only', () => {
+    const decisions = [d(10, [5, 5], 'attack', 'counter', 'B'), d(11, [5, 6], 'counter', 'counter', 'B')];
+    expect(matchReward(me(), { won: false, decisions, plan: 'balanced' })).toEqual(cardReward(['attack', 'counter'], false));
+  });
+
+  it('lifts a rating behind the decisive card to its next whole number on a win', () => {
+    const p = me();
+    const decisions = [d(10, [5, 5], 'counter', 'attack', 'A'), d(11, [6, 5], 'attack', 'counter', 'B'), d(12, [6, 6], 'defend', 'attack', 'A')];
+    const reward = matchReward(p, { won: true, decisions, plan: 'balanced' });
+    const base = cardReward(['counter', 'attack', 'defend'], true);
+    const extra = (Object.keys(reward) as Rated[]).filter((k) => Math.abs(reward[k]! - (base[k] ?? 0)) > 1e-12);
+    expect(extra).toHaveLength(1);
+    expect(QUICK.rewardStats.counter).toContain(extra[0]);
+    expect(reward[extra[0]!]! - (base[extra[0]!] ?? 0)).toBeLessThanOrEqual(1 / QUICK_REWARD.displayScale + 1e-9);
+    expect(gains(p, reward).map(([k]) => k)).toContain(extra[0]);
+  });
+
+  it('lifts a rating behind the game plan when the user won without a decision', () => {
+    const p = me();
+    const reward = matchReward(p, { won: true, decisions: [], plan: 'aggressive' });
+    expect(Object.keys(reward)).toHaveLength(1);
+    expect(QUICK.rewardStats.attack).toContain(Object.keys(reward)[0]);
+    expect(gains(p, reward)).toHaveLength(1);
+  });
+
+  it('skips ratings already at the top', () => {
+    const p = me();
+    for (const k of QUICK.rewardStats.attack) p.attributes[k] = 20;
+    expect(matchReward(p, { won: true, decisions: [], plan: 'aggressive' })).toEqual({});
   });
 });

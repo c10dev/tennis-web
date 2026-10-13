@@ -21,7 +21,7 @@ if (!(n > 0) || !(ladders > 0)) {
 
 const started = performance.now();
 const random = winRate(randomBot, n, seed);
-const rows = [...flowRows(random, n, seed, ladders), ...readRows(random, n, seed), ...resultRows()];
+const rows = [...flowRows(random, n, seed, ladders), ...readRows(random, n, seed), ...resultRows(seed, ladders)];
 console.log(`TennisSim quick match — ${n} matches per bot, ${ladders} ladders, seed ${seed}`);
 console.log(table(rows));
 const failed = rows.some((r) => r.status === 'FAIL');

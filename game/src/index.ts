@@ -34,7 +34,7 @@ export { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQu
 export { isDecisionPoint } from './quick/moments.ts';
 export { HABITS, personaOf } from './quick/persona.ts';
 export { PLANS, planTactic } from './quick/plan.ts';
-export { cardReward } from './quick/rewards.ts';
+export { cardReward, displayRating, matchReward } from './quick/rewards.ts';
 export { decisiveMoment, highlightOf, type Highlight } from './quick/highlight.ts';
 export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './quick/save.ts';
 export { broadcastSeconds, clipFor, decisive } from './quick/pace.ts';

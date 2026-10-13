@@ -11,7 +11,7 @@ import { profileOf } from '../player/profile.ts';
 import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
-import { cardReward } from './rewards.ts';
+import { matchReward } from './rewards.ts';
 import { overtakesBetween } from './standing.ts';
 import type { DecisionRecord, Overtake } from './types.ts';
 
@@ -89,8 +89,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 
   const players = s.world.players.map((p) => (p.id === USER_ID ? { ...p, attributes: { ...p.attributes }, progress: { ...p.progress } } : p));
   const me = players.find((p) => p.id === USER_ID)!;
-  const cards = m.decisions.map((d) => d.user);
-  const progress = Object.entries(cardReward(cards, won)).map(([k, d]) => {
+  const progress = Object.entries(matchReward(me, { won, decisions: m.decisions, plan: m.plan })).map(([k, d]) => {
     const key = k as Rated;
     const before = me.attributes[key] + (me.progress[key] ?? 0);
     adjust(me, key, d!);

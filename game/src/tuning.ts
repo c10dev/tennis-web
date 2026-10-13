@@ -210,5 +210,10 @@ export const QUICK_PERSONA = {
   tellAccuracy: 0.7,
 } as const;
 
-/** The result screen's rewards. */
-export const QUICK_REWARD = {} as const;
+/** The result screen's rewards: ratings shown on a 0–100 scale; a win lifts one rating to its next whole number. */
+export const QUICK_REWARD = {
+  /** Shown rating = floor((rating + progress) × displayScale): 1–20 becomes 5–100. */
+  displayScale: 5,
+  /** On a win without a decision, the cards whose ratings the game plan trains. */
+  planCards: { aggressive: ['attack'], balanced: ['attack', 'defend', 'counter'], defensive: ['defend'] },
+} as const;

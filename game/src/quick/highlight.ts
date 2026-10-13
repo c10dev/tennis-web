@@ -24,7 +24,7 @@ function lineFor(d: DecisionRecord): string {
  * won matchup among those first), in a loss the last one lost (the last lost matchup first); the last decision if
  * none went the match's way. Null only when the user made no decision.
  */
-export function decisiveMoment(r: Pick<QuickRecord, 'won' | 'decisions'>): DecisiveMoment | null {
+export function decisiveMoment(r: { won: boolean; decisions?: readonly DecisionRecord[] }): DecisiveMoment | null {
   const all = r.decisions ?? [];
   if (!all.length) return null;
   const side = r.won ? 'A' : 'B';

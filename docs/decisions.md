@@ -436,3 +436,15 @@ Format: one entry per decision, newest at the bottom.
   | Places climbed in 30 matches (reads half the time) | 10–25 |
   | Won matches where a shown rating rises | ≥ 80% |
   | Matches with decisions where a decisive moment is found | 100% |
+  - **Result (③):** `quick/highlight.ts` picks the decisive moment: in a win the last decision the user won (the last
+    won matchup among those first), in a loss the last one lost (the last lost matchup first), else the last decision;
+    its line names both cards and the score before it ("6-6: your counter beat their attack", "…, but they won the
+    point", "both went defend, and you won the point"). Without a decision the final point is shown with "Your plan
+    carried it" / "They closed it out". `finishQuick` records `overtakes` (above the user before, below after,
+    background matches included; the old rank shown). Ratings are shown as floor((rating + progress) × 5), 5–100.
+    **Reward:** the card progress of ADR-016 stays; a win also lifts the rating behind the decisive card (or behind
+    the game plan without a decision) that is nearest its next whole shown number up to it, at most 0.2 rating — the
+    win always shows a rise named after the choice that won it. Before this, 10% of won matches showed a whole-number
+    rise. Measured (`npm run quick -- --n 300 --seed 1`, 30 ladders of 30 matches, reader bot): visible rise in 100% of
+    wins, 0.54 shown points a match, decisive moment in 100% of matches with a decision, 0.91 players passed a match;
+    places climbed in 30 matches 17.7 before and after (the shown points are mostly progress, below a whole rating).
