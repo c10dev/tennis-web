@@ -37,3 +37,21 @@ Format: one entry per decision, newest at the bottom.
   10. Code, ADRs and commits are in English; the GDD stays in Korean. No remote repository yet.
 - **Consequences:** ESLint enforces CLAUDE.md rules 1 and 2 in `engine/src`: `Math.random`, `Date.now`, `new Date`,
   `performance`, DOM globals, Node built-ins and renderer/ui/three imports are errors. The engine's `lib` has no DOM.
+
+## ADR-003: Scoring state machine semantics
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** GDD §6 leaves a few rule details open, and the event stream must say when players change ends.
+- **Decision:**
+  - `ScoreState.points` holds raw point counts; `scoring/format.ts` turns them into 15/30/40/AD for display.
+  - A `changeover` event means the players change ends: after odd games of a set, after a set with an odd number of
+    games (a tiebreak counts as a game), and every six points of a tiebreak. It is not emitted after the last point of
+    the match.
+  - Final-set mode `tiebreak10` is a 10-point tiebreak at 6-6 in the final set (the Grand Slam rule). A match
+    tiebreak that replaces the whole final set is not implemented.
+  - The player who received first in a tiebreak serves the first game of the next set. A tiebreak game is never a
+    break (`isBreak: false`).
+  - Point tags are found by trying both outcomes of the next point: `break_point` when the receiver would win the
+    game, `set_point` / `match_point` when either player would win the set or match.
+- **Consequences:** Scoring is one pure function, `applyPoint(state, winner)`, with 100% line and branch coverage
+  enforced by the coverage threshold on `engine/src/scoring`.
