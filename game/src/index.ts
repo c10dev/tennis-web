@@ -5,9 +5,17 @@ export { pointsFor, TIERS, type Tier, type TierSpec } from './calendar/tiers.ts'
 export { overall } from './player/overall.ts';
 export { canPlay, endWeek, matchFatigue, type Focus, type Intensity, type WeekActivity } from './player/week.ts';
 export { carryover, rankingOrder, rankingPoints } from './ranking.ts';
-export { champion, nextPairs, playRound, roundCount, roundsWon, startBracket, type Bracket } from './tournament/bracket.ts';
+export { champion, nextPairs, playRound as playBracketRound, roundCount, roundsWon, startBracket, type Bracket } from './tournament/bracket.ts';
 export { makeDraw, seedOrder } from './tournament/draw.ts';
 export { entryList } from './tournament/entry.ts';
 export { CREATION, EDITABLE, FOCUS_RATINGS, STYLES } from './tuning.ts';
 export type { CareerPlayer, World } from './types.ts';
 export { generateWorld } from './world/generate.ts';
+export { aiChoice, aiTactic } from './season/ai.ts';
+export { averageMetrics, seasonMetrics, SEASON_TARGETS, spearman, type SeasonMetrics } from './season/metrics.ts';
+export { pendingUserMatch, playRound, quickRecipe, type PendingMatch } from './season/round.ts';
+export { simulateSeason } from './season/run.ts';
+export {
+  currentRanking, newSeason, playerById, type MatchRecord, type SeasonState, type Standing, type TournamentRecord, type TournamentState, type UserChoice,
+} from './season/state.ts';
+export { beginWeek, closeWeek, seasonOver, weekPreview, type WeekPreview } from './season/week.ts';

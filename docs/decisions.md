@@ -238,3 +238,40 @@ Format: one entry per decision, newest at the bottom.
   fingerprint goldens hold and 10,000-match reports on all three surfaces are byte-identical. Changing to
   aggression 1 after set one raises a player's share of points ended by their own winner or unforced error by more
   than 15% over 300 matches; starting at fatigue 0.8 costs more than 5 points of win rate over 400 matches.
+
+## ADR-011: The game layer and the M4 season
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** M4 needs a playable season (GDD §9.1–9.4). The user accepted every default in the M4 clarification round.
+- **Decision:**
+  - `@tennis/game` is a separate workspace: deterministic, headless, built on the engine's public index (same ESLint
+    rules as the engine). A career seed is split into named streams (`world`, `draw/week`, `match/week/round/pair`,
+    `week/week/player`, `plan/week/player`), so a change in one never shifts another. State is plain JSON, updated by
+    pure functions.
+  - World: the user plus 63 AI players, levels ~N(13.2, 1.45), ages 18–34, hidden potential by age, made-up names.
+    The user is 18, created from a style template and a 230-point budget (8–15 per rating), potential 16–18, and
+    starts around 40th.
+  - Season: 24 weeks, 14 tournaments (2 Majors best of 5 with 64-player draws, 3 Masters and 5 250s with 32, 4
+    Challengers with 16), surfaces hard → clay → grass → hard, ATP-scaled points by rounds won. Rankings add the
+    season's points to last season's, which start from the level order and fade out linearly by week 24. Draws seed
+    a quarter of the field on standard lines; byes go to the top seeds.
+  - Weeks: the user enters, trains (focus × intensity) or rests; AI players enter by tier (Majors and Masters
+    always, 250s 60%, Challengers 75% and not when ranked in the top 24), rest when tired and otherwise train their
+    weakest area at normal intensity. Entry lists take the best-ranked who want in.
+  - Player model: training adds progress to the focused ratings scaled by age and headroom to potential; a week of
+    matches teaches every rated skill a little; fatigue comes from training, sets played and back-to-back events,
+    and 60% of it is the engine's starting fatigue; injuries are rolled weekly from load, fatigue and
+    `injuryProneness`; ratings fade after 30.
+  - The user's match waits for the UI as a `PendingMatch` (config + seed, the user as player A); the UI returns a
+    `MatchRecipe`, which the game replays to record the result. Every other match is simulated at once.
+- **Consequences:** `npm run season -- --n 50 --seed 1` (AI-only, about 63 s):
+
+  | Metric | Value | Target |
+  |---|---|---|
+  | Ranking vs ability (Spearman) | 0.91 | ≥ 0.70 |
+  | Prospect growth per season (overall, 18–19, room to grow) | 1.90 | 1.5–3.0 |
+  | Players injured per season | 10.1% | 5–15% |
+  | Champions and points bookkeeping | ok | ok |
+
+  The AI-played user finishes 39th on average and gains 2.09 overall. `npm run test:season` guards these with 10
+  seasons. A season takes about 1.3 s of simulation, all on the main thread.

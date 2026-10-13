@@ -72,11 +72,11 @@ export const FOCUS_RATINGS = {
 
 export const TRAINING = {
   /** Progress per focused rating per week, before age and headroom. */
-  rate: { light: 0.22, normal: 0.4, hard: 0.6 },
+  rate: { light: 0.3, normal: 0.55, hard: 0.8 },
   /** Share of that rate every other rated skill gets. */
   spill: 0.08,
   /** A week of matches teaches every rated skill a little. */
-  matchRate: 0.05,
+  matchRate: 0.08,
   /** Growth slows as overall nears potential: full speed this far below it. */
   headroom: 2,
   /** Growth by age: [up to age, factor]. */
@@ -97,7 +97,7 @@ export const CONDITION = {
 
 export const INJURY = {
   /** Weekly chance at average proneness (10), multiplied by the week's load and fatigue. */
-  base: 0.0035,
+  base: 0.0026,
   load: { rest: 0.2, light: 0.6, normal: 1, hard: 2, tournament: 1.3 },
   fatigueWeight: 3,
   weeks: [1, 4] as const,
@@ -107,4 +107,18 @@ export const AGING = {
   /** From this age, every rated skill loses this much progress per week per year past it. */
   from: 30,
   weekly: 0.02,
+} as const;
+
+/** How AI players plan their weeks (and how the batch plays the user). */
+export const AI = {
+  /** Too tired to enter above this weekly fatigue; rests instead of training above `restAt`. */
+  enterUpTo: 0.75,
+  restAt: 0.55,
+  /** Chance an eligible AI player enters, by tier: real players pick their events, which leaves room in the draws. */
+  enterChance: { major: 1, masters: 1, t250: 0.6, challenger: 0.75 },
+  /** Players ranked this high skip Challengers, and skip a 250 straight after another tournament. */
+  skipChallengersTop: 24,
+  skip250AfterPlayingTop: 12,
+  /** Aggression by style; everything else is the engine's default tactic. */
+  aggression: { big_server: 0.65, baseliner: 0.5, counter_puncher: 0.35, serve_and_volley: 0.6, all_court: 0.5 },
 } as const;

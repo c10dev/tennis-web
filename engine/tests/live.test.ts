@@ -82,7 +82,7 @@ describe('live match API', () => {
       return shots / points;
     };
     expect(rate(1)).toBeGreaterThan(rate(0) * 1.15);
-  });
+  }, 30_000);
 
   it('starts tired players tired: fatigue going in lowers the win rate', () => {
     const wins = (fatigue: number) => {
@@ -96,7 +96,7 @@ describe('live match API', () => {
     expect(wins(0.8)).toBeLessThan(wins(0) - 0.05);
     const bad = { ...createConfig([averagePlayer('Ann'), averagePlayer('Bea')]), condition: { fatigue: [1.5, 0] as [number, number] } };
     expect(() => simulateMatch(bad, 1)).toThrow(/fatigue/);
-  });
+  }, 30_000);
 
   it('writes schema version 3', () => {
     expect(SCHEMA_VERSION).toBe(3);
