@@ -16,6 +16,8 @@ opponent, and choose a card at the big points of a one-tiebreak match. The match
   attack"). Then the ladder points count up, the players you passed slide in, your ratings tick up, and the next goal
   locks in.
 
+<img src="docs/images/quick-result.png" alt="The result of a won quick match: the decisive point named, points, players passed, a rating rising and the next goal" width="420">
+
 A season mode (Football Manager-style career: calendar, training, tournaments) is one click away from the title screen.
 
 ## Run it
