@@ -1,6 +1,6 @@
 // Watching a match (GDD §2): the user's live match set by set, with tactics between sets (TD-003), or a replay of
 // an earlier match from its recipe. Loads the 3D code on demand (TD-014).
-import { advance, finish, isOver, replayMatch, SCHEMA_VERSION, setTactic, startMatch, type MatchRecipe, type Tactic } from '@tennis/engine';
+import { advance, finish, fingerprint, isOver, replayMatch, SCHEMA_VERSION, setTactic, startMatch, type MatchRecipe, type Tactic } from '@tennis/engine';
 import { pendingUserMatch, playRound, quickRecipe } from '@tennis/game';
 import { h } from '../../lib/h.ts';
 import type { Ctx, Screen } from '../context.ts';
@@ -70,6 +70,8 @@ export async function matchScreen(ctx: Ctx, params: string[]): Promise<Screen> {
 
   function showResult() {
     const result = finish(live);
+    // For the e2e tests: the match on screen, comparable with the engine run in Node.
+    document.body.dataset.fingerprint = fingerprint(result);
     const won = result.winner === 'A';
     panel.replaceChildren(h('div', { id: 'match-result' },
       h('h3', null, won ? `You beat ${opponent}` : `${opponent} wins`),
@@ -102,8 +104,10 @@ function replay(ctx: Ctx, historyIndex: number, matchIndex: number, mount: Mount
     return { element: h('div') };
   }
   const broadcast = mount(dom.stage, { mode: 'highlights' });
-  broadcast.load(replayMatch(record.recipe));
+  const result = replayMatch(record.recipe);
+  broadcast.load(result);
   broadcast.dispatch({ type: 'play' });
+  document.body.dataset.fingerprint = fingerprint(result);
   const names = record.recipe.config.players.map((p) => p.name).join(' v ');
   dom.bar.append(h('span', null, `Replay · ${names} · ${record.score}`), h('button', { id: 'leave', onclick: () => ctx.go(`#/history/${historyIndex}`) }, 'Back'));
   return { element: dom.element, bare: true, dispose: () => broadcast.dispose() };
