@@ -26,11 +26,11 @@ export function ballPop(since: number | null): number {
   return 1 + (scale - 1) * u * u;
 }
 
-/** Where the ball was over the last trail time, newest first; cut at the last contact, empty before the serve. */
-export function trailPoints(point: PointEvent, tau: number, surface: Surface): TrailPoint[] {
+/** Where the ball was over the last `sec` of match time, newest first; cut at the last contact, empty before the serve. */
+export function trailPoints(point: PointEvent, tau: number, surface: Surface, sec: number = BALL_LOOK.trail.sec): TrailPoint[] {
   const contact = lastContact(point, tau);
   if (contact === null) return [];
-  const { sec, samples } = BALL_LOOK.trail;
+  const { samples } = BALL_LOOK.trail;
   const reach = Math.min(sec, tau - contact);
   const out: TrailPoint[] = [];
   for (let i = 0; i < samples; i++) {
@@ -43,9 +43,9 @@ export function trailPoints(point: PointEvent, tau: number, surface: Surface): T
   return out;
 }
 
-/** Width (metres) and opacity of the trail `age` seconds behind the ball: both taper linearly to nothing at its tail. */
-export function trailStyle(age: number): { width: number; alpha: number } {
-  const { sec, widthShare, opacity } = BALL_LOOK.trail;
+/** Width (metres) and opacity of a trail `sec` long, `age` seconds behind the ball: both taper linearly to nothing at its tail. */
+export function trailStyle(age: number, sec: number = BALL_LOOK.trail.sec): { width: number; alpha: number } {
+  const { widthShare, opacity } = BALL_LOOK.trail;
   const u = Math.max(0, 1 - age / sec);
   return { width: 2 * BALL_LOOK.radius * widthShare * u, alpha: opacity * u };
 }

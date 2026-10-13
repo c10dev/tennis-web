@@ -106,9 +106,26 @@ describe('trail', () => {
     expect(trailPoints(seg.point, seg.point.durationSec + 5, tl.surface)).toEqual([]);
   });
 
+  it('reaches back half as far in a slow-motion replay, so it covers the same screen time', () => {
+    const live = trailPoints(seg.point, midFlight, tl.surface);
+    const slow = trailPoints(seg.point, midFlight, tl.surface, BALL_LOOK.trail.sec * BALL_LOOK.trail.replayShare);
+    expect(BALL_LOOK.trail.replayShare).toBe(0.5);
+    expect(slow.at(-1)!.age).toBeCloseTo(live.at(-1)!.age / 2, 9);
+    const stage = createStage(tl);
+    stage.applyFrame({ ...matchFrameAt(tl, seg.zero + midFlight), camera: 'side', clip: 'replay' });
+    const trail = stage.scene.getObjectByName('ball-trail') as Mesh;
+    const pos = trail.geometry.getAttribute('position');
+    const tail = new Vector3().fromBufferAttribute(pos, 2 * (slow.length - 1));
+    const head = new Vector3().fromBufferAttribute(pos, 0);
+    const p = slow.at(-1)!.pos;
+    expect(tail.x).toBeCloseTo(p.x, 5);
+    expect(tail.z).toBeCloseTo(-p.y, 5);
+    expect(head.distanceTo(tail)).toBeGreaterThan(0);
+  });
+
   it('tapers and fades to nothing at its tail', () => {
     const ages = [0, 0.05, 0.1, 0.15, BALL_LOOK.trail.sec];
-    const styles = ages.map(trailStyle);
+    const styles = ages.map((age) => trailStyle(age));
     expect(styles[0]!.alpha).toBeGreaterThan(0.5);
     expect(styles[0]!.width).toBeLessThanOrEqual(2 * BALL_LOOK.radius);
     for (let i = 1; i < styles.length; i++) {

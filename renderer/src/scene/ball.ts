@@ -13,6 +13,8 @@ export interface BallLook {
   scale: number;
   pop: number;
   trail: readonly TrailPoint[];
+  /** How far back the trail reaches, for its taper. */
+  trailSec: number;
 }
 
 export interface BallView {
@@ -36,10 +38,10 @@ export function createBall(): BallView {
   object3d.add(ball, shadow, trail.object3d);
   return {
     object3d,
-    apply(position, look = { scale: 1, pop: 1, trail: [] }) {
+    apply(position, look = { scale: 1, pop: 1, trail: [], trailSec: BALL_LOOK.trail.sec }) {
       ball.visible = shadow.visible = position !== null;
       if (!position) {
-        trail.apply([], look.scale);
+        trail.apply([], look.scale, look.trailSec);
         return;
       }
       // Raised by its radius, so a ball at height 0 rests on the court instead of sinking into it.
@@ -47,7 +49,7 @@ export function createBall(): BallView {
       ball.position.copy(toThree(position)).setY(Math.max(0, position.z) + BALL_LOOK.radius * look.scale);
       shadow.scale.setScalar(look.scale);
       shadow.position.copy(groundToThree(position, 0.005));
-      trail.apply(look.trail, look.scale);
+      trail.apply(look.trail, look.scale, look.trailSec);
     },
   };
 }

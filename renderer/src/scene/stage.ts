@@ -1,7 +1,7 @@
 // The whole Three.js scene for one match; applyFrame() moves everything to a Frame. No WebGL here (ADR-007).
 import { CircleGeometry, Mesh, MeshBasicMaterial, Scene } from 'three';
 import type { LineCall } from '../broadcast/hawkeye.ts';
-import type { CameraId } from '../broadcast/types.ts';
+import type { CameraId, ClipKind } from '../broadcast/types.ts';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
 import { BALL, BALL_LOOK, COLOURS } from '../tuning/index.ts';
@@ -13,8 +13,8 @@ import { addDaylight } from './daylight.ts';
 import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
 
-/** A frame, plus what a broadcast frame adds: the Hawk-Eye call, the camera, and the match second (its t is programme time). */
-export type StageFrame = Frame & { hawkeye?: LineCall | null; camera?: CameraId; matchT?: number };
+/** A frame, plus what a broadcast frame adds: the Hawk-Eye call, camera, clip kind and match second (its t is programme time). */
+export type StageFrame = Frame & { hawkeye?: LineCall | null; camera?: CameraId; clip?: ClipKind; matchT?: number };
 
 export interface Stage {
   readonly scene: Scene;
@@ -51,9 +51,10 @@ export function createStage(timeline: Timeline): Stage {
 /** Camera scale, contact pop and trail for the ball in this frame. */
 function ballLook(timeline: Timeline, frame: StageFrame): BallLook {
   const scale = BALL_LOOK.cameraScale[frame.camera ?? 'main'];
+  const trailSec = BALL_LOOK.trail.sec * (frame.clip === 'replay' ? BALL_LOOK.trail.replayShare : 1);
   const seg = timeline.segments[frame.pointIndex];
-  if (!seg || !frame.ball) return { scale, pop: 1, trail: [] };
+  if (!seg || !frame.ball) return { scale, pop: 1, trail: [], trailSec };
   const tau = (frame.matchT ?? frame.t) - seg.zero;
   const contact = lastContact(seg.point, tau);
-  return { scale, pop: ballPop(contact === null ? null : tau - contact), trail: trailPoints(seg.point, tau, timeline.surface) };
+  return { scale, pop: ballPop(contact === null ? null : tau - contact), trail: trailPoints(seg.point, tau, timeline.surface, trailSec), trailSec };
 }

@@ -28,8 +28,9 @@ export const BALL_LOOK = {
   /** Scale at contact, easing back to 1 over `sec` (about two frames at 30 fps). */
   pop: { scale: 1.3, sec: 0.07 },
   /** White ribbon behind the ball: how far back it reaches, how many samples, its head width (share of the ball's
-   * diameter) and opacity; both taper to nothing at the tail. */
-  trail: { sec: 0.2, samples: 12, widthShare: 0.8, opacity: 0.8, colour: 0xffffff },
+   * diameter) and opacity; both taper to nothing at the tail. Half-speed replays reach back half as far in match
+   * time, so the trail covers the same time on screen. */
+  trail: { sec: 0.2, replayShare: 0.5, samples: 12, widthShare: 0.8, opacity: 0.8, colour: 0xffffff },
 } as const;
 
 /** A sunny afternoon (ADR-018): sky dome and fog separate the stands from the court; no tone mapping. */
