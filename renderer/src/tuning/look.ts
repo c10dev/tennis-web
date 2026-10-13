@@ -44,3 +44,7 @@ export const DAYLIGHT = {
   /** The sun gives the toon bands their light side; it stands high over the umpire's shoulder. */
   sun: { colour: 0xfff1d8, intensity: 2.0, position: [-20, 40, 15] },
 } as const;
+
+/** Adaptive resolution (TD-038): when the median frame of a window runs over budget, draw fewer pixels. One way only
+ *  (no oscillation); frames longer than `stallSec` (a hidden tab, a shader compile) do not count. */
+export const QUALITY = { maxRatio: 2, minRatio: 1, step: 0.8, budgetMs: 22, window: 90, stallSec: 0.25 } as const;

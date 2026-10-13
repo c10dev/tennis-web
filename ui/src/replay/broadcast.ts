@@ -110,7 +110,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       if (frame.clip !== 'result') liveMatchT = frame.matchT;
       viewer.render(frame, dt);
       // Read by the e2e tests and handy when debugging the director.
-      Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
+      Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2), ratio: viewer.pixelRatio.toFixed(2) });
       scoreBug.update(frame.scoreBug);
       overlays.update(overlayAt(programme, frame), programme.timeline.names);
       controls?.update(clock, frame);

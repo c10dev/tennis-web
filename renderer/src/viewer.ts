@@ -6,6 +6,7 @@ import type { CameraId } from './broadcast/types.ts';
 import { cameraPose } from './camera/cameras.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
 import type { Timeline } from './playback/timeline.ts';
+import { createQuality } from './quality.ts';
 import { createStage } from './scene/stage.ts';
 import { CAMERA } from './tuning/index.ts';
 
@@ -16,6 +17,8 @@ export interface Viewer {
   /** Compiles every material's shaders off the main thread where the browser can (KHR_parallel_shader_compile), so
    *  the first frame does not stall on them (TD-037). */
   warm(): Promise<void>;
+  /** The pixel ratio drawn at: the device's, lowered on a device that cannot keep up (TD-038). */
+  readonly pixelRatio: number;
   dispose(): void;
 }
 
@@ -24,7 +27,8 @@ const WIDE: ReadonlySet<CameraId> = new Set(['main', 'side']);
 
 export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline): Viewer {
   const renderer = new WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const quality = createQuality(window.devicePixelRatio);
+  renderer.setPixelRatio(quality.ratio);
   const stage = createStage(timeline);
   const camera = new PerspectiveCamera(CAMERA.fov, 1, 0.3, 400);
   let pan = 0;
@@ -35,6 +39,7 @@ export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline): Vie
       camera.aspect = width / height;
     },
     render(frame, dt) {
+      if (quality.frame(dt)) renderer.setPixelRatio(quality.ratio);
       stage.applyFrame(frame);
       // A cut starts the pan where it wants to be; within a shot it eases there.
       pan = frame.camera === shown ? dampPan(pan, panTarget(frame.ball), dt) : panTarget(frame.ball);
@@ -49,6 +54,9 @@ export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline): Vie
       camera.position.set(pose.position.x, pose.position.y, pose.position.z);
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
       renderer.render(stage.scene, camera);
+    },
+    get pixelRatio() {
+      return quality.ratio;
     },
     async warm() {
       await renderer.compileAsync(stage.scene, camera);
