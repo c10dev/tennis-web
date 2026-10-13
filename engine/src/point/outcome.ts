@@ -16,7 +16,8 @@ export interface ErrorInput {
 }
 
 export function errorProbability(e: ErrorInput): number {
-  const gap = Math.max(RALLY.minSkillGap, 1 - e.skill);
+  // GDD's (1 − skill), with skill compressed towards the average so one rating point is a small edge (ADR-005).
+  const gap = Math.max(RALLY.minSkillGap, 1 - (AVG + RALLY.errorSkill * (e.skill - AVG)));
   const difficulty = Math.exp(RALLY.errorIncoming * (e.incoming - 0.5));
   const tired = 1 + RALLY.fatigueError * e.fatigue;
   const nerves = 1 + RALLY.pressureError * e.pressure * (1 - e.composure);

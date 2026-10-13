@@ -76,3 +76,31 @@ Format: one entry per decision, newest at the bottom.
   - The match JSON is `MatchResult { schemaVersion: 1, seed, config, events, winner, stats }`.
 - **Consequences:** Geometry is consistent with the outcome but never decides it, so M2 can change how shots look
   without changing results. A full best-of-3 match JSON is about 0.7 MB.
+
+## ADR-005: M1 tuning and skill sensitivity
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The first tuning met the GDD table, but a player rated one point higher in every attribute (14 against
+  13) won 98.8% of best-of-3 matches. GDD's literal `(1 − skill)` term cuts errors by about 14% per rating point.
+  The GDD only asks that win rate rises with the gap, but a management game needs a one-point edge to matter without
+  deciding the match.
+- **Decision:** The `(1 − skill)` term uses an effective skill `AVG + errorSkill × (skill − AVG)` with
+  `errorSkill = 0.15`, and the other skill slopes in `tuning.ts` were lowered to match. Average-player rates are
+  unchanged, because every slope multiplies `(skill − AVG)`.
+- **Consequences:** `npm run sim -- --n 10000 --seed 42`:
+
+  | Metric | Hard | Clay | Grass | Target |
+  |---|---|---|---|---|
+  | Hold % | 78.8 | 76.5 | 81.2 | 75–85 / 70–80 / 80–90 |
+  | Aces / service game | 0.61 | 0.47 | 0.72 | 0.3–0.8 |
+  | Double faults / service game | 0.27 | 0.27 | 0.26 | 0.15–0.35 |
+  | 1st serve in % | 61.5 | 61.4 | 61.5 | 58–68 |
+  | 1st serve points won % | 70.8 | 69.2 | 72.6 | 68–78 |
+  | 2nd serve points won % | 49.6 | 49.1 | 50.3 | 48–56 |
+  | Average rally | 4.37 | 4.58 | 4.13 | 3.5–5.5, clay longest |
+  | Rallies ≤ 4 shots % | 64.0 | 62.1 | 66.3 | 60–75 |
+  | Sets with a tiebreak % | 20.8 | 19.3 | 23.1 | 10–25 |
+
+  Big server (serve 18/17/15): 1.27 aces per service game, wins 78.4% against an average player.
+  Rating ladder against 13 (4,000 matches each): 11 → 10.1%, 12 → 26.7%, 13 → 50.2%, 14 → 73.8%, 15 → 90.0%.
+  `npm run test:stats` guards these with 1,000-match runs and slightly wider ranges.

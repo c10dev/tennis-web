@@ -1,6 +1,7 @@
 // Every tuning coefficient of the engine lives here (CLAUDE.md rule 5).
 // Probabilities are written as the rate for two average players (all ratings 13) on hard court. Skill differences
 // shift them on the logit scale, so rates stay inside (0, 1) and rise or fall monotonically with the ratings.
+// Skill slopes are kept small: every rating one point higher wins about 70% of best-of-3 matches (ADR-005).
 import type { Surface } from './types.ts';
 
 /** Normalised value of the reference rating 13. */
@@ -23,28 +24,28 @@ export interface SurfaceTuning {
 
 export const SURFACES: Record<Surface, SurfaceTuning> = {
   hard: { ace: 1, serveQuality: 0, winner: 0, error: 1, fatigue: 1, speed: 1 },
-  clay: { ace: 0.6, serveQuality: -0.07, winner: -0.45, error: 0.9, fatigue: 1.25, speed: 0.92 },
-  grass: { ace: 1.5, serveQuality: 0.07, winner: 0.4, error: 1.05, fatigue: 0.9, speed: 1.06 },
+  clay: { ace: 0.75, serveQuality: -0.01, winner: -0.12, error: 1, fatigue: 1.25, speed: 0.92 },
+  grass: { ace: 1.2, serveQuality: 0.015, winner: 0.15, error: 1, fatigue: 0.9, speed: 1.06 },
 };
 
 export const SERVE = {
   firstIn: 0.63,
   secondIn: 0.9,
   /** Logit shift per unit of normalised rating above average. */
-  firstInAccuracy: 2.2,
+  firstInAccuracy: 0.8,
   firstInPower: -0.6,
-  secondInSkill: 2.6,
+  secondInSkill: 1,
   /** Ace odds per serve that lands in. */
   aceFirst: 0.13,
   aceSecond: 0.025,
-  acePower: 4.2,
-  aceAccuracy: 1.2,
-  aceReturn: -2.8,
+  acePower: 3,
+  aceAccuracy: 1,
+  aceReturn: -1,
   /** Mean quality (difficulty for the returner, 0–1) of a serve that lands in. */
-  qualityFirst: 0.66,
-  qualitySecond: 0.42,
-  qualityPower: 0.55,
-  qualityAccuracy: 0.2,
+  qualityFirst: 0.71,
+  qualitySecond: 0.5,
+  qualityPower: 0.15,
+  qualityAccuracy: 0.08,
   qualitySpread: 0.14,
   /** Pressure lowers in % for players without composure. */
   pressureIn: -0.6,
@@ -59,7 +60,9 @@ export type Risk = 'safe' | 'neutral' | 'aggressive';
 
 export const RALLY = {
   /** p_error = base(risk) × (1 − skill) × difficulty × fatigue × pressure × surface (GDD §5.2). */
-  errorBase: { safe: 0.16, neutral: 0.26, aggressive: 0.44 } satisfies Record<Risk, number>,
+  errorBase: { safe: 0.19, neutral: 0.31, aggressive: 0.5 } satisfies Record<Risk, number>,
+  /** Effective skill in (1 − skill) is AVG + errorSkill × (skill − AVG). */
+  errorSkill: 0.15,
   /** Floor on (1 − skill) so the best players still miss. */
   minSkillGap: 0.08,
   /** difficulty = exp(errorIncoming × (incoming − 0.5)). */
@@ -69,15 +72,15 @@ export const RALLY = {
   /** Shot quality handed to the opponent: base + risk + skill − incoming pace, plus noise. */
   qualityBase: 0.45,
   qualityRisk: { safe: -0.1, neutral: 0, aggressive: 0.12 } satisfies Record<Risk, number>,
-  qualitySkill: 0.45,
-  qualityIncoming: 0.35,
+  qualitySkill: 0.1,
+  qualityIncoming: 0.6,
   qualitySpread: 0.16,
   /** p_winner = sigmoid(winnerSlope × (quality − defence) + winnerBias + risk bonus). */
   winnerSlope: 7,
-  winnerBias: -2.6,
+  winnerBias: -2,
   winnerRisk: { safe: -0.6, neutral: 0, aggressive: 0.35 } satisfies Record<Risk, number>,
   defenceBase: 0.62,
-  defenceSkill: 0.35,
+  defenceSkill: 0.08,
   defenceFatigue: 0.15,
   /** An error on a ball harder than this is forced, otherwise unforced. */
   forcedThreshold: 0.6,
