@@ -55,3 +55,24 @@ Format: one entry per decision, newest at the bottom.
     game, `set_point` / `match_point` when either player would win the set or match.
 - **Consequences:** Scoring is one pure function, `applyPoint(state, winner)`, with 100% line and branch coverage
   enforced by the coverage threshold on `engine/src/scoring`.
+
+## ADR-004: Point model, outcome labels and statistics definitions
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** GDD §5 gives the shape of the probability model; the tuning targets in §10 need exact definitions.
+- **Decision:**
+  - Probabilities are written in `tuning.ts` as the rate for two average players (all ratings 13) on hard court, and
+    skill differences shift them on the logit scale. The rally error rate follows GDD §5.2 literally:
+    `base(risk) × (1 − skill) × difficulty × fatigue × pressure × surface`.
+  - Shot selection draws a risk level (safe / neutral / aggressive) and a target (opponent forehand / backhand /
+    middle). GDD's cross / line / middle directions are not modelled separately in M1. All players are right-handed.
+  - Outcomes: a serve is `fault`, `double_fault`, `ace` or `in`. A rally shot is `in`, `winner`, `forced_error` or
+    `unforced_error`; an error is forced when the incoming ball's quality is above `RALLY.forcedThreshold`. Whether an
+    error went into the net or out is visible only in the geometry (`netClearance < 0` with no bounce, or a bounce
+    outside the court). The `net` outcome is not emitted in M1.
+  - Rally length counts shots that went in, the serve included: an ace is 1, a double fault 0, an unreturned serve 1.
+  - Stats: winners exclude aces; first-serve % is points played on the first serve over service points; break
+    points are counted for the receiver as `converted/opportunities`.
+  - The match JSON is `MatchResult { schemaVersion: 1, seed, config, events, winner, stats }`.
+- **Consequences:** Geometry is consistent with the outcome but never decides it, so M2 can change how shots look
+  without changing results. A full best-of-3 match JSON is about 0.7 MB.
