@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { CYCLE, nodeLadder, nodePlayNext, startLadder, watchErrors } from './helpers.ts';
 
-// Proposal P3 option A: a win streak shown on the result and the ladder home, no bonus. Seed 9 wins its first two
-// matches with the CYCLE cards.
-const SEED = 9;
+// Proposal P3 option A: a win streak shown on the result and the ladder home, no bonus. The seed is the first whose
+// first two matches are wins with the CYCLE cards, found in Node, so other ladder changes cannot break the test.
+const SEED = Array.from({ length: 100 }, (_, i) => i + 1)
+  .find((seed) => nodePlayNext(nodePlayNext(nodeLadder(seed))).history.every((r) => r.won))!;
 
 test('shows the win streak after two wins in a row, on the result and the ladder home', async ({ page }) => {
   test.setTimeout(180_000);
