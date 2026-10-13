@@ -1,9 +1,15 @@
-/* The opponent read on the decision screen and the ladder home (ADR-017): owned by the opponent-read workstream. */
-.read { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
+/* The opponent read on the decision screen and the ladder home (ADR-017), Rally Pop look (ADR-020). */
+.read { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; font-size: 14px; }
 .read .scouting { color: var(--muted); flex-basis: 100%; }
-.read .history { display: flex; gap: 4px; align-items: center; }
-.read .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 4px; font-style: normal; }
-.read .tell { color: var(--bug-accent); font-style: italic; }
+.read .history { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.read .history .chip { font-size: 13px; padding: 1px 9px; }
+.read .label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; font-style: normal; }
+/* The tell: one eye icon in optic, the line in white on a lighter band of the court. */
+.read .tell { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.12);
+  color: var(--text); font-weight: 800; }
+.read .tell .icon, .scouting .icon { color: var(--optic); flex: none; }
 .read .rival { color: var(--muted); }
-.quick-home .opponent .scouting { margin: 4px 0; }
+.quick-home .opponent .scouting { display: flex; align-items: center; gap: 8px; margin: 8px 0; padding: 6px 12px; border-radius: 10px;
+  background: var(--paper-2); }
+.quick-home .opponent .scouting .icon { color: var(--court-2); }
 .quick-home .opponent .rival { margin: 4px 0; color: var(--muted); font-size: 13px; }
