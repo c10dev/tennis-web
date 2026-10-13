@@ -4,7 +4,7 @@ import { matchMetrics } from '../src/match/metrics.ts';
 import { DEFAULT_TACTIC, simulateMatch } from '../src/match/simulateMatch.ts';
 import { exhibitionConfig } from '../src/match/exhibition.ts';
 import { fingerprint } from '../src/match/fingerprint.ts';
-import type { Card, MatchConfig, MatchRecipe, PointCards, TacticChange } from '../src/types.ts';
+import type { Card, MatchConfig, MatchRecipe, PointCards, SetFormat, TacticChange } from '../src/types.ts';
 
 // Found by a bug hunt (2026-10-14): recipes with both cards and tactic changes, and tiebreak sets outside 7-6.
 const CARDS: Card[] = ['attack', 'defend', 'counter'];
@@ -35,7 +35,7 @@ describe('replayMatch with cards and tactic changes', () => {
 });
 
 describe('matchMetrics tiebreak sets', () => {
-  const rules = (setFormat: MatchConfig['rules']['setFormat']): MatchConfig => ({ ...exhibitionConfig('hard'), rules: { bestOf: 3, noAd: true, finalSet: 'tiebreak7', setFormat } });
+  const rules = (setFormat: SetFormat): MatchConfig => ({ ...exhibitionConfig('hard'), rules: { bestOf: 3, noAd: true, finalSet: 'tiebreak7', setFormat } });
 
   it('counts every set decided in a tiebreak, Fast4 and one-tiebreak sets included', () => {
     for (const seed of [1, 2, 3, 4, 5]) {
