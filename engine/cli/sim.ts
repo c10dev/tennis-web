@@ -1,9 +1,11 @@
 // Batch simulation report: npm run sim -- --n 10000 --seed 42 --surface hard [--a big-server] [--ladder]
+// One exhibition match's fingerprint, to compare with the replay page (TD-005): npm run sim -- --fingerprint --seed 42 --surface clay
 // The report goes to stdout and depends only on the arguments; timing goes to stderr.
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
 import {
-  averagePlayer, bigServer, createConfig, deriveSeed, ratedPlayer, runBatch, summarize, type PlayerProfile, type Surface,
+  averagePlayer, bigServer, createConfig, deriveSeed, exhibitionConfig, fingerprint, ratedPlayer, runBatch, simulateMatch, summarize,
+  type PlayerProfile, type Surface,
 } from '../src/index.ts';
 import { check, info, table, type Row } from './report.ts';
 import { BIG_SERVER_ACES, targetsFor } from './targets.ts';
@@ -16,6 +18,7 @@ const { values } = parseArgs({
     a: { type: 'string', default: 'average' },
     'best-of': { type: 'string', default: '3' },
     ladder: { type: 'boolean', default: false },
+    fingerprint: { type: 'boolean', default: false },
   },
 });
 const n = Number(values.n);
@@ -24,7 +27,12 @@ const surface = values.surface as Surface;
 const bestOf = Number(values['best-of']) as 3 | 5;
 if (!['hard', 'clay', 'grass'].includes(surface) || !(n > 0) || ![3, 5].includes(bestOf) || !['average', 'big-server'].includes(values.a)) {
   console.error('Usage: npm run sim -- --n 10000 --seed 42 --surface hard|clay|grass [--a average|big-server] [--best-of 3|5] [--ladder]');
+  console.error('       npm run sim -- --fingerprint --seed 42 --surface hard|clay|grass');
   process.exit(2);
+}
+if (values.fingerprint) {
+  console.log(`fingerprint ${fingerprint(simulateMatch(exhibitionConfig(surface), seed))} (exhibition, seed ${seed}, ${surface})`);
+  process.exit(0);
 }
 
 const batch = (a: PlayerProfile, base: number) =>

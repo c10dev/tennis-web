@@ -104,3 +104,23 @@ Format: one entry per decision, newest at the bottom.
   Big server (serve 18/17/15): 1.27 aces per service game, wins 78.4% against an average player.
   Rating ladder against 13 (4,000 matches each): 11 → 10.1%, 12 → 26.7%, 13 → 50.2%, 14 → 73.8%, 15 → 90.0%.
   `npm run test:stats` guards these with 1,000-match runs and slightly wider ranges.
+
+## ADR-006: Event schema v2 and match fingerprints
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The M2 replay has to know when each ball lands. In v1 that time could only be recovered from private
+  constants of `simulatePoint` (0.45 s from bounce to contact, 0.8 s after the last flight), and never for a fault,
+  because the second serve follows after a fixed gap. TD-005 also asks for a way to check that a browser replays a seed
+  exactly as Node does.
+- **Decision:**
+  - `ShotEvent.flightSec` (seconds from contact to the first bounce, or to the net) is added and `SCHEMA_VERSION`
+    becomes 2. The value was already computed by `geometry.flightSec` and draws no random numbers.
+  - `fingerprint(result)` is FNV-1a 32-bit over the UTF-16 code units of `JSON.stringify(result.events)`, as 8 hex
+    digits. `JSON.stringify` prints numbers by the same shortest round-trip rule in every engine, so equal hashes mean
+    equal events.
+  - `exhibitionConfig(surface)` (big server Flint against the average Rook) is the match both the CLI
+    (`npm run sim -- --fingerprint --seed 42 --surface clay`) and the replay page use, so their hashes can be compared.
+  - `COURT` is exported from the engine index for the renderer. This is not a schema change.
+- **Consequences:** 10,000-match batch reports on all three surfaces are byte-identical before and after the change.
+  v1 replay JSON is rejected by the renderer rather than migrated: nothing has stored v1 files. The golden fingerprint
+  for clay seed 42 is `4c42dc1d`; any change to the event stream must update it on purpose.
