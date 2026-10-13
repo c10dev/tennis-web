@@ -1,0 +1,77 @@
+/* Rally Pop theme (ADR-018, ADR-020): court-blue base, white paper stickers with ink outlines, optic for actions and
+   "up", gold for ladder points and stakes. Colour is never the only cue: cards keep their icon, key and name. */
+:root {
+  --court: #123a8c;
+  --court-2: #1b4db3;
+  --paper: #ffffff;
+  --paper-2: #eef3fc;
+  --ink: #15171e;
+  --ink-muted: #5a6172;
+  --optic: #d6f53a;
+  --gold: #ffc21a;
+  --gold-tint: #fff1c2;
+  /* Card fills (bands, bars) are the phase-0 trio; the text variants pass 4.5:1 on paper. Both stay apart for
+     protan and deutan viewers (smallest ΔE 38/53 fills, 45/61 text). */
+  --atk: #ff7a45;
+  --def: #4aa3ff;
+  --ctr: #3fd3b0;
+  --atk-text: #c2410c;
+  --def-text: #0b66d6;
+  --ctr-text: #047e73;
+  /* Surface tokens, here for court blue (and ink panels); paper surfaces re-point them below. Won and lost: the
+     accent and a muted tone with a word or symbol, never green against red. */
+  --text: #ffffff;
+  --muted: #bfd0f2;
+  --win: var(--optic);
+  --loss: #bfd0f2;
+  --link: #dce6fa;
+  --rule: rgba(255, 255, 255, 0.2);
+  --error: #ffb4a6;
+  --focus: var(--optic);
+  /* The broadcast layer over the 3D: ink panels, optic accent (ADR-020). */
+  --panel-bg: rgba(21, 23, 30, 0.86);
+  --bug-bg: rgba(21, 23, 30, 0.92);
+  --bug-accent: var(--optic);
+  /* Sticker outline and drop shadow. */
+  --outline: 3px solid var(--ink);
+  --lift: 0 5px 0 var(--ink);
+  /* Type: display for headings and big numbers, body for everything else, TV for the broadcast layer. */
+  --font-display: 'Lilita One', 'Arial Rounded MT Bold', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-tv: 'Barlow Condensed', 'Roboto Condensed', 'Arial Narrow', sans-serif;
+  color-scheme: light;
+}
+
+/* Paper surfaces: ink text, and the surface tokens re-pointed for white. */
+.paper, .card, .card-btn, .chip, .gain, .decisive, .overtake, .match-panel, .note-banner, header.top,
+button, select, input, textarea {
+  --text: var(--ink);
+  --muted: var(--ink-muted);
+  --win: var(--court);
+  --loss: var(--ink-muted);
+  --link: var(--court-2);
+  --rule: #d5dce8;
+  --error: #b42318;
+  color: var(--text);
+}
+/* Focus rings are drawn on the surface around a control, so controls keep their container's --focus. */
+.paper, .card, .card-btn, .chip, .gain, .decisive, .overtake, .match-panel, .note-banner, header.top { --focus: var(--court-2); }
+.card, .gain, .decisive, .match-panel { background: var(--paper); border: var(--outline); border-radius: 14px; box-shadow: var(--lift); }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--court); color: var(--text); font: 600 15px/1.35 var(--font-body); }
+h1, h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; }
+h3 { font-weight: 800; }
+b, strong { font-weight: 800; }
+a { color: var(--link); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+button, select, input { font: inherit; background: var(--paper); border: 2px solid var(--ink); border-radius: 10px; padding: 4px 10px; }
+button { cursor: pointer; font-weight: 800; box-shadow: 0 3px 0 var(--ink); }
+button:hover { background: var(--paper-2); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.primary { background: var(--optic); }
+button.primary:hover { background: #e2fa6a; }
+button.big { font: 400 22px/1.1 var(--font-display); letter-spacing: 0.02em; padding: 10px 30px; border-width: 3px; border-radius: 14px;
+  box-shadow: var(--lift); }
+input[type='checkbox'], input[type='range'] { accent-color: var(--court-2); }
