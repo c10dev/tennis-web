@@ -292,3 +292,23 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** A season's save is about 35 KB at the start and 95 KB at the end with 19 of the user's matches
   (one match's events used to be 0.4 MB). Loading and carrying on gives exactly the weeks that would have followed
   without saving, and replays from loaded recipes have the same fingerprints.
+
+## ADR-013: M4 user interface
+- **Date:** 2026-10-13
+- **Status:** Accepted
+- **Context:** The career needs a handful of management screens and the M3 broadcast for the user's matches. The
+  user chose no UI framework.
+- **Decision:**
+  - Screen data comes from pure view models in `game/src/views` (unit-tested); `ui/src/career/screens` draw them with
+    a 30-line `h()` helper that only creates text nodes. A hash router (`#/home`, `#/tournament`, `#/match`, …)
+    picks the screen; renders are async and tokened, so only the latest one shows.
+  - `ui/src/main.ts` loads the dev replay page for `?seed=` and the career app otherwise. The broadcast view
+    (`replay/broadcast.ts`, which pulls in Three.js) is imported only by the match screen and the replay page.
+  - The match screen plays the user's match set by set (ADR-010), stops at each set break for tactics, and hands the
+    recipe (config, seed, tactic changes) to `playRound`. Leaving discards the match; it can be started again.
+  - Weeks close with an autosave; a tournament the user is not in (or is out of) is played out by `playOut`.
+  - The page publishes `data-camera`, `data-clip`, `data-point`, `data-t` and, on match screens, `data-fingerprint`
+    for the e2e tests.
+- **Consequences:** The career screens load 2.6 + 35.8 + 16.6 kB of script; the 574 kB broadcast chunk (Three.js)
+  loads only when a match is watched. `npm run test:e2e` checks the career end to end, including that a match
+  watched with a tactic change matches the same recipe replayed in Node.

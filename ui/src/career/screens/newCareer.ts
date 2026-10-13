@@ -1,5 +1,5 @@
 // Player creation (GDD §9.1): name, style, and ratings spread over a budget.
-import { createPlayer, CREATION, defaultAllocation, EDITABLE, newSeason, STYLE_LABEL, toSave, type Allocation, type CreatableStyle } from '@tennis/game';
+import { createPlayer, CREATION, defaultAllocation, EDITABLE, newSeason, STYLE_LABEL, type Allocation, type CreatableStyle } from '@tennis/game';
 import { h } from '../../lib/h.ts';
 import type { Ctx, Screen } from '../context.ts';
 
@@ -43,8 +43,8 @@ export function newCareerScreen(ctx: Ctx): Screen {
     try {
       const s = Number(seed.value) >>> 0;
       const state = newSeason(s, createPlayer({ name: name.value, style, allocation }, s));
-      await ctx.store.save('auto', toSave(state, new Date().toISOString().slice(0, 16).replace('T', ' ')));
       ctx.set(state, `Welcome to the tour, ${name.value.trim()}.`, '#/home');
+      await ctx.saveSlot('auto');
     } catch (e) {
       error.textContent = (e as Error).message;
     }
