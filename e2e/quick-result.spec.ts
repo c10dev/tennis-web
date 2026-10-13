@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { quickResultView } from '@tennis/game';
-import { css, nodeLadder, nodePlayNext, playToResult, watchErrors } from './helpers.ts';
+import { css, fillSeed, nodeLadder, nodePlayNext, playToResult, watchErrors } from './helpers.ts';
 
 // The result screen (ADR-017, result workstream): the reveal in order, skipping it, and the texts Node computes.
 
@@ -110,7 +110,7 @@ test.describe('quick result', () => {
     await recordCount(page);
     await page.goto('/#/');
     await page.locator('#quick-match').click();
-    await page.locator('#quick-seed').fill('3');
+    await fillSeed(page, 3);
     await page.locator('#quick-start').click();
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();

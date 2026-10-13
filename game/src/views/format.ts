@@ -32,6 +32,14 @@ export const STYLE_LABEL = {
   big_server: 'Big server', baseliner: 'Baseliner', counter_puncher: 'Counter-puncher', serve_and_volley: 'Serve & volley', all_court: 'All-court',
 } as const;
 
+/** One line per creatable style for the start form: its strengths and the card it plays best (engine CARDS.style). */
+export const STYLE_BLURB = {
+  big_server: 'A huge first serve and short points. Attack cards hit harder.',
+  baseliner: 'Heavy forehand and backhand from the back. Defend cards hold better.',
+  counter_puncher: 'Quick, steady, gets everything back. Counter cards bite harder.',
+  all_court: 'No weakness and no favourite card.',
+} as const;
+
 export const RATING_LABEL: Record<string, string> = {
   servePower: 'Serve power', serveAccuracy: 'Serve accuracy', secondServe: 'Second serve', forehand: 'Forehand', backhand: 'Backhand',
   consistency: 'Consistency', return: 'Return', movement: 'Movement', agility: 'Agility', stamina: 'Stamina', composure: 'Composure',

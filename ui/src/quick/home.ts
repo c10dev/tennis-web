@@ -1,5 +1,5 @@
 // The ladder: where you stand, how far the next place is, who is next. One button to play.
-import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, startQuick, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
+import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, startQuick, STYLE_BLURB, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { icon } from '../lib/icons.ts';
@@ -41,7 +41,9 @@ export function quickHome(ctx: Ctx): Screen {
 
 function startForm(ctx: Ctx): Screen {
   const name = h('input', { id: 'quick-name', value: 'Alex Kim', maxlength: 24 });
-  const style = h('select', { id: 'quick-style' }, STYLES.map((s) => h('option', { value: s }, STYLE_LABEL[s])));
+  const blurb = h('p', { class: 'muted style-blurb', id: 'style-blurb' }, STYLE_BLURB[STYLES[0]!]);
+  const style = h('select', { id: 'quick-style', onchange: () => { blurb.textContent = STYLE_BLURB[style.value as CreatableStyle]; } },
+    STYLES.map((s) => h('option', { value: s }, STYLE_LABEL[s])));
   const seed = h('input', { id: 'quick-seed', type: 'number', min: 0, value: String(Math.floor(Math.random() * 2 ** 31)) });
   const error = h('p', { class: 'error' });
   const start = () => {
@@ -56,7 +58,10 @@ function startForm(ctx: Ctx): Screen {
   const element = h('section', { class: 'card quick-start' },
     h('h2', null, 'Quick match ladder'),
     h('p', { class: 'muted' }, 'One tiebreak to seven against the players just above you. At the big points you pick a card: attack beats defend, defend beats counter, counter beats attack.'),
-    h('div', { class: 'form-row' }, h('label', null, 'Name', name), h('label', null, 'Style', style), h('label', null, 'Seed', seed)),
+    h('div', { class: 'form-row' }, h('label', null, 'Name', name), h('label', null, 'Style', style)),
+    blurb,
+    // The seed replays a ladder exactly (tests, bug reports); players never need it.
+    h('details', { class: 'advanced', id: 'quick-advanced' }, h('summary', null, 'Advanced'), h('label', null, 'Seed', seed)),
     error,
     h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'quick-start', onclick: start }, 'Start the ladder')));
   return { element };

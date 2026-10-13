@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { readingHint, type GamePlan } from '@tennis/game';
+import { readingHint, STYLE_BLURB, type GamePlan } from '@tennis/game';
 import { css, CYCLE, nodeLadder, nodePlayNext, startLadder, watchErrors } from './helpers.ts';
 
 const SEED = 3;
@@ -165,6 +165,17 @@ test.describe('quick match', () => {
     await expect(page.locator('#play-again')).toBeFocused();
     await page.locator('#play-again').click();
     await expect(page.locator('#ticker')).toContainText('Plan · Defensive', { timeout: 30_000 });
+  });
+
+  test('explains the chosen style on the start form and keeps the seed under Advanced', async ({ page }) => {
+    await page.goto('/#/');
+    await page.locator('#quick-match').click();
+    await expect(page.locator('#style-blurb')).toHaveText(STYLE_BLURB.big_server);
+    await page.locator('#quick-style').selectOption('counter_puncher');
+    await expect(page.locator('#style-blurb')).toHaveText(STYLE_BLURB.counter_puncher);
+    await expect(page.locator('#quick-seed')).toBeHidden();
+    await page.locator('#quick-advanced summary').click();
+    await expect(page.locator('#quick-seed')).toBeVisible();
   });
 
   test('shows the reading tip at the first decision until dismissed, then never again (TD-027)', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { fillSeed } from './helpers.ts';
 
 type Rgb = [number, number, number];
 const rgb = (css: string): Rgb => css.match(/\d+/g)!.slice(0, 3).map(Number) as Rgb;
@@ -32,7 +33,7 @@ const minCvdDelta = (cs: Rgb[]) => Math.min(...Object.values(CVD).flatMap((m) =>
 test('marks every card with an icon and its key, uses the colour-blind-safe trio, and words the verdict with a symbol', async ({ page }) => {
   await page.goto('/#/');
   await page.locator('#quick-match').click();
-  await page.locator('#quick-seed').fill('3');
+  await fillSeed(page, 3);
   await page.locator('#quick-start').click();
   await page.locator('#fast-mode').check();
   await page.locator('#quick-play').click();

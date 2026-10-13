@@ -38,11 +38,17 @@ export function nodePlayNext(s: QuickState, plan: GamePlan = 'balanced', onDecis
   return finishQuick(s, qm);
 }
 
+/** Types `seed` into the start form's seed field, opening its Advanced section first. */
+export async function fillSeed(page: Page, seed: number): Promise<void> {
+  if (!(await page.locator('#quick-seed').isVisible())) await page.locator('#quick-advanced summary').click();
+  await page.locator('#quick-seed').fill(String(seed));
+}
+
 /** Starts a ladder with `seed` from the title screen and waits for the Play button. */
 export async function startLadder(page: Page, seed: number): Promise<void> {
   await page.goto('/#/');
   await page.locator('#quick-match').click();
-  await page.locator('#quick-seed').fill(String(seed));
+  await fillSeed(page, seed);
   await page.locator('#quick-start').click();
   await expect(page.locator('#quick-play')).toBeVisible();
 }

@@ -35,3 +35,6 @@ ul.recent .lost { color: var(--loss); }
   .sound-pill { padding: 6px 8px; }
   .sound-pill .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
+.quick-start .style-blurb { margin: 4px 0 8px; font-size: 14px; }
+.quick-start .advanced summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 800; }
+.quick-start .advanced label { margin-top: 8px; }

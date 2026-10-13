@@ -21,7 +21,7 @@ export {
 export { beginWeek, closeWeek, seasonOver, weekPreview, type WeekPreview } from './season/week.ts';
 export { fromSave, SAVE_VERSION, toSave, type SaveFile, type SaveSummary } from './save/format.ts';
 export { checkSlot, MemoryStore, SLOTS, type SaveStore, type Slot, type SlotSummary } from './save/store.ts';
-export { fatigueLabel, money, ordinal, resultLabel, roundName, STYLE_LABEL, SURFACE_LABEL } from './views/format.ts';
+export { fatigueLabel, money, ordinal, resultLabel, roundName, STYLE_BLURB, STYLE_LABEL, SURFACE_LABEL } from './views/format.ts';
 export { homeView, type HomeView, type Option } from './views/home.ts';
 export { playerView } from './views/player.ts';
 export { rankingsView } from './views/rankings.ts';
