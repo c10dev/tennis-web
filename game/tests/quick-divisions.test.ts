@@ -45,6 +45,7 @@ describe('divisions (P5)', () => {
       if (r.promotedTo) {
         promotedAt = m;
         expect(r.promotedTo).toBe(2);
+        expect(r.won).toBe(true);
         expect(r.rankAfter).toBeLessThanOrEqual(QUICK_DIVISION.promoteTop);
         expect(s.matchNo - (before.divisionStart ?? 0)).toBeGreaterThanOrEqual(QUICK_DIVISION.minMatches);
         expect(s.division).toBe(2);
@@ -57,4 +58,21 @@ describe('divisions (P5)', () => {
     const s = play(freshLadder(4), 300);
     expect(s.division ?? 1).toBeGreaterThan(1);
   });
+
+  it('promotes only after a win, and tells the result screen about the new division', async () => {
+    const { quickResultView } = await import('../src/views/quick-result.ts');
+    let s = freshLadder(4);
+    for (let m = 0; m < 300; m++) {
+      s = play(s, 1);
+      const r = s.history.at(-1)!;
+      if (!r.won) expect(r.promotedTo).toBeUndefined();
+      if (r.promotedTo) {
+        const v = quickResultView(s);
+        expect(v.promotedTo).toBe(r.promotedTo);
+        expect(v.division).toBe(r.promotedTo);
+        break;
+      }
+    }
+  });
 });
+

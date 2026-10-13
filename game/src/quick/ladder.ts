@@ -135,7 +135,8 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
   const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
   const done: QuickState = { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
   delete done.live;
-  const promotes = record.rankAfter <= QUICK_DIVISION.promoteTop && done.matchNo - (s.divisionStart ?? 0) >= QUICK_DIVISION.minMatches;
+  // Only a win promotes: "You lost · Promoted" would read wrong even in the top 8.
+  const promotes = won && record.rankAfter <= QUICK_DIVISION.promoteTop && done.matchNo - (s.divisionStart ?? 0) >= QUICK_DIVISION.minMatches;
   if (!promotes) return done;
   record.promotedTo = (s.division ?? 1) + 1;
   return promote(done);

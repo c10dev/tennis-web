@@ -42,7 +42,10 @@ export function quickResult(ctx: Ctx): Screen {
   const gains = step('gains', 'gains',
     h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
     h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} `, glyph('arrow-right', '→'), ` #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),
-    h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? 'Top!' : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : `pts to #${v.rankAfter - 1}`)));
+    // After a promotion the next place belongs to the new division: show the division instead of a mixed-up count.
+    v.promotedTo
+      ? h('div', { class: 'gain', id: 'next-place' }, h('strong', null, `Division ${v.promotedTo}`), h('span', { class: 'muted' }, 'new division'))
+      : h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? 'Top!' : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : `pts to #${v.rankAfter - 1}`)));
   const overtakes = v.overtakes.length
     ? step('overtakes', 'overtakes', h('span', { class: 'kicker' }, 'Passed'), h('ul', null, v.overtakes.map((o) => h('li', { class: 'overtake' }, h('strong', null, `#${o.rank}`), ` ${o.name}`))))
     : null;
@@ -132,7 +135,8 @@ export function quickResult(ctx: Ctx): Screen {
     showAll();
     phase('done');
     // The whole result in one line for screen readers, once the reveal has ended (or been skipped).
-    announce(`${v.headline} against ${v.opponent}. ${signed(v.delta)} points, now #${v.rankAfter}. Next goal: ${v.goalLine}.`);
+    const standing = v.promotedTo ? `promoted to Division ${v.promotedTo}` : `now #${v.rankAfter}`;
+    announce(`${v.headline} against ${v.opponent}. ${signed(v.delta)} points, ${standing}. Next goal: ${v.goalLine}.`);
     requestAnimationFrame(() => element.querySelector<HTMLButtonElement>('#play-again')?.focus());
   }
 
