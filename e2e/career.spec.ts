@@ -129,6 +129,15 @@ test.describe('career', () => {
     expect(errors).toEqual([]);
   });
 
+  test('opens every screen at the top, not where the last one was scrolled to', async ({ page }) => {
+    await newCareer(page);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+    await page.locator('#nav-rankings').click();
+    await expect(page.locator('#rankings')).toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
   test('loads the career screens without Three.js', async ({ page }) => {
     const scripts: string[] = [];
     page.on('response', (r) => {

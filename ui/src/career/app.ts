@@ -113,6 +113,8 @@ function header(): HTMLElement {
     h('div', { class: 'status', id: 'status' }, v.seasonOver ? 'Season over' : `Week ${v.week} of ${v.weeks}`, ' · ', `#${v.player.rank}`));
 }
 
+let shownPath: string | null = null;
+
 async function render(): Promise<void> {
   const route = currentRoute();
   if (!state && NEEDS_STATE.has(route.name)) {
@@ -129,6 +131,9 @@ async function render(): Promise<void> {
   }
   current = screen;
   app.replaceChildren(...(screen.bare ? [screen.element] : [header(), h('main', { class: 'career' }, screen.element)]));
+  // A new screen opens at its top; a re-render of the same screen (after an action) keeps the place.
+  if (location.hash !== shownPath) window.scrollTo(0, 0);
+  shownPath = location.hash;
   if (route.name === 'home') note = null;
 }
 
