@@ -48,8 +48,8 @@ rematch plays exactly like a first meeting, apart from what the player remembers
 - **A. A counter-read in rematches (recommended).** An opponent who lost big points to one of your cards shifts its
   off-habit mix toward the card that beats it, at most +0.15 share. The rival line says so ("Cortley remembers your
   counters"). The habit stays the main read, and the counter-read gives the player a second-order guess to make. A
-  new target would guard it: "knows the habit" stays ≥ 62%, and a bot that ignores the rival line loses about 2–4 pp
-  in rematches.
+  new target would guard it: "knows the habit" stays ≥ 62%, and a bot that keeps playing one card loses ground in
+  rematches (measured below: about 2 pp).
 - **B. Escalating habits.** A rival's habit strengthens each meeting (habit share 0.72 → 0.8). Easier to read, but
   rematches get easier, which is the opposite of a rivalry.
 - **C. Leave it.** Rematches are a memory test for the player only.
@@ -81,7 +81,8 @@ short-term chain.
 **Default:** A now, C with the server.
 
 **Built for review** on the local branch `proposal/p3-win-streak` (not merged): `winStreak` over the history (no save
-change), the pill on the result and the ladder home, stamps at 3 / 5 / 10, unit tests and an e2e (seed 9 wins twice).
+change; the best run is counted from the history too), the pill on the result and the ladder home, stamps at
+3 / 5 / 10, unit tests and an e2e (on a seed found in Node that wins its first two matches).
 
 ## P4. A guided first match (rest of TD-027)
 
@@ -130,8 +131,8 @@ loop is "points to the next rank always visible" and continuous growth.
 
 **Default:** A. P3's streaks and P2's rivals carry over into each new division.
 
-**Built for review** on the local branch `proposal/p5-divisions` (not merged): `promote()` after a match that ends in
-the top 8 once the division has had 10 matches; a new world from the ladder seed with AI levels +1 per division and
+**Built for review** on the local branch `proposal/p5-divisions` (not merged): `promote()` after a win that ends in
+the top 8 once the division has had 10 matches (the result then shows the new division instead of a points count); a new world from the ladder seed with AI levels +1 per division and
 ids prefixed (`d2p01`); records keep the opponent's name; "Division N" on the ladder home, "Promoted to Division N" on
 the result, "Top 8 · promotion" as the goal. The same ten 300-match ladders now end in division 3.2 at rank 15 on
 average (division 1.2 and rank 15 at match 100, 2.3 and rank 21 at match 200) instead of #1.6 with nothing to chase.
