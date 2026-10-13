@@ -121,6 +121,21 @@ test.describe('quick result', () => {
     expect(errors).toEqual([]);
   });
 
+  test('keeps the next goal\'s label and line inside its gold lock ring', async ({ page }) => {
+    await playToResult(page, 3, true);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#next-goal')).toHaveClass(/is-locked/);
+    const gap = await page.locator('#next-goal').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const label = el.querySelector('.kicker')!.getBoundingClientRect();
+      const line = el.querySelector('strong')!.getBoundingClientRect();
+      return { top: label.top - box.top, bottom: box.bottom - line.bottom };
+    });
+    // The ring is a 2 px inset shadow; text needs clear space inside it, not just the ring's width.
+    expect(gap.top).toBeGreaterThanOrEqual(8);
+    expect(gap.bottom).toBeGreaterThanOrEqual(8);
+  });
+
   test('with reduced motion, shows the final result at once and plays the match reveal as cuts', async ({ page }) => {
     const errors = watchErrors(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });

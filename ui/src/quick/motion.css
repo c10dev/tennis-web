@@ -69,7 +69,7 @@
 @keyframes tick-up { from { transform: translateY(0.6em); opacity: 0.2; } }
 /* The next goal locks in: a short stamp. */
 .quick-result .goal.is-locked strong { display: inline-block; animation: goal-lock 420ms var(--ease-back); }
-.quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); border-radius: 8px; transition: box-shadow var(--dur-short) ease-out; }
+.quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); transition: box-shadow var(--dur-short) ease-out; }
 @keyframes goal-lock { from { transform: scale(1.35); opacity: 0; } }
 /* Skipped: every transition and animation ends at once. */
 .quick-result.is-skipped, .quick-result.is-skipped *, .quick-result.is-skipped *::before, .quick-result.is-skipped *::after {

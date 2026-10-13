@@ -35,6 +35,8 @@
 .rating-gain .fill { display: block; height: 100%; background: var(--court-2); width: var(--from); }
 .quick-result .shown .rating-gain .fill { width: var(--to); }
 .rating-gain.rose .fill { background: var(--gold); }
+/* Room inside the gold ring the goal gets when it locks in. */
+#next-goal { padding: 10px 16px; border-radius: 12px; }
 #next-goal strong { font: 400 26px/1.2 var(--font-display); }
 .quick-result .actions { justify-content: center; }
 .decisive-replay { position: fixed; inset: 0; z-index: 30; background: #000; }
