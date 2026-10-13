@@ -498,3 +498,22 @@ Format: one entry per decision, newest at the bottom.
     style (`scoutBot`) 56.3% (64% / 18%), habit only 54.8%, odds ceiling 56.3%. With the flow approximated (won
     matchup +29 pp, decisions from 4-4: 3.4 a match) the same code gives 66.7% / 64.8% / 68.9% and fixed cards
     44–48%: the habit target needs ① near the top of its edge range (TD-033).
+  - **Result (③):** `quick/highlight.ts` picks the decisive moment: in a win the last decision the user won (the last
+    won matchup among those first), in a loss the last one lost (the last lost matchup first), else the last decision;
+    its line names both cards and the score before it ("6-6: your counter beat their attack", "…, but they won the
+    point", "both went defend, and you won the point"). Without a decision the final point is shown with "Your plan
+    carried it" / "They closed it out". `finishQuick` records `overtakes` (above the user before, below after,
+    background matches included; the old rank shown). Ratings are shown as floor((rating + progress) × 5), 5–100.
+    **Reward:** the card progress of ADR-016 stays; a win also lifts the rating behind the decisive card (or behind
+    the game plan without a decision) that is nearest its next whole shown number up to it, at most 0.2 rating — the
+    win always shows a rise named after the choice that won it. Before this, 10% of won matches showed a whole-number
+    rise. Measured (`npm run quick -- --n 2000 --seed 1`, 30 ladders of 30 matches, reader bot, on the contract's
+    flow): visible rise in 100% of wins, 0.54 shown points a match, decisive moment in 100% of matches with a decision,
+    0.91 players passed a match; places climbed in 30 matches 17.7 before and after (the extra progress rarely crosses
+    a whole rating, which is what the engine reads). **Next goal** (`quick/standing.ts`): the first of Top 50/32/16/8
+    and #1 above the user; wins needed counts wins over an opponent two places up (the average of the three possible),
+    the rest of the ladder standing still. **Screen** (`ui/src/quick/result.ts`): the decisive point replays full
+    screen in 3D with the line as a caption (the whole point up to its last 8 s, at 1.25×), or as a play-by-play in
+    fast mode; then the result, the points counting up, the players passed, the ratings (rises first, bars growing
+    from the old share) and the next goal, each fading in; click or space skips to the end and [Play again] takes
+    focus. All final texts are in the page from the start (①'s e2e reads them at once). Fast mode reveals in about 5 s.

@@ -11,9 +11,10 @@ import { profileOf } from '../player/profile.ts';
 import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
-import { cardReward } from './rewards.ts';
+import { matchReward } from './rewards.ts';
+import { overtakesBetween } from './overtakes.ts';
 import { recordRival } from './rivals.ts';
-import type { DecisionRecord, RivalRecord } from './types.ts';
+import type { DecisionRecord, Overtake, RivalRecord } from './types.ts';
 
 export interface QuickRecord {
   matchNo: number;
@@ -30,6 +31,8 @@ export interface QuickRecord {
   progress: { key: Rated; before: number; after: number }[];
   /** The points the user chose a card on (ADR-017); absent in M5 records. */
   decisions?: DecisionRecord[];
+  /** Players the user passed this match, the first passed first; absent in M5 records. */
+  overtakes?: Overtake[];
 }
 
 export interface QuickState {
@@ -89,8 +92,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 
   const players = s.world.players.map((p) => (p.id === USER_ID ? { ...p, attributes: { ...p.attributes }, progress: { ...p.progress } } : p));
   const me = players.find((p) => p.id === USER_ID)!;
-  const cards = m.decisions.map((d) => d.user);
-  const progress = Object.entries(cardReward(cards, won)).map(([k, d]) => {
+  const progress = Object.entries(matchReward(me, { won, decisions: m.decisions, plan: m.plan })).map(([k, d]) => {
     const key = k as Rated;
     const before = me.attributes[key] + (me.progress[key] ?? 0);
     adjust(me, key, d!);
@@ -103,7 +105,7 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
   const record: QuickRecord = {
     matchNo: s.matchNo, opponent: m.opponent, opponentRank, won, score, pointsDelta, rankBefore, rankAfter: rankOf(next),
     fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
-    decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })),
+    decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })), overtakes: overtakesBetween(ladderOrder(s), ladderOrder(next), next),
   };
   const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
   return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };

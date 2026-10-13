@@ -214,5 +214,18 @@ export const QUICK_PERSONA = {
   rivalSeen: 12,
 } as const;
 
-/** The result screen's rewards. */
-export const QUICK_REWARD = {} as const;
+/** The result screen's rewards: ratings shown on a 0–100 scale; a win lifts one rating to its next whole number. */
+export const QUICK_REWARD = {
+  /** Shown rating = floor((rating + progress) × displayScale): 1–20 becomes 5–100. */
+  displayScale: 5,
+  /** On a win without a decision, the cards whose ratings the game plan trains. */
+  planCards: { aggressive: ['attack'], balanced: ['attack', 'defend', 'counter'], defensive: ['defend'] },
+  /** Ladder goals shown after a match: the first one above the user's rank (1 is "#1"). */
+  milestones: [50, 32, 16, 8, 1],
+  /** Wins are estimated against the opponent this many places above (the next opponent is one of the three above). */
+  placesAbove: 2,
+  /** Estimates stop here. */
+  maxWins: 50,
+  /** The result screen's reveal: play-by-play lines, pauses between steps, the points count-up, the replay speed. */
+  reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 0.7, replaySpeed: 1.25 },
+} as const;
