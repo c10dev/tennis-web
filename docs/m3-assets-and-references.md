@@ -1,12 +1,12 @@
 # M3 assets, tools and references
 
 Research for the rest of M3 (GDD §8, §10), gathered 2026-10-13. Every license below was checked on a live page, a
-repo LICENSE file or a model card, not from memory. Nothing here is installed or committed as an asset yet; each
-"Default" is a proposal to approve, and anything that adds a dependency or MCP server is a decision under rule 10.
+repo LICENSE file or a model card, not from memory, unless a line says otherwise. Nothing here is installed or
+committed as an asset yet. The defaults at the end were accepted on 2026-10-13.
 
-**Status of M3 at time of writing** (from git log): director, viewing modes, programme, replays, Hawk-Eye calls,
-cameras, venue and broadcast graphics (serve speed, rally count, captions, stats) are committed. Audio is in progress
-(`renderer/tests/calls.test.ts`, `cues.test.ts`). The player rig (TD-012) has not started.
+**Status:** M3 closed (ADR-009) with synthesised sound, the browser's `speechSynthesis` for the umpire and a procedural
+`MannequinRig`. This document is now the asset plan for the follow-ups: TD-016 (samples and a pre-rendered call set)
+and TD-012 (skinned GLTF rig).
 
 ## License classes
 - **CC0 / public domain:** commit freely, no attribution.
@@ -91,6 +91,22 @@ procedural hit as fallback only.
 | Ready Player Me | Service shut down 2026-01-31 | | Avoid |
 | [CMU Mocap](http://mocap.cs.cmu.edu) | Free use, no resale even converted; not CC0 | | No tennis; has golf and baseball swings |
 
+### Tripo (AI generation + auto-rig), evaluated 2026-10-13
+- What it does: text/image → 3D model, auto-rig, retarget preset clips; GLB or FBX; `animate_in_place` option
+  ([retarget API](https://developers.tripo3d.ai/en/docs/animations-retarget)).
+- Presets: rig v2.5 has 11 biped clips (idle, walk, run, jump, slash, turn…). Rig v1.0 has 90+, including
+  `cheer`, `clap`, `victory_celebration`, `frustrated_01/02`, `defeat_02/03`, `angry_*`, `bow`, `warm_up`, `golf`,
+  `pitch_baseball`, `volleyball`. **No tennis strokes either.** Its real gain is Reaction Cam material.
+- License: free-plan output stays Tripo's (Terms §5.2.1 as quoted in search results; `tripo3d.ai/terms` and the help
+  page returned 403, so unverified first-hand). Paid plans grant commercial rights to output generated while
+  subscribed. Plan prices seen only on aggregators ($15.90–19.90/month), unverified.
+- Tooling: [tripo-mcp](https://github.com/VAST-AI-Research/tripo-mcp) is MIT but alpha and needs Blender plus Tripo's
+  Blender add-on; the REST API / `tripo3d` Python SDK with an API key avoids both.
+- Risks: unknown bone names (retarget map needed to mix with Mesh2Motion clips), AI meshes and 2k textures run
+  several MB (decimate and shrink before commit), output differs per run (keep the chosen GLB, not the prompt).
+- Fit: optional complement. One generated, rigged body with its own presets would replace Mesh2Motion entirely and
+  add reactions; strokes stay procedural either way. Needs a paid plan and an API key before any asset is committed.
+
 **Gap: no CC0 pack has tennis strokes** (serve, forehand, backhand, split-step). The nearest stand-ins are
 Mesh2Motion `OverhandThrow`, `Golf_Drive`, `Strafe_left/right` and KayKit's horizontal slashes. That makes the
 current approach (procedural swings in `CapsuleRig`) the stroke layer to keep, not a gap to fill with assets.
@@ -153,6 +169,7 @@ spin direction, left-handers, nationality and umpire names.
 | parallax-threejs plugin (Anthropic directory, community) | Not installed | Three.js scene-graph/GL debugging, visual regression | Bundles 4 MCP servers + a PostToolUse hook; heavy |
 | Audiorective plugin (Anthropic directory, community) | Not installed | Web Audio skills | Built around its own library; we need plain Web Audio |
 | [blender-mcp](https://github.com/ahujasid/blender-mcp) | Blender **not installed** | Trim clips, attach racket, fetch Poly Haven/Sketchfab | MIT; only if the rig work needs DCC edits |
+| [tripo-mcp](https://github.com/VAST-AI-Research/tripo-mcp) | Not connected | Generate and rig a player body, reaction clips | Alpha; needs Blender + add-on. Paid plan required for commercial rights (see §2) |
 | [ElevenLabs MCP](https://github.com/elevenlabs/elevenlabs-mcp) | Not connected | Umpire voice, SFX | Free plan is non-commercial; Piper covers this locally |
 | Context7 MCP | Not connected | Up-to-date three.js docs | Local `node_modules/three` + `@types/three` already answer most questions |
 
@@ -161,7 +178,7 @@ Local tools already present: `ffmpeg` (transcoding), `piper` + 13 English voices
 **Default:** add nothing. Playwright MCP, local Piper and ffmpeg cover M3. Revisit blender-mcp only if trimming the
 rig in code proves too fiddly.
 
-## Open decisions (proposed defaults)
+## Decisions (accepted 2026-10-13)
 1. Umpire voice: Piper `en_GB-cori-medium` clips, built by a script, committed as OGG. *(alt: jenny_dioco)*
 2. Samples: the CC0 Freesound list above, transcoded to OGG, credits listed in `ui/public/audio/CREDITS.md`.
 3. Rig: Mesh2Motion CC0 body + trimmed clips, procedural strokes on top, lazy-loaded.
@@ -169,3 +186,4 @@ rig in code proves too fiddly.
    `@gltf-transform/cli`.
 5. Fonts: self-hosted Barlow Condensed woff2, no `@fontsource` dep.
 6. No new MCP servers or plugins for M3.
+7. Tripo: not adopted for now. A pilot (one rigged body + reaction presets) needs a paid plan and an API key first.
