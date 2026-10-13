@@ -1,15 +1,16 @@
 // One point as a sequence of shots (GDD §5.1): serve(s), return, then the rally until an error or a winner.
 import { returnSkill, strokeSkill, type PlayerRuntime } from '../player/condition.ts';
 import { chance, type Rng } from '../rng/mulberry32.ts';
-import { GEOMETRY, RALLY } from '../tuning.ts';
+import { CARDS, GEOMETRY, RALLY } from '../tuning.ts';
 import type { Outcome, PlayerId, PointCards, ShotEvent, ShotType, Surface, Vec2, Wing } from '../types.ts';
+import { cardEffects, type CardEffect } from './cards.ts';
 import { chase } from './chase.ts';
 import type { Side } from './court.ts';
 import * as geo from './geometry.ts';
 import { errorProbability, shotQualityMean, winnerProbability } from './outcome.ts';
 import { chooseServeTarget, drawServe, serveOdds, type ServeTarget } from './serve.ts';
 import { chooseShot, type TargetSide } from './shotSelection.ts';
-import { clamp01 } from './prob.ts';
+import { clamp01, logit, shifted, sigmoid } from './prob.ts';
 import type { Risk } from '../tuning.ts';
 
 export interface PointInput {
@@ -70,13 +71,29 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
     rallyLength: shots.filter((s) => s.outcome === 'in' || s.outcome === 'winner' || s.outcome === 'ace').length,
   });
 
-  const srv = input.players[server];
-  const ret = input.players[returner];
+  // Cards (ADR-015) set each player's risk appetite for the point and tilt serve and rally odds; without cards
+  // nothing below changes by even a rounding error.
+  const eff: Record<PlayerId, CardEffect> | null = input.cards ? cardEffects(input.cards, server, input.players) : null;
+  const players: Record<PlayerId, PlayerRuntime> = eff
+    ? {
+      A: { ...input.players.A, tactic: { ...input.players.A.tactic, aggression: eff.A.aggression } },
+      B: { ...input.players.B, tactic: { ...input.players.B.tactic, aggression: eff.B.aggression } },
+    }
+    : input.players;
+  const srv = players[server];
+  const ret = players[returner];
+  const odds = (n: 1 | 2, target: ServeTarget) => {
+    const o = serveOdds(srv, ret, n, target, surface, pressure);
+    if (!eff) return o;
+    const e = eff[server];
+    const share = n === 1 ? 1 : CARDS.secondServeShare;
+    return { pIn: shifted(o.pIn, e.serveIn * share), pAce: shifted(o.pAce, e.serveAce), quality: clamp01(o.quality + e.serveQuality) };
+  };
   let serveNumber: 1 | 2 = 1;
   for (;;) {
     const target = chooseServeTarget(rng, srv.tactic);
     const second = serveNumber === 2;
-    const result = drawServe(rng, serveOdds(srv, ret, serveNumber, target, surface, pressure));
+    const result = drawServe(rng, odds(serveNumber, target));
     const skill = second ? srv.n.secondServe : srv.n.servePower;
     const speed = geo.speedKmh(rng, 'serve', skill, surface, 'neutral', second);
     const spin = geo.spinRpm(rng, 'serve', 'neutral', second);
@@ -100,8 +117,8 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
     let bounce = firstBounce;
     let wing = firstWing;
     for (let n = 0; n < RALLY.maxShots; n++) {
-      const me = input.players[hitter];
-      const opp = input.players[other(hitter)];
+      const me = players[hitter];
+      const opp = players[other(hitter)];
       const shot: ShotType = n === 0 ? 'return' : 'drive';
       const incomingShot = shots.at(-1)!;
       const met = chase(rng, {
@@ -112,7 +129,8 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
       t += met.bounceToContact;
       const choice = chooseShot(rng, me, opp, incoming);
       const skill = shot === 'return' ? returnSkill(me, wing) : strokeSkill(me, wing);
-      const pError = errorProbability({ skill, risk: choice.risk, incoming, fatigue: me.fatigue, pressure, composure: me.n.composure, surface });
+      const base = errorProbability({ skill, risk: choice.risk, incoming, fatigue: me.fatigue, pressure, composure: me.n.composure, surface });
+      const pError = eff ? Math.min(0.97, base * eff[hitter].errorMul) : base;
       const speedSpin = (r: Risk) => [geo.speedKmh(rng, shot, skill, surface, r), geo.spinRpm(rng, shot, r)] as const;
       if (chance(rng, pError)) {
         const outcome: Outcome = incoming > RALLY.forcedThreshold ? 'forced_error' : 'unforced_error';
@@ -121,7 +139,8 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
         return finish(other(hitter), outcome, serveNumber, flight);
       }
       const quality = clamp01(shotQualityMean(skill, choice.risk, incoming, surface) + RALLY.qualitySpread * (2 * rng.next() - 1));
-      const isWinner = chance(rng, winnerProbability(quality, opp, surface, choice.risk));
+      const pWinner = winnerProbability(quality, opp, surface, choice.risk);
+      const isWinner = chance(rng, eff ? sigmoid(logit(pWinner) + eff[hitter].winnerShift) : pWinner);
       const [speed, spin] = speedSpin(choice.risk);
       const landing = geo.rallyLanding(rng, sideOf(other(hitter)), choice.target, true);
       const flight = push(hitter, shot, landing, speed, spin, isWinner ? 'winner' : 'in', wing, met.contact);

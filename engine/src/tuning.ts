@@ -151,3 +151,42 @@ export const GEOMETRY = {
   maxBehindBaseline: 4.5,
   maxWide: 4.5,
 } as const;
+
+/**
+ * Cards (ADR-015): what each card does for its player on the point, by role, and how much winning the matchup
+ * (attack > defend > counter > attack) is worth. Logit shifts and multipliers, scaled by the card's strength.
+ */
+export const CARDS = {
+  roles: {
+    serve: {
+      attack: { aggression: 0.8, serveIn: -0.45, serveAce: 0.7, serveQuality: 0.03, errorMul: 1.05, winnerShift: 0.03 },
+      defend: { aggression: 0.25, serveIn: 0.6, serveAce: -0.5, serveQuality: -0.03, errorMul: 0.93, winnerShift: -0.05 },
+      counter: { aggression: 0.5, serveIn: 0, serveAce: 0, serveQuality: 0, errorMul: 1, winnerShift: 0 },
+    },
+    return: {
+      attack: { aggression: 0.8, serveIn: 0, serveAce: 0, serveQuality: 0, errorMul: 1.1, winnerShift: 0.2 },
+      defend: { aggression: 0.25, serveIn: 0, serveAce: 0, serveQuality: 0, errorMul: 0.88, winnerShift: -0.15 },
+      counter: { aggression: 0.5, serveIn: 0, serveAce: 0, serveQuality: 0, errorMul: 1, winnerShift: 0 },
+    },
+  },
+  /** The second serve takes this share of the serve card's in % shift. */
+  secondServeShare: 0.6,
+  /** Winning the matchup: own rally errors × exp(−edgeError), winners +edgeWinner on the logit, serve +edgeAce and
+   *  +edgeQuality; losing it the reverse. A returner who wins it takes edgeQuality off the serve. */
+  edgeError: 0.22,
+  edgeWinner: 0.22,
+  edgeAce: 0.2,
+  edgeQuality: 0.03,
+  /** Ratings behind each card; strength = 1 + statWeight × (their mean − average). */
+  stats: {
+    attack: ['servePower', 'forehand', 'aggression'],
+    defend: ['consistency', 'movement'],
+    counter: ['return', 'decision', 'agility'],
+  },
+  statWeight: 1.5,
+  /** Styles built for a card get more from it. */
+  style: { big_server: { attack: 1.15 }, serve_and_volley: { attack: 1.15 }, baseliner: { defend: 1.15 }, counter_puncher: { counter: 1.15 } },
+  /** Attack loses this share of its strength per unit of fatigue. */
+  fatigueAttack: 0.6,
+  minStrength: 0.3,
+} as const;

@@ -336,7 +336,21 @@ Format: one entry per decision, newest at the bottom.
   - `advance(live, 'point', { cards })` plays one point; `Card` is `attack | defend | counter` and
     `PointEvent.cards` records both players' cards. `MatchRecipe.cards` (by point index) replays such matches.
   - `SCHEMA_VERSION` becomes 4; the renderer plays v2–v4 and draws card matches like any other.
-  - Card effects on the point model are numerical only and draw no random numbers (step 3 of M5).
+  - Card effects (`point/cards.ts`, `CARDS` in tuning) are numerical only and draw no random numbers. A card sets its
+    player's risk appetite for the point and, by role, tilts the serve (attack: in % −, aces +, quality +; defend:
+    in % +, aces −). Winning the matchup scales that player's rally errors by exp(−0.22·k), shifts their winners by
+    +0.22·k on the logit and moves serve aces and quality; losing it does the reverse. k is the card's strength:
+    1 + 1.5 × (mean of its ratings − average) × style (×1.15 for a style built for it) × (1 − 0.6 × fatigue) for attack.
+  - Average players, 20,000 points each, server's point-win shift from the card-free 0.625:
+
+    | Server \ returner | attack | defend | counter |
+    |---|---|---|---|
+    | attack | +0.009 | +0.110 | −0.100 |
+    | defend | −0.142 | −0.005 | +0.109 |
+    | counter | +0.114 | −0.121 | 0.000 |
+
+    Against an even mix of the returner's cards the three serve cards land within 0.018 of each other, and the three
+    return cards within 0.007. Attack serves 46% more aces and 3.4× the double faults of defend.
 - **Consequences:** Matches without cards are unchanged: goldens hold and 10,000-match reports on all three surfaces
   are byte-identical. A Fast4 set with No-Ad runs a median of 35 points (quartiles 29/35/40 over 1,000 matches), not
   the 20–32 estimated when M5 was planned; the 1–2 minute target is met through short per-point clips (ADR-016).

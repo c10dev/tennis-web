@@ -12,11 +12,13 @@ export interface PlayerRuntime {
   fatigue: number;
   /** Shift added to every skill from the surface affinity rating. */
   affinity: number;
+  /** Playing style: some styles get more out of some cards (ADR-015). */
+  style: PlayerProfile['style'];
 }
 
 export function runtime(profile: PlayerProfile, tactic: Tactic, id: PlayerId, surface: Surface, fatigue = 0): PlayerRuntime {
   const n = normalizeAttributes(profile.attributes);
-  return { id, n, tactic, fatigue, affinity: SKILL_MIX.surfaceAffinity * (n.surfaceAffinity[surface] - AVG) };
+  return { id, n, tactic, fatigue, affinity: SKILL_MIX.surfaceAffinity * (n.surfaceAffinity[surface] - AVG), style: profile.style };
 }
 
 export function strokeSkill(p: PlayerRuntime, wing: Wing): number {
