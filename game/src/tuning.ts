@@ -180,4 +180,6 @@ export const QUICK_PACE = {
   tossSec: 1,
   /** Rallies at least this long are key points, shown whole (as are points that end a set or win a break). */
   keyRally: 10,
+  /** Even a key point shows at most its last this-many seconds (a long point with a second serve runs 20 s+). */
+  keyMaxSec: 8,
 } as const;

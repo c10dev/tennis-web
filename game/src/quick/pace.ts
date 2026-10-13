@@ -10,7 +10,7 @@ export const decisive = (p: PointEvent): boolean => p.scoreAfter.sets.length > p
 export function clipFor(p: PointEvent): { fromTau: number; toTau: number; full: boolean } {
   const full = decisive(p) || p.rallyLength >= QUICK_PACE.keyRally;
   const toTau = p.durationSec;
-  return { fromTau: full ? -QUICK_PACE.tossSec : Math.max(-QUICK_PACE.tossSec, toTau - QUICK_PACE.clipSec), toTau, full };
+  return { fromTau: Math.max(-QUICK_PACE.tossSec, toTau - (full ? QUICK_PACE.keyMaxSec : QUICK_PACE.clipSec)), toTau, full };
 }
 
 /** Seconds on screen for these points, decisions aside. */

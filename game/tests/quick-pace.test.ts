@@ -23,7 +23,7 @@ describe('quick-match pacing', () => {
       expect(clip.toTau).toBeCloseTo(end, 9);
       const key = decisive(p) || p.rallyLength >= QUICK_PACE.keyRally;
       expect(clip.full).toBe(key);
-      if (key) expect(clip.fromTau).toBe(-QUICK_PACE.tossSec);
+      if (key) expect(clip.fromTau).toBeCloseTo(Math.max(-QUICK_PACE.tossSec, end - QUICK_PACE.keyMaxSec), 9);
       else expect(clip.fromTau).toBeCloseTo(Math.max(-QUICK_PACE.tossSec, end - QUICK_PACE.clipSec), 9);
     }
   });

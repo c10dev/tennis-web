@@ -1,5 +1,5 @@
 // SaveStore on the browser's IndexedDB: one object store keyed by slot (ADR-012). Covered by the e2e tests.
-import { checkSlot, SLOTS, type SaveFile, type SaveStore, type Slot, type SlotSummary } from '@tennis/game';
+import { checkSlot, SLOTS, type QuickSave, type SaveFile, type SaveStore, type Slot, type SlotSummary } from '@tennis/game';
 
 const DB = 'tennis-sim';
 const STORE = 'saves';
@@ -46,6 +46,16 @@ export class IndexedDbStore implements SaveStore {
   async save(slot: Slot, file: SaveFile): Promise<void> {
     checkSlot(slot);
     await request((await this.store('readwrite')).put(JSON.stringify(file), slot));
+  }
+
+  /** The quick-match ladder lives under its own key, outside the season slots (ADR-016). */
+  async loadQuick(): Promise<QuickSave | null> {
+    const text = (await request((await this.store('readonly')).get('quick'))) as string | undefined;
+    return text ? (JSON.parse(text) as QuickSave) : null;
+  }
+
+  async saveQuick(file: QuickSave): Promise<void> {
+    await request((await this.store('readwrite')).put(JSON.stringify(file), 'quick'));
   }
 
   async remove(slot: Slot): Promise<void> {

@@ -1,6 +1,6 @@
 // The career game: hash-routed screens over one SeasonState, autosaved to IndexedDB at the end of every week.
 import { DEFAULT_TACTIC } from '@tennis/engine';
-import { closeWeek, fromSave, homeView, playerById, playOut, toSave, USER_ID, type SeasonState } from '@tennis/game';
+import { closeWeek, fromQuickSave, fromSave, homeView, playerById, playOut, toQuickSave, toSave, USER_ID, type QuickState, type SeasonState } from '@tennis/game';
 import { h } from '../lib/h.ts';
 import { currentRoute, go } from '../lib/router.ts';
 import { IndexedDbStore } from '../storage/indexedDb.ts';
@@ -13,12 +13,13 @@ import { playerScreen } from './screens/player.ts';
 import { rankingsScreen } from './screens/rankings.ts';
 import { savesScreen } from './screens/saves.ts';
 import { titleScreen } from './screens/title.ts';
+import { quickScreen } from '../quick/screens.ts';
 import { tournamentScreen } from './screens/tournament.ts';
 import './career.css';
 
 type ScreenFn = (ctx: Ctx, params: string[]) => Screen | Promise<Screen>;
 const SCREENS: Record<string, ScreenFn> = {
-  '': titleScreen, new: newCareerScreen, saves: savesScreen,
+  '': titleScreen, new: newCareerScreen, saves: savesScreen, quick: quickScreen,
   home: homeScreen, tournament: tournamentScreen, history: historyScreen, rankings: rankingsScreen, player: playerScreen, match: matchScreen,
 };
 const NEEDS_STATE = new Set(['home', 'tournament', 'history', 'rankings', 'player', 'match']);
@@ -26,6 +27,15 @@ const NEEDS_STATE = new Set(['home', 'tournament', 'history', 'rankings', 'playe
 const app = document.getElementById('app')!;
 const stamp = () => new Date().toISOString().slice(0, 16).replace('T', ' ');
 let state: SeasonState | null = null;
+let quick: QuickState | null = null;
+const FAST = 'tennis-fast-mode';
+const readFast = () => {
+  try {
+    return localStorage.getItem(FAST) === '1';
+  } catch {
+    return false;
+  }
+};
 let note: string | null = null;
 let current: Screen | null = null;
 /** Renders are async (screens may load code); only the latest one may show. */
@@ -38,6 +48,26 @@ const ctx: Ctx = {
   store: new IndexedDbStore(),
   get note() {
     return note;
+  },
+  get quick() {
+    return quick;
+  },
+  quickMatch: null,
+  get fastMode() {
+    return readFast();
+  },
+  set fastMode(on: boolean) {
+    try {
+      localStorage.setItem(FAST, on ? '1' : '0');
+    } catch {
+      // Private windows may refuse storage; the toggle then lasts for this page only.
+    }
+  },
+  async setQuick(next, path) {
+    quick = next;
+    await ctx.store.saveQuick(toQuickSave(next, stamp()));
+    if (path) go(path);
+    else void render();
   },
   tactic: { ...DEFAULT_TACTIC },
   go,
@@ -69,7 +99,10 @@ const ctx: Ctx = {
 };
 
 function header(): HTMLElement {
-  if (!state) return h('header', { class: 'top' }, h('a', { href: '#/', class: 'brand' }, 'TennisSim'));
+  if (!state) {
+    return h('header', { class: 'top' }, h('a', { href: '#/', class: 'brand' }, 'TennisSim'),
+      quick ? h('nav', null, h('a', { href: '#/quick', id: 'nav-quick', class: currentRoute().name === 'quick' ? 'active' : '' }, 'Quick match')) : null);
+  }
   const v = homeView(state);
   const link = (path: string, label: string, id: string) =>
     h('a', { href: path, id, class: currentRoute().name === path.slice(2) ? 'active' : '' }, label);
@@ -101,4 +134,6 @@ async function render(): Promise<void> {
 
 window.addEventListener('hashchange', () => void render());
 document.title = 'TennisSim';
-void render();
+void ctx.store.loadQuick().then((file) => {
+  if (file) quick = fromQuickSave(file);
+}).catch(() => undefined).finally(() => void render());

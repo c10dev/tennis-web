@@ -1,5 +1,6 @@
 // What every career screen gets: the season, the save store, navigation and the actions that change the season.
-import type { SaveStore, SeasonState, Slot } from '@tennis/game';
+import type { QuickMatch, QuickState, SeasonState, Slot } from '@tennis/game';
+import type { IndexedDbStore } from '../storage/indexedDb.ts';
 import type { Tactic } from '@tennis/engine';
 
 export interface Screen {
@@ -11,7 +12,14 @@ export interface Screen {
 
 export interface Ctx {
   readonly state: SeasonState | null;
-  readonly store: SaveStore;
+  readonly store: IndexedDbStore;
+  /** The quick-match ladder (ADR-016), and the match being played, if any. */
+  readonly quick: QuickState | null;
+  quickMatch: QuickMatch | null;
+  /** Quick matches without the 3D clips (kept in localStorage). */
+  fastMode: boolean;
+  /** Replace the ladder, save it, and go to `path`. */
+  setQuick(state: QuickState, path?: string): Promise<void>;
   /** One-line message for the next screen ("Week 4: trained serve"). */
   readonly note: string | null;
   /** The tactic the user set for their next match. */

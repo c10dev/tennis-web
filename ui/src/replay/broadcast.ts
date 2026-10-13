@@ -14,11 +14,17 @@ export interface Broadcast {
   readonly programme: Programme | null;
   readonly clock: ClockState;
   dispatch(action: ClockAction): void;
+  /** Plays match seconds [from, to] at `speed`, then stops; resolves when done (quick matches). */
+  playWindow(from: number, to: number, speed: number): Promise<void>;
   dispose(): void;
 }
 
 export interface BroadcastOptions {
   mode: ViewMode;
+  /** Transport controls (play, seek, speeds, modes); off for quick matches. */
+  controls?: boolean;
+  /** Programme without the introduction and replays (quick matches). */
+  bare?: boolean;
   /** After every drawn frame. */
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
 }
@@ -29,7 +35,10 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   document.body.classList.add('broadcast-page');
   const canvas = Object.assign(document.createElement('canvas'), { id: 'view' });
   const [score, graphics, soundRoot, controlsRoot] = ['score', 'graphics', 'sound', 'controls'].map(div) as [HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLDivElement];
-  root.append(canvas, score, graphics, soundRoot, controlsRoot);
+  root.append(canvas, score, graphics, soundRoot);
+  if (options.controls !== false) root.append(controlsRoot);
+  const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
+  let window: { end: number; speed: number; done: () => void } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
   const overlays = createOverlays();
@@ -44,14 +53,14 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const dispatch = (action: ClockAction) => {
     if (programme) clock = clockReducer(programme, clock, action);
   };
-  const controls = createControls(controlsRoot, dispatch, (next) => {
+  const controls = options.controls === false ? null : createControls(controlsRoot, dispatch, (next) => {
     mode = next;
     if (!programme) return;
     // Keep the place: the new programme starts at (or just after) the match moment on screen now.
     const matchT = broadcastFrameAt(programme, clock.t).matchT;
-    programme = buildProgramme(programme.timeline, mode);
+    programme = build(programme.timeline);
     clock = { ...clock, t: programmeTimeFor(programme, matchT) };
-    controls.setProgramme(programme);
+    controls?.setProgramme(programme);
   });
   // The canvas may be mounted before it is in the document (size 0): every frame checks its size instead.
   let size = '';
@@ -70,15 +79,25 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     if (programme && viewer) {
       resize();
       const before = clock.t;
-      clock = clockReducer(programme, clock, { type: 'tick', dt });
-      if (sound.mixer && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) sound.mixer.play(cue);
+      if (window) {
+        clock = { ...clock, t: Math.min(window.end, clock.t + Math.min(dt, 0.25) * window.speed) };
+        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, window.speed)) sound.mixer.play(cue);
+        if (clock.t >= window.end) {
+          const { done } = window;
+          window = null;
+          done();
+        }
+      } else {
+        clock = clockReducer(programme, clock, { type: 'tick', dt });
+        if (sound.mixer && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) sound.mixer.play(cue);
+      }
       const frame = broadcastFrameAt(programme, clock.t);
       viewer.render(frame, dt);
       // Read by the e2e tests and handy when debugging the director.
       Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
       scoreBug.update(frame.scoreBug);
       overlays.update(overlayAt(programme, frame), programme.timeline.names);
-      controls.update(clock, frame);
+      controls?.update(clock, frame);
       options.onFrame?.(frame, clock, programme);
     }
     raf = requestAnimationFrame(loop);
@@ -95,9 +114,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         size = '';
         resize();
       }
-      programme = buildProgramme(timeline, mode);
+      programme = build(timeline);
       clock = opts.keepTime ? clockReducer(programme, clock, { type: 'seek', t: clock.t }) : createClock();
-      controls.setProgramme(programme);
+      controls?.setProgramme(programme);
       return timeline;
     },
     get programme() {
@@ -107,9 +126,20 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       return clock;
     },
     dispatch,
+    playWindow(from, to, speed) {
+      if (!programme) return Promise.resolve();
+      const p = programme;
+      return new Promise<void>((done) => {
+        window?.done();
+        clock = { ...clock, playing: false, t: programmeTimeFor(p, from) };
+        window = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done };
+      });
+    },
     dispose() {
+      window?.done();
+      window = null;
       cancelAnimationFrame(raf);
-      controls.dispose();
+      controls?.dispose();
       sound.mixer?.dispose();
       viewer?.dispose();
       root.replaceChildren();
