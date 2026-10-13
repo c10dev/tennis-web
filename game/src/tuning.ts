@@ -60,3 +60,51 @@ export const RANKING = {
   /** Carryover falls by a factor e every this many ranking places. */
   carryoverScale: 14,
 } as const;
+
+/** Training focuses (GDD §9.3) and the ratings each one works on. */
+export const FOCUS_RATINGS = {
+  serve: ['servePower', 'serveAccuracy', 'secondServe'],
+  groundstrokes: ['forehand', 'backhand', 'consistency'],
+  return: ['return', 'decision', 'concentration'],
+  physical: ['movement', 'agility', 'stamina'],
+  mental: ['composure', 'concentration', 'decision', 'aggression'],
+} as const satisfies Record<string, readonly Rated[]>;
+
+export const TRAINING = {
+  /** Progress per focused rating per week, before age and headroom. */
+  rate: { light: 0.22, normal: 0.4, hard: 0.6 },
+  /** Share of that rate every other rated skill gets. */
+  spill: 0.08,
+  /** A week of matches teaches every rated skill a little. */
+  matchRate: 0.05,
+  /** Growth slows as overall nears potential: full speed this far below it. */
+  headroom: 2,
+  /** Growth by age: [up to age, factor]. */
+  age: [[21, 1], [25, 0.75], [29, 0.45], [99, 0.2]] as const,
+} as const;
+
+export const CONDITION = {
+  train: { light: 0.04, normal: 0.08, hard: 0.14 },
+  perSet: 0.03,
+  /** A tournament straight after another one. */
+  travel: 0.06,
+  rest: 0.35,
+  /** Every week takes this much off whatever was added. */
+  weekly: 0.06,
+  /** Share of weekly fatigue a player carries into a match (engine starting fatigue). */
+  toMatch: 0.6,
+} as const;
+
+export const INJURY = {
+  /** Weekly chance at average proneness (10), multiplied by the week's load and fatigue. */
+  base: 0.0035,
+  load: { rest: 0.2, light: 0.6, normal: 1, hard: 2, tournament: 1.3 },
+  fatigueWeight: 3,
+  weeks: [1, 4] as const,
+} as const;
+
+export const AGING = {
+  /** From this age, every rated skill loses this much progress per week per year past it. */
+  from: 30,
+  weekly: 0.02,
+} as const;

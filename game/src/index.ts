@@ -3,10 +3,11 @@ export { createPlayer, defaultAllocation, USER_ID, type Allocation, type Creatab
 export { CALENDAR, tournamentInWeek, type Tournament } from './calendar/schedule.ts';
 export { pointsFor, TIERS, type Tier, type TierSpec } from './calendar/tiers.ts';
 export { overall } from './player/overall.ts';
+export { canPlay, endWeek, matchFatigue, type Focus, type Intensity, type WeekActivity } from './player/week.ts';
 export { carryover, rankingOrder, rankingPoints } from './ranking.ts';
 export { champion, nextPairs, playRound, roundCount, roundsWon, startBracket, type Bracket } from './tournament/bracket.ts';
 export { makeDraw, seedOrder } from './tournament/draw.ts';
 export { entryList } from './tournament/entry.ts';
-export { CREATION, EDITABLE, STYLES } from './tuning.ts';
+export { CREATION, EDITABLE, FOCUS_RATINGS, STYLES } from './tuning.ts';
 export type { CareerPlayer, World } from './types.ts';
 export { generateWorld } from './world/generate.ts';
