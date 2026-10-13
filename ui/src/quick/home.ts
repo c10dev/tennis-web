@@ -1,5 +1,5 @@
 // The ladder: where you stand, how far the next place is, who is next. One button to play.
-import { createPlayer, defaultAllocation, newLadder, quickHomeView, startQuick, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
+import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, startQuick, STYLE_LABEL, type CreatableStyle } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 
@@ -8,6 +8,7 @@ const STYLES: CreatableStyle[] = ['big_server', 'baseliner', 'counter_puncher', 
 export function quickHome(ctx: Ctx): Screen {
   if (!ctx.quick) return startForm(ctx);
   const v = quickHomeView(ctx.quick);
+  const scout = opponentScouting(ctx.quick, v.opponent.id);
   const play = () => {
     ctx.quickMatch = startQuick(ctx.quick!);
     ctx.go('#/quick/match');
@@ -24,6 +25,8 @@ export function quickHome(ctx: Ctx): Screen {
       h('span', { class: 'muted' }, 'Next opponent'),
       h('h2', null, v.opponent.name),
       h('p', { class: 'muted' }, `#${v.opponent.rank} · ${v.opponent.style} · level ${v.opponent.level.toFixed(1)} · ${v.opponent.surface} · tiebreak to 7`),
+      h('p', { class: 'scouting', id: 'home-scouting' }, h('span', { class: 'muted' }, 'Scouting: '), scout.habit),
+      scout.rival ? h('p', { class: 'rival', id: 'home-rival' }, scout.rival) : null,
       h('button', { class: 'primary big', id: 'quick-play', onclick: play }, 'Play'),
       h('label', { class: 'muted fast' }, fast, ' Fast mode (no 3D)')),
     v.recent.length ? h('div', { class: 'card' }, h('h3', null, 'Recent'),
