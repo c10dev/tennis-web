@@ -1,42 +1,48 @@
-/* The quick result screen (ADR-017): owned by the result workstream. Steps fade in as the reveal reaches them. */
-.quick-result { max-width: 680px; margin: 0 auto; text-align: center; display: grid; gap: 12px; }
+/* The quick result screen (ADR-017), Rally Pop look (ADR-020): paper tiles on court blue, gold for the ladder points.
+   Steps fade in as the reveal reaches them. */
+.quick-result { max-width: 680px; margin: 0 auto; text-align: center; display: grid; gap: 14px; }
 .quick-result .step, .quick-result .pbp { opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; }
 .quick-result .shown { opacity: 1; transform: none; }
 .quick-result.done .skip-hint { visibility: hidden; }
-.quick-result .kicker { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
-.quick-result h1 { font-size: 40px; margin: 0; }
-.quick-result.won h1 { color: var(--win); } .quick-result.lost h1 { color: var(--loss); }
-.decisive { background: #19212c; border: 1px solid #2a3443; border-left: 4px solid var(--bug-accent); border-radius: 8px; padding: 12px 16px; text-align: left; }
+.quick-result .kicker { display: block; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.quick-result h1 { font-size: 52px; line-height: 1.05; margin: 0; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; text-shadow: 0 5px 0 var(--ink); }
+.quick-result.won h1 { color: var(--win); } .quick-result.lost h1 { color: var(--text); }
+.decisive { border-left: 10px solid var(--gold); padding: 12px 16px; text-align: left; }
 #play-by-play { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 3px; font-variant-numeric: tabular-nums; color: var(--muted); }
 #play-by-play.compact, .decisive.collapsed #play-by-play { display: none; }
-#play-by-play li:last-child { color: var(--text); font-weight: 600; }
-#decisive-line { margin: 6px 0 0; font-size: 20px; font-weight: 700; }
+#play-by-play li:last-child { color: var(--text); font-weight: 800; }
+#decisive-line { margin: 6px 0 0; font: 400 22px/1.2 var(--font-display); }
 #decisive-line.you { color: var(--win); } #decisive-line.them { color: var(--loss); }
-.gains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.gain { display: grid; gap: 4px; background: #19212c; border: 1px solid #2a3443; border-radius: 8px; padding: 12px; }
-.gain strong { font-size: 24px; font-variant-numeric: tabular-nums; }
-#points-delta strong { color: var(--bug-accent); font-size: 30px; }
+.gains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.gain { display: grid; gap: 4px; padding: 12px; }
+.gain strong { font: 400 30px/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+/* A win's points tile is gold; its label stays ink (ink-muted on gold is under 4.5:1). */
+.quick-result.won #points-delta { background: var(--gold); --muted: var(--ink); }
+#points-delta strong { font-size: 40px; }
+.quick-result.lost #points-delta strong { color: var(--loss); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.overtakes ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 6px 0 0; padding: 0; }
-.overtake { background: #1f3a2a; color: #b8f5c8; border-radius: 14px; padding: 4px 12px; }
+.overtakes ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0 0; padding: 0; }
+.overtake { background: var(--paper); border: 2px solid var(--ink); border-radius: 999px; box-shadow: 0 3px 0 var(--ink); padding: 3px 12px; }
 .overtake strong { color: var(--win); }
-#rating-gains { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+#rating-gains { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
 #rating-gains h3 { grid-column: 1 / -1; margin: 0 0 4px; }
 .rating-gain { display: grid; grid-template-columns: 1fr auto 70px; gap: 8px; align-items: center; text-align: left; }
 .rating-gain .value { font-variant-numeric: tabular-nums; text-align: right; color: var(--muted); white-space: nowrap; }
-.rating-gain.rose .value { color: var(--bug-accent); font-weight: 700; font-size: 17px; }
+.rating-gain.rose .value { color: var(--ink); font-weight: 800; font-size: 17px; }
+/* The rise: ▲ in court-2 on paper (optic would be 1.2:1 on white). */
+.rating-gain .up { color: var(--court-2); }
 .quick-result .shown .rating-gain.rose .value { animation: rating-pop 0.5s ease 0.2s both; }
-.rating-gain .bar { height: 6px; background: #2a3443; border-radius: 3px; overflow: hidden; }
-.rating-gain .fill { display: block; height: 100%; background: #6aa8ff; width: var(--from); transition: width 0.8s ease 0.3s; }
+.rating-gain .bar { height: 10px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.rating-gain .fill { display: block; height: 100%; background: var(--court-2); width: var(--from); transition: width 0.8s ease 0.3s; }
 .quick-result .shown .rating-gain .fill { width: var(--to); }
-.rating-gain.rose .fill { background: var(--bug-accent); }
-#next-goal strong { font-size: 22px; }
+.rating-gain.rose .fill { background: var(--gold); }
+#next-goal strong { font: 400 26px/1.2 var(--font-display); }
 .quick-result .actions { justify-content: center; }
 .decisive-replay { position: fixed; inset: 0; z-index: 30; background: #000; }
 .replay-caption { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 31; width: min(720px, calc(100vw - 32px));
-  background: rgba(16, 21, 30, 0.92); border-left: 4px solid var(--bug-accent); border-radius: 6px; padding: 12px 16px; text-align: left; display: grid; gap: 4px; }
-.replay-caption strong { font-size: 20px; }
+  background: rgba(18, 58, 140, 0.95); border: var(--outline); border-left: 10px solid var(--gold); border-radius: 14px; box-shadow: var(--lift);
+  padding: 12px 16px; text-align: left; display: grid; gap: 4px; }
+.replay-caption strong { font: 400 22px/1.2 var(--font-display); }
 @keyframes rating-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 @media (max-width: 640px) { .gains, #rating-gains { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .quick-result .step, .quick-result .pbp { transition: none; } }
-.quick-result.lost #points-delta strong { color: var(--loss); }
