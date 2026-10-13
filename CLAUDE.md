@@ -23,6 +23,7 @@ npm run test:game
 npm run season -- --n 50 --seed 1   # season balance report (M4 targets)
 npm run quick -- --n 2000 --seed 1  # quick-match balance report (M5 targets); test:quick guards it
 npm run test:e2e     # Playwright (Chromium) against the dev page; not part of npm test
+npx playwright test e2e/quick-look.spec.ts --update-snapshots   # refresh the screenshot baselines after a deliberate visual change
 npm run sim -- --n 10000 --seed 42 --surface hard   # batch sim stats report
 npm run sim -- --fingerprint --seed 42 --surface clay   # hash to compare with the replay page
 npm run -s sim -- --replay --seed 42 --surface clay > replay.json   # replay JSON for the page's loader
