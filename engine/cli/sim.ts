@@ -1,5 +1,6 @@
 // Batch simulation report: npm run sim -- --n 10000 --seed 42 --surface hard [--a big-server] [--ladder]
 // One exhibition match's fingerprint, to compare with the replay page (TD-005): npm run sim -- --fingerprint --seed 42 --surface clay
+// One exhibition match as replay JSON for the page's file loader: npm run -s sim -- --replay --seed 42 --surface clay > replay.json
 // The report goes to stdout and depends only on the arguments; timing goes to stderr.
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
@@ -19,6 +20,7 @@ const { values } = parseArgs({
     'best-of': { type: 'string', default: '3' },
     ladder: { type: 'boolean', default: false },
     fingerprint: { type: 'boolean', default: false },
+    replay: { type: 'boolean', default: false },
   },
 });
 const n = Number(values.n);
@@ -27,8 +29,12 @@ const surface = values.surface as Surface;
 const bestOf = Number(values['best-of']) as 3 | 5;
 if (!['hard', 'clay', 'grass'].includes(surface) || !(n > 0) || ![3, 5].includes(bestOf) || !['average', 'big-server'].includes(values.a)) {
   console.error('Usage: npm run sim -- --n 10000 --seed 42 --surface hard|clay|grass [--a average|big-server] [--best-of 3|5] [--ladder]');
-  console.error('       npm run sim -- --fingerprint --seed 42 --surface hard|clay|grass');
+  console.error('       npm run sim -- --fingerprint|--replay --seed 42 --surface hard|clay|grass');
   process.exit(2);
+}
+if (values.replay) {
+  console.log(JSON.stringify(simulateMatch(exhibitionConfig(surface), seed)));
+  process.exit(0);
 }
 if (values.fingerprint) {
   console.log(`fingerprint ${fingerprint(simulateMatch(exhibitionConfig(surface), seed))} (exhibition, seed ${seed}, ${surface})`);

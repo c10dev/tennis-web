@@ -1,0 +1,50 @@
+:root {
+  --bug-bg: rgba(14, 22, 38, 0.92);
+  --bug-accent: #f2c94c;
+  --text: #f4f6fa;
+  --muted: #9aa6b8;
+  --panel-bg: rgba(14, 18, 26, 0.82);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1f2630; color: var(--text);
+  font: 14px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+#score { position: fixed; top: 16px; left: 16px; }
+.score-bug { border-collapse: collapse; background: var(--bug-bg); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  font-variant-numeric: tabular-nums; font-weight: 600; }
+.score-bug td, .score-bug th { padding: 4px 8px; text-align: center; }
+.score-bug .serve { width: 18px; padding: 0 0 0 8px; color: var(--bug-accent); font-size: 10px; }
+.score-bug .name { text-align: left; min-width: 90px; font-weight: 600; }
+.score-bug .set { color: var(--muted); }
+.score-bug .games { color: var(--text); }
+.score-bug .points { min-width: 38px; background: var(--bug-accent); color: #10141c; }
+.score-bug .points.tiebreak { background: #9bd0ff; }
+.score-bug tr + tr td, .score-bug tr + tr th { border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.score-bug .winner .name { color: var(--bug-accent); }
+.score-bug .check { color: var(--bug-accent); }
+
+#panel { position: fixed; top: 16px; right: 16px; max-width: min(360px, calc(100vw - 32px)); padding: 10px 12px;
+  background: var(--panel-bg); border-radius: 6px; display: grid; gap: 8px; font-size: 13px; }
+#panel form { display: flex; gap: 6px; }
+#panel .seed { width: 90px; }
+#panel .meta { color: var(--muted); }
+#panel .error { color: #ff8a80; }
+#panel .error:empty { display: none; }
+#panel code { color: var(--text); }
+
+#controls { position: fixed; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px; padding: 8px 10px; background: var(--panel-bg); border-radius: 6px; }
+#controls .seek { flex: 1 1 200px; }
+#controls .time, #controls .point { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; }
+button, select, input { font: inherit; color: var(--text); background: #2b3445; border: 1px solid #3d4a60; border-radius: 4px;
+  padding: 3px 8px; }
+button { cursor: pointer; }
+button:hover { background: #36425a; }
+#controls .speed.active { background: var(--bug-accent); color: #10141c; border-color: var(--bug-accent); }
+
+@media (max-width: 640px) {
+  #panel { top: auto; bottom: 120px; }
+  #controls .time, #controls .point { min-width: 0; }
+}
