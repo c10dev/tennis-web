@@ -9,6 +9,7 @@ import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { glyph } from '../lib/icons.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
+import { announce } from '../lib/announce.ts';
 import { appSound } from '../lib/sound.ts';
 import { savedPlan } from './plan.ts';
 
@@ -158,6 +159,8 @@ export function quickResult(ctx: Ctx): Screen {
   function finish() {
     showAll();
     phase('done');
+    // The whole result in one line for screen readers, once the reveal has ended (or been skipped).
+    announce(`${v.headline} against ${v.opponent}. ${signed(v.delta)} points, now #${v.rankAfter}. Next goal: ${v.goalLine}.`);
     requestAnimationFrame(() => element.querySelector<HTMLButtonElement>('#play-again')?.focus());
   }
 

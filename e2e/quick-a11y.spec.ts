@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { startLadder, watchErrors } from './helpers.ts';
+import { quickResultView } from '@tennis/game';
+import { nodeLadder, nodePlayNext, playToResult, startLadder, watchErrors } from './helpers.ts';
 
 // Quick screens without sight: a polite live region tells the score and the stakes, and focus lands where the keys are.
 test.describe('quick screens for keyboard and screen-reader players', () => {
@@ -25,5 +26,14 @@ test.describe('quick screens for keyboard and screen-reader players', () => {
     await expect(page.locator('#outcome')).toBeVisible();
     await expect(announcer).toHaveText(/(your|their) point · \d+-\d+$/);
     expect(errors).toEqual([]);
+  });
+
+  test('sums up the result when its reveal ends: score, points, rank and the next goal', async ({ page }) => {
+    await playToResult(page, 3, true);
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('done');
+    const v = quickResultView(nodePlayNext(nodeLadder(3)));
+    await expect(page.locator('#announcer')).toHaveText(
+      `${v.headline} against ${v.opponent}. ${v.delta >= 0 ? '+' : ''}${v.delta} points, now #${v.rankAfter}. Next goal: ${v.goalLine}.`);
   });
 });
