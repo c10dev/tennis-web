@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COURT } from '@tennis/engine';
 import { dampPan, mainCamPose, panTarget } from '../src/camera/mainCam.ts';
-import { CAMERA } from '../src/tuning.ts';
+import { CAMERA } from '../src/tuning/index.ts';
 
 describe('main camera', () => {
   it('sits high behind the near (A starting) baseline and looks down the court', () => {

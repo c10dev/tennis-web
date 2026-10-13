@@ -1,7 +1,7 @@
 // Ball arcs between the points a ShotEvent records: contact, net crossing, bounce (engine coordinates, z up).
 import type { ShotEvent, Vec3 } from '@tennis/engine';
 import { lerp } from '../math.ts';
-import { BALL, NET, PLAYBACK } from '../tuning.ts';
+import { BALL, NET, PLAYBACK } from '../tuning/index.ts';
 
 /** Fraction of the contact → bounce path at which the ball crosses the net (y = 0); null for a ball into the net. */
 export function netCrossing(shot: ShotEvent): number | null {

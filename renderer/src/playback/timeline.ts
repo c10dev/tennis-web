@@ -1,7 +1,7 @@
 // A match laid out on one replay clock: each point gets a segment (toss lead, the point, a pause after it).
 import type { MatchResult, PlayerId, PointEvent, ScoreState, Surface } from '@tennis/engine';
 import { SUPPORTED_SCHEMA_VERSION } from '../version.ts';
-import { PLAYBACK } from '../tuning.ts';
+import { PLAYBACK } from '../tuning/index.ts';
 
 export type GapKind = 'point' | 'changeover' | 'set_end' | 'match_end';
 

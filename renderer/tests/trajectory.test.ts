@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ShotEvent } from '@tennis/engine';
 import { flightPosition, gravityArc, netCrossing, tossPosition } from '../src/playback/trajectory.ts';
-import { BALL, NET } from '../src/tuning.ts';
+import { BALL, NET } from '../src/tuning/index.ts';
 import { SAMPLE } from './fixtures.ts';
 
 const shots = SAMPLE.flatMap((r) => r.events.flatMap((e) => (e.type === 'point' ? e.shots : [])));

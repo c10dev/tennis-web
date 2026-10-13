@@ -1,7 +1,7 @@
 // The ball and the blob shadow beneath it: the shadow is how a viewer reads the ball's height without real shadows.
 import { CircleGeometry, Group, Mesh, MeshBasicMaterial, MeshLambertMaterial, SphereGeometry } from 'three';
 import type { Vec3 } from '@tennis/engine';
-import { BALL, COLOURS } from '../tuning.ts';
+import { BALL, COLOURS } from '../tuning/index.ts';
 import { groundToThree, toThree } from './coords.ts';
 
 export interface BallView {

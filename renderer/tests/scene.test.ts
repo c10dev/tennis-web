@@ -6,7 +6,7 @@ import { groundToThree, toThree } from '../src/scene/coords.ts';
 import { createStage } from '../src/scene/stage.ts';
 import { frameAt } from '../src/playback/frame.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
-import { BALL, NET } from '../src/tuning.ts';
+import { BALL, NET } from '../src/tuning/index.ts';
 import { match } from './fixtures.ts';
 
 const box = (o: Object3D) => new Box3().setFromObject(o);

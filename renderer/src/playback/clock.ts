@@ -1,6 +1,6 @@
 // Replay clock as a pure reducer: play/pause, speed, seek and point jumps (GDD §8.3). The UI only dispatches.
 import { clamp } from '../math.ts';
-import { PLAYBACK } from '../tuning.ts';
+import { PLAYBACK } from '../tuning/index.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
 export interface ClockState {

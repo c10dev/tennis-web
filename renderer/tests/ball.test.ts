@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PointEvent, Surface } from '@tennis/engine';
 import { ballAt } from '../src/playback/ball.ts';
-import { BALL, PLAYBACK } from '../src/tuning.ts';
+import { BALL, PLAYBACK } from '../src/tuning/index.ts';
 import { SAMPLE } from './fixtures.ts';
 
 const points: { p: PointEvent; surface: Surface }[] = SAMPLE.flatMap((r) =>

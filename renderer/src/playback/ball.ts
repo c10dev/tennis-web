@@ -1,6 +1,6 @@
 // Where the ball is at point time τ (seconds from the first serve's contact), or null when it is out of play.
 import type { PointEvent, ShotEvent, Surface, Vec3 } from '@tennis/engine';
-import { BALL, PLAYBACK } from '../tuning.ts';
+import { BALL, PLAYBACK } from '../tuning/index.ts';
 import { flightPosition, gravityArc, tossPosition } from './trajectory.ts';
 
 export function ballAt(point: PointEvent, tau: number, surface: Surface): Vec3 | null {

@@ -5,7 +5,7 @@ import { dampPan, mainCamPose, panTarget } from './camera/mainCam.ts';
 import type { Frame } from './playback/frame.ts';
 import type { Timeline } from './playback/timeline.ts';
 import { createStage } from './scene/stage.ts';
-import { CAMERA } from './tuning.ts';
+import { CAMERA } from './tuning/index.ts';
 
 export interface Viewer {
   resize(width: number, height: number): void;

@@ -4,7 +4,7 @@ import {
   PlaneGeometry, Vector3,
 } from 'three';
 import { COURT, type Surface } from '@tennis/engine';
-import { COLOURS, COURT_DRAW, NET } from '../tuning.ts';
+import { COLOURS, COURT_DRAW, NET } from '../tuning/index.ts';
 
 const { halfLength: L, halfWidth: W, serviceLine: S } = COURT;
 const D = COURT_DRAW.doublesHalfWidth;

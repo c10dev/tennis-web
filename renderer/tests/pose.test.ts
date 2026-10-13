@@ -4,7 +4,7 @@ import { ballAt } from '../src/playback/ball.ts';
 import { positionAt } from '../src/playback/movement.ts';
 import { playerPose } from '../src/playback/pose.ts';
 import { buildTimeline, segmentAt, type Timeline } from '../src/playback/timeline.ts';
-import { COURT_DRAW, RIG_MOTION } from '../src/tuning.ts';
+import { COURT_DRAW, RIG_MOTION } from '../src/tuning/index.ts';
 import { SAMPLE, match } from './fixtures.ts';
 
 const IDS: PlayerId[] = ['A', 'B'];

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MatchResult, PointEvent } from '@tennis/engine';
 import { buildTimeline, scoreAt, segmentAt } from '../src/playback/timeline.ts';
-import { PLAYBACK } from '../src/tuning.ts';
+import { PLAYBACK } from '../src/tuning/index.ts';
 import { SAMPLE, match } from './fixtures.ts';
 
 const pointsOf = (r: MatchResult) => r.events.filter((e): e is PointEvent => e.type === 'point');

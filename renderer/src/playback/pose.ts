@@ -1,6 +1,6 @@
 // A player's pose at replay time t, from the events alone: what a rig needs to draw them (ADR-007).
 import type { PlayerId, Vec2, Vec3 } from '@tennis/engine';
-import { RIG_MOTION } from '../tuning.ts';
+import { RIG_MOTION } from '../tuning/index.ts';
 import { positionAt } from './movement.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 

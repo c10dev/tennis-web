@@ -2,7 +2,7 @@
 // pans slightly with the ball. Pure functions; the UI owns the eased pan value between frames.
 import { COURT, type Vec3 } from '@tennis/engine';
 import { clamp } from '../math.ts';
-import { CAMERA } from '../tuning.ts';
+import { CAMERA } from '../tuning/index.ts';
 
 export interface CamPose {
   /** Three.js coordinates (y up). */

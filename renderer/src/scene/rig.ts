@@ -5,7 +5,7 @@ import {
 } from 'three';
 import type { PlayerPose } from '../playback/pose.ts';
 import { lerp } from '../math.ts';
-import { COLOURS, RIG } from '../tuning.ts';
+import { COLOURS, RIG } from '../tuning/index.ts';
 import { groundToThree, yawFor } from './coords.ts';
 
 export interface PlayerRig {

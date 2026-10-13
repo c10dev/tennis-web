@@ -10,5 +10,5 @@ export { playerPose, type PlayerPose, type Reaction, type SwingKind } from './pl
 export { buildTimeline, scoreAt, segmentAt, type GapKind, type PointSegment, type Timeline } from './playback/timeline.ts';
 export { CapsuleRig, type PlayerRig } from './scene/rig.ts';
 export { createStage, type Stage } from './scene/stage.ts';
-export { PLAYBACK } from './tuning.ts';
+export { PLAYBACK } from './tuning/index.ts';
 export { createViewer, type Viewer } from './viewer.ts';

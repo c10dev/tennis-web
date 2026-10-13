@@ -2,7 +2,7 @@
 import { AmbientLight, Color, DirectionalLight, HemisphereLight, Scene } from 'three';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
-import { COLOURS } from '../tuning.ts';
+import { COLOURS } from '../tuning/index.ts';
 import { createBall } from './ball.ts';
 import { buildCourt } from './court.ts';
 import { CapsuleRig, type PlayerRig } from './rig.ts';

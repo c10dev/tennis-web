@@ -1,7 +1,7 @@
 // Where each player stands at replay time t: moved between the positions the shot events record.
 import type { PlayerId, PointEvent, Vec2 } from '@tennis/engine';
 import { lerp, trapezoid } from '../math.ts';
-import { COURT_DRAW, PLAYBACK, RIG_MOTION } from '../tuning.ts';
+import { COURT_DRAW, PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
 interface Key { tau: number; pos: Vec2 }
