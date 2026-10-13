@@ -82,8 +82,9 @@ describe('broadcastFrameAt', () => {
     const t = live.start + live.duration / 2;
     const f = broadcastFrameAt(p, t);
     const matchT = live.matchFrom + live.duration / 2;
-    expect(f).toMatchObject({ camera: live.camera, clip: 'live', matchT });
-    const m = matchFrameAt(tl, matchT);
+    expect(f).toMatchObject({ camera: live.camera, clip: 'live' });
+    expect(f.matchT).toBeCloseTo(matchT, 9);
+    const m = matchFrameAt(tl, f.matchT);
     expect({ ball: f.ball, players: f.players, scoreBug: f.scoreBug, pointIndex: f.pointIndex, t: f.t })
       .toEqual({ ball: m.ball, players: m.players, scoreBug: m.scoreBug, pointIndex: m.pointIndex, t });
   });

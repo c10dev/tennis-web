@@ -15,6 +15,8 @@ export default defineConfig({
           name: 'renderer',
           include: ['renderer/tests/**/*.test.ts'],
           environment: 'node',
+          // Property tests sample whole matches at 60 fps; give them room when files run in parallel.
+          testTimeout: 20_000,
         },
       },
       {

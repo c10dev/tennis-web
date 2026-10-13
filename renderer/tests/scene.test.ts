@@ -105,3 +105,22 @@ describe('stage.applyFrame', () => {
     }
   });
 });
+
+describe('Hawk-Eye mark', () => {
+  const tl = buildTimeline(match(2));
+  const stage = createStage(tl);
+  const frame = matchFrameAt(tl, 30);
+
+  it('shows the bounce mark where the line call says, only while a call is on screen', () => {
+    stage.applyFrame({ ...frame, hawkeye: { call: 'OUT', marginM: -0.02, mark: { x: 4.135, y: 9 } } });
+    const mark = named(stage.scene, 'ball-mark');
+    expect(mark.visible).toBe(true);
+    expect(mark.position.x).toBeCloseTo(4.135, 9);
+    expect(mark.position.z).toBeCloseTo(-9, 9);
+    expect(mark.position.y).toBeGreaterThan(0.003);
+    stage.applyFrame({ ...frame, hawkeye: null });
+    expect(mark.visible).toBe(false);
+    stage.applyFrame(frame);
+    expect(mark.visible).toBe(false);
+  });
+});

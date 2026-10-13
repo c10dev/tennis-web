@@ -21,6 +21,8 @@ export const COLOURS = {
   net: 0x161616,
   post: 0x2f4f3a,
   ball: 0xdcf24a,
+  /** Skid mark a bounce leaves, shown on Hawk-Eye close-ups. */
+  mark: 0x2b2b2b,
   shadow: 0x000000,
   surface: {
     hard: { court: 0x3a6ea5, surround: 0x4a7f5a },

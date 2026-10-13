@@ -11,4 +11,11 @@ export const BROADCAST = {
   /** Highlights: rallies at least this long, and winners that end a rally at least this long. */
   longRally: 10,
   winnerRally: 5,
+  /** Replays: the last seconds of the point at this rate, ending a little after the last ball lands. */
+  replayRate: 0.5,
+  replayLeadSec: 3,
+  replayTailSec: 0.6,
+  /** Hawk-Eye: bounces this close to a line (metres) get a still close-up of the mark. */
+  hawkeyeMarginM: 0.05,
+  hawkeyeSec: 2.5,
 } as const;

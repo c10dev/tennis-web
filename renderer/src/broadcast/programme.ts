@@ -3,6 +3,7 @@ import type { Timeline } from '../playback/timeline.ts';
 import { BROADCAST } from '../tuning/index.ts';
 import { cameraTrack, type TrackShot } from './director.ts';
 import { selectPoints } from './modes.ts';
+import { replayInserts } from './replay.ts';
 import type { Clip, Programme, ViewMode } from './types.ts';
 
 /** Clips shown after point `index` once play reaches match second `at` (replays, Hawk-Eye); see replay.ts. */
@@ -12,9 +13,7 @@ export interface Insert {
 }
 export type Inserts = (timeline: Timeline, index: number) => Insert | null;
 
-const none: Inserts = () => null;
-
-export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = none): Programme {
+export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts): Programme {
   const clips: Clip[] = [];
   const pointStarts: number[] = [];
   let t = 0;

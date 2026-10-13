@@ -1,15 +1,20 @@
 // The whole Three.js scene for one match; applyFrame() moves everything to a Frame. No WebGL here (ADR-007).
-import { AmbientLight, Color, DirectionalLight, HemisphereLight, Scene } from 'three';
+import { AmbientLight, CircleGeometry, Color, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial, Scene } from 'three';
+import type { LineCall } from '../broadcast/hawkeye.ts';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
-import { COLOURS } from '../tuning/index.ts';
+import { BALL, COLOURS } from '../tuning/index.ts';
 import { createBall } from './ball.ts';
+import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
 import { CapsuleRig, type PlayerRig } from './rig.ts';
 
+/** A frame, plus the Hawk-Eye call when one is on screen. */
+export type StageFrame = Frame & { hawkeye?: LineCall | null };
+
 export interface Stage {
   readonly scene: Scene;
-  applyFrame(frame: Frame): void;
+  applyFrame(frame: StageFrame): void;
 }
 
 export function createStage(timeline: Timeline): Stage {
@@ -23,13 +28,20 @@ export function createStage(timeline: Timeline): Stage {
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';
   const ball = createBall();
-  scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d);
+  const mark = new Mesh(new CircleGeometry(BALL.radius * 1.6, 16), new MeshBasicMaterial({ color: COLOURS.mark, transparent: true, opacity: 0.85 }));
+  mark.rotation.x = -Math.PI / 2;
+  mark.scale.set(1.6, 1, 1);
+  mark.name = 'ball-mark';
+  mark.visible = false;
+  scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d, mark);
   return {
     scene,
     applyFrame(frame) {
       rigs.A.apply(frame.players.A);
       rigs.B.apply(frame.players.B);
       ball.apply(frame.ball);
+      mark.visible = !!frame.hawkeye;
+      if (frame.hawkeye) mark.position.copy(groundToThree(frame.hawkeye.mark, 0.006));
     },
   };
 }
