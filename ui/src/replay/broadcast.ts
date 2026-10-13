@@ -38,7 +38,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   root.append(canvas, score, graphics, soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
-  let window: { end: number; speed: number; done: () => void } | null = null;
+  let clipWindow: { end: number; speed: number; done: () => void } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
   const overlays = createOverlays();
@@ -79,12 +79,12 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     if (programme && viewer) {
       resize();
       const before = clock.t;
-      if (window) {
-        clock = { ...clock, t: Math.min(window.end, clock.t + Math.min(dt, 0.25) * window.speed) };
-        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, window.speed)) sound.mixer.play(cue);
-        if (clock.t >= window.end) {
-          const { done } = window;
-          window = null;
+      if (clipWindow) {
+        clock = { ...clock, t: Math.min(clipWindow.end, clock.t + Math.min(dt, 0.25) * clipWindow.speed) };
+        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) sound.mixer.play(cue);
+        if (clock.t >= clipWindow.end) {
+          const { done } = clipWindow;
+          clipWindow = null;
           done();
         }
       } else {
@@ -130,14 +130,14 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       if (!programme) return Promise.resolve();
       const p = programme;
       return new Promise<void>((done) => {
-        window?.done();
+        clipWindow?.done();
         clock = { ...clock, playing: false, t: programmeTimeFor(p, from) };
-        window = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done };
+        clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done };
       });
     },
     dispose() {
-      window?.done();
-      window = null;
+      clipWindow?.done();
+      clipWindow = null;
       cancelAnimationFrame(raf);
       controls?.dispose();
       sound.mixer?.dispose();
