@@ -81,10 +81,10 @@ const ctx: Ctx = {
   tactic: { ...DEFAULT_TACTIC },
   go,
   redirect: replace,
-  set(next, message, path) {
+  set(next, message, path, opts) {
     state = next;
     if (message !== undefined) note = message;
-    if (path) go(path);
+    if (path) (opts?.replace ? replace : go)(path);
     else void render();
   },
   async finishWeek(s, message) {

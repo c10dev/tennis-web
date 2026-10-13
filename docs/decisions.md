@@ -861,3 +861,11 @@ Format: one entry per decision, newest at the bottom.
   - **Resume:** a quick match left in the middle (Back, reload) resumes exactly. `QuickState.live` notes the plan and
     the cards chosen, and `resumeQuick` replays them on the deterministic match, so leaving no longer dodges a loss.
     Resume was chosen over a forfeit because it punishes nothing and hides nothing.
+  - **Season match screen** (`e2e/career-match.spec.ts`):
+    - Play set N continues from the end of the set just shown, even after Space rewound the clock at the break.
+    - Skip keeps the tactics picked at the break.
+    - Leave or Back on an unplayed match restores the tactic set before it.
+    - Leave hides once the result shows.
+    - "Back to the tournament" and the replay's Back replace their history entry, so browser Back cannot open the
+      next round or loop between a replay and the history page.
+    - Browser Back after the result still leaves the match unrecorded (TD-051).
