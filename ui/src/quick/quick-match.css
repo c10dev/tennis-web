@@ -1,57 +1,65 @@
-/* The quick match screen (ADR-017): owned by the match-flow workstream. */
-.quick-match.fast { min-height: 100vh; background: radial-gradient(circle at 50% 30%, #23324a, #151b24); }
-.quick-panel { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; width: min(760px, calc(100vw - 32px));
-  background: rgba(16, 21, 30, 0.92); border: 1px solid #34425a; border-radius: 10px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
-.quick-match.fast .quick-panel { bottom: auto; top: 30vh; }
+/* The quick match screen (ADR-017), Rally Pop look (ADR-020): a court-blue panel with sticker cards. */
+.quick-match.fast { min-height: 100vh; background: radial-gradient(circle at 50% 30%, var(--court-2), var(--court) 70%); }
+.quick-panel { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; width: min(780px, calc(100vw - 32px));
+  background: rgba(18, 58, 140, 0.95); border: var(--outline); border-radius: 18px; padding: 14px 18px 18px; box-shadow: 0 6px 0 var(--ink); }
+.quick-match.fast .quick-panel { bottom: auto; top: 24vh; }
 .situation { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; font-variant-numeric: tabular-nums; }
 .situation .versus { color: var(--muted); }
-.quick-panel .moment { background: var(--bug-accent); color: #10141c; padding: 2px 8px; border-radius: 3px; font-weight: 700; letter-spacing: 0.08em; }
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.card-btn { display: grid; gap: 4px; text-align: left; padding: 12px; border-radius: 8px; border-width: 2px; background: #1c2431; }
-.card-btn .key { color: var(--muted); font-size: 12px; }
-.card-btn strong { font-size: 20px; }
-.card-btn .flavour, .card-btn .rule { color: var(--muted); font-size: 13px; }
-.card-btn .strength { height: 5px; background: #2a3443; border-radius: 3px; overflow: hidden; }
-.card-btn .strength .fill { display: block; height: 100%; background: currentColor; }
-.card-btn.attack { color: var(--atk); border-color: color-mix(in srgb, var(--atk) 40%, #1c2431); }
-.card-btn.defend { color: var(--def); border-color: color-mix(in srgb, var(--def) 40%, #1c2431); }
-.card-btn.counter { color: var(--ctr); border-color: color-mix(in srgb, var(--ctr) 40%, #1c2431); }
-.card-btn strong, .card-btn .key { color: var(--text); }
-.card-btn:hover { background: #253044; }
-.reveal { display: grid; gap: 8px; justify-items: center; text-align: center; }
-.reveal .pair { display: flex; gap: 10px; align-items: center; }
-.reveal .chip { padding: 6px 12px; border-radius: 6px; font-weight: 700; background: #253044; }
-.chip.attack { color: var(--atk); } .chip.defend { color: var(--def); } .chip.counter { color: var(--ctr); }
-.reveal .verdict { font-size: 22px; }
+/* The moment: a gold sticker tilted a little (rotate, so a transform animation still composes). */
+.quick-panel .moment { display: inline-block; background: var(--gold); color: var(--ink); padding: 3px 12px; border: var(--outline); border-radius: 10px;
+  box-shadow: 0 4px 0 var(--ink); font: 400 18px/1.15 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; rotate: -2deg; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+/* A sticker card: paper, ink outline, a colour band with the key in its corner, a big icon and the name in the card's
+   text colour. --c is the band fill, --t the text colour. */
+.card-btn { --c: var(--ink-muted); --t: var(--ink); position: relative; display: grid; gap: 4px; text-align: left; color: var(--t);
+  background: var(--paper); border: var(--outline); border-radius: 16px; box-shadow: var(--lift); padding: 38px 14px 14px; overflow: hidden; }
+.card-btn::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 26px; background: var(--c); border-bottom: var(--outline); }
+.card-btn.attack { --c: var(--atk); --t: var(--atk-text); }
+.card-btn.defend { --c: var(--def); --t: var(--def-text); }
+.card-btn.counter { --c: var(--ctr); --t: var(--ctr-text); }
+.card-btn .key { position: absolute; top: 2px; right: 10px; min-width: 22px; text-align: center; color: var(--ink); font: 400 18px/22px var(--font-display); }
+.card-btn strong { display: flex; align-items: center; gap: 8px; font: 400 24px/1.1 var(--font-display); letter-spacing: 0.01em; }
+.card-btn strong .icon { width: 30px; height: 30px; flex: none; stroke-width: 2.5; }
+.card-btn .flavour { color: var(--ink); font-weight: 800; font-size: 14px; }
+.card-btn .rule { color: var(--ink-muted); font-size: 13px; }
+.card-btn .strength { height: 10px; margin-top: 4px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.card-btn .strength .fill { display: block; height: 100%; background: var(--c); }
+.card-btn:hover { background: var(--paper); box-shadow: 0 7px 0 var(--ink); }
+.card-btn:focus-visible { outline: 3px solid var(--optic); outline-offset: 3px; }
+/* The reveal: both cards as chips, the verdict as a sticker word with its symbol. */
+.reveal { display: grid; gap: 10px; justify-items: center; text-align: center; }
+.reveal .pair { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.reveal .vs { color: var(--muted); font-family: var(--font-display); }
+.reveal .chip { padding: 6px 14px; border-width: 3px; font: 400 19px/1.2 var(--font-display); box-shadow: 0 4px 0 var(--ink); }
+.reveal .verdict { font: 400 36px/1.1 var(--font-display); letter-spacing: 0.01em; color: var(--text); -webkit-text-stroke: 1.5px var(--ink);
+  paint-order: stroke fill; text-shadow: 0 4px 0 var(--ink); }
 .reveal.won .verdict { color: var(--win); } .reveal.lost .verdict { color: var(--loss); }
-.outcome { margin: 0; font-size: 16px; }
+.outcome { margin: 0; font-size: 16px; font-weight: 800; }
 .outcome.you { color: var(--win); } .outcome.them { color: var(--loss); }
-@media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
-/* The game plan picker on the ladder, next to Play. */
-.plan-picker { display: grid; gap: 6px; margin: 12px 0; }
-.plan-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
-.plan-btn { flex: 1; min-width: 96px; background: #1c2431; border: 2px solid #34425a; }
-.plan-btn.selected { border-color: var(--bug-accent); color: var(--text); font-weight: 700; }
-.plan-line { font-size: 13px; }
+@media (max-width: 640px) { .cards { grid-template-columns: 1fr; } .card-btn { padding-top: 34px; } }
 /* Points without cards: a running ticker. */
 .ticker .situation { margin-bottom: 6px; }
 .ticker .plan { margin-left: auto; font-size: 13px; }
 .tick-line { display: flex; align-items: baseline; gap: 14px; font-variant-numeric: tabular-nums; }
-.tick-score { font-size: 30px; letter-spacing: 0.04em; }
+.tick-score { font: 400 32px/1.1 var(--font-display); letter-spacing: 0.04em; }
+.tick-point { font-weight: 800; }
 .tick-point.you { color: var(--win); } .tick-point.them { color: var(--loss); }
-.pips { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0 4px; min-height: 10px; }
-.pip { width: 10px; height: 10px; border-radius: 50%; background: #3a4558; }
-.pip.you { background: var(--win); } .pip.them { background: var(--loss); }
-.pip.decision { box-shadow: 0 0 0 2px #10151e, 0 0 0 3px var(--bug-accent); }
+/* Pips: yours filled optic, theirs hollow (shape, not only colour), a gold ring where you chose a card. */
+.pips { display: flex; gap: 5px; flex-wrap: wrap; margin: 8px 0 6px; min-height: 12px; }
+.pip { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); background: transparent; }
+.pip.you { background: var(--win); border-color: var(--ink); } .pip.them { border-color: var(--loss); }
+.pip.decision { box-shadow: 0 0 0 2px var(--court), 0 0 0 4px var(--gold); }
 .pips .pip:last-child { animation: pip-in 0.25s ease-out; }
 @keyframes pip-in { from { transform: scale(0.2); opacity: 0; } }
 /* A decision point: the match stops. */
-.quick-panel.stop { border-color: var(--bug-accent); box-shadow: 0 0 0 1px var(--bug-accent), 0 10px 40px rgba(0, 0, 0, 0.6); }
+.quick-panel.stop { box-shadow: 0 0 0 4px var(--gold), 0 8px 0 4px var(--ink); }
 .moment-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.moment-banner .moment { font-size: 18px; padding: 4px 12px; animation: stop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
-.moment-banner .stop-score { font-size: 30px; font-variant-numeric: tabular-nums; }
+.moment-banner .moment { font-size: 22px; padding: 4px 14px; animation: stop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.moment-banner .stop-score { font: 400 34px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 @keyframes stop-in { from { transform: scale(1.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .moment-banner .moment, .pips .pip:last-child { animation: none; } }
-/* Card icons (Lucide, ADR-018) sit on the text baseline in the card's colour. */
-.card-btn strong .icon, .chip .icon { vertical-align: -3px; }
-.chip { display: inline-flex; align-items: center; gap: 4px; }
+/* Card chips (their cards, the reveal): paper pills with the card's icon and text colour. */
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; background: var(--paper); border: 2px solid var(--ink); border-radius: 999px;
+  font-weight: 800; }
+.chip.attack { color: var(--atk-text); } .chip.defend { color: var(--def-text); } .chip.counter { color: var(--ctr-text); }
+.chip .icon { flex: none; }
