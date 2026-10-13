@@ -53,8 +53,14 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     clock = { ...clock, t: programmeTimeFor(programme, matchT) };
     controls.setProgramme(programme);
   });
-  const resize = () => viewer?.resize(canvas.clientWidth, canvas.clientHeight);
-  window.addEventListener('resize', resize);
+  // The canvas may be mounted before it is in the document (size 0): every frame checks its size instead.
+  let size = '';
+  const resize = () => {
+    const next = `${canvas.clientWidth}x${canvas.clientHeight}`;
+    if (next === size || !viewer || canvas.clientWidth === 0) return;
+    size = next;
+    viewer.resize(canvas.clientWidth, canvas.clientHeight);
+  };
 
   let last = performance.now();
   let raf = 0;
@@ -62,6 +68,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     const dt = (now - last) / 1000;
     last = now;
     if (programme && viewer) {
+      resize();
       const before = clock.t;
       clock = clockReducer(programme, clock, { type: 'tick', dt });
       if (sound.mixer && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) sound.mixer.play(cue);
@@ -85,6 +92,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         viewer?.dispose();
         viewer = createViewer(canvas, timeline);
         surface = timeline.surface;
+        size = '';
         resize();
       }
       programme = buildProgramme(timeline, mode);
@@ -101,7 +109,6 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     dispatch,
     dispose() {
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
       controls.dispose();
       sound.mixer?.dispose();
       viewer?.dispose();

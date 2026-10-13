@@ -17,6 +17,6 @@ export function historyScreen(ctx: Ctx, params: string[]): Screen {
     h('p', null, v.userResult ? `You: ${v.userResult}` : 'You did not play.'),
     v.userMatches.length ? h('table', { class: 'matches' }, h('tbody', null, v.userMatches.map((m) => h('tr', null,
       h('td', null, m.round), h('td', null, `${m.won ? 'Beat' : 'Lost to'} ${m.opponent}`), h('td', null, m.score),
-    )))) : null);
+      h('td', null, m.replayable ? h('button', { id: `replay-${m.index}`, onclick: () => ctx.go(`#/match/replay/${index}/${m.index}`) }, 'Watch replay') : null))))) : null);
   return { element };
 }

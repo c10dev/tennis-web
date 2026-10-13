@@ -28,7 +28,7 @@ export function homeScreen(ctx: Ctx): Screen {
       v.inTournament
         ? h('button', { class: 'primary', id: 'to-tournament', onclick: () => ctx.go('#/tournament') }, 'Back to the tournament')
         : [
-          option(h('button', { class: 'primary', id: 'enter', disabled: !v.options.enter.enabled, onclick: () => { ctx.set(beginWeek(s, { kind: 'enter' })); ctx.go('#/tournament'); } },
+          option(h('button', { class: 'primary', id: 'enter', disabled: !v.options.enter.enabled, onclick: () => ctx.set(beginWeek(s, { kind: 'enter' }), undefined, '#/tournament') },
             v.thisWeek.tournament ? `Enter ${v.thisWeek.tournament.name}` : 'Enter a tournament'), v.options.enter.note),
           h('div', { class: 'option train' }, focus, intensity,
             h('button', { id: 'train', disabled: !v.options.train.enabled, onclick: () => void train() }, 'Train this week'),

@@ -1,5 +1,5 @@
 // A match laid out on one replay clock: each point gets a segment (toss lead, the point, a pause after it).
-import type { MatchConfig, MatchEvent, MatchResult, PlayerId, PlayStyle, PointEvent, ScoreState, Surface } from '@tennis/engine';
+import type { MatchConfig, MatchEvent, PlayerId, PlayStyle, PointEvent, ScoreState, Surface } from '@tennis/engine';
 import { SUPPORTED_SCHEMA_VERSIONS } from '../version.ts';
 import { PLAYBACK } from '../tuning/index.ts';
 
@@ -39,7 +39,12 @@ export interface Timeline {
 }
 
 /** A finished MatchResult, or a match in progress: its events so far. */
-export type ReplayInput = Pick<MatchResult, 'schemaVersion' | 'config'> & { events: MatchEvent[]; config: MatchConfig };
+export interface ReplayInput {
+  /** Checked at runtime: replays come from files of any age. */
+  schemaVersion: number;
+  config: MatchConfig;
+  events: MatchEvent[];
+}
 
 const GAP_SEC: Record<GapKind, number> = {
   point: PLAYBACK.pointGapSec,

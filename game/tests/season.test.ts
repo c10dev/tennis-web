@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { replayMatch } from '@tennis/engine';
+import { advance, DEFAULT_TACTIC, finish, isOver, replayMatch, setTactic, startMatch, type MatchRecipe } from '@tennis/engine';
 import { CALENDAR } from '../src/calendar/schedule.ts';
 import { pointsFor, TIERS } from '../src/calendar/tiers.ts';
 import { createPlayer, defaultAllocation, USER_ID } from '../src/player/create.ts';
@@ -100,6 +100,30 @@ describe('a tournament week', () => {
 
   it('will not close a week with matches still to play', () => {
     expect(() => closeWeek(beginWeek(fresh(), { kind: 'enter' }))).toThrow(/still/);
+  });
+});
+
+describe('watching the user\'s match', () => {
+  it('records the match the user watched set by set, tactic changes and all, from its recipe', () => {
+    const s = beginWeek(toAcceptedWeek(), { kind: 'enter' });
+    const pending = pendingUserMatch(s)!;
+    const live = startMatch(pending.config, pending.seed);
+    const changes: MatchRecipe['tacticChanges'] = [];
+    let sets = 0;
+    while (!isOver(live)) {
+      advance(live, 'set');
+      sets++;
+      if (!isOver(live) && sets === 1) {
+        const tactic = { ...DEFAULT_TACTIC, aggression: 0.9, serveTarget: 'wide' as const };
+        setTactic(live, 'A', tactic);
+        changes.push({ afterSet: 1, player: 'A', tactic });
+      }
+    }
+    const watched = finish(live);
+    const next = playRound(s, { config: pending.config, seed: pending.seed, tacticChanges: changes });
+    const record = next.tournament!.matches.find((m) => m.a === USER_ID)!;
+    expect(record.winner === USER_ID ? 'A' : 'B').toBe(watched.winner);
+    expect(replayMatch(record.recipe!)).toEqual(watched);
   });
 });
 

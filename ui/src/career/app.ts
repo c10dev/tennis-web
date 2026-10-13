@@ -7,6 +7,7 @@ import { IndexedDbStore } from '../storage/indexedDb.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
 import { homeScreen } from './screens/home.ts';
+import { matchScreen } from './screens/match.ts';
 import { newCareerScreen } from './screens/newCareer.ts';
 import { playerScreen } from './screens/player.ts';
 import { rankingsScreen } from './screens/rankings.ts';
@@ -18,7 +19,7 @@ import './career.css';
 type ScreenFn = (ctx: Ctx, params: string[]) => Screen | Promise<Screen>;
 const SCREENS: Record<string, ScreenFn> = {
   '': titleScreen, new: newCareerScreen, saves: savesScreen,
-  home: homeScreen, tournament: tournamentScreen, history: historyScreen, rankings: rankingsScreen, player: playerScreen,
+  home: homeScreen, tournament: tournamentScreen, history: historyScreen, rankings: rankingsScreen, player: playerScreen, match: matchScreen,
 };
 const NEEDS_STATE = new Set(['home', 'tournament', 'history', 'rankings', 'player', 'match']);
 
@@ -27,6 +28,8 @@ const stamp = () => new Date().toISOString().slice(0, 16).replace('T', ' ');
 let state: SeasonState | null = null;
 let note: string | null = null;
 let current: Screen | null = null;
+/** Renders are async (screens may load code); only the latest one may show. */
+let renders = 0;
 
 const ctx: Ctx = {
   get state() {
@@ -38,10 +41,11 @@ const ctx: Ctx = {
   },
   tactic: { ...DEFAULT_TACTIC },
   go,
-  set(next, message) {
+  set(next, message, path) {
     state = next;
     if (message !== undefined) note = message;
-    void render();
+    if (path) go(path);
+    else void render();
   },
   async finishWeek(s, message) {
     // The week's tournament goes on without the user if they are not in it (or are out).
@@ -82,8 +86,14 @@ async function render(): Promise<void> {
     go('#/');
     return;
   }
+  const token = ++renders;
   current?.dispose?.();
+  current = null;
   const screen = await (SCREENS[route.name] ?? titleScreen)(ctx, route.params);
+  if (token !== renders) {
+    screen.dispose?.();
+    return;
+  }
   current = screen;
   app.replaceChildren(...(screen.bare ? [screen.element] : [header(), h('main', { class: 'career' }, screen.element)]));
   if (route.name === 'home') note = null;

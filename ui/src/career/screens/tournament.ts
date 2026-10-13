@@ -35,7 +35,8 @@ export function tournamentScreen(ctx: Ctx): Screen {
       h('p', { class: 'muted' }, `#${v.pending.opponentRank} · level ${v.pending.opponentLevel.toFixed(1)} · ${v.pending.opponentStyle} · best of ${v.pending.bestOf}`),
       tacticControls(ctx),
       h('div', { class: 'actions' },
-        h('button', { class: 'primary', id: 'quick', onclick: quick }, 'Quick result')))
+        h('button', { class: 'primary', id: 'watch', onclick: () => ctx.go('#/match') }, 'Watch the match'),
+        h('button', { id: 'quick', onclick: quick }, 'Quick result')))
     : v.done
       ? h('div', { class: 'card', id: 'tournament-done' }, h('h3', null, `Champion: ${v.champion}`),
         h('button', { class: 'primary', id: 'finish-week', onclick: () => void ctx.finishWeek(s, weekNote()) }, 'Finish the week'))

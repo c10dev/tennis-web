@@ -17,8 +17,8 @@ export interface Ctx {
   /** The tactic the user set for their next match. */
   tactic: Tactic;
   go(path: string): void;
-  /** Replace the season (and re-render); optionally leave a note. */
-  set(state: SeasonState, note?: string): void;
+  /** Replace the season and re-render, or go to `path` (one render either way); optionally leave a note. */
+  set(state: SeasonState, note?: string, path?: string): void;
   /** Close the week, autosave, and go home with a note. */
   finishWeek(state: SeasonState, note: string): Promise<void>;
   loadSlot(slot: Slot): Promise<void>;

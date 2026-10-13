@@ -54,3 +54,8 @@ td.down { color: #ff7a6b; }
 .rating .next { background: var(--bug-accent); }
 .potential { color: var(--bug-accent); }
 @media (max-width: 720px) { .columns { grid-template-columns: 1fr; } header.top { flex-wrap: wrap; } }
+.match-bar { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; gap: 10px; align-items: center;
+  padding: 6px 10px; background: var(--panel-bg); border-radius: 6px; }
+.match-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4; min-width: 320px; padding: 16px 20px;
+  background: #19212c; border: 1px solid #3a4658; border-radius: 8px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); }
+.match-panel[hidden] { display: none; }

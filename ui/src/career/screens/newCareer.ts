@@ -44,8 +44,7 @@ export function newCareerScreen(ctx: Ctx): Screen {
       const s = Number(seed.value) >>> 0;
       const state = newSeason(s, createPlayer({ name: name.value, style, allocation }, s));
       await ctx.store.save('auto', toSave(state, new Date().toISOString().slice(0, 16).replace('T', ' ')));
-      ctx.set(state, `Welcome to the tour, ${name.value.trim()}.`);
-      ctx.go('#/home');
+      ctx.set(state, `Welcome to the tour, ${name.value.trim()}.`, '#/home');
     } catch (e) {
       error.textContent = (e as Error).message;
     }
