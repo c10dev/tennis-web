@@ -853,3 +853,11 @@ Format: one entry per decision, newest at the bottom.
     - The card strength bars read "Suits you N%".
   - **A final review caught two regressions from these fixes:** a failed autosave left the career page `inert` for
     good, and the blur rule missed the sound toggle. Both are fixed and covered by e2e.
+  - **Quick-match flow guards** (`e2e/quick-guards.spec.ts`):
+    - Card keys count only on the choose screen.
+    - Screens that redirect replace their history entry (`ctx.redirect`), so Back can leave the ladder.
+    - A card-decided last point shows its score, and a failed save does not freeze the screen.
+    - Long names wrap on phones, and Space on a focused control presses it.
+  - **Resume:** a quick match left in the middle (Back, reload) resumes exactly. `QuickState.live` notes the plan and
+    the cards chosen, and `resumeQuick` replays them on the deterministic match, so leaving no longer dodges a loss.
+    Resume was chosen over a forfeit because it punishes nothing and hides nothing.
