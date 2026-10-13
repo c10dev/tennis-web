@@ -45,6 +45,7 @@ export const DAYLIGHT = {
   sun: { colour: 0xfff1d8, intensity: 2.0, position: [-20, 40, 15] },
 } as const;
 
-/** Adaptive resolution (TD-038): when the median frame of a window runs over budget, draw fewer pixels. One way only
- *  (no oscillation); frames longer than `stallSec` (a hidden tab, a shader compile) do not count. */
-export const QUALITY = { maxRatio: 2, minRatio: 1, step: 0.8, budgetMs: 22, window: 90, stallSec: 0.25 } as const;
+/** Adaptive resolution (TD-038): when the median frame of a window runs over budget, draw fewer pixels. A step that
+ *  does not make the next window's median at least `minGain` faster is undone and adapting stops (a frame-rate cap, not
+ *  the GPU, was the limit). Never steps back up; frames longer than `stallSec` (a hidden tab, a compile) do not count. */
+export const QUALITY = { maxRatio: 2, minRatio: 1, step: 0.8, budgetMs: 22, minGain: 0.1, window: 90, stallSec: 0.25 } as const;
