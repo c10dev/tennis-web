@@ -1,0 +1,12 @@
+/* Rally Pop faces (ADR-020), self-hosted from ui/public/fonts (SIL OFL 1.1). Lilita One for display, Nunito for body,
+   Barlow Condensed for the broadcast layer only. Missing glyphs (✓ ✗ ▲, Hangul) fall back per glyph. */
+@font-face { font-family: 'Lilita One'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('/fonts/lilita-one-400.woff2') format('woff2'); }
+@font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/nunito-600.woff2') format('woff2'); }
+@font-face { font-family: 'Nunito'; font-style: normal; font-weight: 800; font-display: swap;
+  src: url('/fonts/nunito-800.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/barlow-condensed-600.woff2') format('woff2'); }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap;
+  src: url('/fonts/barlow-condensed-700.woff2') format('woff2'); }
