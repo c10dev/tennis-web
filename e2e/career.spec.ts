@@ -117,6 +117,32 @@ test.describe('career', () => {
     expect(errors).toEqual([]);
   });
 
+  test('closes the match screen\'s audio when it leaves, even with sound turned back off', async ({ page }) => {
+    await page.addInitScript(() => {
+      const Real = window.AudioContext;
+      const made: AudioContext[] = [];
+      (window as unknown as { __audio: AudioContext[] }).__audio = made;
+      window.AudioContext = class extends Real {
+        constructor(...args: ConstructorParameters<typeof AudioContext>) {
+          super(...args);
+          made.push(this);
+        }
+      };
+    });
+    await newCareer(page);
+    await page.locator('#enter').click();
+    await page.locator('#watch').click();
+    await expect(page.locator('#view')).toBeVisible();
+    await page.locator('#sound .sound-toggle').click();
+    await page.locator('#sound .sound-toggle').click();
+    await expect(page.locator('#sound .sound-toggle')).toContainText('Sound off');
+    await page.goBack();
+    await expect(page.locator('#view')).toHaveCount(0);
+    const open = () => page.evaluate(() => (window as unknown as { __audio: AudioContext[] }).__audio.map((c) => c.state));
+    expect((await open()).length).toBeGreaterThan(0);
+    await expect.poll(async () => (await open()).every((st) => st === 'closed')).toBe(true);
+  });
+
   test('replays an earlier match from its recipe', async ({ page }) => {
     const errors = watchErrors(page);
     await newCareer(page);

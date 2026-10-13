@@ -85,8 +85,9 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
   const won = result.winner === 'A';
   const rankBefore = rankOf(s);
   const opponentRank = rankOf(s, m.opponent);
-  const pointsDelta = delta(won, rankBefore, opponentRank);
-  const points: Record<string, number> = { ...s.points, [USER_ID]: Math.max(0, s.points[USER_ID]! + pointsDelta) };
+  const points: Record<string, number> = { ...s.points, [USER_ID]: Math.max(0, s.points[USER_ID]! + delta(won, rankBefore, opponentRank)) };
+  // What the user really gained or lost: a loss at 0 points costs nothing.
+  const pointsDelta = points[USER_ID]! - s.points[USER_ID]!;
   const oppDelta = delta(!won, opponentRank, rankBefore);
   points[m.opponent] = Math.max(0, points[m.opponent]! + oppDelta);
 

@@ -58,7 +58,9 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
     button('⏭', 'Next point (→)', () => dispatch({ type: 'nextPoint' })), seek, time, point, ...speeds, modeGroup,
   );
   const onKey = (e: KeyboardEvent) => {
-    if (e.target instanceof HTMLInputElement && e.target.type !== 'range') return;
+    // Only from the page itself, the canvas or the seek bar: Space on a focused button presses it, arrows move a slider.
+    const t = e.target;
+    if (!(t === document.body || t === document.documentElement || t instanceof HTMLCanvasElement || t === seek)) return;
     const action: ClockAction | null = e.code === 'Space' ? { type: 'toggle' }
       : e.code === 'ArrowLeft' ? { type: 'prevPoint' } : e.code === 'ArrowRight' ? { type: 'nextPoint' } : null;
     if (!action) return;
@@ -66,6 +68,11 @@ export function createControls(root: HTMLElement, dispatch: (action: ClockAction
     dispatch(action);
   };
   window.addEventListener('keydown', onKey);
+  // A button clicked with the mouse gives focus back, so Space toggles play again; one pressed from the keyboard
+  // (detail 0) keeps focus for the next key.
+  root.addEventListener('click', (e) => {
+    if (e.detail > 0 && e.target instanceof HTMLElement) e.target.closest('button')?.blur();
+  });
   const onUp = () => {
     dragging = false;
   };

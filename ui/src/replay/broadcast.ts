@@ -169,7 +169,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       clipWindow = null;
       cancelAnimationFrame(raf);
       controls?.dispose();
-      if (!options.sound) sound.mixer?.dispose();
+      // Our own sound, muted or not; a shared one (quick matches) belongs to the page.
+      if (!options.sound) sound.dispose?.();
+      for (const attr of ['data-camera', 'data-clip', 'data-point', 'data-t', 'data-clip-from', 'data-ratio']) document.body.removeAttribute(attr);
       viewer?.dispose();
       root.replaceChildren();
       document.body.classList.remove('broadcast-page');

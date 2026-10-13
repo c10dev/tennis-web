@@ -114,6 +114,19 @@ test.describe('replay page', () => {
     expect(errors).toEqual([]);
   });
 
+  test('leaves Space to a focused button: shortcuts act only from the page, the canvas or the seek bar', async ({ page }) => {
+    await open(page, '/?seed=42&surface=clay');
+    const t0 = (await dataset(page)).t;
+    await page.locator('[data-speed="2"]').focus();
+    await page.keyboard.press('Space');
+    await expect(page.locator('[data-speed="2"]')).toHaveClass(/active/);
+    await page.waitForTimeout(400);
+    expect((await dataset(page)).t).toBe(t0);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await page.keyboard.press('Space');
+    await expect.poll(async () => Number((await dataset(page)).t)).toBeGreaterThan(Number(t0));
+  });
+
   test('turns sound on and plays with it without errors', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '/?seed=42&surface=clay');

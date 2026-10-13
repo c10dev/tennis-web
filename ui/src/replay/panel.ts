@@ -35,6 +35,8 @@ export function createPanel(root: HTMLElement, current: { seed: number; surface:
     } catch (err) {
       message.textContent = `Could not read ${chosen.name}: ${(err as Error).message}`;
     }
+    // Choosing the same file again (after editing it) must fire change again.
+    file.value = '';
   });
   const load = document.createElement('label');
   load.className = 'load';
@@ -49,7 +51,8 @@ export function createPanel(root: HTMLElement, current: { seed: number; surface:
     a.href = URL.createObjectURL(new Blob([JSON.stringify(result)], { type: 'application/json' }));
     a.download = `replay-${result.config.surface}-${result.seed}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    // Some browsers start the download after click() returns; free the URL a moment later.
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
 
   const meta = document.createElement('div');
