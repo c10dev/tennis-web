@@ -36,7 +36,7 @@ export { HABITS, personaOf } from './quick/persona.ts';
 export { PLANS, planTactic } from './quick/plan.ts';
 export { cardReward } from './quick/rewards.ts';
 export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './quick/save.ts';
-export { broadcastSeconds, clipFor, decisive } from './quick/pace.ts';
+export { broadcastSeconds, clipFor, decisive, pointSeconds } from './quick/pace.ts';
 export type * from './quick/types.ts';
 export { quickHomeView } from './views/quick-home.ts';
 export { CARD_LABEL, cardChoices, decisionSituation, momentLabel, revealView, scoreLine } from './views/quick-match.ts';

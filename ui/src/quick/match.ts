@@ -2,6 +2,7 @@
 // opponent read shows, the user picks a card (keys 1/2/3), both cards are revealed and the point plays in 3D (or as
 // text in fast mode). The 3D code loads only when it is used.
 import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
+import type { Timeline } from '@tennis/renderer';
 import {
   autoPlay, CARD_LABEL, cardChoices, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
 } from '@tennis/game';
@@ -10,8 +11,6 @@ import { h } from '../lib/h.ts';
 import { renderRead } from './scout.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-/** Seconds each point without cards stays on the ticker. */
-const AUTO_SEC = 0.35;
 
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const qm = ctx.quickMatch;
@@ -31,13 +30,16 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   /** Plays on to the next decision point, ticking each point by; then the choose screen, or the result. */
   async function run() {
     const points = autoPlay(qm!);
+    if (broadcast && points.length) load();
     for (const p of points) {
+      if (disposed) return;
+      if (broadcast) await playClip(p, QUICK_PACE.autoSpeed);
       if (disposed) return;
       panel.replaceChildren(h('div', { class: 'situation ticker', id: 'ticker' }, h('span', { class: 'versus' }, `You v ${opponent}`),
         h('strong', { id: 'score-line' }, `${p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0)}-${p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0)}`),
         h('span', { class: p.winner === 'A' ? 'you' : 'them' }, p.winner === 'A' ? 'your point' : 'their point')));
       phase('auto');
-      await sleep(AUTO_SEC * 1000);
+      await sleep(QUICK_PACE.autoSec * 1000);
     }
     if (disposed) return;
     if (matchOver(qm!)) {
@@ -74,7 +76,11 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       h('strong', { class: 'verdict' }, verdict)));
     phase('reveal');
     await sleep(QUICK_PACE.revealSec * 1000);
-    if (broadcast && !disposed) await playClip(point);
+    if (broadcast && !disposed) {
+      load();
+      phase('clip');
+      await playClip(point, QUICK_PACE.speed);
+    }
     if (disposed) return;
     panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, `${r.how} · ${r.winner === 'you' ? 'your point' : 'their point'} · ${scoreLine(qm!)}`));
     phase('outcome');
@@ -83,12 +89,17 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     if (!disposed) await run();
   }
 
-  async function playClip(point: PointEvent) {
-    const timeline = broadcast!.load({ schemaVersion: SCHEMA_VERSION, config: qm!.live.config, events: [...qm!.live.events] }, { keepTime: true });
-    const seg = timeline.segments.at(-1)!;
+  /** Loads the match so far into the broadcast (after new points were played). */
+  let timeline: Timeline | null = null;
+  const load = () => {
+    timeline = broadcast!.load({ schemaVersion: SCHEMA_VERSION, config: qm!.live.config, events: [...qm!.live.events] }, { keepTime: true });
+  };
+
+  /** Plays the window `clipFor` gives this point (pace.ts models the same seconds). */
+  async function playClip(point: PointEvent, speed: number) {
+    const seg = timeline!.segments.find((x) => x.point.index === point.index)!;
     const clip = clipFor(point);
-    phase('clip');
-    await broadcast!.playWindow(seg.zero + clip.fromTau, seg.zero + clip.toTau, QUICK_PACE.speed);
+    await broadcast!.playWindow(seg.zero + clip.fromTau, seg.zero + clip.toTau, speed);
   }
 
   const onKey = (e: KeyboardEvent) => {
