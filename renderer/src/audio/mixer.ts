@@ -139,7 +139,8 @@ export function createMixer(): Mixer {
     },
     duck,
     resume() {
-      if (ctx.state === 'suspended') void ctx.resume();
+      // 'interrupted' is iOS Safari's state after a call or a trip to the background.
+      if (ctx.state !== 'running' && ctx.state !== 'closed') void ctx.resume();
     },
     setBed(on) {
       bedGain.gain.setTargetAtTime(on ? bedLevel : 0, ctx.currentTime, 0.3);

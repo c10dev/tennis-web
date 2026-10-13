@@ -27,7 +27,8 @@ export function createQuality(devicePixelRatio: number): Quality {
       if (window.length < QUALITY.window) return false;
       const median = [...window].sort((a, b) => a - b)[Math.floor(window.length / 2)]!;
       window = [];
-      if (trial && median > trial.median * (1 - QUALITY.minGain)) {
+      // A step stays if it brought the frames inside the budget or made them clearly faster; otherwise it is undone.
+      if (trial && median > QUALITY.budgetMs && median > trial.median * (1 - QUALITY.minGain)) {
         ratio = trial.from;
         settled = true;
         return true;

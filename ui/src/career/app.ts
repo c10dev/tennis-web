@@ -117,6 +117,7 @@ let shownPath: string | null = null;
 
 async function render(): Promise<void> {
   const route = currentRoute();
+  const path = location.hash;
   if (!state && NEEDS_STATE.has(route.name)) {
     go('#/');
     return;
@@ -132,8 +133,8 @@ async function render(): Promise<void> {
   current = screen;
   app.replaceChildren(...(screen.bare ? [screen.element] : [header(), h('main', { class: 'career' }, screen.element)]));
   // A new screen opens at its top; a re-render of the same screen (after an action) keeps the place.
-  if (location.hash !== shownPath) window.scrollTo(0, 0);
-  shownPath = location.hash;
+  if (path !== shownPath) window.scrollTo(0, 0);
+  shownPath = path;
   if (route.name === 'home') note = null;
 }
 

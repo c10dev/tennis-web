@@ -74,7 +74,8 @@ let prefetched = false;
 function prefetch3d(): void {
   if (prefetched) return;
   prefetched = true;
-  const load = () => void import('../replay/broadcast.ts');
+  // A failed prefetch is harmless: Play imports the module again and reports a real failure there.
+  const load = () => void import('../replay/broadcast.ts').catch(() => {});
   if ('requestIdleCallback' in window) requestIdleCallback(load, { timeout: 2000 });
   else setTimeout(load, 500);
 }

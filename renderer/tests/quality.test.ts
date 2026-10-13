@@ -36,6 +36,14 @@ describe('createQuality', () => {
     expect(feed(q, () => 33.3, 20 * QUALITY.window)).toBe(2);
   });
 
+  it('keeps a small step that brings the frames under budget', () => {
+    const q = createQuality(2);
+    // 23 ms at ratio 2, 21.5 ms at 1.6: only 6.5% faster, but now inside the budget.
+    const ms = (r: number) => (r === 2 ? 23 : 21.5);
+    expect(feed(q, ms, QUALITY.window)).toBeCloseTo(2 * QUALITY.step, 9);
+    expect(feed(q, ms, 5 * QUALITY.window)).toBeCloseTo(2 * QUALITY.step, 9);
+  });
+
   it('never goes under the minimum', () => {
     const q = createQuality(2);
     expect(feed(q, gpuBound(400), 40 * QUALITY.window)).toBeGreaterThanOrEqual(QUALITY.minRatio);
