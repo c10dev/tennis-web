@@ -17,7 +17,6 @@ export const COURT_DRAW = {
 
 /** Rally Pop palette (ADR-018, docs/design-references.md §3): yellow-green belongs to the ball alone. */
 export const COLOURS = {
-  background: 0x1f2630,
   ground: 0x5f665a,
   /** Slightly off-white, so the white trail and the paper UI stay the brightest things on screen. */
   lines: 0xf3f0e6,
@@ -93,7 +92,7 @@ export const VENUE = {
   boardHeight: 0.9,
   umpireChairX: -7.3,
   umpireChairHeight: 2.2,
-  seats: { hard: 0x3b4590, clay: 0x2f6b4a, grass: 0x5b3f8a },
+  seats: { hard: 0x5664b0, clay: 0x3a8160, grass: 0x6e52a3 },
   boards: { hard: 0x15306b, clay: 0x1f5a3a, grass: 0x24502f },
   chair: 0x3b4048,
 } as const;

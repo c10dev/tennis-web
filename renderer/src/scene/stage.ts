@@ -1,5 +1,5 @@
 // The whole Three.js scene for one match; applyFrame() moves everything to a Frame. No WebGL here (ADR-007).
-import { AmbientLight, CircleGeometry, Color, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial, Scene } from 'three';
+import { CircleGeometry, Mesh, MeshBasicMaterial, Scene } from 'three';
 import type { LineCall } from '../broadcast/hawkeye.ts';
 import type { CameraId } from '../broadcast/types.ts';
 import type { Frame } from '../playback/frame.ts';
@@ -9,6 +9,7 @@ import { createBall, type BallLook } from './ball.ts';
 import { ballPop, lastContact, trailPoints } from './ballMotion.ts';
 import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
+import { addDaylight } from './daylight.ts';
 import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
 
@@ -22,10 +23,7 @@ export interface Stage {
 
 export function createStage(timeline: Timeline): Stage {
   const scene = new Scene();
-  scene.background = new Color(COLOURS.background);
-  const sun = new DirectionalLight(0xffffff, 1.6);
-  sun.position.set(-20, 40, 15);
-  scene.add(new HemisphereLight(0xdfe8ff, 0x3a4030, 1.1), new AmbientLight(0xffffff, 0.25), sun);
+  addDaylight(scene);
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
   const kit = COLOURS.kits[timeline.surface];
   const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(kit.A), B: new MannequinRig(kit.B) };

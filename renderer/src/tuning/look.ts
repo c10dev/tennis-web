@@ -31,3 +31,13 @@ export const BALL_LOOK = {
    * diameter) and opacity; both taper to nothing at the tail. */
   trail: { sec: 0.2, samples: 12, widthShare: 0.8, opacity: 0.8, colour: 0xffffff },
 } as const;
+
+/** A sunny afternoon (ADR-018): sky dome and fog separate the stands from the court; no tone mapping. */
+export const DAYLIGHT = {
+  sky: { zenith: 0x4f9de0, horizon: 0xd3e8f2, radius: 200 },
+  /** Metres from the camera: clear over the court, a light haze on the far stands. */
+  fog: { near: 50, far: 200 },
+  hemisphere: { sky: 0xe4f1ff, ground: 0x8a7556, intensity: 1.0 },
+  /** The sun gives the toon bands their light side; it stands high over the umpire's shoulder. */
+  sun: { colour: 0xfff1d8, intensity: 2.0, position: [-20, 40, 15] },
+} as const;
