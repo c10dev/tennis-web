@@ -25,6 +25,8 @@ export interface Ctx {
   /** The tactic the user set for their next match. */
   tactic: Tactic;
   go(path: string): void;
+  /** Sends the user elsewhere without a new history entry (a screen that cannot open now). */
+  redirect(path: string): void;
   /** Replace the season and re-render, or go to `path` (one render either way); optionally leave a note. */
   set(state: SeasonState, note?: string, path?: string): void;
   /** Close the week, autosave, and go home with a note. */

@@ -2,7 +2,7 @@
 import { DEFAULT_TACTIC } from '@tennis/engine';
 import { closeWeek, fromQuickSave, fromSave, homeView, playerById, playOut, toQuickSave, toSave, USER_ID, type QuickState, type SeasonState } from '@tennis/game';
 import { h } from '../lib/h.ts';
-import { currentRoute, go } from '../lib/router.ts';
+import { currentRoute, go, replace } from '../lib/router.ts';
 import { IndexedDbStore } from '../storage/indexedDb.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
@@ -65,12 +65,18 @@ const ctx: Ctx = {
   },
   async setQuick(next, path) {
     quick = next;
-    await ctx.store.saveQuick(toQuickSave(next, stamp()));
+    // A failed save (blocked or full storage) must not stop the game: the ladder goes on in memory.
+    try {
+      await ctx.store.saveQuick(toQuickSave(next, stamp()));
+    } catch (e) {
+      console.warn(`Quick ladder not saved: ${(e as Error).message}`);
+    }
     if (path) go(path);
     else void render();
   },
   tactic: { ...DEFAULT_TACTIC },
   go,
+  redirect: replace,
   set(next, message, path) {
     state = next;
     if (message !== undefined) note = message;
@@ -127,7 +133,7 @@ async function render(): Promise<void> {
   const route = currentRoute();
   const path = location.hash;
   if (!state && NEEDS_STATE.has(route.name)) {
-    go('#/');
+    replace('#/');
     return;
   }
   const token = ++renders;

@@ -22,7 +22,7 @@ export function tournamentScreen(ctx: Ctx): Screen {
   const s = ctx.state!;
   const v = tournamentView(s);
   if (!v) {
-    ctx.go('#/home');
+    ctx.redirect('#/home');
     return { element: h('div') };
   }
   const quick = () => {

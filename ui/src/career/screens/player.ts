@@ -7,7 +7,7 @@ export function playerScreen(ctx: Ctx, params: string[]): Screen {
   const s = ctx.state!;
   const id = params[0] ?? 'user';
   if (!s.world.players.some((p) => p.id === id)) {
-    ctx.go('#/rankings');
+    ctx.redirect('#/rankings');
     return { element: h('div') };
   }
   const v = playerView(s, id);

@@ -13,3 +13,9 @@ export function go(path: string): void {
   if (location.hash === path) window.dispatchEvent(new HashChangeEvent('hashchange'));
   else location.hash = path;
 }
+
+/** Like go, but in place of the current history entry: a screen that sends you elsewhere must not trap Back. */
+export function replace(path: string): void {
+  if (location.hash === path) window.dispatchEvent(new HashChangeEvent('hashchange'));
+  else location.replace(path);
+}

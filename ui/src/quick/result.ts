@@ -21,7 +21,7 @@ const phase = (p: string) => {
 
 export function quickResult(ctx: Ctx): Screen {
   if (!ctx.quick?.history.length) {
-    ctx.go('#/quick');
+    ctx.redirect('#/quick');
     return { element: h('div') };
   }
   const v = quickResultView(ctx.quick);

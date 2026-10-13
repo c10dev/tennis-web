@@ -17,7 +17,7 @@ export async function matchScreen(ctx: Ctx, params: string[]): Promise<Screen> {
   const s = ctx.state!;
   const pending = pendingUserMatch(s);
   if (!pending) {
-    ctx.go('#/tournament');
+    ctx.redirect('#/tournament');
     return { element: h('div') };
   }
   const recipe: MatchRecipe = quickRecipe(pending, ctx.tactic);
@@ -102,7 +102,7 @@ type Mount = (typeof import('../../replay/broadcast.ts'))['mountBroadcast'];
 function replay(ctx: Ctx, historyIndex: number, matchIndex: number, mount: Mount, dom: { element: HTMLElement; stage: HTMLElement; bar: HTMLElement }): Screen {
   const record = ctx.state!.history[historyIndex]?.userMatches[matchIndex];
   if (!record?.recipe) {
-    ctx.go('#/home');
+    ctx.redirect('#/home');
     return { element: h('div') };
   }
   const broadcast = mount(dom.stage, { mode: 'highlights' });

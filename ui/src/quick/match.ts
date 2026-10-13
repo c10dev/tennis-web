@@ -27,7 +27,7 @@ const lastPoint = (m: QuickMatch) => m.live.events.findLast((e): e is PointEvent
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const qm = ctx.quickMatch;
   if (!qm || matchOver(qm)) {
-    ctx.go('#/quick');
+    ctx.redirect('#/quick');
     return { element: h('div') };
   }
   const stage = h('div');
@@ -44,6 +44,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   };
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
+  /** True while the choose screen is up: card keys count only then, not while points tick by. */
+  let choosing = false;
   let disposed = false;
   const phase = (p: string) => Object.assign(document.body.dataset, { quickPhase: p, quickPoints: String(qm.recipe.cards.length), quickDecisions: String(qm.decisions.length) });
 
@@ -102,13 +104,15 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
     deals = [0, 1, 2].map((i) => setTimeout(() => sound.ui({ kind: 'deal', i }), 120 + 60 * i));
     announce(`${sit.moment}, ${scoreLine(qm!)}. ${sit.line}. Choose 1 Attack, 2 Defend or 3 Counter.`);
+    choosing = true;
     panel.focus({ preventScroll: true });
     phase('choose');
   }
 
   async function choose(card: Card) {
-    if (busy || !qm!.pending) return;
+    if (busy || !choosing || !qm!.pending) return;
     busy = true;
+    choosing = false;
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point);
     stopDeals();
@@ -132,7 +136,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       await playClip(point, QUICK_PACE.speed);
     }
     if (disposed) return;
-    const outcome = `${r.how} · ${r.winner === 'you' ? 'your point' : 'their point'} · ${scoreLine(qm!)}`;
+    // The score after this point (the live score resets once the match is over).
+    const outcome = `${r.how} · ${r.winner === 'you' ? 'your point' : 'their point'} · ${tickerView(qm!, point).score}`;
     panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, outcome));
     announce(outcome);
     phase('outcome');

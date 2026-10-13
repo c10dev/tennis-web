@@ -7,7 +7,7 @@ export function historyScreen(ctx: Ctx, params: string[]): Screen {
   const s = ctx.state!;
   const index = Number(params[0]);
   if (!(Number.isInteger(index) && index >= 0 && index < s.history.length)) {
-    ctx.go('#/home');
+    ctx.redirect('#/home');
     return { element: h('div') };
   }
   const v = historyView(s, index);

@@ -114,7 +114,8 @@ export function onSkipInput(fn: () => void): () => void {
     if (!interactive(e.target)) fn();
   };
   const onKey = (e: KeyboardEvent) => {
-    if (e.code === 'Space' || (e.code === 'Enter' && !interactive(e.target))) {
+    // Space or Enter on a focused control presses it; elsewhere they skip.
+    if ((e.code === 'Space' || e.code === 'Enter') && !interactive(e.target)) {
       e.preventDefault();
       fn();
     }
