@@ -791,3 +791,43 @@ Format: one entry per decision, newest at the bottom.
   skip's lone stamp, and a remembered mute that plays nothing. The main `app` chunk grows 2.2 kB; the audio code shares
   a 25 kB chunk with engine code the dev page already split out. Sounds are synthesised, untested by ear in CI, and have
   no volume slider on the quick screens (TD-050).
+
+## ADR-024: Polish pass after Rally Pop (autonomous session)
+- **Date:** 2026-10-14
+- **Status:** Accepted
+- **Context:** After Rally Pop phase 3 and the UI sounds, a six-hour autonomous session worked through tech debt,
+  phone layout, accessibility and review findings. No dependencies were added and nothing changes what a match
+  computes. Design questions that need the user went to `docs/proposals.md`, with prototypes on local
+  `proposal/*` branches. This ADR records the decisions that shape code.
+- **Decision:**
+  - **Adaptive resolution** (`renderer/src/quality.ts`, `QUALITY`): the viewer starts at the device pixel ratio and
+    steps it ×0.8, down to 1, when the median of 90 frames misses 22 ms. A step stays only if it brings frames inside
+    the budget or at least 10% faster; otherwise it is undone and adapting stops (a 30 fps battery saver is a cap, not
+    a GPU limit). It never steps back up and ignores stalls over 0.25 s. On the desktop GPU it never acts.
+  - **Clip start** (`ui/src/replay/clip.ts`, `Broadcast.ready()`): a clip's first frame shows its window start, and a
+    new viewer compiles its shaders with `compileAsync` before the loop draws. The wait is capped at 1.5 s
+    (`within()`), so a lost WebGL context cannot stall a match.
+  - **Side replays** track from x = +15 m, away from the umpire chair (TD-040); `sideReplay.test.ts` keeps the chair
+    out of the sight line.
+  - **Sound and gestures:** the page's one mixer is created on the first gesture and resumed on every pointer, click
+    and key gesture. A touch screen only allows audio on the end of a tap, and iOS reports `interrupted` after a call.
+    The sound pill's name stays "Sound", and `aria-pressed` carries its state.
+  - **Screen readers:** one polite live region (`ui/src/lib/announce.ts`) says each point's score and ending, the big
+    point with its stakes and the 1/2/3 choice, and the outcome. At a decision, focus moves to the panel. Marks the
+    fonts lack (✓ ✗ = → ▲ ▼) are Lucide icons with the character kept as screen-reader text (`glyph()`).
+  - **Onboarding:** a one-time reading tip at the first decision (`readingHint`, localStorage `tennis-hints`); each
+    style's strengths and favoured card on the start form (`STYLE_BLURB`). The seed moves under Advanced.
+  - **Phones (375×667):**
+    - The decision panel keeps the three cards side by side without the flavour line, and the revealed chips stack.
+    - Hover effects apply only where hover exists, and the career header fits two rows.
+    - Each new screen opens at its top.
+  - **Look tests:** `e2e/quick-look.spec.ts` compares three DOM screens with committed baselines at a 10-pixel
+    tolerance. Renders are identical run to run, and a ratio such as 1% let changed text pass. Refresh with
+    `--update-snapshots=all`.
+  - **Play again** starts on the remembered plan. The ladder home fetches the 3D chunk while it waits (not in fast
+    mode). `game/src/tuning.ts` re-exports the quick blocks from `tuning-quick.ts`, and the e2e specs share
+    `e2e/helpers.ts`.
+- **Consequences:** Closed TD-012, TD-018, TD-024, TD-032, TD-037, TD-039, TD-040, TD-044, TD-045, TD-046, TD-047;
+  TD-027, TD-041 and TD-042 are partial. Open design questions are P1–P5 in `docs/proposals.md`. P1 option B (plan
+  card scaling) was prototyped and dropped: it left the plan gap at 5.7–5.8 pp. P2, P3 and P4 wait on their branches,
+  rebased on main, each passing every check.
