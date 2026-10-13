@@ -1,5 +1,7 @@
 // Counts for batch reports (GDD §10 M1 tuning table). Pure: the CLI sums them and prints rates.
-import type { MatchResult, PlayerId } from '../types.ts';
+import { deriveSeed } from '../rng/mulberry32.ts';
+import type { MatchConfig, MatchResult, PlayerId } from '../types.ts';
+import { simulateMatch } from './simulateMatch.ts';
 
 export interface Metrics {
   matches: number;
@@ -96,4 +98,19 @@ export function summarize(m: Metrics): Summary {
     shortRallyPct: rate(m.shortRallies, m.servicePoints),
     tiebreakSetPct: rate(m.tiebreakSets, m.sets),
   };
+}
+
+/**
+ * Plays `count` matches with seeds `deriveSeed(baseSeed, i)`, alternating the first server so neither player gets the
+ * edge of serving first. Returns the summed metrics for the whole match and for A's service only.
+ */
+export function runBatch(config: MatchConfig, count: number, baseSeed: number): { all: Metrics; a: Metrics } {
+  let all = emptyMetrics();
+  let a = emptyMetrics();
+  for (let i = 0; i < count; i++) {
+    const r = simulateMatch({ ...config, firstServer: i % 2 === 0 ? 'A' : 'B' }, deriveSeed(baseSeed, i));
+    all = addMetrics(all, matchMetrics(r));
+    a = addMetrics(a, matchMetrics(r, 'A'));
+  }
+  return { all, a };
 }

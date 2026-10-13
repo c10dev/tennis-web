@@ -15,3 +15,4 @@
 
 ## Refactor passes
 - (record date + what was cleaned up)
+- 2026-10-13 (end of M1): moved the batch loop into `runBatch` and the rating ladder player into `ratedPlayer`, both shared by the CLI and `test:stats`. Batch reports are byte-identical before and after. Reviewed TD-001–TD-009: all stay open for M2–M4; none blocks M1.

@@ -1,31 +1,16 @@
 // Regression guard for the tuning (npm run test:stats). 1,000 matches per case with ranges a little wider than the GDD
 // targets; the full 10,000-match check is `npm run sim`.
 import { describe, expect, it } from 'vitest';
-import { addMetrics, emptyMetrics, matchMetrics, summarize, type Summary } from '../src/match/metrics.ts';
-import { averagePlayer, bigServer, createConfig, deriveSeed, playerWith, simulateMatch, type PlayerProfile, type Surface } from '../src/index.ts';
+import { averagePlayer, bigServer, createConfig, ratedPlayer, runBatch, summarize, type PlayerProfile, type Summary, type Surface } from '../src/index.ts';
 
 function run(a: PlayerProfile, surface: Surface, n = 1000, base = 7): { all: Summary; a: Summary } {
-  const config = createConfig([a, averagePlayer('B')], { surface });
-  let all = emptyMetrics();
-  let onlyA = emptyMetrics();
-  for (let i = 0; i < n; i++) {
-    const r = simulateMatch({ ...config, firstServer: i % 2 === 0 ? 'A' : 'B' }, deriveSeed(base, i));
-    all = addMetrics(all, matchMetrics(r));
-    onlyA = addMetrics(onlyA, matchMetrics(r, 'A'));
-  }
-  return { all: summarize(all), a: summarize(onlyA) };
+  const r = runBatch(createConfig([a, averagePlayer('B')], { surface }), n, base);
+  return { all: summarize(r.all), a: summarize(r.a) };
 }
 
 const within = (v: number, lo: number, hi: number) => {
   expect(v).toBeGreaterThanOrEqual(lo);
   expect(v).toBeLessThanOrEqual(hi);
-};
-
-const rated = (r: number) => {
-  const keys = Object.keys(averagePlayer('x').attributes).filter((k) => k !== 'surfaceAffinity');
-  const p = playerWith(`R${r}`, Object.fromEntries(keys.map((k) => [k, r])));
-  p.attributes.surfaceAffinity = { hard: r, clay: r, grass: r };
-  return p;
 };
 
 describe('tuning regression (average vs average)', () => {
@@ -61,7 +46,7 @@ describe('skill', () => {
   });
 
   it('win rate rises with the rating gap, one point being a clear but not crushing edge', () => {
-    const wins = [11, 12, 13, 14, 15].map((r, k) => run(rated(r), 'hard', 600, 100 + k).all.winPctA);
+    const wins = [11, 12, 13, 14, 15].map((r, k) => run(ratedPlayer(`R${r}`, r), 'hard', 600, 100 + k).all.winPctA);
     for (let i = 1; i < wins.length; i++) expect(wins[i]).toBeGreaterThan(wins[i - 1]!);
     within(wins[3]!, 0.6, 0.85);
   });

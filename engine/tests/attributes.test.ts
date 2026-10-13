@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalize, normalizeAttributes, validateAttributes } from '../src/player/attributes.ts';
-import { averagePlayer, bigServer, playerWith } from '../src/player/presets.ts';
+import { averagePlayer, bigServer, playerWith, ratedPlayer } from '../src/player/presets.ts';
 
 describe('normalize', () => {
   it('maps 1 to 0, 20 to 1 and is linear in between', () => {
@@ -58,5 +58,13 @@ describe('presets', () => {
     expect(p.attributes.backhand).toBe(13);
     p.attributes.surfaceAffinity.hard = 5;
     expect(averagePlayer('Q').attributes.surfaceAffinity.hard).toBe(13);
+  });
+});
+
+describe('ratedPlayer', () => {
+  it('sets every rating, surface affinity included, to the same value', () => {
+    const { surfaceAffinity, ...rest } = ratedPlayer('R', 15).attributes;
+    expect(Object.values(rest).every((v) => v === 15)).toBe(true);
+    expect(surfaceAffinity).toEqual({ hard: 15, clay: 15, grass: 15 });
   });
 });

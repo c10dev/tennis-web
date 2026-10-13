@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addMetrics, emptyMetrics, matchMetrics, summarize } from '../src/match/metrics.ts';
+import { addMetrics, emptyMetrics, matchMetrics, runBatch, summarize } from '../src/match/metrics.ts';
+import { deriveSeed } from '../src/rng/mulberry32.ts';
 import { createConfig, simulateMatch } from '../src/match/simulateMatch.ts';
 import { averagePlayer } from '../src/player/presets.ts';
 import type { PointEvent } from '../src/types.ts';
@@ -44,5 +45,20 @@ describe('batch metrics', () => {
     expect(s.avgRally).toBeCloseTo(m.rallyTotal / m.servicePoints, 12);
     expect(s.tiebreakSetPct).toBeCloseTo(m.tiebreakSets / m.sets, 12);
     expect(s.firstServeInPct).toBeCloseTo(m.firstServesIn / m.servicePoints, 12);
+  });
+});
+
+describe('runBatch', () => {
+  it('sums the per-match metrics of seeds derived from the base seed, alternating the first server', () => {
+    const config = createConfig([averagePlayer('A'), averagePlayer('B')]);
+    const batch = runBatch(config, 4, 99);
+    let all = emptyMetrics();
+    let onlyA = emptyMetrics();
+    for (let i = 0; i < 4; i++) {
+      const r = simulateMatch({ ...config, firstServer: i % 2 === 0 ? 'A' : 'B' }, deriveSeed(99, i));
+      all = addMetrics(all, matchMetrics(r));
+      onlyA = addMetrics(onlyA, matchMetrics(r, 'A'));
+    }
+    expect(batch).toEqual({ all, a: onlyA });
   });
 });

@@ -2,9 +2,26 @@ import type { PlayerAttributes, PlayerProfile, PlayStyle } from '../types.ts';
 
 type Ratings = Partial<Omit<PlayerAttributes, 'surfaceAffinity'>>;
 
+/** Every attribute at the same rating, surface affinity included. */
+function uniform(rating: number): PlayerAttributes {
+  return {
+    servePower: rating, serveAccuracy: rating, secondServe: rating, forehand: rating, backhand: rating, return: rating,
+    volley: rating, overhead: rating, slice: rating, dropShot: rating,
+    movement: rating, agility: rating, stamina: rating, strength: rating,
+    composure: rating, concentration: rating, aggression: rating, consistency: rating, decision: rating,
+    injuryProneness: rating,
+    surfaceAffinity: { hard: rating, clay: rating, grass: rating },
+  };
+}
+
 /** Reference "average tour player" for batch tuning (ADR-002): every rating 13. */
 export function averagePlayer(name: string): PlayerProfile {
-  return playerWith(name, {});
+  return ratedPlayer(name, 13);
+}
+
+/** Every rating, surface affinity included, at `rating`: the skill ladder in batch checks. */
+export function ratedPlayer(name: string, rating: number): PlayerProfile {
+  return { name, style: 'all_court', attributes: uniform(rating) };
 }
 
 /** Big server: serve ratings 17+ and average elsewhere (GDD M1 target: 1.0+ aces per service game). */
@@ -12,14 +29,7 @@ export function bigServer(name: string): PlayerProfile {
   return playerWith(name, { servePower: 18, serveAccuracy: 17, secondServe: 15 }, 'big_server');
 }
 
+/** An average player with some ratings changed. */
 export function playerWith(name: string, ratings: Ratings, style: PlayStyle = 'all_court'): PlayerProfile {
-  const base: PlayerAttributes = {
-    servePower: 13, serveAccuracy: 13, secondServe: 13, forehand: 13, backhand: 13, return: 13,
-    volley: 13, overhead: 13, slice: 13, dropShot: 13,
-    movement: 13, agility: 13, stamina: 13, strength: 13,
-    composure: 13, concentration: 13, aggression: 13, consistency: 13, decision: 13,
-    injuryProneness: 13,
-    surfaceAffinity: { hard: 13, clay: 13, grass: 13 },
-  };
-  return { name, style, attributes: { ...base, ...ratings } };
+  return { name, style, attributes: { ...uniform(13), ...ratings } };
 }
