@@ -13,9 +13,9 @@ aggression 0.2 → 0.8 the win rate rises from 47% to 53%. The other tactic fiel
 49 / 50 / 52%) shrinks the gap but makes the choice meaningless, against the playtest's "my choice must matter".
 
 **Options.**
-- **A. The engine gives risk a best level per matchup (recommended after B failed).** Errors from aggression cost more against strong defenders
-  (counter-punchers, high defence ratings), so aggressive pays against weak defenders and defensive pays against big
-  hitters. This is closest to real tennis. But it is an engine change: the season balance (M4) and the M1 batch
+- **A. The engine gives risk a best level per matchup (recommended after B failed).** Errors from aggression cost
+  more against strong defenders (counter-punchers, high defence ratings), so aggressive pays against weak defenders and
+  defensive pays against big hitters. This is closest to real tennis. But it is an engine change: the season balance (M4) and the M1 batch
   targets need a re-check, and the engine goldens change.
 - **B. The plan carries into the big points.** Each plan also scales the user's card strengths at
   decision points. Aggressive: Attack ×1.15 and Defend/Counter ×0.9. Defensive: the reverse. Balanced: no change.
@@ -81,9 +81,10 @@ opponent's habit is random, though, so the first lesson may be a hard one (`repe
 one the player can see at once.
 
 **Options.**
-- **A. A fixed first opponent (recommended).** The first ladder match is always against a `big_point_attack` persona.
-  At each decision the tip names what the habit predicts ("Their habit says attack here: Counter beats Attack"). It is
-  shown for that match only. The match is still played and still counts.
+- **A. A fixed first opponent (recommended).** The first ladder match is always against a `defend_unless_behind`
+  persona: it applies at 52% of first decisions and 59% of all, against 0% and 45% for `big_point_attack`. At each
+  decision a note names what the habit predicts ("Their habit says defend here: Attack beats Defend"), or that the tell
+  is the read. It is shown for that match only. The match is still played and still counts.
 - **B. A separate tutorial match** before the ladder, with scripted points. More control, more code, and it delays the
   first real match.
 - **C. Keep the tip as it is.**
