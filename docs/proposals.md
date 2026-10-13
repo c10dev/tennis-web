@@ -84,3 +84,30 @@ one the player can see at once.
 
 **Built for review** on the local branch `proposal/p4-guided-first-match` (not merged): a fixed first-opponent habit
 (`QuickState.tutor`, optional), the prediction at every decision of match one, tests and refreshed baselines.
+
+## P5. What happens after the top of the ladder (TD-026, TD-035)
+
+**Finding.** Ten 300-match ladders with the reader bot (seed 4) give these averages:
+
+| After matches | Rank | Points | Top points | Level |
+|---|---|---|---|---|
+| 0 | 45.8 | 100 | 1,600 | 12.66 |
+| 30 | 25.7 | 439 | 1,633 | 12.74 |
+| 100 | 11.6 | 1,086 | 1,714 | 13.76 |
+| 200 | 2.5 | 1,929 | 2,063 | 15.09 |
+| 300 | 1.6 | 2,675 | 2,830 | 16.21 |
+
+Only the user grows, and points never decay, so the climb ends around match 200. At about 1.5 minutes a match that is
+roughly five hours of play, and after it the player out-levels the ladder with nothing left to chase. The 기획서's long
+loop is "points to the next rank always visible" and continuous growth.
+
+**Options.**
+- **A. Divisions (recommended).** The ladder is one division. Finishing a run of matches in the top 8 promotes the
+  player to the next division: a new 64-player world a level higher, and points reset to that division's scale. The
+  bottom 8 can be relegated. Growth never runs out, and the "next goal" line becomes "Top 8 for promotion".
+- **B. Seasons.** Every 50 matches a season closes: points halve, the season rank goes into a history, and AI players
+  age and grow (the season mode's ageing already exists). Keeps one ladder, but it is a softer reset.
+- **C. Cap growth.** Slow rating gains near the top of the scale and let points decay. Simplest, but the end state is
+  still "#1, nothing to do".
+
+**Default:** A. P3's streaks and P2's rivals carry over into each new division.
