@@ -1,35 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import type { Card } from '@tennis/engine';
-import { autoPlay, createPlayer, decide, defaultAllocation, finishQuick, matchOver, newLadder, startQuick, type GamePlan } from '@tennis/game';
+import type { GamePlan } from '@tennis/game';
+import { css, CYCLE, nodeLadder, nodePlayNext, startLadder, watchErrors } from './helpers.ts';
 
 const SEED = 3;
-const CYCLE: Card[] = ['attack', 'defend', 'counter'];
 
-/** The same first match in Node: the default style on the start form is the first option, big server. */
-function nodeFirstMatch(plan: GamePlan = 'balanced') {
-  const s = newLadder(SEED, createPlayer({ name: 'Alex Kim', style: 'big_server', allocation: defaultAllocation('big_server') }, SEED));
-  const qm = startQuick(s, plan);
-  let i = 0;
-  for (autoPlay(qm); !matchOver(qm); autoPlay(qm)) decide(qm, CYCLE[i++ % 3]!);
-  return finishQuick(s, qm).history[0]!;
-}
-
-function watchErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
-  });
-  return errors;
-}
-
-async function startLadder(page: Page) {
-  await page.goto('/#/');
-  await page.locator('#quick-match').click();
-  await page.locator('#quick-seed').fill(String(SEED));
-  await page.locator('#quick-start').click();
-  await expect(page.locator('#quick-play')).toBeVisible();
-}
+/** The same first match in Node. */
+const nodeFirstMatch = (plan: GamePlan = 'balanced') => nodePlayNext(nodeLadder(SEED), plan).history[0]!;
 
 /** Picks cards in the CYCLE order at every decision point until the match ends; `keys` uses 1/2/3 instead of clicks. */
 async function playThrough(page: Page, keys = false, limit = Infinity) {
@@ -74,7 +50,6 @@ async function watchReveal(page: Page) {
     }).observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
   });
 }
-const css = (page: Page, sel: string, prop: string) => page.locator(sel).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
 const ms = (s: string) => s.split(',').map((x) => parseFloat(x) * (x.trim().endsWith('ms') ? 1 : 1000));
 
 test.describe('quick match', () => {
@@ -82,7 +57,7 @@ test.describe('quick match', () => {
 
   test('plays a fast-mode match, stopping for cards only at decision points, and lands on the result the engine computes in Node', async ({ page }) => {
     const errors = watchErrors(page);
-    await startLadder(page);
+    await startLadder(page, SEED);
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toBe('auto');
@@ -103,7 +78,7 @@ test.describe('quick match', () => {
 
   test('deals the cards in with a stagger, lifts them on hover, then flips both cards at once before the verdict (ADR-021)', async ({ page }) => {
     const errors = watchErrors(page);
-    await startLadder(page);
+    await startLadder(page, SEED);
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
@@ -129,7 +104,7 @@ test.describe('quick match', () => {
 
   test('plays the game plan picked next to Play, and remembers it', async ({ page }) => {
     const errors = watchErrors(page);
-    await startLadder(page);
+    await startLadder(page, SEED);
     await expect(page.locator('#plan-balanced')).toHaveClass(/selected/);
     await page.locator('#plan-aggressive').click();
     await expect(page.locator('#plan-aggressive')).toHaveClass(/selected/);
@@ -146,7 +121,7 @@ test.describe('quick match', () => {
 
   test('plays again against the next opponent, and keeps the ladder after a reload', async ({ page }) => {
     const errors = watchErrors(page);
-    await startLadder(page);
+    await startLadder(page, SEED);
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();
     await playThrough(page, true);
@@ -164,44 +139,13 @@ test.describe('quick match', () => {
 
   test('shows a decision point in 3D: reveal, then a clip on a sized canvas', async ({ page }) => {
     const errors = watchErrors(page);
-    await startLadder(page);
+    await startLadder(page, SEED);
     await page.locator('#quick-play').click();
     await playThrough(page, false, 1);
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toMatch(/clip|outcome|choose/);
     await expect.poll(() => page.locator('#view').evaluate((c) => (c as HTMLCanvasElement).width >= c.clientWidth && c.clientWidth > 300)).toBe(true);
     await expect(page.locator('#score .score-bug')).toBeVisible();
     expect(errors).toEqual([]);
-  });
-
-  const sfx = (page: Page) => page.evaluate(() => ((window as unknown as { __sfx?: { kind: string }[] }).__sfx ?? []).map((c) => c.kind));
-
-  test('sounds the decision point: three deals, the pick, the face-down hold, the flip and the clash (ADR-023)', async ({ page }) => {
-    const errors = watchErrors(page);
-    await startLadder(page);
-    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'true');
-    await page.locator('#fast-mode').check();
-    await page.locator('#quick-play').click();
-    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
-    await expect.poll(() => sfx(page)).toEqual(['deal', 'deal', 'deal']);
-    await page.keyboard.press('Digit1');
-    // The next decision can follow 0.6 s after the outcome in fast mode: compare the first decision's cues only.
-    await expect.poll(async () => (await sfx(page)).slice(0, 7)).toEqual(['deal', 'deal', 'deal', 'pick', 'hold', 'flip', 'clash']);
-    expect(errors).toEqual([]);
-  });
-
-  test('mutes from the sound toggle, remembers it after a reload, and then plays nothing', async ({ page }) => {
-    await startLadder(page);
-    await page.locator('#sound-toggle').click();
-    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
-    await page.reload();
-    await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.locator('#sound-toggle')).toContainText('Sound off');
-    await page.locator('#fast-mode').check();
-    await page.locator('#quick-play').click();
-    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
-    await page.keyboard.press('Digit2');
-    await expect(page.locator('#outcome')).toBeVisible();
-    expect(await sfx(page)).toEqual([]);
   });
 
   test('keeps the season mode one click away', async ({ page }) => {

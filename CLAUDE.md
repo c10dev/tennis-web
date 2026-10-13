@@ -36,7 +36,7 @@ engine/    src/{rng,scoring,point,match,tuning.ts,types.ts} tests/
 game/      src/{world,player,calendar,tournament,season,save,quick,views,tuning.ts} cli/ tests/
 renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts} tests/
 ui/        index.html src/{career,quick,replay,lib,storage}   (Vite root)
-e2e/       Playwright specs (playwright.config.ts at the root)
+e2e/       Playwright specs, shared helpers in e2e/helpers.ts (playwright.config.ts at the root)
 docs/      decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), m6-workstreams.md
 GDD.md     game design doc
 ```
@@ -46,7 +46,7 @@ GDD.md     game design doc
 2. Determinism: never use `Math.random()` or `Date.now()` in engine or game. Inject a seeded RNG. Same seed + input = identical events.
 3. Engine work is test-first: write failing Vitest test, then implement.
 4. Keep files small (~200 lines max) and functions focused. Prefer pure functions.
-5. All tuning constants live in `engine/src/tuning.ts`, `game/src/tuning.ts` and `renderer/src/tuning/`.
+5. All tuning constants live in `engine/src/tuning.ts`, `game/src/tuning.ts` (quick-match blocks in `game/src/tuning-quick.ts`, re-exported) and `renderer/src/tuning/`.
 6. Event schema changes: update types, bump `schemaVersion`, note in decisions.md.
 7. Log notable decisions in `docs/decisions.md` (ADR format).
 8. Log shortcuts/known issues in `docs/tech-debt.md` instead of leaving silent TODOs.

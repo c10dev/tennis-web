@@ -4,16 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { exhibitionConfig, fingerprint, simulateMatch, type Surface } from '@tennis/engine';
 import { buildProgramme, buildTimeline, type CameraId } from '@tennis/renderer';
-
-/** Fails the test on any page error or console error. */
-function watchErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
-  });
-  return errors;
-}
+import { watchErrors } from './helpers.ts';
 
 async function seek(page: Page, t: number) {
   await page.evaluate((to) => {

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { DEFAULT_TACTIC, fingerprint, replayMatch, type MatchRecipe } from '@tennis/engine';
 import { beginWeek, createPlayer, defaultAllocation, newSeason, pendingUserMatch, quickRecipe } from '@tennis/game';
+import { watchErrors } from './helpers.ts';
 
 const SEED = 4;
 
@@ -8,15 +9,6 @@ const SEED = 4;
 function firstMatch() {
   const s = newSeason(SEED, createPlayer({ name: 'Alex Kim', style: 'baseliner', allocation: defaultAllocation('baseliner') }, SEED));
   return pendingUserMatch(beginWeek(s, { kind: 'enter' }))!;
-}
-
-function watchErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
-  });
-  return errors;
 }
 
 async function newCareer(page: Page) {

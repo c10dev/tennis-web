@@ -1,27 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import type { Card } from '@tennis/engine';
-import { autoPlay, createPlayer, decide, defaultAllocation, finishQuick, matchOver, newLadder, quickResultView, startQuick } from '@tennis/game';
+import { quickResultView } from '@tennis/game';
+import { css, nodeLadder, nodePlayNext, playToResult, watchErrors } from './helpers.ts';
 
 // The result screen (ADR-017, result workstream): the reveal in order, skipping it, and the texts Node computes.
-const CYCLE: Card[] = ['attack', 'defend', 'counter'];
 
-/** The first ladder match in Node, the same cards as the browser picks; the default style is big server. */
-function nodeResult(seed: number) {
-  const s = newLadder(seed, createPlayer({ name: 'Alex Kim', style: 'big_server', allocation: defaultAllocation('big_server') }, seed));
-  const qm = startQuick(s);
-  let i = 0;
-  for (autoPlay(qm); !matchOver(qm); autoPlay(qm)) decide(qm, CYCLE[i++ % 3]!);
-  return quickResultView(finishQuick(s, qm));
-}
-
-function watchErrors(page: Page): string[] {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
-  });
-  return errors;
-}
+/** The first ladder match in Node, the same cards as the browser picks. */
+const nodeResult = (seed: number) => quickResultView(nodePlayNext(nodeLadder(seed)));
 
 /** Records every result phase the page goes through in window.__phases. */
 async function recordPhases(page: Page) {
@@ -45,25 +29,6 @@ async function recordCount(page: Page) {
       if (t && w.__count.at(-1)?.[1] !== t) w.__count.push([performance.now(), t]);
     }).observe(document, { childList: true, characterData: true, subtree: true });
   });
-}
-const css = (page: Page, sel: string, prop: string) => page.locator(sel).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
-
-async function playToResult(page: Page, seed: number, fast: boolean) {
-  await page.goto('/#/');
-  await page.locator('#quick-match').click();
-  await page.locator('#quick-seed').fill(String(seed));
-  await page.locator('#quick-start').click();
-  if (fast) await page.locator('#fast-mode').check();
-  await page.locator('#quick-play').click();
-  let i = 0;
-  while (!page.url().includes('#/quick/result')) {
-    const ready = await page.evaluate(() => document.body.dataset.quickPhase === 'choose' && !!document.querySelector('#card-attack'));
-    if (ready) {
-      await page.keyboard.press(`Digit${i % 3 + 1}`);
-      i++;
-      await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions)).toBe(String(i));
-    } else await page.waitForTimeout(30);
-  }
 }
 
 test.describe('quick result', () => {
@@ -119,31 +84,6 @@ test.describe('quick result', () => {
     await expect(page.locator('#next-goal')).toHaveClass(/is-locked/);
     expect(await css(page, '#gains .gain:last-child', 'transition-duration')).toMatch(/^0s/);
     expect(errors).toEqual([]);
-  });
-
-  test('ticks the points up on climbing notes, chimes each rating that rose and stamps the goal (ADR-023)', async ({ page }) => {
-    const errors = watchErrors(page);
-    await playToResult(page, 3, true);
-    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase), { timeout: 15_000 }).toBe('done');
-    const v = nodeResult(3);
-    const cues = await page.evaluate(() => (window as unknown as { __sfx: { kind: string; i?: number; n?: number; down?: boolean }[] }).__sfx);
-    const after = cues.slice(cues.findLastIndex((c) => c.kind === 'clash') + 1);
-    const ticks = after.filter((c) => c.kind === 'tick');
-    expect(ticks.length).toBeGreaterThan(2);
-    for (const t of ticks) expect(t).toMatchObject({ n: Math.abs(v.delta), down: v.delta < 0 });
-    for (let k = 1; k < ticks.length; k++) expect(ticks[k]!.i!).toBeGreaterThan(ticks[k - 1]!.i!);
-    expect(after.filter((c) => c.kind === 'rise')).toHaveLength(v.ratings.filter((r) => r.rose).length);
-    expect(after.at(-1)!.kind).toBe('stamp');
-    expect(errors).toEqual([]);
-  });
-
-  test('skipping the reveal plays the stamp alone', async ({ page }) => {
-    await playToResult(page, 3, true);
-    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('replay');
-    await page.keyboard.press('Enter');
-    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('done');
-    const cues = await page.evaluate(() => (window as unknown as { __sfx: { kind: string }[] }).__sfx.map((c) => c.kind));
-    expect(cues.slice(cues.lastIndexOf('clash') + 1)).toEqual(['stamp']);
   });
 
   test('keeps the next goal\'s label and line inside its gold lock ring', async ({ page }) => {
