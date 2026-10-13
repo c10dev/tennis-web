@@ -2,6 +2,8 @@
 import { liveCardStrength, liveStatus, matchup, type Card, type PointCards, type PointEvent, type PointTag } from '@tennis/engine';
 import { BEATEN_BY, CARDS } from '../quick/ai.ts';
 import { userRole, type QuickMatch } from '../quick/match.ts';
+import { PLANS } from '../quick/plan.ts';
+import type { GamePlan } from '../quick/types.ts';
 
 /** The decision point from the user's side (the user is player A). */
 export function decisionSituation(m: QuickMatch) {
@@ -46,3 +48,12 @@ export function revealView(cards: PointCards, point: PointEvent) {
     winner: point.winner === 'A' ? 'you' as const : 'them' as const, how: HOW[point.endedBy] ?? 'Error',
   };
 }
+
+const PLAN_TEXT: Record<GamePlan, { label: string; line: string }> = {
+  aggressive: { label: 'Aggressive', line: 'Go for your shots: more winners, more errors' },
+  balanced: { label: 'Balanced', line: 'Play the percentages' },
+  defensive: { label: 'Defensive', line: 'Make them play one more ball' },
+};
+
+/** The game plans the user picks from before a match: how the points without cards are played. */
+export const planChoices = () => PLANS.map((plan) => ({ plan, ...PLAN_TEXT[plan], default: plan === 'balanced' }));

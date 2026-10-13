@@ -3,7 +3,7 @@ import { USER_ID } from '../src/player/create.ts';
 import { ladderOrder, pointsToNext, rankOf } from '../src/quick/ladder.ts';
 import { decide } from '../src/quick/match.ts';
 import { quickHomeView } from '../src/views/quick-home.ts';
-import { cardChoices, decisionSituation, momentLabel, revealView, scoreLine } from '../src/views/quick-match.ts';
+import { cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine } from '../src/views/quick-match.ts';
 import { freshLadder, ladderWithDecision, toDecision } from './quick-helpers.ts';
 
 describe('quickHomeView', () => {
@@ -18,6 +18,18 @@ describe('quickHomeView', () => {
     expect(v.opponent.rank).toBeLessThan(v.rank);
     expect(v.opponent.surface).toMatch(/Hard|Clay|Grass/);
     expect(v.recent).toEqual([]);
+  });
+});
+
+describe('planChoices', () => {
+  it('offers the three game plans, each with a label and a one-line description, balanced by default', () => {
+    const plans = planChoices();
+    expect(plans.map((p) => p.plan)).toEqual(['aggressive', 'balanced', 'defensive']);
+    for (const p of plans) {
+      expect(p.label.length).toBeGreaterThan(0);
+      expect(p.line.length).toBeGreaterThan(10);
+    }
+    expect(plans.filter((p) => p.default).map((p) => p.plan)).toEqual(['balanced']);
   });
 });
 

@@ -27,3 +27,9 @@
 .outcome { margin: 0; font-size: 16px; }
 .outcome.you { color: #6fe08a; } .outcome.them { color: #ff9a8f; }
 @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+/* The game plan picker on the ladder, next to Play. */
+.plan-picker { display: grid; gap: 6px; margin: 12px 0; }
+.plan-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.plan-btn { flex: 1; min-width: 96px; background: #1c2431; border: 2px solid #34425a; }
+.plan-btn.selected { border-color: var(--bug-accent); color: var(--text); font-weight: 700; }
+.plan-line { font-size: 13px; }

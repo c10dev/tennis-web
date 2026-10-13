@@ -39,6 +39,6 @@ export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './qui
 export { broadcastSeconds, clipFor, decisive, pointSeconds } from './quick/pace.ts';
 export type * from './quick/types.ts';
 export { quickHomeView } from './views/quick-home.ts';
-export { CARD_LABEL, cardChoices, decisionSituation, momentLabel, revealView, scoreLine } from './views/quick-match.ts';
+export { CARD_LABEL, cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine } from './views/quick-match.ts';
 export { quickResultView } from './views/quick-result.ts';
 export { opponentRead } from './views/quick-scout.ts';
