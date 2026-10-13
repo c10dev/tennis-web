@@ -2,9 +2,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { playToResult, startLadder } from './helpers.ts';
 
 // The Rally Pop look of the DOM screens (TD-045): screenshot comparisons of the quick ladder, a fast-mode decision and
-// the result's end state. No 3D (fast mode), animations off, fonts loaded first. The renders are identical run to run,
-// so the tolerance is a few pixels: a one-letter change fails (a ratio like 1% let whole changed lines pass). After a deliberate visual change,
-// refresh the baselines with `npx playwright test e2e/quick-look.spec.ts --update-snapshots` and review the PNGs.
+// the result's end state. No 3D (fast mode), animations off, fonts loaded first. Renders are identical run to run, so
+// the tolerance is a few pixels: a one-letter change fails (a ratio like 1% let whole changed lines pass). After a
+// deliberate visual change, refresh the baselines with
+// `npx playwright test e2e/quick-look.spec.ts --update-snapshots=all` and review the PNGs.
 const shot = { animations: 'disabled', caret: 'hide', maxDiffPixels: 10 } as const;
 
 async function fontsReady(page: Page) {
