@@ -3,15 +3,15 @@
 // Motion (ADR-021): the tiles rise 120 ms apart, the points count up with an ease-out, the names passed slide in, each
 // rating that rose ticks up, the goal locks in. Click, space or Enter skips to the end; reduced motion starts there.
 // Every final text is in the page from the start; the reveal only shows it.
-import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
-import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
+import { QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { glyph } from '../lib/icons.ts';
-import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
+import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger } from '../lib/motion.ts';
 import { announce } from '../lib/announce.ts';
 import { appSound } from '../lib/sound.ts';
 import { savedPlan } from './plan.ts';
+import { replayDecisive } from './result-replay.ts';
 
 const R = QUICK_REWARD.reveal;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -90,7 +90,9 @@ export function quickResult(ctx: Ctx): Screen {
         show(li);
         await seq.wait(R.lineSec);
       }
-    } else await replay3d(seq);
+    } else await replayDecisive(seq, {
+      host: element, recipe: record.recipe, point: v.decisive.point, score: v.decisive.score, line: v.decisive.line, sound, onPlay: () => phase('replay-3d'),
+    });
     for (const li of lines) show(li);
     await seq.wait(R.holdSec);
     decisive.classList.add('collapsed');
@@ -122,38 +124,6 @@ export function quickResult(ctx: Ctx): Screen {
     goal.classList.add('is-locked');
     if (!seq.skipped) sound.ui({ kind: 'stamp' });
     await seq.wait(R.stepSec);
-  }
-
-  /** The decisive point in 3D, full screen with the line as a caption; removed when it ends or on skip. */
-  async function replay3d(s: Sequence) {
-    const stage = h('div', { class: 'decisive-replay', id: 'decisive-replay' });
-    const caption = h('div', { class: 'replay-caption' }, h('span', { class: 'kicker' }, `The decisive point · ${v.decisive.score}`), h('strong', null, v.decisive.line));
-    element.append(stage);
-    const { mountBroadcast } = await import('../replay/broadcast.ts');
-    if (s.skipped) {
-      stage.remove();
-      return;
-    }
-    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
-    stage.append(caption);
-    let open = true;
-    const close = () => {
-      if (!open) return;
-      open = false;
-      broadcast.dispose();
-      stage.remove();
-    };
-    s.onSkip(close);
-    if (s.skipped) return;
-    const timeline = broadcast.load({ schemaVersion: SCHEMA_VERSION, config: record.recipe.config, events: replayMatch(record.recipe).events });
-    const seg = timeline.segments.find((x) => x.point.index === v.decisive.point)!;
-    const p: PointEvent = seg.point;
-    await broadcast.ready();
-    if (s.skipped) return;
-    phase('replay-3d');
-    await broadcast.playWindow(seg.zero + Math.max(-QUICK_PACE.tossSec, p.durationSec - QUICK_PACE.keyMaxSec), seg.zero + p.durationSec, R.replaySpeed);
-    await s.wait(R.holdSec);
-    if (!s.skipped) close();
   }
 
   function finish() {
