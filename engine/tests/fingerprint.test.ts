@@ -6,7 +6,7 @@ describe('fingerprint', () => {
 
   it('is a stable 8-digit hex hash of the events (golden value, also checked in the browser: TD-005)', () => {
     expect(fingerprint(clay42)).toMatch(/^[0-9a-f]{8}$/);
-    expect(fingerprint(clay42)).toBe('4c42dc1d');
+    expect(fingerprint(clay42)).toBe('d351eb07');
   });
 
   it('changes with the seed and the surface', () => {

@@ -1,8 +1,9 @@
 // One point as a sequence of shots (GDD §5.1): serve(s), return, then the rally until an error or a winner.
 import { returnSkill, strokeSkill, type PlayerRuntime } from '../player/condition.ts';
 import { chance, type Rng } from '../rng/mulberry32.ts';
-import { RALLY } from '../tuning.ts';
+import { GEOMETRY, RALLY } from '../tuning.ts';
 import type { Outcome, PlayerId, ShotEvent, ShotType, Surface, Vec2, Wing } from '../types.ts';
+import { chase } from './chase.ts';
 import type { Side } from './court.ts';
 import * as geo from './geometry.ts';
 import { errorProbability, shotQualityMean, winnerProbability } from './outcome.ts';
@@ -35,7 +36,6 @@ export interface PointResult {
 }
 
 const SECOND_SERVE_GAP = 4;
-const BOUNCE_TO_CONTACT = 0.45;
 const other = (p: PlayerId): PlayerId => (p === 'A' ? 'B' : 'A');
 
 export function simulatePoint(input: PointInput, rng: Rng): PointResult {
@@ -50,8 +50,8 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
   const shotsHit: Record<PlayerId, number> = { A: 0, B: 0 };
   let t = 0;
 
-  const push = (hitter: PlayerId, shot: ShotType, landing: geo.Landing, speed: number, spin: number, outcome: Outcome, wing?: Wing) => {
-    const from = geo.contactPoint(rng, pos[hitter], sideOf(hitter), shot === 'serve');
+  const push = (hitter: PlayerId, shot: ShotType, landing: geo.Landing, speed: number, spin: number, outcome: Outcome, wing?: Wing, ball?: Vec2) => {
+    const from = geo.contactPoint(rng, pos[hitter], sideOf(hitter), shot === 'serve', ball);
     const flightSec = geo.flightSec(from, landing, speed);
     const event: ShotEvent = {
       type: 'shot', t, hitter, shot, from, flightSec, speedKmh: speed, spinRpm: spin, netClearance: landing.netClearance,
@@ -101,8 +101,13 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
       const me = input.players[hitter];
       const opp = input.players[other(hitter)];
       const shot: ShotType = n === 0 ? 'return' : 'drive';
-      pos[hitter] = geo.chasePosition(rng, bounce, sideOf(hitter));
-      t += BOUNCE_TO_CONTACT;
+      const incomingShot = shots.at(-1)!;
+      const met = chase(rng, {
+        bounce, from: incomingShot.from, speedKmh: incomingShot.speedKmh, surface, side: sideOf(hitter), player: pos[hitter],
+        sinceKey: incomingShot.flightSec, wing, returning: n === 0,
+      });
+      pos[hitter] = met.pos;
+      t += met.bounceToContact;
       const choice = chooseShot(rng, me, opp, incoming);
       const skill = shot === 'return' ? returnSkill(me, wing) : strokeSkill(me, wing);
       const pError = errorProbability({ skill, risk: choice.risk, incoming, fatigue: me.fatigue, pressure, composure: me.n.composure, surface });
@@ -110,16 +115,16 @@ export function simulatePoint(input: PointInput, rng: Rng): PointResult {
       if (chance(rng, pError)) {
         const outcome: Outcome = incoming > RALLY.forcedThreshold ? 'forced_error' : 'unforced_error';
         const [speed, spin] = speedSpin(choice.risk);
-        const flight = push(hitter, shot, geo.rallyLanding(rng, sideOf(other(hitter)), choice.target, false), speed, spin, outcome, wing);
+        const flight = push(hitter, shot, geo.rallyLanding(rng, sideOf(other(hitter)), choice.target, false), speed, spin, outcome, wing, met.contact);
         return finish(other(hitter), outcome, serveNumber, flight);
       }
       const quality = clamp01(shotQualityMean(skill, choice.risk, incoming, surface) + RALLY.qualitySpread * (2 * rng.next() - 1));
       const isWinner = chance(rng, winnerProbability(quality, opp, surface, choice.risk));
       const [speed, spin] = speedSpin(choice.risk);
       const landing = geo.rallyLanding(rng, sideOf(other(hitter)), choice.target, true);
-      const flight = push(hitter, shot, landing, speed, spin, isWinner ? 'winner' : 'in', wing);
+      const flight = push(hitter, shot, landing, speed, spin, isWinner ? 'winner' : 'in', wing, met.contact);
       if (isWinner) return finish(hitter, 'winner', serveNumber, flight);
-      pos[hitter] = geo.recoverPosition(rng, pos[hitter], sideOf(hitter));
+      pos[hitter] = geo.recoverPosition(rng, pos[hitter], sideOf(hitter), GEOMETRY.maxRunSpeed * (flight + GEOMETRY.minContactSec));
       t += flight;
       incoming = quality;
       bounce = landing.bounce!;

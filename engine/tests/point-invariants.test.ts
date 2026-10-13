@@ -4,7 +4,8 @@ import { averagePlayer, bigServer } from '../src/player/presets.ts';
 import { COURT, inHalf, inServiceBox, rightSign, type Side } from '../src/point/court.ts';
 import { simulatePoint, type PointInput, type PointResult } from '../src/point/simulatePoint.ts';
 import { createRng } from '../src/rng/mulberry32.ts';
-import type { PlayerId, Surface, Tactic } from '../src/types.ts';
+import { GEOMETRY } from '../src/tuning.ts';
+import type { PlayerId, Surface, Tactic, Vec2 } from '../src/types.ts';
 
 const TACTIC: Tactic = { aggression: 0.5, netApproach: 0, targetBackhand: false, serveTarget: 'mix' };
 const SUCCESS = new Set(['in', 'winner', 'ace']);
@@ -66,7 +67,11 @@ describe('simulatePoint invariants', () => {
         const next = result.shots[i + 1];
         if (!next) expect(s.t + s.flightSec + 0.8).toBeCloseTo(result.durationSec, 9);
         else if (s.outcome === 'fault') expect(next.t).toBeCloseTo(s.t + 4, 9);
-        else expect(next.t).toBeCloseTo(s.t + s.flightSec + 0.45, 9);
+        else {
+          // Bounce to contact depends on how fast the ball comes off the court (ADR-008).
+          expect(next.t - (s.t + s.flightSec)).toBeGreaterThanOrEqual(GEOMETRY.minContactSec - 1e-9);
+          expect(next.t - (s.t + s.flightSec)).toBeLessThanOrEqual(GEOMETRY.maxContactSec + 1e-9);
+        }
       });
     }
   });
@@ -96,7 +101,7 @@ describe('simulatePoint invariants', () => {
         expect(Math.sign(s.hitterPos.y)).toBe(side(input, s.hitter));
         expect(Math.sign(s.receiverPos.y)).toBe(-side(input, s.hitter));
         expect(Math.sign(s.from.y)).toBe(side(input, s.hitter));
-        expect(Math.abs(s.hitterPos.x)).toBeLessThan(COURT.halfWidth + 3);
+        expect(Math.abs(s.hitterPos.x)).toBeLessThanOrEqual(COURT.halfWidth + GEOMETRY.maxWide);
         if (s.shot === 'serve') {
           const deuceSign = -side(input, s.hitter);
           expect(Math.sign(s.from.x)).toBe(input.deuceCourt ? deuceSign : -deuceSign);
@@ -141,4 +146,64 @@ describe('simulatePoint invariants', () => {
   it('is reproducible from the seed', () => {
     expect(JSON.stringify(points(200))).toBe(JSON.stringify(points(200)));
   });
+
+  it('lets players run no faster than a tour player between the positions it records (TD-006)', () => {
+    let fastest = 0;
+    for (const { result } of sample) {
+      for (const id of ['A', 'B'] as const) {
+        const keys = result.shots.map((s) => ({ t: s.t, pos: s.hitter === id ? s.hitterPos : s.receiverPos }));
+        for (let i = 1; i < keys.length; i++) {
+          const dt = keys[i]!.t - keys[i - 1]!.t;
+          const d = dist(keys[i]!.pos, keys[i - 1]!.pos);
+          if (dt > 0) fastest = Math.max(fastest, d / dt);
+          else expect(d).toBe(0);
+        }
+      }
+    }
+    expect(fastest).toBeLessThanOrEqual(GEOMETRY.maxRunSpeed + 1e-9);
+  });
+
+  it('meets the ball beyond its bounce, after it has slowed off the court (TD-011)', () => {
+    for (const { result } of sample) {
+      result.shots.forEach((s, i) => {
+        const next = result.shots[i + 1];
+        if (!next || s.outcome !== 'in' || !s.bounce) return;
+        const inDir = { x: s.bounce.x - s.from.x, y: s.bounce.y - s.from.y };
+        const along = (next.from.x - s.bounce.x) * inDir.x + (next.from.y - s.bounce.y) * inDir.y;
+        expect(along).toBeGreaterThan(0);
+        const before = dist(s.from, s.bounce) / s.flightSec;
+        const after = dist(s.bounce, next.from) / (next.t - s.t - s.flightSec);
+        expect(after).toBeLessThan(before);
+      });
+    }
+  });
+
+  it('returns serves from around the baseline', () => {
+    for (const { result } of sample) {
+      const ret = result.shots.find((s) => s.shot === 'return');
+      if (ret) expect(Math.abs(ret.hitterPos.y)).toBeGreaterThan(COURT.halfLength - 1.5);
+    }
+  });
+
+  it('lands some balls within 5 cm of a line, on both sides of it (for Hawk-Eye)', () => {
+    let nearIn = 0;
+    let nearOut = 0;
+    for (const { result } of sample) {
+      for (const s of result.shots) {
+        if (!s.bounce) continue;
+        const gapX = Math.abs(Math.abs(s.bounce.x) - COURT.halfWidth);
+        const depth = s.shot === 'serve' ? COURT.serviceLine : COURT.halfLength;
+        const gapY = Math.abs(Math.abs(s.bounce.y) - depth);
+        if (Math.min(gapX, gapY) > 0.05) continue;
+        if (SUCCESS.has(s.outcome)) nearIn++;
+        else nearOut++;
+      }
+    }
+    expect(nearIn).toBeGreaterThan(20);
+    expect(nearOut).toBeGreaterThan(20);
+  });
 });
+
+function dist(a: Vec2, b: Vec2): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}

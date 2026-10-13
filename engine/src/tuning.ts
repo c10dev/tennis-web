@@ -127,3 +127,27 @@ export const PRESSURE = {
   tiebreak: 0.4,
   finalSet: 0.15,
 } as const;
+
+/**
+ * Presentation geometry (ADR-008). These numbers place players and the ball; they never change a result, because no
+ * outcome reads a position and every RNG draw happens whatever they are.
+ */
+export const GEOMETRY = {
+  /** Share of its ground speed a ball keeps off the bounce: grass skids, clay grabs. */
+  bounceRetain: { hard: 0.62, clay: 0.55, grass: 0.7 } as Record<Surface, number>,
+  /** Bounce-to-contact time limits, seconds. */
+  minContactSec: 0.25,
+  maxContactSec: 0.9,
+  /** A ball is met at least this far past its bounce, metres. */
+  minContactDistance: 1.5,
+  /** Average speed between recorded positions, m/s: about a tour player's sprint. */
+  maxRunSpeed: 5.5,
+  /** The ball passes this far to the racket side of the body at contact. */
+  contactSideOffset: 0.75,
+  lateralJitter: 0.25,
+  /** How far a player steps in (+) or back (−) from where they stand to meet the ball, metres. */
+  stepIn: { return: [0, 1], rally: [-0.5, 1] } as const,
+  /** Players never stand further than this behind their baseline or outside a singles sideline (court run-off). */
+  maxBehindBaseline: 4.5,
+  maxWide: 4.5,
+} as const;
