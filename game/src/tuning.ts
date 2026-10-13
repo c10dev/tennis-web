@@ -209,6 +209,8 @@ export const QUICK_PERSONA = {
   tellAccuracy: 0.7,
   /** Chance the opponent plays its habit card when its habit applies (the rest follows its style mix). */
   habitShare: 0.72,
+  /** A rival record keeps the opponent's cards at this many latest decision points. */
+  rivalSeen: 12,
 } as const;
 
 /** The result screen's rewards. */

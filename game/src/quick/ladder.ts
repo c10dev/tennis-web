@@ -12,7 +12,8 @@ import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
 import { cardReward } from './rewards.ts';
-import type { DecisionRecord } from './types.ts';
+import { recordRival } from './rivals.ts';
+import type { DecisionRecord, RivalRecord } from './types.ts';
 
 export interface QuickRecord {
   matchNo: number;
@@ -37,13 +38,15 @@ export interface QuickState {
   world: World;
   points: Record<string, number>;
   history: QuickRecord[];
+  /** What the user has seen of each opponent met so far (ADR-017, quick save v2). */
+  rivals: Record<string, RivalRecord>;
 }
 
 export function newLadder(seed: number, user: CareerPlayer): QuickState {
   const world = generateWorld(seed, user);
   const order = rankingOrder(world.players.map((p) => ({ id: p.id, points: 0, level: overall(p) })));
   const points = Object.fromEntries(order.map((id, i) => [id, Math.round(QUICK.startTop * Math.exp(-i / QUICK.startScale))]));
-  return { seed, matchNo: 0, world, points, history: [] };
+  return { seed, matchNo: 0, world, points, history: [], rivals: {} };
 }
 
 const levelOf = (s: QuickState) => new Map(s.world.players.map((p) => [p.id, overall(p)]));
@@ -102,7 +105,8 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
     fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
     decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })),
   };
-  return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record] };
+  const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
+  return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
 }
 
 /** "7-5" for a one-tiebreak match (the user first), set scores for anything else. */
