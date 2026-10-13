@@ -5,6 +5,7 @@ import {
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
   type ViewMode,
 } from '@tennis/renderer';
+import { clipStep } from './clip.ts';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
 
@@ -16,6 +17,8 @@ export interface Broadcast {
   dispatch(action: ClockAction): void;
   /** Plays match seconds [from, to] at `speed`, then stops; resolves when done (quick matches). */
   playWindow(from: number, to: number, speed: number): Promise<void>;
+  /** Resolves once the loaded match's shaders are compiled; await it before the first clip (TD-037). */
+  ready(): Promise<void>;
   dispose(): void;
 }
 
@@ -38,7 +41,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   root.append(canvas, score, graphics, soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
-  let clipWindow: { end: number; speed: number; done: () => void } | null = null;
+  let clipWindow: { end: number; speed: number; done: () => void; first: boolean } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
   const overlays = createOverlays();
@@ -48,6 +51,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   let mode = options.mode;
   let programme: Programme | null = null;
   let viewer: Viewer | null = null;
+  let warming: Promise<void> = Promise.resolve();
+  /** False while a new viewer compiles its shaders: drawing then would compile them on the main thread anyway. */
+  let warmed = true;
   let surface: string | null = null;
   let clock = createClock();
   const dispatch = (action: ClockAction) => {
@@ -76,11 +82,12 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const loop = (now: number) => {
     const dt = (now - last) / 1000;
     last = now;
-    if (programme && viewer) {
+    if (programme && viewer && warmed) {
       resize();
       const before = clock.t;
       if (clipWindow) {
-        clock = { ...clock, t: Math.min(clipWindow.end, clock.t + Math.min(dt, 0.25) * clipWindow.speed) };
+        clock = { ...clock, t: clipStep(clock.t, clipWindow.end, dt, clipWindow.speed, clipWindow.first) };
+        clipWindow.first = false;
         if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) sound.mixer.play(cue);
         if (clock.t >= clipWindow.end) {
           const { done } = clipWindow;
@@ -109,7 +116,13 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const timeline = buildTimeline(input);
       if (!viewer || surface !== timeline.surface || !opts.keepTime) {
         viewer?.dispose();
-        viewer = createViewer(canvas, timeline);
+        const created = createViewer(canvas, timeline);
+        viewer = created;
+        warmed = false;
+        // A failed parallel compile only means the first frame compiles them itself, as before.
+        warming = created.warm().catch(() => {}).then(() => {
+          if (viewer === created) warmed = true;
+        });
         surface = timeline.surface;
         size = '';
         resize();
@@ -132,9 +145,12 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       return new Promise<void>((done) => {
         clipWindow?.done();
         clock = { ...clock, playing: false, t: programmeTimeFor(p, from) };
-        clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done };
+        clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done, first: true };
+        // Read by the e2e tests: the first frame of the window must show this time.
+        document.body.dataset.clipFrom = clock.t.toFixed(2);
       });
     },
+    ready: () => warming,
     dispose() {
       clipWindow?.done();
       clipWindow = null;

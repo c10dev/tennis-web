@@ -195,6 +195,26 @@ test.describe('quick result', () => {
     expect(errors).toEqual([]);
   });
 
+  test('starts the 3D replay on its first frame instead of skipping what a slow first frame took (TD-037)', async ({ page }) => {
+    const errors = watchErrors(page);
+    // Every drawn frame writes data-t; record it with the result phase and the window the clip starts from.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __frames: { t: string; from: string | undefined; phase: string | undefined }[] };
+      w.__frames = [];
+      new MutationObserver(() => {
+        const d = document.body?.dataset;
+        if (d?.t && w.__frames.at(-1)?.t !== d.t) w.__frames.push({ t: d.t, from: d.clipFrom, phase: d.resultPhase });
+      }).observe(document, { attributes: true, subtree: true, attributeFilter: ['data-t'] });
+    });
+    await playToResult(page, 3, false);
+    await expect(page.locator('#decisive-replay #view')).toBeVisible({ timeout: 15_000 });
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __frames: { phase?: string }[] }).__frames.filter((f) => f.phase === 'replay-3d').length)).toBeGreaterThan(3);
+    const first = await page.evaluate(() => (window as unknown as { __frames: { t: string; from: string | undefined; phase: string | undefined }[] }).__frames.find((f) => f.phase === 'replay-3d'));
+    expect(first!.from).toMatch(/^\d+\.\d\d$/);
+    expect(first!.t).toBe(first!.from);
+    expect(errors).toEqual([]);
+  });
+
   test('plays the 3D replay to its end, then removes it and reveals the rest', async ({ page }) => {
     const errors = watchErrors(page);
     await recordPhases(page);

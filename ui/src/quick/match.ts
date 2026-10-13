@@ -39,7 +39,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   /** Plays on to the next decision point, ticking each point by; then the choose screen, or the result. */
   async function run() {
     const points = autoPlay(qm!);
-    if (broadcast && points.length) load();
+    if (broadcast && points.length) {
+      load();
+      await broadcast.ready();
+    }
     for (const p of points) {
       if (disposed) return;
       if (broadcast) await playClip(p, QUICK_PACE.autoSpeed);
@@ -96,6 +99,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     await playReveal(reveal, () => !disposed);
     if (broadcast && !disposed) {
       load();
+      await broadcast.ready();
+      if (disposed) return;
       phase('clip');
       await playClip(point, QUICK_PACE.speed);
     }

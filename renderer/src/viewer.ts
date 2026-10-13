@@ -13,6 +13,9 @@ export interface Viewer {
   resize(width: number, height: number): void;
   /** Draw a frame; dt is the real time since the last draw, for camera easing. */
   render(frame: BroadcastFrame, dt: number): void;
+  /** Compiles every material's shaders off the main thread where the browser can (KHR_parallel_shader_compile), so
+   *  the first frame does not stall on them (TD-037). */
+  warm(): Promise<void>;
   dispose(): void;
 }
 
@@ -46,6 +49,9 @@ export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline): Vie
       camera.position.set(pose.position.x, pose.position.y, pose.position.z);
       camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
       renderer.render(stage.scene, camera);
+    },
+    async warm() {
+      await renderer.compileAsync(stage.scene, camera);
     },
     dispose() {
       renderer.dispose();

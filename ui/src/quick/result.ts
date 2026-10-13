@@ -139,6 +139,8 @@ export function quickResult(ctx: Ctx): Screen {
     const timeline = broadcast.load({ schemaVersion: SCHEMA_VERSION, config: record.recipe.config, events: replayMatch(record.recipe).events });
     const seg = timeline.segments.find((x) => x.point.index === v.decisive.point)!;
     const p: PointEvent = seg.point;
+    await broadcast.ready();
+    if (s.skipped) return;
     phase('replay-3d');
     await broadcast.playWindow(seg.zero + Math.max(-QUICK_PACE.tossSec, p.durationSec - QUICK_PACE.keyMaxSec), seg.zero + p.durationSec, R.replaySpeed);
     await s.wait(R.holdSec);
