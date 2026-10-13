@@ -1,10 +1,10 @@
 // One quick match (ADR-016): Fast4 against the next opponent, a card from the user before every point, the AI's
 // card from its seeded stream. The recipe (with every point's cards) replays it exactly.
-import { advance, createConfig, isOver, liveStatus, startMatch, type Card, type LiveMatch, type MatchRecipe, type PlayerProfile, type Surface } from '@tennis/engine';
+import { advance, createConfig, isOver, liveStatus, startMatch, type Card, type LiveMatch, type MatchRecipe, type Surface } from '@tennis/engine';
 import { USER_ID } from '../player/create.ts';
 import { stream, streamSeed } from '../rng.ts';
-import { QUICK } from '../tuning.ts';
-import type { CareerPlayer } from '../types.ts';
+import { FAST4_RULES, QUICK } from '../tuning.ts';
+import { profileOf } from '../player/profile.ts';
 import { aiCard } from './ai.ts';
 import { nextOpponent, type QuickState } from './ladder.ts';
 
@@ -18,15 +18,14 @@ export interface QuickMatch {
   readonly seed: number;
 }
 
-const profile = (p: CareerPlayer): PlayerProfile => ({ name: p.name, style: p.style, attributes: p.attributes });
 
 export function startQuick(s: QuickState): QuickMatch {
   const opponent = nextOpponent(s);
   const [me, opp] = [s.world.players.find((p) => p.id === USER_ID)!, s.world.players.find((p) => p.id === opponent)!];
   const surface = QUICK.surfaces[s.matchNo % QUICK.surfaces.length] as Surface;
-  const config = createConfig([profile(me), profile(opp)], {
+  const config = createConfig([profileOf(me), profileOf(opp)], {
     surface,
-    rules: { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'fast4' },
+    rules: { ...FAST4_RULES },
     firstServer: streamSeed(s.seed, 'quick-toss', s.matchNo) % 2 === 0 ? 'A' : 'B',
   });
   const seed = streamSeed(s.seed, 'quick', s.matchNo);

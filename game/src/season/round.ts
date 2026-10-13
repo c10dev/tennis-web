@@ -1,7 +1,8 @@
 // Tournament rounds: the user's match waits for the UI; every other match is simulated straight away.
-import { createConfig, replayMatch, simulateMatch, type MatchConfig, type MatchRecipe, type MatchResult, type PlayerProfile, type Tactic } from '@tennis/engine';
+import { createConfig, replayMatch, simulateMatch, type MatchConfig, type MatchRecipe, type MatchResult, type Tactic } from '@tennis/engine';
 import { TIERS } from '../calendar/tiers.ts';
 import { USER_ID } from '../player/create.ts';
+import { profileOf } from '../player/profile.ts';
 import { matchFatigue } from '../player/week.ts';
 import { streamSeed } from '../rng.ts';
 import { CONDITION } from '../tuning.ts';
@@ -17,7 +18,6 @@ export interface PendingMatch {
   seed: number;
 }
 
-const profile = (p: CareerPlayer): PlayerProfile => ({ name: p.name, style: p.style, attributes: p.attributes });
 
 /** Config and seed for a match between a and b this round (a is player A). */
 function setup(s: SeasonState, a: string, b: string, pairIndex: number): { config: MatchConfig; seed: number } {
@@ -26,7 +26,7 @@ function setup(s: SeasonState, a: string, b: string, pairIndex: number): { confi
   const [pa, pb] = [playerById(s, a), playerById(s, b)];
   const tired = (p: CareerPlayer) => matchFatigue({ ...p, fatigue: Math.min(1, p.fatigue + (t.setsPlayed[p.id] ?? 0) * CONDITION.perSet) });
   const seed = streamSeed(s.seed, 'match', s.week, round, pairIndex);
-  const config = createConfig([profile(pa), profile(pb)], {
+  const config = createConfig([profileOf(pa), profileOf(pb)], {
     surface: t.tournament.surface,
     rules: { bestOf: TIERS[t.tournament.tier].bestOf, noAd: false, finalSet: 'tiebreak7' },
     tactics: [aiTactic(pa), aiTactic(pb)],

@@ -147,6 +147,9 @@ export const QUICK_AI = {
 } as const;
 
 /** The quick-match ladder and its rewards (ADR-016). */
+/** Quick matches are one Fast4 set with No-Ad (ADR-015). */
+export const FAST4_RULES = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'fast4' } as const;
+
 export const QUICK = {
   /** Ladder points by starting rank: top × exp(−(rank − 1) / scale). */
   startTop: 1600,

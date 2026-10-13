@@ -370,15 +370,15 @@ Format: one entry per decision, newest at the bottom.
     pairs play after each user match. **Rewards:** each card played adds 0.008 progress to its ratings (×1.5 for a
     win), shown after the match.
   - **Pacing** (`quick/pace.ts`, used by the UI and the report): per point a 0.4 s card reveal, the last 2.2 s of
-    the rally at 2.5× (the whole point for a set- or match-winning point, a converted break or a 10+ shot rally),
-    and a 0.4 s score beat. The card matchup edge was raised to 0.25 (from 0.22) during this tuning; ADR-015's matrix
+    the rally at 2.5× (up to the last 8 s for a set- or match-winning point, a converted break or a 10+ shot
+    rally), and a 0.4 s score beat. Fast mode skips the 3D and shows the result only. The card matchup edge was raised to 0.25 (from 0.22) during this tuning; ADR-015's matrix
     stays inside its ±0.08–0.17 bound.
 - **Consequences:** `npm run quick -- --n 2000 --seed 1` (30 ladders, about 13 s):
 
   | Metric | Value | Target |
   |---|---|---|
   | Points per match (median) | 34 | 28–40 (was 20–32 before ADR-015 measured Fast4) |
-  | Seconds on screen per match (median) | 87 s | ≤ 90 s |
+  | Seconds on screen per match (median) | 69 s | ≤ 90 s |
   | Always attack / defend / counter vs the adaptive AI | 38.5% / 41.9% / 35.9% | ≤ 45% |
   | Always attack / defend / counter vs any card | 51.1% / 51.1% / 46.6% | 45–55% |
   | Reading the AI perfectly | 68.7% | ≥ 60% |
@@ -388,3 +388,9 @@ Format: one entry per decision, newest at the bottom.
 
   Random cards win 49.2% against the adaptive AI. The first tuning pass had reading pay only 54%: the AI's read of
   the user diluted its own pattern, so adaptation went down (40% → 15%) and the repeat tell was added.
+  Measured in the browser (Playwright, headless Chromium): a fast-mode match of 26 points took 22.6 s with instant
+  clicks; a 3D match of 38 points took 178 s, because headless software WebGL renders about 8 frames a second and
+  every frame blocks the timers. Real GPU timing is unmeasured (TD-024).
+  - **UI** (ADR-013 structure): the menu leads with the quick ladder; `ui/src/quick` has the ladder, the match
+    (cards on keys 1/2/3, reveal, clip via `playWindow`) and the result; the ladder saves under the IndexedDB key
+    `quick`, outside the season slots.

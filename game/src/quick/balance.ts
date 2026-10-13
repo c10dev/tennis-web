@@ -5,6 +5,7 @@ import {
 } from '@tennis/engine';
 import { createPlayer, defaultAllocation } from '../player/create.ts';
 import { stream, streamSeed } from '../rng.ts';
+import { FAST4_RULES } from '../tuning.ts';
 import { aiCard, cardEntropy } from './ai.ts';
 import { randomBot, type Bot } from './bots.ts';
 import { finishQuick, newLadder, rankOf } from './ladder.ts';
@@ -15,7 +16,7 @@ const STYLES: PlayStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_
 const SURFACES: Surface[] = ['hard', 'clay', 'grass'];
 
 export const fast4 = (a: PlayerProfile, b: PlayerProfile, i: number): MatchConfig =>
-  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'fast4' }, firstServer: i % 2 ? 'B' : 'A' });
+  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...FAST4_RULES }, firstServer: i % 2 ? 'B' : 'A' });
 
 /** A plays `bot`; B is the adaptive AI (or `opponent` if given). Returns the match and B's cards. */
 export function cardMatch(config: MatchConfig, seed: number, bot: Bot, opponent?: Bot): { result: MatchResult; aiCards: Card[] } {

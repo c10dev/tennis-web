@@ -1,12 +1,13 @@
 // The quick-match ladder (ADR-016): 64 players by points, the next opponent just above, points for every win,
 // AI matches in the background so the ladder never stands still.
-import { createConfig, finish, fingerprint, simulateMatch, type MatchRecipe, type PlayerProfile, type Surface } from '@tennis/engine';
+import { createConfig, finish, fingerprint, simulateMatch, type MatchRecipe, type Surface } from '@tennis/engine';
 import { USER_ID } from '../player/create.ts';
 import { overall } from '../player/overall.ts';
 import { adjust } from '../player/week.ts';
 import { rankingOrder } from '../ranking.ts';
 import { pick, stream, streamSeed } from '../rng.ts';
-import { QUICK, type Rated } from '../tuning.ts';
+import { FAST4_RULES, QUICK, type Rated } from '../tuning.ts';
+import { profileOf } from '../player/profile.ts';
 import type { CareerPlayer, World } from '../types.ts';
 import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
@@ -105,14 +106,13 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 function background(s: QuickState, matchNo: number): void {
   const rng = stream(s.seed, 'background', matchNo);
   const byId = new Map(s.world.players.map((p) => [p.id, p]));
-  const profile = (p: CareerPlayer): PlayerProfile => ({ name: p.name, style: p.style, attributes: p.attributes });
   for (let i = 0; i < QUICK.background; i++) {
     const order = ladderOrder(s).filter((id) => id !== USER_ID);
     const k = Math.floor(rng.next() * (order.length - 1));
     const [a, b] = [order[k]!, order[k + 1]!];
-    const config = createConfig([profile(byId.get(a)!), profile(byId.get(b)!)], {
+    const config = createConfig([profileOf(byId.get(a)!), profileOf(byId.get(b)!)], {
       surface: QUICK.surfaces[(matchNo + i) % QUICK.surfaces.length] as Surface,
-      rules: { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'fast4' },
+      rules: { ...FAST4_RULES },
     });
     const won = simulateMatch(config, streamSeed(s.seed, 'background-match', matchNo, i)).winner === 'A';
     const [ra, rb] = [k + 1, k + 2];
