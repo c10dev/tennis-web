@@ -37,6 +37,9 @@ async function playThrough(page: Page, keys = false, limit = Infinity) {
   while (!page.url().includes('#/quick/result') && i < limit) {
     const ready = await page.evaluate(() => document.body.dataset.quickPhase === 'choose' && !!document.querySelector('#card-attack'));
     if (ready) {
+      // Every stop is named on the banner, over a pip for each point played so far.
+      await expect(page.locator('#moment')).toHaveText(/^(MATCH POINT|MATCH POINT DOWN|\d+-ALL|BIG POINT)$/);
+      expect(await page.locator('#point-pips .pip').count()).toBe(Number(await page.evaluate(() => document.body.dataset.quickPoints)));
       const card = CYCLE[i % 3]!;
       if (keys) await page.keyboard.press(`Digit${i % 3 + 1}`);
       else await page.locator(`#card-${card}`).click();
@@ -56,6 +59,8 @@ test.describe('quick match', () => {
     await page.locator('#fast-mode').check();
     await page.locator('#quick-play').click();
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toBe('auto');
+    await expect(page.locator('#ticker #score-line')).toHaveText(/^\d+-\d+$/);
+    await expect(page.locator('#ticker')).toContainText('Plan · Balanced');
     await expect(page.locator('#situation')).toHaveText(/(Your|Their) serve · \d+-\d+/, { timeout: 15_000 });
     await expect(page.locator('#opponent-read #scouting')).toBeVisible();
     const decisions = await playThrough(page);

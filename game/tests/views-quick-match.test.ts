@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { USER_ID } from '../src/player/create.ts';
 import { ladderOrder, pointsToNext, rankOf } from '../src/quick/ladder.ts';
-import { decide } from '../src/quick/match.ts';
+import { autoPlay, decide } from '../src/quick/match.ts';
+import { freshLadder as fresh, playLadderMatch } from './quick-helpers.ts';
+import type { PointEvent } from '@tennis/engine';
 import { quickHomeView } from '../src/views/quick-home.ts';
-import { cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine } from '../src/views/quick-match.ts';
+import { cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine, tickerView } from '../src/views/quick-match.ts';
 import { freshLadder, ladderWithDecision, toDecision } from './quick-helpers.ts';
 
 describe('quickHomeView', () => {
@@ -30,6 +32,32 @@ describe('planChoices', () => {
       expect(p.line.length).toBeGreaterThan(10);
     }
     expect(plans.filter((p) => p.default).map((p) => p.plan)).toEqual(['balanced']);
+  });
+});
+
+describe('tickerView', () => {
+  const { m } = playLadderMatch(fresh());
+  const points = m.live.events.filter((e): e is PointEvent => e.type === 'point');
+
+  it('shows the score after a point, who won it and how, and one pip per point so far (decisions marked)', () => {
+    for (const p of points) {
+      const v = tickerView(m, p);
+      const [a, b] = [p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0), p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0)];
+      expect(v.score).toBe(`${a}-${b}`);
+      expect(v.winner).toBe(p.winner === 'A' ? 'you' : 'them');
+      expect(v.how).toMatch(/Ace|Double fault|Winner|Unforced error|Forced error|Error/);
+      expect(v.pips).toHaveLength(p.index + 1);
+      expect(v.pips.filter((x) => x.winner === 'you')).toHaveLength(a);
+      expect(v.pips.map((x) => x.decision)).toEqual(points.slice(0, p.index + 1).map((x) => !!x.cards));
+    }
+    expect(tickerView(m, points[0]!).plan).toBe('Balanced');
+  });
+
+  it('works in the middle of a match, before the later points exist', () => {
+    const live = toDecision(fresh());
+    const played = live.live.events.filter((e): e is PointEvent => e.type === 'point');
+    expect(autoPlay(live)).toEqual([]);
+    if (played.length) expect(tickerView(live, played.at(-1)!).pips).toHaveLength(played.length);
   });
 });
 

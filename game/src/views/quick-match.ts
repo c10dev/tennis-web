@@ -57,3 +57,15 @@ const PLAN_TEXT: Record<GamePlan, { label: string; line: string }> = {
 
 /** The game plans the user picks from before a match: how the points without cards are played. */
 export const planChoices = () => PLANS.map((plan) => ({ plan, ...PLAN_TEXT[plan], default: plan === 'balanced' }));
+
+/** The running ticker after point `p` of a match (later points, if already played, are left out). */
+export function tickerView(m: QuickMatch, p: PointEvent) {
+  const upTo = m.live.events.filter((e): e is PointEvent => e.type === 'point' && e.index <= p.index);
+  return {
+    score: `${p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0)}-${p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0)}`,
+    winner: p.winner === 'A' ? 'you' as const : 'them' as const,
+    how: HOW[p.endedBy] ?? 'Error',
+    plan: PLAN_TEXT[m.plan].label,
+    pips: upTo.map((x) => ({ winner: x.winner === 'A' ? 'you' as const : 'them' as const, decision: !!x.cards })),
+  };
+}

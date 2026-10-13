@@ -5,12 +5,18 @@ import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
   autoPlay, CARD_LABEL, cardChoices, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
+  tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { h } from '../lib/h.ts';
 import { renderRead } from './scout.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** One pip per point played: green yours, red theirs, ringed where you chose a card. */
+const pipRow = (m: QuickMatch, p: PointEvent | undefined) => h('div', { class: 'pips', id: 'point-pips' },
+  p ? tickerView(m, p).pips.map((x) => h('span', { class: `pip ${x.winner}${x.decision ? ' decision' : ''}` })) : []);
+const lastPoint = (m: QuickMatch) => m.live.events.findLast((e): e is PointEvent => e.type === 'point');
 
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const qm = ctx.quickMatch;
@@ -35,9 +41,12 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       if (disposed) return;
       if (broadcast) await playClip(p, QUICK_PACE.autoSpeed);
       if (disposed) return;
-      panel.replaceChildren(h('div', { class: 'situation ticker', id: 'ticker' }, h('span', { class: 'versus' }, `You v ${opponent}`),
-        h('strong', { id: 'score-line' }, `${p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0)}-${p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0)}`),
-        h('span', { class: p.winner === 'A' ? 'you' : 'them' }, p.winner === 'A' ? 'your point' : 'their point')));
+      const v = tickerView(qm!, p);
+      panel.replaceChildren(h('div', { class: 'ticker', id: 'ticker' },
+        h('div', { class: 'situation' }, h('span', { class: 'versus' }, `You v ${opponent}`), h('span', { class: 'plan muted' }, `Plan · ${v.plan}`)),
+        h('div', { class: 'tick-line' }, h('strong', { id: 'score-line', class: 'tick-score' }, v.score),
+          h('span', { class: `tick-point ${v.winner}` }, `${v.winner === 'you' ? 'Your point' : 'Their point'} · ${v.how}`)),
+        pipRow(qm!, p)));
       phase('auto');
       await sleep(QUICK_PACE.autoSec * 1000);
     }
@@ -53,9 +62,11 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
 
   function drawChoose() {
     const sit = decisionSituation(qm!);
+    panel.classList.add('stop');
     panel.replaceChildren(
-      h('div', { class: 'situation' }, h('span', { class: 'versus' }, `You v ${opponent}`),
-        sit.moment ? h('span', { class: 'moment', id: 'moment' }, sit.moment) : null, h('span', { id: 'situation' }, sit.line)),
+      h('div', { class: 'moment-banner' }, h('span', { class: 'moment', id: 'moment' }, sit.moment), h('strong', { class: 'stop-score' }, scoreLine(qm!))),
+      h('div', { class: 'situation' }, h('span', { class: 'versus' }, `You v ${opponent}`), h('span', { id: 'situation' }, sit.line)),
+      pipRow(qm!, lastPoint(qm!)),
       renderRead(opponentRead(qm!)),
       h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card}`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
         h('span', { class: 'key' }, String(i + 1)), h('strong', null, c.label), h('span', { class: 'flavour' }, c.flavour),
@@ -67,6 +78,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   async function choose(card: Card) {
     if (busy || !qm!.pending) return;
     busy = true;
+    panel.classList.remove('stop');
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point);
     const verdict = r.matchup === 'won' ? 'You read it!' : r.matchup === 'lost' ? 'They read you' : 'Same card';
