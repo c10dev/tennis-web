@@ -48,8 +48,9 @@ export class MannequinRig implements PlayerRig {
     const head = new Mesh(new SphereGeometry(RIG.headRadius, 12, 8), lit(COLOURS.skin));
     head.position.y = headY;
     head.name = 'head';
-    const visor = new Mesh(new CylinderGeometry(0.09, 0.09, 0.02, 10, 1, false, -Math.PI / 2, Math.PI), lit(COLOURS.visor));
-    visor.position.set(0, headY + 0.04, RIG.headRadius * 0.8);
+    const brim = RIG.headRadius * 0.75;
+    const visor = new Mesh(new CylinderGeometry(brim, brim, 0.025, 10, 1, false, -Math.PI / 2, Math.PI), lit(COLOURS.visor));
+    visor.position.set(0, headY + RIG.headRadius * 0.3, RIG.headRadius * 0.8);
     visor.name = 'visor';
     this.arm.position.set(-RIG.shoulderOffset, RIG.shoulderHeight, 0);
     this.arm.add(...racketParts());
@@ -132,10 +133,10 @@ function along(mesh: Mesh, start: number, length: number, sign = -1): Mesh {
 
 /** Arm, handle and an oval head laid out along the pivot's −x (out to the right). */
 function racketParts(): Mesh[] {
-  const arm = along(new Mesh(new CylinderGeometry(0.045, 0.04, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength);
+  const arm = along(new Mesh(new CylinderGeometry(RIG.armRadius, RIG.armRadius * 0.9, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength);
   arm.name = 'arm-right';
   const handle = along(new Mesh(new CylinderGeometry(0.016, 0.016, RIG.handleLength, 6), lit(COLOURS.racket)), RIG.armLength, RIG.handleLength);
-  const head = new Mesh(new CylinderGeometry(RIG.racketHeadRadius, RIG.racketHeadRadius, 0.02, 14), lit(COLOURS.racket));
+  const head = new Mesh(new CylinderGeometry(RIG.racketHeadRadius, RIG.racketHeadRadius, 0.02, 14), lit(COLOURS.strings));
   head.rotation.x = Math.PI / 2;
   head.scale.set(1.3, 1, 1);
   head.position.x = -(RIG.armLength + RIG.handleLength + RIG.racketHeadRadius * 1.3);
@@ -145,9 +146,9 @@ function racketParts(): Mesh[] {
 
 /** The free arm along the pivot's +x (out to the left), ending in the hand that tosses. */
 function leftArmParts(): Mesh[] {
-  const arm = along(new Mesh(new CylinderGeometry(0.045, 0.04, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength, 1);
+  const arm = along(new Mesh(new CylinderGeometry(RIG.armRadius, RIG.armRadius * 0.9, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength, 1);
   arm.name = 'arm-left';
-  const hand = new Mesh(new SphereGeometry(0.05, 8, 6), lit(COLOURS.skin));
+  const hand = new Mesh(new SphereGeometry(RIG.armRadius * 1.15, 8, 6), lit(COLOURS.skin));
   hand.position.x = RIG.armLength;
   hand.name = 'left-hand';
   return [arm, hand];

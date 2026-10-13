@@ -41,24 +41,28 @@ export const COLOURS = {
   shorts: 0x1d2333,
   shoes: 0xf2f2f2,
   racket: 0x26282c,
+  /** The racket head reads as a pale string bed with an ink rim (its outline), not a black paddle. */
+  strings: 0xe6e1d3,
   visor: 0x20242a,
 } as const;
 
 /** Mannequin rig sizes in metres and its pose angles in radians (ADR-007, ADR-009). */
 export const RIG = {
-  /** Thigh and shin each; hips stand at twice this. */
-  legSegment: 0.45,
-  legRadius: 0.07,
-  hipHalfWidth: 0.11,
-  torsoRadius: 0.19,
-  torsoLength: 0.4,
-  headRadius: 0.13,
+  /** Thigh and shin each; hips stand at twice this. Rally Pop (ADR-018): shorter, thicker limbs, a bigger head and
+   * racket; the M3 figure had 0.45 legs, 0.13 head, 0.6 arms and a 0.14 racket head. */
+  legSegment: 0.43,
+  legRadius: 0.08,
+  hipHalfWidth: 0.12,
+  torsoRadius: 0.21,
+  torsoLength: 0.38,
+  headRadius: 0.19,
   /** Shoulders above the hips. */
-  shoulderHeight: 0.55,
-  shoulderOffset: 0.2,
-  armLength: 0.6,
-  handleLength: 0.28,
-  racketHeadRadius: 0.14,
+  shoulderHeight: 0.56,
+  shoulderOffset: 0.22,
+  armLength: 0.56,
+  armRadius: 0.055,
+  handleLength: 0.27,
+  racketHeadRadius: 0.19,
   /** Racket direction is set by a roll (down +, up −) then a yaw sweep (0 = out to the right, + towards the front). */
   idle: { yaw: 0.4, roll: 0.7 },
   forehand: { from: -1.6, to: 2.6, roll: 0.15 },
