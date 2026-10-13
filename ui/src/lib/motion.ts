@@ -62,9 +62,9 @@ export function createSequence(): Sequence {
   };
 }
 
-/** Counts `el`'s text from 0 to `to` over `sec` with an ease-out, once per frame; the final text on skip, on reduced
- *  motion, or when the frames stop coming (a hidden tab), so the flow always ends on the right number. */
-export function countUp(el: HTMLElement, to: number, sec: number, seq: Sequence, fmt: (x: number) => string = signed): Promise<void> {
+/** Counts `el`'s text from `from` to `to` over `sec` with an ease-out, once per frame; the final text on skip, on
+ *  reduced motion, or when the frames stop coming (a hidden tab), so the flow always ends on the right number. */
+export function countUp(el: HTMLElement, to: number, sec: number, seq: Sequence, fmt: (x: number) => string = signed, from = 0): Promise<void> {
   let ended = false;
   let frame = 0;
   const end = () => {
@@ -81,10 +81,10 @@ export function countUp(el: HTMLElement, to: number, sec: number, seq: Sequence,
   const t0 = performance.now();
   const tick = (now: number) => {
     if (ended) return;
-    el.textContent = fmt(countValue(to, (now - t0) / (sec * 1000)));
+    el.textContent = fmt(from + countValue(to - from, (now - t0) / (sec * 1000)));
     frame = requestAnimationFrame(tick);
   };
-  el.textContent = fmt(0);
+  el.textContent = fmt(from);
   frame = requestAnimationFrame(tick);
   return seq.wait(sec).then(end);
 }

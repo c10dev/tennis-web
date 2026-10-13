@@ -234,6 +234,8 @@ export const QUICK_REWARD = {
   placesAbove: 2,
   /** Estimates stop here. */
   maxWins: 50,
-  /** The result screen's reveal: play-by-play lines, pauses between steps, the points count-up, the replay speed. */
-  reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 0.7, replaySpeed: 1.25 },
+  /** The result screen's reveal: play-by-play lines, pauses between steps, the points count-up (ease-out), the replay
+   *  speed; ADR-021: tiles, names and ratings rise staggerSec apart, a rating that rose ticks up over tickSec, and the
+   *  goal locks in lockSec after it shows. */
+  reveal: { lineSec: 0.25, holdSec: 0.6, stepSec: 0.45, countSec: 1, replaySpeed: 1.25, staggerSec: 0.12, tickSec: 0.25, lockSec: 0.2 },
 } as const;

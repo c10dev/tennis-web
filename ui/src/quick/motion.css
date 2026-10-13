@@ -49,6 +49,33 @@
 .pips .pip.is-new { animation: pip-pop 260ms var(--ease-back); }
 @keyframes pip-pop { from { transform: scale(0.2); opacity: 0; } }
 
+/* ---- Result: steps rise with an overshoot; inside a step the tiles, names and rows rise --stagger-rise apart. */
+.quick-result .step, .quick-result .pbp { transform: translateY(16px);
+  transition: opacity var(--dur-medium) var(--ease-standard), transform var(--dur-long) var(--ease-back); }
+.quick-result .step.shown, .quick-result .pbp.shown,
+.quick-result .step.gains, .quick-result .step.overtakes, .quick-result .step.ratings { transform: none; }
+.quick-result .gain, .quick-result .overtake, .quick-result .rating-gain { opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-standard), transform var(--dur-long) var(--ease-back);
+  transition-delay: calc(var(--i, 0) * var(--stagger-rise)); }
+.quick-result .gain { transform: translateY(20px) scale(0.94); }
+.quick-result .overtake { transform: translateX(56px); }
+.quick-result .rating-gain { transform: translateY(10px); }
+.quick-result .shown .gain, .quick-result .shown .overtake, .quick-result .shown .rating-gain { opacity: 1; transform: none; }
+/* A rating that rose: the new number rolls up and the tick mark pops (replaces the theme's rating-pop). */
+.quick-result .shown .rating-gain.rose .value { animation: none; }
+.rating-gain.rose .to, .rating-gain.rose .tick { display: inline-block; }
+.rating-gain.rose .tick { transform: scale(0); opacity: 0; transition: transform var(--dur-medium) var(--ease-back), opacity var(--dur-short) linear; }
+.rating-gain.rose.is-ticked .tick { transform: none; opacity: 1; }
+.rating-gain.rose.is-ticked .to { animation: tick-up var(--dur-medium) var(--ease-back); }
+@keyframes tick-up { from { transform: translateY(0.6em); opacity: 0.2; } }
+/* The next goal locks in: a short stamp. */
+.quick-result .goal.is-locked strong { display: inline-block; animation: goal-lock 420ms var(--ease-back); }
+.quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); border-radius: 8px; transition: box-shadow var(--dur-short) ease-out; }
+@keyframes goal-lock { from { transform: scale(1.35); opacity: 0; } }
+/* Skipped: every transition and animation ends at once. */
+.quick-result.is-skipped, .quick-result.is-skipped *, .quick-result.is-skipped *::before, .quick-result.is-skipped *::after {
+  animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; transition-delay: 0s !important; }
+
 /* Reduced motion: every flip, pop, slide and count-up is a cut (the TS shows final numbers directly). */
 @media (prefers-reduced-motion: reduce) {
   .quick-match *, .quick-match *::before, .quick-match *::after,
