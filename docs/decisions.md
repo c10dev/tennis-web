@@ -781,8 +781,9 @@ Format: one entry per decision, newest at the bottom.
     Quick matches hand this sound to the broadcast (`BroadcastOptions.sound`), so ball, crowd and umpire play in the
     clips too; the replay page keeps its own toggle and sliders. The crowd murmur runs under a match only
     (`Mixer.setBed`).
-  - **Three-free entry:** `@tennis/renderer/audio` (package `exports`) carries the mixer and the UI cues without Three.js;
-    the lint rule for ui/ allows it by name. The career screens still load no Three.js or broadcast code (e2e).
+  - **Three-free entry:** `@tennis/renderer/audio` (package `exports`) carries the mixer and the UI cues without
+    Three.js; the lint rule for ui/ allows it by name. The career screens still load no Three.js or broadcast code
+    (e2e).
   - **Where cues fire:** deals on the CSS deal stagger (120 ms, then 60 ms apart; a pick cuts them), pick on the
     choice, hold/flip/clash from `playReveal`, ticks from `countUp`'s new `onStep` (each new number, the last one too
     when it ends on time), rise as each rating ticks, stamp as the goal locks. A skip or reduced motion plays the stamp
