@@ -1,6 +1,7 @@
 // Icons from Lucide v0.468.0 (ISC, see LICENSE-lucide.txt): zap, shield, rotate-ccw for the cards; eye (the tell),
 // trophy (the ladder), chevrons-up (a rise), volume-2 / volume-x (the sound toggle), and check, x, equal, arrow-right,
-// chevron-up / chevron-down for the marks the fonts lack (TD-042). Copied path data, no package; eye's circle and
+// chevron-up / chevron-down for the marks the fonts lack (TD-042), and skip-back, play, pause, skip-forward for the
+// replay transport. Copied path data, no package; eye's circle and
 // equal's lines are written as paths.
 import type { Card } from '@tennis/engine';
 
@@ -14,6 +15,10 @@ const PATHS = {
     'M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22', 'M18 2H6v7a6 6 0 0 0 12 0V2Z'],
   'chevrons-up': ['m17 11-5-5-5 5', 'm17 18-5-5-5 5'],
   check: ['M20 6 9 17l-5-5'],
+  'skip-back': ['M19 20 9 12l10-8z', 'M5 19V5'],
+  'skip-forward': ['M5 4l10 8-10 8z', 'M19 5v14'],
+  play: ['M6 3 20 12 6 21z'],
+  pause: ['M14 4h4v16h-4z', 'M6 4h4v16H6z'],
   x: ['M18 6 6 18', 'm6 6 12 12'],
   equal: ['M5 9h14', 'M5 15h14'],
   'arrow-right': ['M5 12h14', 'm12 5 7 7-7 7'],
