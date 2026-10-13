@@ -38,6 +38,10 @@
 .reveal.won .verdict { color: var(--win); } .reveal.lost .verdict { color: var(--loss); }
 .outcome { margin: 0; font-size: 16px; font-weight: 800; }
 .outcome.you { color: var(--win); } .outcome.them { color: var(--loss); }
+/* The first-decision reading tip (TD-027): a paper note above the cards. */
+.hint { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 8px 12px; background: var(--paper); color: var(--ink);
+  border: 2px solid var(--ink); border-radius: 12px; font-size: 14px; font-weight: 700; }
+.hint .hint-dismiss { flex: none; padding: 4px 12px; font-size: 13px; }
 /* Phones: the three cards stay side by side, smaller, without the flavour line, so the panel fits a 667 px screen. */
 @media (max-width: 640px) {
   .quick-panel { bottom: 10px; width: calc(100vw - 16px); padding: 10px 12px 12px; }
@@ -49,6 +53,7 @@
   .card-btn .flavour { display: none; }
   .card-btn .rule { font-size: 12px; }
   .reveal .pair { flex-direction: column; gap: 6px; }
+  .hint { font-size: 12px; padding: 6px 8px; margin-bottom: 8px; gap: 8px; }
 }
 /* Points without cards: a running ticker. */
 .ticker .situation { margin-bottom: 6px; }

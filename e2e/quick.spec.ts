@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import type { GamePlan } from '@tennis/game';
+import { readingHint, type GamePlan } from '@tennis/game';
 import { css, CYCLE, nodeLadder, nodePlayNext, startLadder, watchErrors } from './helpers.ts';
 
 const SEED = 3;
@@ -152,6 +152,33 @@ test.describe('quick match', () => {
     await expect.poll(() => page.locator('#view').evaluate((c) => (c as HTMLCanvasElement).width >= c.clientWidth && c.clientWidth > 300)).toBe(true);
     await expect(page.locator('#score .score-bug')).toBeVisible();
     expect(errors).toEqual([]);
+  });
+
+  test('shows the reading tip at the first decision until dismissed, then never again (TD-027)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await startLadder(page, SEED);
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    await expect(page.locator('#hint')).toContainText(readingHint());
+    await page.locator('#hint-dismiss').click();
+    await expect(page.locator('#hint')).toHaveCount(0);
+    await expect(page.locator('#quick-panel')).toBeFocused();
+    await page.keyboard.press('Digit1');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickDecisions)).toBe('1');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
+    await expect(page.locator('#hint')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('tennis-hints'))).toBe('seen');
+    expect(errors).toEqual([]);
+  });
+
+  test('retires the reading tip when a card is picked without dismissing it', async ({ page }) => {
+    await startLadder(page, SEED);
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect(page.locator('#hint')).toBeVisible({ timeout: 30_000 });
+    await page.keyboard.press('Digit2');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('tennis-hints'))).toBe('seen');
   });
 
   test('keeps the season mode one click away', async ({ page }) => {

@@ -16,6 +16,9 @@ test.describe('quick screens for keyboard and screen-reader players', () => {
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase), { timeout: 30_000 }).toBe('choose');
     await expect(announcer).toHaveText(/(BIG POINT|MATCH POINT|MATCH POINT DOWN|\d+-ALL), \d+-\d+\. .* Choose 1 Attack, 2 Defend or 3 Counter\.$/);
     await expect(page.locator('#quick-panel')).toBeFocused();
+    // The first decision carries the reading tip (TD-027): its Got it comes first, then the cards.
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#hint-dismiss')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.locator('#card-attack')).toBeFocused();
     await page.keyboard.press('Enter');

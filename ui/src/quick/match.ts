@@ -13,6 +13,7 @@ import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
 import { stagger } from '../lib/motion.ts';
 import { appSound } from '../lib/sound.ts';
+import { readingTip, retireHint } from './hint.ts';
 import { playReveal, revealElement } from './reveal.ts';
 import { renderRead } from './scout.ts';
 
@@ -79,12 +80,14 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
 
   function drawChoose() {
     const sit = decisionSituation(qm!);
+    const tip = readingTip(() => panel.focus({ preventScroll: true }));
     panel.classList.add('stop');
     panel.replaceChildren(
       h('div', { class: 'moment-banner' }, h('span', { class: 'moment', id: 'moment' }, sit.moment), h('strong', { class: 'stop-score' }, scoreLine(qm!))),
       h('div', { class: 'situation' }, h('span', { class: 'versus' }, `You v ${opponent}`), h('span', { id: 'situation' }, sit.line)),
       pipRow(qm!, lastPoint(qm!)),
       renderRead(opponentRead(qm!)),
+      ...(tip ? [tip] : []),
       h('div', { class: 'cards' }, cardChoices(qm!).map((c, i) => h('button', { class: `card-btn ${c.card} is-dealt`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
         h('span', { class: 'key' }, String(i + 1)), h('strong', null, cardIcon(c.card), ' ', c.label), h('span', { class: 'flavour' }, c.flavour),
         h('span', { class: 'rule' }, `beats ${CARD_LABEL[c.beats]}`),
@@ -102,6 +105,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point);
     stopDeals();
+    retireHint();
     sound.ui({ kind: 'pick' });
     phase('reveal');
     // The picked card rises above the others for a beat, then both cards go face down (ADR-021).

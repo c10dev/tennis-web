@@ -3,6 +3,7 @@ import { liveCardStrength, liveStatus, matchup, type Card, type PointCards, type
 import { BEATEN_BY, CARDS } from '../quick/ai.ts';
 import { userRole, type QuickMatch } from '../quick/match.ts';
 import { PLANS } from '../quick/plan.ts';
+import { QUICK_PERSONA } from '../tuning.ts';
 import type { GamePlan } from '../quick/types.ts';
 
 /** The decision point from the user's side (the user is player A). */
@@ -30,6 +31,10 @@ const FLAVOUR: Record<'serve' | 'return', Record<Card, string>> = {
   return: { attack: 'Step in', defend: 'Block it deep', counter: 'Read the serve' },
 };
 export const CARD_LABEL: Record<Card, string> = { attack: 'Attack', defend: 'Defend', counter: 'Counter' };
+
+/** The one-time tip at a player's first decision point (TD-027): the cycle, where the habit is, how far the tell goes. */
+export const readingHint = (): string =>
+  `Each card beats one: Attack › Defend › Counter › Attack. The scouting line names their habit; the tell is right ${Math.round(QUICK_PERSONA.tellAccuracy * 10)} times in 10.`;
 
 export function cardChoices(m: QuickMatch) {
   const role = userRole(m);

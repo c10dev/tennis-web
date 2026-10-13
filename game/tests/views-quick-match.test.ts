@@ -5,7 +5,8 @@ import { autoPlay, decide } from '../src/quick/match.ts';
 import { freshLadder as fresh, playLadderMatch } from './quick-helpers.ts';
 import type { PointEvent } from '@tennis/engine';
 import { quickHomeView } from '../src/views/quick-home.ts';
-import { cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine, tickerView } from '../src/views/quick-match.ts';
+import { cardChoices, decisionSituation, momentLabel, planChoices, readingHint, revealView, scoreLine, tickerView } from '../src/views/quick-match.ts';
+import { QUICK_PERSONA } from '../src/tuning.ts';
 import { freshLadder, ladderWithDecision, toDecision } from './quick-helpers.ts';
 
 describe('quickHomeView', () => {
@@ -94,5 +95,15 @@ describe('a decision point', () => {
     expect(v.matchup).toBe(cards.B === 'defend' ? 'won' : cards.B === 'counter' ? 'lost' : 'even');
     expect(['you', 'them']).toContain(v.winner);
     expect(v.how).toMatch(/Ace|Double fault|Winner|Unforced error|Forced error|Error/);
+  });
+});
+
+describe('readingHint (TD-027)', () => {
+  it('teaches the cycle, the scouting habit and how far to trust the tell, with the tell accuracy from tuning', () => {
+    const hint = readingHint();
+    expect(hint).toContain('Attack › Defend › Counter › Attack');
+    expect(hint).toMatch(/scouting/i);
+    expect(hint).toContain(`${Math.round(QUICK_PERSONA.tellAccuracy * 10)} times in 10`);
+    expect(hint.length).toBeLessThan(160);
   });
 });
