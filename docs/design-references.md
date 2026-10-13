@@ -169,7 +169,7 @@ Self-host woff2 via `@font-face` like the M3 decision (no `@fontsource` dependen
 Copy single SVGs into `ui/` (no npm dependency), keeping the licence text alongside.
 
 ### Colour checks (WCAG 2 contrast; [1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html), [1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html), [1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html))
-Computed with a scratch script using the WCAG formula. The current UI passes AA everywhere (text 14.1, muted 6.2,
+Computed with a scratch script using the WCAG formula. The current UI passes AA on the pairs checked (text 14.1, muted 6.2,
 button 11.6, card colours 6.4–7.4).
 
 **Card colours under colour-vision deficiency** (smallest CIE76 ΔE between the three cards after Machado et al. 2009
@@ -177,7 +177,7 @@ simulation; above ~20 reads as different):
 
 | Trio (Attack / Defend / Counter) | Normal | Protan | Deutan | Tritan |
 |---|---|---|---|---|
-| Today `#ff8a6b` / `#6aa8ff` / `#c9a0ff` | 29 | **2** | 13 | 45 |
+| Today `#ff8a6b` / `#6aa8ff` / `#c9a0ff` | 29 | **2** (Defend–Counter) | 13 (Defend–Counter) | 45 |
 | Red / blue / amber `#FF7A45` / `#4AA3FF` / `#F2D04A` | 55 | 36 | 19 | 47 |
 | **Proposed** `#FF7A45` / `#4AA3FF` / `#3FD3B0` (teal) | 78 | 38 | 53 | 18 |
 
