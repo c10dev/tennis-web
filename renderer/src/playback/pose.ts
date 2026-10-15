@@ -17,6 +17,8 @@ export interface PlayerPose {
   /** Swing in progress: phase 0 → 1, contact at 0.5. */
   swing: { kind: SwingKind; phase: number } | null;
   reaction: Reaction;
+  /** How far into the reaction the body is, 0–1: it eases in after the ball lands and out before it ends. */
+  reactionWeight: number;
   /** Stride phase (radians) and how much of a full running stride, 0–1. */
   gait: { phase: number; amount: number };
   /** Knee bend into a groundstroke, 0–1 (1 at contact). */
@@ -37,7 +39,7 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number, ball: Ve
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
   return {
-    pos, facing: turnToShot(facing(pos, ball), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t),
+    pos, facing: turnToShot(facing(pos, ball), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
     splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
@@ -93,6 +95,14 @@ function swing(timeline: Timeline, id: PlayerId, t: number): PlayerPose['swing']
     return { kind, phase };
   }
   return null;
+}
+
+function reactionWeight(timeline: Timeline, t: number): number {
+  const seg = timeline.segments[segmentAt(timeline, t)]!;
+  const end = Math.min(seg.landed + RIG_MOTION.reactionSec, seg.next);
+  if (t < seg.landed || t >= end) return 0;
+  const ramp = Math.min(RIG_MOTION.reactionRampSec, (end - seg.landed) / 2);
+  return smoothstep(Math.min(t - seg.landed, end - t) / ramp);
 }
 
 function reaction(timeline: Timeline, id: PlayerId, t: number): Reaction {

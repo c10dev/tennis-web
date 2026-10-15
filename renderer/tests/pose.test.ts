@@ -157,6 +157,19 @@ describe('playerPose', () => {
     }
   });
 
+  it('eases into and out of a reaction instead of snapping (ADR-023)', () => {
+    for (const seg of tl.segments.slice(0, 30)) {
+      const last = seg.point.shots.at(-1)!;
+      const landed = seg.zero + last.t + last.flightSec;
+      const end = Math.min(landed + RIG_MOTION.reactionSec, seg.next);
+      const ramp = RIG_MOTION.reactionRampSec;
+      const weight = (t: number) => playerPose(tl, seg.point.winner, t, null).reactionWeight;
+      expect(weight(landed + 1e-6)).toBeLessThan(0.01);
+      if (end - landed > 2 * ramp) expect(weight(landed + ramp)).toBeCloseTo(1, 9);
+      expect(weight(end - 1e-6)).toBeLessThan(0.01);
+    }
+  });
+
   it('reports running speed from the movement', () => {
     const seg = tl.segments.find((s) => s.point.shots.length > 4)!;
     const s = seg.point.shots[2]!;

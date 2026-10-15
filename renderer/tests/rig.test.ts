@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Vector3, type Object3D } from 'three';
 import type { PlayerPose } from '../src/playback/pose.ts';
 import { MannequinRig } from '../src/scene/rig.ts';
+import { RIG } from '../src/tuning/index.ts';
 
 const pose = (o: Partial<PlayerPose> = {}): PlayerPose => ({
-  pos: { x: 1, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none',
+  pos: { x: 1, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 1,
   gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, ...o,
 });
 const world = (o: Object3D) => {
@@ -44,11 +45,13 @@ describe('MannequinRig', () => {
       rig.apply(pose({ swing: { kind, phase } }));
       return head(rig);
     };
-    // Facing −z (the far end): behind is +z relative to the player at z = 11.
-    expect(at('forehand', 0).z).toBeGreaterThan(11);
+    // Facing −z (the far end): behind is +z relative to the player at z = 11. A swing eases out of the rest position
+    // first, so the backswing is furthest back once that ease is done.
+    const back = RIG.swingEase;
+    expect(at('forehand', back).z).toBeGreaterThan(11);
     expect(at('forehand', 0.5).z).toBeLessThan(11);
     expect(at('forehand', 0.5).x).toBeGreaterThan(1);
-    expect(at('backhand', 0).x).toBeLessThan(1);
+    expect(at('backhand', back).x).toBeLessThan(1);
     expect(at('backhand', 0.5).z).toBeLessThan(11);
   });
 

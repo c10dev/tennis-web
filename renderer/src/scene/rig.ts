@@ -7,6 +7,7 @@ import {
 import { lerp } from '../math.ts';
 import type { PlayerPose } from '../playback/pose.ts';
 import { COLOURS, LOOK, RIG } from '../tuning/index.ts';
+import { atReach, leftArmParts, RacketArm, swingTarget } from './arm.ts';
 import { groundToThree, yawFor } from './coords.ts';
 import { lit } from './materials.ts';
 import { addOutline } from './outline.ts';
@@ -15,8 +16,6 @@ export interface PlayerRig {
   readonly object3d: Object3D;
   apply(pose: PlayerPose): void;
 }
-
-interface Angles { yaw: number; roll: number }
 
 /** A capsule `length` long hanging down from its group's origin. */
 function limb(name: string, radius: number, length: number, colour: number): Mesh {
@@ -34,7 +33,7 @@ export class MannequinRig implements PlayerRig {
   readonly object3d = new Group();
   private readonly hips = new Group();
   private readonly torso = new Group();
-  private readonly arm = new Group();
+  private readonly arm = new RacketArm();
   private readonly leftArm = new Group();
   private readonly legs: { thigh: Group; shin: Group }[] = [];
 
@@ -52,11 +51,10 @@ export class MannequinRig implements PlayerRig {
     const visor = new Mesh(new CylinderGeometry(brim, brim, 0.025, 10, 1, false, -Math.PI / 2, Math.PI), lit(COLOURS.visor));
     visor.position.set(0, headY + RIG.headRadius * 0.3, RIG.headRadius * 0.8);
     visor.name = 'visor';
-    this.arm.position.set(-RIG.shoulderOffset, RIG.shoulderHeight, 0);
-    this.arm.add(...racketParts());
+    this.arm.shoulder.position.set(-RIG.shoulderOffset, RIG.shoulderHeight, 0);
     this.leftArm.position.set(RIG.shoulderOffset, RIG.shoulderHeight, 0);
     this.leftArm.add(...leftArmParts());
-    this.torso.add(body, head, visor, this.arm, this.leftArm);
+    this.torso.add(body, head, visor, this.arm.shoulder, this.leftArm);
     for (const side of ['left', 'right'] as const) this.hips.add(this.leg(side));
     this.hips.add(this.torso);
     const shadow = new Mesh(new CircleGeometry(RIG.shadowRadius, 16), new MeshBasicMaterial({ color: COLOURS.shadow, transparent: true, opacity: 0.28 }));
@@ -102,54 +100,12 @@ export class MannequinRig implements PlayerRig {
       shin.rotation.x = 2 * alpha + knee * Math.max(0, -Math.sin(pose.gait.phase + i * Math.PI));
     });
     let lean = (RIG.runLean * Math.min(pose.speed, RIG.runLeanSpeed)) / RIG.runLeanSpeed;
-    let racket: Angles = RIG.idle;
-    if (pose.swing) racket = swingAngles(pose.swing.kind, pose.swing.phase);
-    else if (pose.reaction === 'celebrate') racket = RIG.celebrate;
-    else if (pose.reaction === 'dejected') lean = RIG.dejectedLean;
+    // Between swings the racket rests, or eases up into a celebration; a swing leaves from and returns to that rest.
+    let rest = atReach(RIG.idle);
+    if (pose.reaction === 'celebrate') rest = rest.lerp(atReach(RIG.celebrate), pose.reactionWeight);
+    else if (pose.reaction === 'dejected') lean = lerp(lean, RIG.dejectedLean, pose.reactionWeight);
     this.torso.rotation.x = lean;
-    this.arm.rotation.set(0, racket.yaw, racket.roll);
+    this.arm.reach(pose.swing ? swingTarget(pose.swing.kind, pose.swing.phase, rest) : rest);
     this.leftArm.rotation.set(0, RIG.leftArm.forward, lerp(RIG.leftArm.down, RIG.leftArm.up, pose.toss));
   }
-}
-
-function swingAngles(kind: 'serve' | 'forehand' | 'backhand', phase: number): Angles {
-  if (kind === 'serve') {
-    const s = RIG.serve;
-    // Up from the hip to full stretch at contact, then across the body and down.
-    if (phase <= 0.5) return { yaw: 0, roll: lerp(s.rollFrom, s.rollContact, phase / 0.5) };
-    const u = (phase - 0.5) / 0.5;
-    return { yaw: lerp(0, s.yawEnd, u), roll: lerp(s.rollContact, s.rollEnd, u) };
-  }
-  const w = RIG[kind];
-  return { yaw: lerp(w.from, w.to, phase), roll: w.roll };
-}
-
-/** A mesh laid along −x (out to the right of the shoulder) from `start` for `length`. */
-function along(mesh: Mesh, start: number, length: number, sign = -1): Mesh {
-  mesh.rotation.z = Math.PI / 2;
-  mesh.position.x = sign * (start + length / 2);
-  return mesh;
-}
-
-/** Arm, handle and an oval head laid out along the pivot's −x (out to the right). */
-function racketParts(): Mesh[] {
-  const arm = along(new Mesh(new CylinderGeometry(RIG.armRadius, RIG.armRadius * 0.9, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength);
-  arm.name = 'arm-right';
-  const handle = along(new Mesh(new CylinderGeometry(0.016, 0.016, RIG.handleLength, 6), lit(COLOURS.racket)), RIG.armLength, RIG.handleLength);
-  const head = new Mesh(new CylinderGeometry(RIG.racketHeadRadius, RIG.racketHeadRadius, 0.02, 14), lit(COLOURS.strings));
-  head.rotation.x = Math.PI / 2;
-  head.scale.set(1.3, 1, 1);
-  head.position.x = -(RIG.armLength + RIG.handleLength + RIG.racketHeadRadius * 1.3);
-  head.name = 'racket-head';
-  return [arm, handle, head];
-}
-
-/** The free arm along the pivot's +x (out to the left), ending in the hand that tosses. */
-function leftArmParts(): Mesh[] {
-  const arm = along(new Mesh(new CylinderGeometry(RIG.armRadius, RIG.armRadius * 0.9, RIG.armLength, 6), lit(COLOURS.skin)), 0, RIG.armLength, 1);
-  arm.name = 'arm-left';
-  const hand = new Mesh(new SphereGeometry(RIG.armRadius * 1.15, 8, 6), lit(COLOURS.skin));
-  hand.position.x = RIG.armLength;
-  hand.name = 'left-hand';
-  return [arm, hand];
 }

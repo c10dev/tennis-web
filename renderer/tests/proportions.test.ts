@@ -5,7 +5,7 @@ import { MannequinRig } from '../src/scene/rig.ts';
 import { RIG } from '../src/tuning/index.ts';
 
 const pose = (o: Partial<PlayerPose> = {}): PlayerPose => ({
-  pos: { x: 0, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none',
+  pos: { x: 0, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 1,
   gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, ...o,
 });
 const top = (rig: MannequinRig, name: string) => {

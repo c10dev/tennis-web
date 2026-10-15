@@ -12,7 +12,7 @@ export const LOOK = {
     px: 1.5,
     referenceHeight: 720,
     /** Rig parts that get a hull (named meshes in MannequinRig); thin ones (handle, visor, feet, hand) do not. */
-    rigParts: ['body', 'head', 'racket-head', 'arm-right', 'arm-left', 'thigh-left', 'thigh-right', 'shin-left', 'shin-right'],
+    rigParts: ['body', 'head', 'racket-head', 'arm-right', 'forearm-right', 'arm-left', 'thigh-left', 'thigh-right', 'shin-left', 'shin-right'],
     /** Ceiling on outline draws for the whole stage: two players, net posts and tape, ball. */
     maxDraws: 24,
   },

@@ -60,6 +60,11 @@ export const RIG = {
   shoulderHeight: 0.56,
   shoulderOffset: 0.22,
   armLength: 0.56,
+  /** The racket arm bends at the elbow (ADR-023): upper arm and forearm together make `armLength`. */
+  upperArm: 0.28,
+  forearm: 0.28,
+  /** The racket elbow bends towards this direction in torso space: down, a little out to the right and back. */
+  elbowPole: { x: -0.3, y: -1, z: -0.2 },
   armRadius: 0.055,
   handleLength: 0.27,
   racketHeadRadius: 0.19,
@@ -69,6 +74,8 @@ export const RIG = {
   backhand: { from: 3.9, to: 0.4, roll: 0.15 },
   serve: { rollFrom: 0.6, rollContact: -1.5, rollEnd: 0.5, yawEnd: 2.4 },
   celebrate: { yaw: 0.2, roll: -1.3 },
+  /** Share of a swing at each end spent easing from and back to the racket's rest position. */
+  swingEase: 0.15,
   dejectedLean: 0.3,
   /** How far the hips drop at full crouch, the split-step hop, and the leg swing of a full stride. */
   crouchDrop: 0.22,

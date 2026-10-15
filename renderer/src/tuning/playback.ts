@@ -41,6 +41,8 @@ export const RIG_MOTION = {
   swing: { stroke: { pre: 0.3, post: 0.3 }, serve: { pre: 0.6, post: 0.35 } },
   /** Seconds a player celebrates or hangs their head after the last ball lands (cut short by the next point). */
   reactionSec: 1.8,
+  /** A reaction eases in over this long after the ball lands and out over this long before it ends. */
+  reactionRampSec: 0.25,
   /** Window for the finite-difference running speed. */
   speedSampleSec: 0.05,
   /** Running gait: stride cycles per second, and the speed (m/s) at which the stride is full. */
