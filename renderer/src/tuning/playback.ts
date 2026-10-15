@@ -49,6 +49,8 @@ export const RIG_MOTION = {
   /** Knees bend this long either side of a groundstroke's contact; split steps this long either side of the opponent's. */
   crouchSec: 0.3,
   splitStepSec: 0.15,
+  /** Around their own contact a player turns from the ball towards where the shot goes, over this long each side. */
+  contactTurnSec: 0.25,
   /** The tossing arm reaches the top this far into the toss. */
   tossRiseShare: 0.4,
   /** Share of each move spent speeding up and slowing down. */

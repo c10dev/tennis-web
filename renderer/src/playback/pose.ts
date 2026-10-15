@@ -1,5 +1,6 @@
 // A player's pose at replay time t, from the events alone: what a rig needs to draw them (ADR-007).
-import type { PlayerId, Vec2, Vec3 } from '@tennis/engine';
+import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
+import { smoothstep } from '../math.ts';
 import { PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
 import { positionAt } from './movement.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
@@ -34,8 +35,9 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number, ball: Ve
   const speed = Math.hypot(after.x - before.x, after.y - before.y) / (2 * dt);
   const seg = timeline.segments[segmentAt(timeline, t)]!;
   const tau = t - seg.zero;
+  const own = seg.point.shots.filter((s) => s.hitter === id);
   return {
-    pos, facing: facing(pos, ball), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t),
+    pos, facing: turnToShot(facing(pos, ball), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
     splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
@@ -64,6 +66,19 @@ function facing(pos: Vec2, ball: Vec3 | null): Vec2 {
     if (d > 0.5) return { x: (ball.x - pos.x) / d, y: (ball.y - pos.y) / d };
   }
   return { x: 0, y: -Math.sign(pos.y) };
+}
+
+/** Near their own contact a player turns towards where the shot goes, so the ball meets them side-on (ADR-023). */
+function turnToShot(base: Vec2, own: ShotEvent[], tau: number): Vec2 {
+  const s = own.find((x) => Math.abs(tau - x.t) < RIG_MOTION.contactTurnSec);
+  if (!s) return base;
+  const w = smoothstep(1 - Math.abs(tau - s.t) / RIG_MOTION.contactTurnSec);
+  const to = s.bounce ? { x: s.bounce.x - s.from.x, y: s.bounce.y - s.from.y } : { x: 0, y: -Math.sign(s.from.y) };
+  const n = Math.hypot(to.x, to.y);
+  const dir = { x: to.x / n, y: to.y / n };
+  const mix = { x: base.x + (dir.x - base.x) * w, y: base.y + (dir.y - base.y) * w };
+  const m = Math.hypot(mix.x, mix.y);
+  return m > 1e-6 ? { x: mix.x / m, y: mix.y / m } : dir;
 }
 
 function swing(timeline: Timeline, id: PlayerId, t: number): PlayerPose['swing'] {

@@ -87,12 +87,19 @@ describe('positionAt', () => {
 describe('playerPose', () => {
   const tl = buildTimeline(match(2, 'clay'));
 
+  /** Whether `id` is within the turn window around one of their own contacts at replay time t. */
+  const turning = (id: PlayerId, t: number) => {
+    const seg = tl.segments[segmentAt(tl, t)]!;
+    return seg.point.shots.some((s) => s.hitter === id && Math.abs(t - seg.zero - s.t) < RIG_MOTION.contactTurnSec);
+  };
+
   it('faces the ball when it is in play, and the net when it is not', () => {
     for (let t = 0; t < 300; t += 0.37) {
       const ball = ballFor(tl, t);
       for (const id of IDS) {
         const pose = playerPose(tl, id, t, ball);
         expect(Math.hypot(pose.facing.x, pose.facing.y)).toBeCloseTo(1, 9);
+        if (turning(id, t)) continue;
         if (ball && dist(ball, pose.pos) > 0.5) {
           const d = dist(ball, pose.pos);
           expect(pose.facing.x * (ball.x - pose.pos.x) / d + pose.facing.y * (ball.y - pose.pos.y) / d).toBeCloseTo(1, 6);
@@ -101,6 +108,26 @@ describe('playerPose', () => {
         }
       }
     }
+  });
+
+  it('turns towards where the shot goes at contact, with the ball on the racket side for a forehand (ADR-023)', () => {
+    let sided = 0;
+    for (const seg of tl.segments.slice(0, 30)) {
+      for (const s of seg.point.shots) {
+        const t = seg.zero + s.t;
+        const pose = playerPose(tl, s.hitter, t, ballFor(tl, t));
+        if (s.bounce) {
+          const d = dist(s.bounce, s.from);
+          expect(pose.facing.x * (s.bounce.x - s.from.x) / d + pose.facing.y * (s.bounce.y - s.from.y) / d).toBeGreaterThan(0.99);
+        }
+        if (s.shot === 'serve') continue;
+        // The player's right in court coordinates is the facing turned a quarter clockwise.
+        const right = (s.from.x - pose.pos.x) * pose.facing.y - (s.from.y - pose.pos.y) * pose.facing.x;
+        expect(Math.sign(right)).toBe(s.wing === 'backhand' ? -1 : 1);
+        sided++;
+      }
+    }
+    expect(sided).toBeGreaterThan(50);
   });
 
   it('swings with the shot recorded: serve or wing, half-way through at contact', () => {
