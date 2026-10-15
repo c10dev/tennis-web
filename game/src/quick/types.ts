@@ -16,7 +16,8 @@ export interface Persona {
 /** A visible sign before a decision, pointing at a card (right `tellAccuracy` of the time). */
 export interface Tell {
   card: Card;
-  text: string;
+  /** Which of the card's tell texts is shown (`Messages.tells[card][index]`). */
+  index: number;
 }
 
 /** A point where both players chose a card. Scores are tiebreak points, the user (A) first. */

@@ -1,5 +1,6 @@
 // Display strings shared by the screens.
 import type { Surface } from '@tennis/engine';
+import { en } from '../text/en.ts';
 
 /** Round 1 is the first round of a draw of `size`. */
 export function roundName(size: number, round: number): string {
@@ -22,18 +23,12 @@ export function ordinal(n: number): string {
   return `${n}${tail}`;
 }
 
-export const SURFACE_LABEL: Record<Surface, string> = { hard: 'Hard', clay: 'Clay', grass: 'Grass' };
+export const SURFACE_LABEL: Record<Surface, string> = en.surface;
 
 export function fatigueLabel(f: number): string {
   return f < 0.2 ? 'Fresh' : f < 0.45 ? 'Fit' : f < 0.7 ? 'Tired' : 'Exhausted';
 }
 
-export const STYLE_LABEL = {
-  big_server: 'Big server', baseliner: 'Baseliner', counter_puncher: 'Counter-puncher', serve_and_volley: 'Serve & volley', all_court: 'All-court',
-} as const;
+export const STYLE_LABEL = en.style;
 
-export const RATING_LABEL: Record<string, string> = {
-  servePower: 'Serve power', serveAccuracy: 'Serve accuracy', secondServe: 'Second serve', forehand: 'Forehand', backhand: 'Backhand',
-  consistency: 'Consistency', return: 'Return', movement: 'Movement', agility: 'Agility', stamina: 'Stamina', composure: 'Composure',
-  concentration: 'Concentration', decision: 'Decision', aggression: 'Aggression',
-};
+export const RATING_LABEL: Record<string, string> = en.rating;

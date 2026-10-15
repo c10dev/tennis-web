@@ -2,7 +2,8 @@
 // (one class on the parent, so neither side shows first), and the verdict pops a little later with a small clash: one
 // white frame and a 6 px kick on the winning card. Timing comes from QUICK_PACE.reveal, which the pace model sums.
 import type { Card } from '@tennis/engine';
-import { CARD_LABEL, QUICK_PACE, type revealView } from '@tennis/game';
+import { QUICK_PACE, type revealView } from '@tennis/game';
+import { T, U } from '../i18n/index.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
@@ -11,7 +12,7 @@ const P = QUICK_PACE.reveal;
 const sleep = (sec: number) => new Promise((r) => setTimeout(r, sec * 1000));
 type Reveal = ReturnType<typeof revealView>;
 
-const VERDICT: Record<Reveal['matchup'], string> = { won: '✓ You read it!', lost: '✗ They read you', even: '= Same card' };
+const VERDICT: Record<Reveal['matchup'], string> = U.verdict;
 
 /** A card that can flip: a plain back, and the front chip (icon, name). */
 const flipCard = (side: 'yours' | 'theirs', card: Card, text: string, winner: boolean) =>
@@ -26,9 +27,9 @@ export function revealElement(r: Reveal, opponent: string): HTMLElement {
     style: `--flip-dur:${P.flipSec * 1000}ms`,
   },
   h('div', { class: 'pair' },
-    flipCard('yours', r.yours, ` You · ${CARD_LABEL[r.yours]}`, r.matchup === 'won'),
-    h('span', { class: 'vs' }, 'v'),
-    flipCard('theirs', r.theirs, ` ${CARD_LABEL[r.theirs]} · ${opponent}`, r.matchup === 'lost'),
+    flipCard('yours', r.yours, U.youCard(T.card[r.yours]), r.matchup === 'won'),
+    h('span', { class: 'vs' }, U.vs),
+    flipCard('theirs', r.theirs, ` ${T.card[r.theirs]} · ${opponent}`, r.matchup === 'lost'),
     h('span', { class: 'flash', 'aria-hidden': 'true' })),
   h('strong', { class: 'verdict', 'aria-live': 'polite' }, VERDICT[r.matchup]));
 }

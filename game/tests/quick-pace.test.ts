@@ -79,7 +79,7 @@ describe('bots', () => {
   });
 
   it('believes a tell: plays the card that beats the card it points at', () => {
-    expect(tellBot(view(createRng(1), { card: 'defend', text: '' }))).toBe('attack');
+    expect(tellBot(view(createRng(1), { card: 'defend', index: 0 }))).toBe('attack');
   });
 
   it('reads the AI half of the time as an average user would', () => {

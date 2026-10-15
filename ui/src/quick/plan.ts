@@ -1,9 +1,10 @@
 // The game plan picker on the ladder (ADR-017): three toggles next to Play. The last plan is remembered.
 import { planChoices, type GamePlan } from '@tennis/game';
+import { T, U } from '../i18n/index.ts';
 import { h } from '../lib/h.ts';
 
 const KEY = 'tennis-quick-plan';
-const PLANS = planChoices();
+const PLANS = planChoices(T);
 
 function readPlan(): GamePlan {
   try {
@@ -34,6 +35,6 @@ export function planPicker(): { element: HTMLElement; plan: () => GamePlan } {
   }
   select(plan);
   const element = h('div', { class: 'plan-picker', id: 'plan-picker' },
-    h('span', { class: 'muted' }, 'Game plan'), h('div', { class: 'plan-buttons', role: 'group' }, buttons), line);
+    h('span', { class: 'muted' }, U.gamePlan), h('div', { class: 'plan-buttons', role: 'group' }, buttons), line);
   return { element, plan: () => plan };
 }

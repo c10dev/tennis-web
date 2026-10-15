@@ -769,5 +769,22 @@ Format: one entry per decision, newest at the bottom.
     portrait at boot. In `vite --mode toss` dev the devtools plugin swaps in its mock SDK (production builds switch
     it off); `AIT_PANEL=0` hides its panel for e2e. The platform module compares the mode inline, so the web build
     has no SDK code (checked by searching `dist/`).
+  - **Korean (step 3).** The game's sentences moved into text catalogs, `game/src/text/{en,ko}.ts` (`Messages`):
+    card names, flavours, moments, how points end, plans, styles, surfaces, ratings, habits, scouting and rival
+    lines, tells, the decisive line, headline, goals and the play-by-play. Views, `decisiveMoment`, `highlightOf`
+    and `nextGoal` take a catalog as their last argument, English by default, so the web screens, the tests and
+    the e2e text checks are unchanged; `STYLE_LABEL`, `SURFACE_LABEL`, `RATING_LABEL` and `CARD_LABEL` are now the
+    English catalog's. A tell is drawn as `{ card, index }` (the index consumes the stream exactly as `pick` did, so
+    every seed plays the same) and put in words by the view; nothing saved holds prose, so the save format stays
+    v2. Korean lines put a dash after a player's (Latin) name instead of guessing a particle; particles after card
+    names come from `withJosa` (받침 test on the last syllable). The UI's own words are `ui/src/i18n/{en,ko}.ts`
+    (`UiText`); `LANG` is Korean in the toss build and on the web with `?lang=ko`, English otherwise, and sets
+    `<html lang>`. The season mode, the dev replay page, the broadcast graphics (MATCH POINT, the score bug) and the
+    umpire's voice stay English (TD-051).
+  - **Pretendard.** The author's own subset files (npm `pretendard@1.3.9`, SemiBold and ExtraBold, 2,780 Hangul
+    syllables, about 270 KB each) are self-hosted unmodified, as the OFL reserves the name. They join the body and
+    display stacks behind Nunito and Lilita One with a Hangul-only `unicode-range`, so Latin and digits keep the
+    Rally Pop faces and an English page never fetches them (an e2e test checks); a Korean page preloads both.
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
-  gzip) for the SDK chunk; the `.ait` is 0.33 MB. Untested on a device until the console registration (TD-049).
+  gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. Untested on a device until the console
+  registration (TD-049).

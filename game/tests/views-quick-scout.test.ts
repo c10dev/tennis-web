@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { decide, startQuick } from '../src/quick/match.ts';
 import { HABITS } from '../src/quick/persona.ts';
+import { TELL_TEXTS } from '../src/quick/tells.ts';
 import { habitLine, opponentRead, opponentScouting, rivalLine } from '../src/views/quick-scout.ts';
 import { freshLadder, ladderWithDecision, playLadderMatch, toDecision } from './quick-helpers.ts';
 
@@ -20,7 +21,7 @@ describe('opponentRead', () => {
     const name = m.recipe.config.players[1].name;
     const read = opponentRead(m);
     expect(read.scouting).toContain(habitLine(name, m.persona.habit));
-    expect(read.tell).toBe(m.pending!.tell!.text);
+    expect(read.tell).toBe(TELL_TEXTS[m.pending!.tell!.card][m.pending!.tell!.index]);
     expect(read.rival).toBeNull();
   });
 });

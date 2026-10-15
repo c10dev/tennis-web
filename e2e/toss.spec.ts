@@ -31,3 +31,26 @@ test.describe('toss target', () => {
     await expect(page.locator('#controls')).toHaveCount(0);
   });
 });
+
+// Korean (ADR-022): the toss build speaks Korean and lays Hangul out in the self-hosted Pretendard.
+test.describe('toss target in Korean', () => {
+  test('plays to a decision in Korean, with Pretendard loaded', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ko');
+    await expect(page.locator('#quick-start')).toHaveText('래더 시작');
+    await page.locator('#quick-seed').fill('3');
+    await page.locator('#quick-start').click();
+    await expect(page.locator('#quick-play')).toHaveText('경기 시작');
+    await expect(page.locator('#home-scouting')).toContainText('스카우팅');
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect(page.locator('#moment')).toHaveText(/^(매치 포인트( 위기)?|\d+-\d+ 동점|승부처)$/, { timeout: 30_000 });
+    await expect(page.locator('#card-attack strong')).toHaveText('공격');
+    await expect(page.locator('#situation')).toHaveText(/^(내|상대) 서브 · \d+-\d+$/);
+    const loaded = await page.evaluate(async () => {
+      await Promise.all(['600', '800'].map((w) => document.fonts.load(`${w} 16px "Pretendard"`, '한')));
+      return [...document.fonts].filter((x) => x.family.replace(/"/g, '') === 'Pretendard' && x.status === 'loaded').map((x) => x.weight).sort();
+    });
+    expect(loaded).toEqual(['600', '800']);
+  });
+});

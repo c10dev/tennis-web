@@ -1,33 +1,28 @@
 // The decisive point as text (ADR-017): the fast-mode replay on the result screen, one line at a time.
-import type { PlayerId, PointEvent, ShotEvent } from '@tennis/engine';
+import type { PointEvent, ShotEvent } from '@tennis/engine';
 import type { Highlight } from '../quick/highlight.ts';
+import { en } from '../text/en.ts';
+import type { Ending, Messages } from '../text/types.ts';
 
-const who = (p: PlayerId) => (p === 'A' ? 'Your' : 'Their');
+const stroke = (s: ShotEvent, t: Messages) => t.pbp.stroke(s.shot, s.wing ?? 'forehand');
 
-function stroke(s: ShotEvent): string {
-  const wing = s.wing ?? 'forehand';
-  if (s.shot === 'drive' || s.shot === 'return' || s.shot === 'approach') return wing;
-  if (s.shot === 'slice') return `${wing} slice`;
-  return s.shot;
-}
-
-function ending(p: PointEvent): string {
+function ending(p: PointEvent, t: Messages): string {
   const last = p.shots.at(-1);
-  if (p.endedBy === 'ace') return `${who(p.server)} ace`;
-  if (p.endedBy === 'double_fault' || !last) return `${who(p.server)} double fault`;
-  if (p.endedBy === 'winner') return `${who(last.hitter)} ${stroke(last)} winner`;
-  return `${who(last.hitter)} ${stroke(last)} ${p.endedBy === 'forced_error' ? 'forced into an error' : 'error'}`;
+  if (p.endedBy === 'ace') return t.pbp.ending('ace', p.server === 'A', '');
+  if (p.endedBy === 'double_fault' || !last) return t.pbp.ending('double_fault', p.server === 'A', '');
+  const kind: Ending = p.endedBy === 'winner' ? 'winner' : p.endedBy === 'forced_error' ? 'forced_error' : 'error';
+  return t.pbp.ending(kind, last.hitter === 'A', stroke(last, t));
 }
 
-export function playByPlay(p: PointEvent, h: Highlight): string[] {
+export function playByPlay(p: PointEvent, h: Highlight, t: Messages = en): string[] {
   const serve = p.shots.find((s) => s.shot === 'serve' && s.outcome !== 'fault') ?? p.shots[0];
   const [a, b] = p.scoreAfter.points;
   return [
-    `${h.score} · ${p.server === 'A' ? 'You serve' : 'They serve'}`,
-    h.user && h.ai ? `You ${h.user}, they ${h.ai}` : 'No cards: your game plan',
-    serve ? `${p.serveNumber === 1 ? 'First' : 'Second'} serve, ${Math.round(serve.speedKmh)} km/h` : null,
-    p.rallyLength > 2 ? `${p.rallyLength}-shot rally` : null,
-    `${ending(p)}`,
-    `${p.winner === 'A' ? 'Your point' : 'Their point'}${p.scoreAfter.sets.length > p.scoreBefore.sets.length ? ' · game, set and match' : ` · ${a}-${b}`}`,
+    t.pbp.opening(h.score, p.server === 'A'),
+    h.user && h.ai ? t.pbp.cards(h.user, h.ai) : t.pbp.noCards,
+    serve ? t.pbp.serve(p.serveNumber === 1, Math.round(serve.speedKmh)) : null,
+    p.rallyLength > 2 ? t.pbp.rally(p.rallyLength) : null,
+    ending(p, t),
+    t.pbp.close(p.winner === 'A', p.scoreAfter.sets.length > p.scoreBefore.sets.length, `${a}-${b}`),
   ].filter((x): x is string => x !== null);
 }

@@ -6,6 +6,7 @@
 import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
+import { T, U } from '../i18n/index.ts';
 import { h } from '../lib/h.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
 
@@ -20,7 +21,7 @@ export function quickResult(ctx: Ctx): Screen {
     ctx.go('#/quick');
     return { element: h('div') };
   }
-  const v = quickResultView(ctx.quick);
+  const v = quickResultView(ctx.quick, T);
   const record = ctx.quick.history.at(-1)!;
   const again = () => {
     ctx.quickMatch = startQuick(ctx.quick!);
@@ -28,32 +29,32 @@ export function quickResult(ctx: Ctx): Screen {
   };
   const step = (cls: string, id: string, ...children: Parameters<typeof h>[2][]) => h('div', { class: `step ${cls}`, id }, ...children);
   const lines = v.playByPlay.map((t) => h('li', { class: 'pbp' }, t));
-  const decisive = step('decisive', 'decisive', h('span', { class: 'kicker' }, v.decisive.user ? 'The decisive point' : 'The last point'),
+  const decisive = step('decisive', 'decisive', h('span', { class: 'kicker' }, v.decisive.user ? U.decisivePoint : U.lastPoint),
     h('ol', { id: 'play-by-play', class: ctx.fastMode ? '' : 'compact' }, lines),
     h('p', { id: 'decisive-line', class: v.decisive.won ? 'you' : 'them' }, v.decisive.line));
   const count = h('strong', { 'aria-hidden': 'true' }, signed(v.delta));
-  const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, `against ${v.opponent}`));
+  const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, U.against(v.opponent)));
   const gains = step('gains', 'gains',
-    h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, `${signed(v.delta)} points`), h('span', { class: 'muted' }, 'points')),
-    h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} → #${v.rankAfter}`), h('span', { class: 'muted' }, 'ranking')),
-    h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? 'Top!' : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : `pts to #${v.rankAfter - 1}`)));
+    h('div', { class: 'gain', id: 'points-delta' }, count, h('span', { class: 'sr-only' }, U.pointsDelta(signed(v.delta))), h('span', { class: 'muted' }, U.pointsLabel)),
+    h('div', { class: 'gain', id: 'rank-change' }, h('strong', null, `#${v.rankBefore} → #${v.rankAfter}`), h('span', { class: 'muted' }, U.ranking)),
+    h('div', { class: 'gain', id: 'next-place' }, h('strong', null, v.rankAfter === 1 ? U.top : `${v.toNext}`), h('span', { class: 'muted' }, v.rankAfter === 1 ? '' : U.toPlace(v.rankAfter - 1))));
   const overtakes = v.overtakes.length
-    ? step('overtakes', 'overtakes', h('span', { class: 'kicker' }, 'Passed'), h('ul', null, v.overtakes.map((o) => h('li', { class: 'overtake' }, h('strong', null, `#${o.rank}`), ` ${o.name}`))))
+    ? step('overtakes', 'overtakes', h('span', { class: 'kicker' }, U.passed), h('ul', null, v.overtakes.map((o) => h('li', { class: 'overtake' }, h('strong', null, `#${o.rank}`), ` ${o.name}`))))
     : null;
-  const ratings = step('ratings card', 'rating-gains', h('h3', null, 'Training from this match'),
+  const ratings = step('ratings card', 'rating-gains', h('h3', null, U.training),
     v.ratings.map((r) => h('div', { class: `rating-gain${r.rose ? ' rose' : ''}` },
       h('span', { class: 'label' }, r.label),
       r.rose
         ? h('span', { class: 'value' }, h('span', { class: 'from' }, String(r.before)), ' → ', h('span', { class: 'to' }, String(r.after)), h('span', { class: 'up tick' }, ' ▲'))
         : h('span', { class: 'value' }, String(r.after)),
       h('span', { class: 'bar' }, h('span', { class: 'fill', style: `--from:${pct(r.fillBefore)};--to:${pct(r.fill)}` })))));
-  const goal = step('goal', 'next-goal', h('span', { class: 'kicker' }, 'Next goal'), h('strong', null, v.goalLine));
+  const goal = step('goal', 'next-goal', h('span', { class: 'kicker' }, U.nextGoal), h('strong', null, v.goalLine));
   const actions = h('div', { class: 'actions' },
-    h('button', { class: 'primary big', id: 'play-again', onclick: again }, 'Play again'),
-    h('button', { id: 'to-ladder', onclick: () => ctx.go('#/quick') }, 'Ladder'));
+    h('button', { class: 'primary big', id: 'play-again', onclick: again }, U.playAgain),
+    h('button', { id: 'to-ladder', onclick: () => ctx.go('#/quick') }, U.ladder));
   const element = h('section', { class: `quick-result ${v.won ? 'won' : 'lost'}`, id: 'quick-result', style: `--stagger-rise:${R.staggerSec * 1000}ms` },
     decisive, headline, gains, overtakes, ratings, goal, actions,
-    h('p', { class: 'muted skip-hint' }, 'Click, Space or Enter to skip'));
+    h('p', { class: 'muted skip-hint' }, U.skipHint));
   for (const list of [gains.querySelectorAll('.gain'), overtakes?.querySelectorAll('.overtake') ?? [], ratings.querySelectorAll('.rating-gain')]) stagger(list as Iterable<HTMLElement>);
   const rose = [...ratings.querySelectorAll<HTMLElement>('.rating-gain.rose')];
 

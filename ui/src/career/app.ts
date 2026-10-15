@@ -6,6 +6,7 @@ import { currentRoute, go } from '../lib/router.ts';
 import { IndexedDbStore } from '../storage/indexedDb.ts';
 import { landingFor, routesFor, TARGET } from '../target.ts';
 import { getPlatform } from '../platform/index.ts';
+import { LANG, U } from '../i18n/index.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
 import { homeScreen } from './screens/home.ts';
@@ -105,7 +106,7 @@ const ctx: Ctx = {
 function header(): HTMLElement {
   if (!state) {
     return h('header', { class: 'top' }, h('a', { href: '#/', class: 'brand' }, 'TennisSim'),
-      quick ? h('nav', null, h('a', { href: '#/quick', id: 'nav-quick', class: currentRoute().name === 'quick' ? 'active' : '' }, 'Quick match')) : null);
+      quick ? h('nav', null, h('a', { href: '#/quick', id: 'nav-quick', class: currentRoute().name === 'quick' ? 'active' : '' }, U.quickMatch)) : null);
   }
   const v = homeView(state);
   const link = (path: string, label: string, id: string) =>
@@ -144,6 +145,14 @@ window.addEventListener('hashchange', () => void render());
 // The game is portrait-only in Toss (ADR-022); the web platform ignores this.
 void getPlatform().then((p) => p.lockPortrait());
 document.title = 'TennisSim';
+document.documentElement.lang = LANG;
+// Korean pages need Pretendard at once (the CSS fetches it only when Hangul is laid out); the path is relative to
+// the page, like the CSS once built, so the toss bundle finds it too.
+if (LANG === 'ko') {
+  for (const w of [600, 800]) {
+    document.head.append(Object.assign(document.createElement('link'), { rel: 'preload', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous', href: `fonts/pretendard-${w}.subset.woff2` }));
+  }
+}
 void ctx.store.loadQuick().then((file) => {
   if (file) quick = fromQuickSave(file);
 }).catch(() => undefined).finally(() => void render());

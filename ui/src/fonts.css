@@ -1,5 +1,6 @@
 /* Rally Pop faces (ADR-020), self-hosted from ui/public/fonts (SIL OFL 1.1). Lilita One for display, Nunito for body,
-   Barlow Condensed for the broadcast layer only. Missing glyphs (✓ ✗ ▲, Hangul) fall back per glyph. */
+   Barlow Condensed for the broadcast layer only. Hangul comes from Pretendard (ADR-022), limited to the Korean ranges
+   so an English page never downloads it; other missing glyphs (▲ ▼) fall back per glyph. */
 @font-face { font-family: 'Lilita One'; font-style: normal; font-weight: 400; font-display: swap;
   src: url('/fonts/lilita-one-400.woff2') format('woff2'); }
 @font-face { font-family: 'Nunito'; font-style: normal; font-weight: 600; font-display: swap;
@@ -10,3 +11,10 @@
   src: url('/fonts/barlow-condensed-600.woff2') format('woff2'); }
 @font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap;
   src: url('/fonts/barlow-condensed-700.woff2') format('woff2'); }
+@font-face { font-family: 'Pretendard'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('/fonts/pretendard-600.subset.woff2') format('woff2'); unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3; }
+@font-face { font-family: 'Pretendard'; font-style: normal; font-weight: 800; font-display: swap;
+  src: url('/fonts/pretendard-800.subset.woff2') format('woff2'); unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3; }
+/* Lilita One has a single weight; its Hangul partner is the ExtraBold face at any weight. */
+@font-face { font-family: 'Pretendard Display'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('/fonts/pretendard-800.subset.woff2') format('woff2'); unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3; }

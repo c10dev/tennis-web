@@ -3,20 +3,21 @@ import { liveCardStrength, liveStatus, matchup, type Card, type PointCards, type
 import { BEATEN_BY, CARDS } from '../quick/ai.ts';
 import { userRole, type QuickMatch } from '../quick/match.ts';
 import { PLANS } from '../quick/plan.ts';
-import type { GamePlan } from '../quick/types.ts';
+import { en } from '../text/en.ts';
+import type { Messages } from '../text/types.ts';
 
 /** The decision point from the user's side (the user is player A). */
-export function decisionSituation(m: QuickMatch) {
+export function decisionSituation(m: QuickMatch, t: Messages = en) {
   const st = liveStatus(m.live);
   const role = userRole(m);
   const [a, b] = st.score.points;
-  return { role, line: `${role === 'serve' ? 'Your serve' : 'Their serve'} · ${a}-${b}`, moment: momentLabel([a, b], st.nextTags) };
+  return { role, line: t.situation(role, `${a}-${b}`), moment: momentLabel([a, b], st.nextTags, t) };
 }
 
 /** The banner over a decision point; tiebreak points, the user first. */
-export function momentLabel([a, b]: readonly [number, number], tags: readonly PointTag[]): string {
-  if (tags.includes('match_point')) return a > b ? 'MATCH POINT' : 'MATCH POINT DOWN';
-  return a === b ? `${a}-ALL` : 'BIG POINT';
+export function momentLabel([a, b]: readonly [number, number], tags: readonly PointTag[], t: Messages = en): string {
+  if (tags.includes('match_point')) return a > b ? t.moment.matchPoint : t.moment.matchPointDown;
+  return a === b ? t.moment.all(a) : t.moment.big;
 }
 
 /** The running score while points play without cards. */
@@ -25,47 +26,38 @@ export const scoreLine = (m: QuickMatch): string => {
   return `${a}-${b}`;
 };
 
-const FLAVOUR: Record<'serve' | 'return', Record<Card, string>> = {
-  serve: { attack: 'Big serve', defend: 'Safe serve', counter: 'Bait the return' },
-  return: { attack: 'Step in', defend: 'Block it deep', counter: 'Read the serve' },
-};
-export const CARD_LABEL: Record<Card, string> = { attack: 'Attack', defend: 'Defend', counter: 'Counter' };
+/** English card names (the web build's screens); other languages read `Messages.card`. */
+export const CARD_LABEL: Record<Card, string> = en.card;
 
-export function cardChoices(m: QuickMatch) {
+export function cardChoices(m: QuickMatch, t: Messages = en) {
   const role = userRole(m);
   return CARDS.map((card) => ({
-    card, label: CARD_LABEL[card], flavour: FLAVOUR[role][card], beats: BEATEN_BY[BEATEN_BY[card]], losesTo: BEATEN_BY[card],
+    card, label: t.card[card], flavour: t.flavour[role][card], beats: BEATEN_BY[BEATEN_BY[card]], losesTo: BEATEN_BY[card],
     strength: Math.round(liveCardStrength(m.live, 'A', card) * 100) / 100,
   }));
 }
 
-const HOW: Record<string, string> = { ace: 'Ace', double_fault: 'Double fault', winner: 'Winner', unforced_error: 'Unforced error', forced_error: 'Forced error' };
+const how = (p: PointEvent, t: Messages) => (p.endedBy in t.how ? t.how[p.endedBy as keyof Messages['how']] : t.how.other);
 
-export function revealView(cards: PointCards, point: PointEvent) {
+export function revealView(cards: PointCards, point: PointEvent, t: Messages = en) {
   const m = matchup(cards.A, cards.B);
   return {
     yours: cards.A, theirs: cards.B, matchup: m > 0 ? 'won' as const : m < 0 ? 'lost' as const : 'even' as const,
-    winner: point.winner === 'A' ? 'you' as const : 'them' as const, how: HOW[point.endedBy] ?? 'Error',
+    winner: point.winner === 'A' ? 'you' as const : 'them' as const, how: how(point, t),
   };
 }
 
-const PLAN_TEXT: Record<GamePlan, { label: string; line: string }> = {
-  aggressive: { label: 'Aggressive', line: 'Go for your shots: more winners, more errors' },
-  balanced: { label: 'Balanced', line: 'Play the percentages' },
-  defensive: { label: 'Defensive', line: 'Make them play one more ball' },
-};
-
 /** The game plans the user picks from before a match: how the points without cards are played. */
-export const planChoices = () => PLANS.map((plan) => ({ plan, ...PLAN_TEXT[plan], default: plan === 'balanced' }));
+export const planChoices = (t: Messages = en) => PLANS.map((plan) => ({ plan, ...t.plan[plan], default: plan === 'balanced' }));
 
 /** The running ticker after point `p` of a match (later points, if already played, are left out). */
-export function tickerView(m: QuickMatch, p: PointEvent) {
+export function tickerView(m: QuickMatch, p: PointEvent, t: Messages = en) {
   const upTo = m.live.events.filter((e): e is PointEvent => e.type === 'point' && e.index <= p.index);
   return {
     score: `${p.scoreBefore.points[0] + (p.winner === 'A' ? 1 : 0)}-${p.scoreBefore.points[1] + (p.winner === 'B' ? 1 : 0)}`,
     winner: p.winner === 'A' ? 'you' as const : 'them' as const,
-    how: HOW[p.endedBy] ?? 'Error',
-    plan: PLAN_TEXT[m.plan].label,
+    how: how(p, t),
+    plan: t.plan[m.plan].label,
     pips: upTo.map((x) => ({ winner: x.winner === 'A' ? 'you' as const : 'them' as const, decision: !!x.cards })),
   };
 }

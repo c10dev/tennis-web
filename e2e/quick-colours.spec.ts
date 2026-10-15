@@ -73,3 +73,15 @@ test('loads the self-hosted Rally Pop fonts', async ({ page }) => {
   await expect(page.locator('.title h1')).toHaveCSS('font-family', /Lilita One/);
   await expect(page.locator('body')).toHaveCSS('font-family', /Nunito/);
 });
+
+// ADR-022: an English page never downloads the Korean face (its unicode-range is Hangul only).
+test('does not fetch Pretendard on an English page', async ({ page }) => {
+  const fetched: string[] = [];
+  page.on('request', (r) => {
+    if (r.url().includes('pretendard')) fetched.push(r.url());
+  });
+  await page.goto('/#/');
+  await expect(page.locator('#quick-match')).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  expect(fetched).toEqual([]);
+});

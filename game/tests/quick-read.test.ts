@@ -85,14 +85,14 @@ describe('aiDecision and its tell', () => {
     const right = ds.filter((d) => d.tell!.card === d.card).length / ds.length;
     expect(right).toBeGreaterThan(QUICK_PERSONA.tellAccuracy - 0.03);
     expect(right).toBeLessThan(QUICK_PERSONA.tellAccuracy + 0.03);
-    for (const d of ds) expect(TELL_TEXTS[d.tell!.card]).toContain(d.tell!.text);
+    for (const d of ds) expect(TELL_TEXTS[d.tell!.card][d.tell!.index]).toBeDefined();
   });
 
   it('varies its tells: several short texts per card, all of them shown', () => {
     const ds = draw(base, 3000, 12);
     for (const card of CARDS) {
       expect(TELL_TEXTS[card].length).toBeGreaterThanOrEqual(4);
-      expect(new Set(ds.filter((d) => d.tell!.card === card).map((d) => d.tell!.text)).size).toBe(TELL_TEXTS[card].length);
+      expect(new Set(ds.filter((d) => d.tell!.card === card).map((d) => d.tell!.index)).size).toBe(TELL_TEXTS[card].length);
       for (const t of TELL_TEXTS[card]) expect(t.length).toBeLessThan(50);
     }
   });

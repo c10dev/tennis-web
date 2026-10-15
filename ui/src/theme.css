@@ -36,8 +36,8 @@
   --outline: 3px solid var(--ink);
   --lift: 0 5px 0 var(--ink);
   /* Type: display for headings and big numbers, body for everything else, TV for the broadcast layer. */
-  --font-display: 'Lilita One', 'Arial Rounded MT Bold', 'Arial Black', system-ui, sans-serif;
-  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Lilita One', 'Pretendard Display', 'Arial Rounded MT Bold', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Nunito', 'Pretendard', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-tv: 'Barlow Condensed', 'Roboto Condensed', 'Arial Narrow', sans-serif;
   color-scheme: light;
 }
