@@ -758,5 +758,16 @@ Format: one entry per decision, newest at the bottom.
     refused storage as empty, has no user key, haptics or back button, and closes to the title.
   - **Tests.** A `toss` Playwright project runs `e2e/toss.spec.ts` against a second Vite server in the toss mode on
     `E2E_PORT + 1`.
-- **Consequences:** Engine and game are untouched by the targets. Until the SDK step the toss platform is the web
-  one under another name.
+  - **SDK (step 2).** `@apps-in-toss/web-framework` 3.7.0 (ui, exact) and `@apps-in-toss/devtools` 3.7.0 (root dev).
+    `apps-in-toss.config.ts` names the app `rally-tennis` (must match the console), brand colour `--court`, a
+    transparent navigation bar, and no bounce, overscroll, pull-to-refresh or swipe-back. `npm run build:toss` is
+    `vite build --mode toss && ait build` and writes `rally-tennis.ait` at the root (git-ignored); `npx ait deploy`
+    uploads it for the QR test (the 3.x SDK has no sandbox app). `toss.ts` maps `User.getAnonymousKey`, `Storage`,
+    `Device.triggerHaptic`, `graniteEvent` `backEvent`, `Screen.close`, `SafeArea` and `Screen.setOrientation` onto
+    `toss-core.ts`, which guards every call: unsupported on this Toss app, a throw, a rejection or no answer within
+    `SDK_TIMEOUT_MS` (3 s) falls back to the web behaviour, and the user key is asked for once. The app locks
+    portrait at boot. In `vite --mode toss` dev the devtools plugin swaps in its mock SDK (production builds switch
+    it off); `AIT_PANEL=0` hides its panel for e2e. The platform module compares the mode inline, so the web build
+    has no SDK code (checked by searching `dist/`).
+- **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
+  gzip) for the SDK chunk; the `.ait` is 0.33 MB. Untested on a device until the console registration (TD-049).

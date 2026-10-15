@@ -5,6 +5,7 @@ import { h } from '../lib/h.ts';
 import { currentRoute, go } from '../lib/router.ts';
 import { IndexedDbStore } from '../storage/indexedDb.ts';
 import { landingFor, routesFor, TARGET } from '../target.ts';
+import { getPlatform } from '../platform/index.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
 import { homeScreen } from './screens/home.ts';
@@ -140,6 +141,8 @@ async function render(): Promise<void> {
 }
 
 window.addEventListener('hashchange', () => void render());
+// The game is portrait-only in Toss (ADR-022); the web platform ignores this.
+void getPlatform().then((p) => p.lockPortrait());
 document.title = 'TennisSim';
 void ctx.store.loadQuick().then((file) => {
   if (file) quick = fromQuickSave(file);

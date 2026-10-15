@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@apps-in-toss/web-framework": "3.7.0",
     "@tennis/engine": "0.1.0",
     "@tennis/game": "0.1.0",
     "@tennis/renderer": "0.1.0"

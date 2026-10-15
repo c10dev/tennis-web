@@ -19,6 +19,6 @@ export default defineConfig({
   ],
   webServer: [
     { command: `npx vite --port ${PORT} --strictPort`, url: `http://localhost:${PORT}`, reuseExistingServer: false },
-    { command: `npx vite --mode toss --port ${TOSS_PORT} --strictPort`, url: `http://localhost:${TOSS_PORT}`, reuseExistingServer: false },
+    { command: `AIT_PANEL=0 npx vite --mode toss --port ${TOSS_PORT} --strictPort`, url: `http://localhost:${TOSS_PORT}`, reuseExistingServer: false },
   ],
 });
