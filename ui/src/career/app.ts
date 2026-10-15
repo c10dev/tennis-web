@@ -4,6 +4,7 @@ import { closeWeek, fromQuickSave, fromSave, homeView, playerById, playOut, toQu
 import { h } from '../lib/h.ts';
 import { currentRoute, go } from '../lib/router.ts';
 import { IndexedDbStore } from '../storage/indexedDb.ts';
+import { landingFor, routesFor, TARGET } from '../target.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
 import { homeScreen } from './screens/home.ts';
@@ -23,6 +24,8 @@ const SCREENS: Record<string, ScreenFn> = {
   home: homeScreen, tournament: tournamentScreen, history: historyScreen, rankings: rankingsScreen, player: playerScreen, match: matchScreen,
 };
 const NEEDS_STATE = new Set(['home', 'tournament', 'history', 'rankings', 'player', 'match']);
+/** Routes this build offers (ADR-022): the toss build has the quick match only. */
+const OFFERED = new Set(routesFor(TARGET));
 
 const app = document.getElementById('app')!;
 const stamp = () => new Date().toISOString().slice(0, 16).replace('T', ' ');
@@ -115,6 +118,10 @@ function header(): HTMLElement {
 
 async function render(): Promise<void> {
   const route = currentRoute();
+  if (!OFFERED.has(route.name)) {
+    go(landingFor(TARGET));
+    return;
+  }
   if (!state && NEEDS_STATE.has(route.name)) {
     go('#/');
     return;

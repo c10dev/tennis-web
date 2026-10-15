@@ -736,3 +736,27 @@ Format: one entry per decision, newest at the bottom.
   decision; the skippable result reveal 3.9–4.6 s → 5.4–6.7 s. Structural DOM: the reveal chips sit in `.flip` wrappers with a
   plain `.face.back` and the chip as `.face.front`; a rating that rose writes its numbers as `.from`, `.to` and a
   `.tick`. A `ui` Vitest project tests the pure helpers. Dead theme rules, the missing sound layer and timing-sensitive e2e bounds are TD-046–TD-048.
+
+## ADR-022: M7 Apps in Toss release
+- **Date:** 2026-10-15
+- **Status:** Accepted (grows with each M7 step)
+- **Context:** M7 ships the quick match as a game mini app in Apps in Toss (토스 앱인토스): a WebView with the
+  `@apps-in-toss/web-framework` 3.x SDK, judged against the game launch checklist (developers-apps-in-toss.toss.im
+  `checklist/app-game`). The game was built for a desktop browser (1280×720, English, keyboard, IndexedDB). The
+  user took every default of the M7 questions: quick match only, portrait, Korean with Pretendard, a platform
+  adapter, saves per user key in the SDK storage, no ads or purchases, a sound toggle with background pause and
+  haptics, back and concede behind a confirm, a DPR cap with automatic quality steps, SDK 3.x.
+- **Decision:**
+  - **Two build targets.** `vite --mode toss` (`npm run dev:toss`, `npm run build:toss`) is the Toss build;
+    everything else is the web build (dev page, e2e, desktop). `ui/src/target.ts` maps the mode to a target and
+    decides per target: the dev replay page (`?seed=`) loads on the web only, the toss build offers the `quick`
+    routes only and sends every other route (title, season mode, unknown) to `#/quick`, the web build sends unknown
+    routes to the title. The toss build uses relative asset paths (`base: './'`).
+  - **Platform adapter.** Screens reach the host through `ui/src/platform` (`Platform`: user key, small key-value
+    settings, haptics, back button, close, safe-area insets, portrait lock). `getPlatform()` loads `toss.ts` only in
+    the toss build, so the web bundle never contains the SDK; `web.ts` keeps settings in localStorage and treats
+    refused storage as empty, has no user key, haptics or back button, and closes to the title.
+  - **Tests.** A `toss` Playwright project runs `e2e/toss.spec.ts` against a second Vite server in the toss mode on
+    `E2E_PORT + 1`.
+- **Consequences:** Engine and game are untouched by the targets. Until the SDK step the toss platform is the web
+  one under another name.

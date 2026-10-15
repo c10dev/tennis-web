@@ -13,7 +13,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:toss": "vite --mode toss",
     "build": "vite build",
+    "build:toss": "vite build --mode toss",
     "preview": "vite preview",
     "test": "vitest run --project engine --project game --project renderer --project ui",
     "test:engine": "vitest run --project engine",

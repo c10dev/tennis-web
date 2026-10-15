@@ -6,7 +6,7 @@ Tennis management sim (Football Manager-style) with TV-broadcast-style 3D match 
 - `renderer/` — Three.js replay of events (broadcast cams, replays, score bug, audio)
 - `game/` — headless, deterministic career layer (world, calendar, training, season, saves) on the engine
 - `ui/` — menus, management screens, DOM overlays
-- Full design: `GDD.md` (Korean). Current milestone: **M6** (playtest redesign, ADR-017, GDD §14); M1–M5 are done (M5: casual quick match, see `docs/casual-design.md` and GDD §13).
+- Full design: `GDD.md` (Korean). Current milestone: **M7** (Apps in Toss release, ADR-022); M1–M6 are done (M5: casual quick match, see `docs/casual-design.md` and GDD §13; M6: playtest redesign, ADR-017, GDD §14).
 
 ## Stack
 Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
@@ -16,6 +16,7 @@ Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
 npm install
 npm run dev          # Vite dev server: career game at /, replay page at /?seed=42&surface=clay&mode=full|key|highlights|result
 npm run build        # production build to dist/
+npm run dev:toss     # the Apps in Toss build (quick match only, ADR-022); build:toss for dist/
 npm test             # Vitest: engine + game + renderer (test:stats and test:season for the slow balance checks)
 npm run test:engine  # engine tests only
 npm run test:renderer
@@ -35,7 +36,7 @@ npm run typecheck && npm run lint
 engine/    src/{rng,scoring,point,match,tuning.ts,types.ts} tests/
 game/      src/{world,player,calendar,tournament,season,save,quick,views,tuning.ts} cli/ tests/
 renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts} tests/
-ui/        index.html src/{career,quick,replay,lib,storage}   (Vite root)
+ui/        index.html src/{career,quick,replay,lib,storage,platform}   (Vite root)
 e2e/       Playwright specs (playwright.config.ts at the root)
 docs/      decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), m6-workstreams.md
 GDD.md     game design doc
