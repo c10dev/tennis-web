@@ -848,3 +848,55 @@ Format: one entry per decision, newest at the bottom.
   gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. The first chunk carries the mixer (22 KB,
   9 KB gzip). Untested on a device until the console
   registration (TD-049).
+
+## ADR-023: Player motion track A, step A1: the racket meets the ball
+- **Date:** 2026-10-15
+- **Status:** Accepted
+- **Context:** The M3 mannequin swung a rigid one-piece arm on fixed angles and faced the ball at all times. Measured
+  over seeds 1–4 on all surfaces, the racket-head centre missed the engine's contact point (`shot.from`) by a median
+  1.21 m on forehands, 0.46 m on backhands and 0.51 m on serves: at contact the ball sits 0.5–1.0 m beside the
+  hitter, so facing it turned the body side-on to the sideline with the ball dead ahead; the racket reached a fixed
+  1.08 m from the shoulder at a fixed 1.04 m height against balls 0.64–1.36 m high; and serves struck at 2.62–2.94 m
+  were out of reach. The user chose track A (procedural upgrades on the current rig, no new assets or dependencies)
+  over a skinned CC0 body (B) or authored clips (C); no CC0 pack has tennis strokes (docs/m3-assets-and-references.md),
+  so the procedural stroke layer is needed whichever body comes later. A1 is its first step.
+- **Decision:**
+  - **Renderer only.** The engine already records where every ball was struck, so nothing in the engine, the event
+    schema or the game layer changes. Every addition is a closed-form function of replay time (ADR-007): no
+    per-frame state, no simulated springs, so seek, replays and speeds stay exact.
+  - **Facing at contact.** Within `RIG_MOTION.contactTurnSec` (0.25 s) of their own contact a player turns from the
+    ball towards where the shot goes (`from → bounce`, or the far end for a net ball), smoothstep-weighted. The ball
+    then sits on the forehand or backhand side.
+  - **Elbow and IK.** The racket arm is an upper arm (0.28 m) and a forearm (0.28 m) carrying the racket in line;
+    `scene/ik.ts` solves the two bones with the law of cosines, the elbow bending towards `RIG.elbowPole` (down, out,
+    back). `scene/arm.ts` holds the arm meshes and the swing maths; the old swing angles survive as a path of
+    full-reach targets for the racket-head centre, eased out of and back into the rest position over
+    `RIG.swingEase` (15 %) of the swing, which also removed a 1.8 m racket jump at the start and end of every swing.
+    Reactions ease in and out over `RIG_MOTION.reactionRampSec` (`PlayerPose.reactionWeight`).
+  - **Contact targeting.** `PlayerPose.swing.contact` carries the shot's `from`. The swing path is moved, weighted by
+    a smoothstep over `RIG.contactBlend` (35 % of the swing) either side of contact, so it passes through the contact
+    point at phase 0.5. For groundstrokes the torso leans sideways (up to `RIG.contactLeanMax`, 0.6 rad) and then the
+    hips lunge sideways (up to `RIG.lungeMax`, 0.9 m) to keep the shoulder `RIG.contactReach` (0.85 m) from the ball,
+    so the elbow stays bent (about 80–97° at contact) instead of folding flat or locking. Serves jump
+    (`RIG.serveJump`, 0.4 m at contact).
+  - **Tests.** `renderer/tests/contact.test.ts`: per stroke, the racket-head centre is within 0.15 m of the ball at
+    p95 and 0.3 m at worst over the six sample matches; the racket never moves more than 0.7 m on the body between
+    60 fps frames. `ik.test.ts` covers the solver.
+- **Roadmap (each step approved separately):**
+  - **A2 body and stroke shape:** pelvis and chest split (unit turn, hip–shoulder separation), wrist and racket face,
+    head tracking the ball, key poses per stroke (ready, unit turn, backswing, contact, finish), swing start timed
+    from the incoming ball's flight instead of a fixed 0.3 s, two-handed backhand.
+  - **A3 movement:** stride phase from distance travelled (closed form over the trapezoid easing) to stop foot slide;
+    shuffle, crossover or sprint chosen from movement against facing; split-step landing timed to the opponent's
+    contact; recovery steps; a blended facing when the ball goes dead (TD-057).
+  - **A4 shots from the data we have:** contact height (deep crouch for low balls), `spinRpm` (low-to-high finish),
+    `speedKmh` (swing size), the run into the ball (defensive shots). Slices, volleys and the rest need the engine
+    first (TD-001).
+  - **A5 reactions and character:** reactions by outcome and point tag (fist pump on a winner, racket drop on an
+    unforced error, bigger celebrations on break, set and match points), between-point business (bouncing the ball
+    before a serve), per-player appearance.
+  - Then phase 3's body decision (TD-012, TD-039): the capsule rig or a CC0 chunky body; the A layers carry over.
+- **Consequences:** Measured on 12 further matches, groundstrokes now meet the ball exactly and serves within 0.094 m
+  at p95 (0.132 m at worst). Each player draws three more meshes (forearm, elbow joint, the forearm's outline): the
+  outline budget is now full at 24 (TD-038). The lunge slides both feet and the racket face is uncontrolled (TD-058);
+  the body still snaps round when the ball goes dead (TD-057).
