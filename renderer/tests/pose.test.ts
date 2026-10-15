@@ -137,6 +137,7 @@ describe('playerPose', () => {
         const kind = s.shot === 'serve' ? 'serve' : s.wing;
         expect(at(0)!.kind).toBe(kind);
         expect(at(0)!.phase).toBeCloseTo(0.5, 9);
+        expect(at(-0.1)!.contact).toEqual(s.from);
         expect(at(-0.1)!.phase).toBeLessThan(0.5);
         expect(at(0.1)!.phase).toBeGreaterThan(0.5);
         expect(at(0.5)).toBeNull();

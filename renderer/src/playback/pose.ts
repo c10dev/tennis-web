@@ -14,8 +14,8 @@ export interface PlayerPose {
   facing: Vec2;
   /** Running speed in m/s. */
   speed: number;
-  /** Swing in progress: phase 0 → 1, contact at 0.5. */
-  swing: { kind: SwingKind; phase: number } | null;
+  /** Swing in progress: phase 0 → 1, contact at 0.5, where the engine says the ball was struck (court coordinates). */
+  swing: { kind: SwingKind; phase: number; contact?: Vec3 } | null;
   reaction: Reaction;
   /** How far into the reaction the body is, 0–1: it eases in after the ball lands and out before it ends. */
   reactionWeight: number;
@@ -92,7 +92,7 @@ function swing(timeline: Timeline, id: PlayerId, t: number): PlayerPose['swing']
     const { pre, post } = s.shot === 'serve' ? RIG_MOTION.swing.serve : RIG_MOTION.swing.stroke;
     if (tau < s.t - pre || tau > s.t + post) continue;
     const phase = tau < s.t ? 0.5 * (tau - (s.t - pre)) / pre : 0.5 + 0.5 * (tau - s.t) / post;
-    return { kind, phase };
+    return { kind, phase, contact: s.from };
   }
   return null;
 }

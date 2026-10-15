@@ -1,14 +1,14 @@
 // Player rigs: anything that can draw a PlayerPose. MannequinRig is M3's low-poly figure built from primitives;
 // a skinned GLTF rig can replace it behind the same interface without touching playback (ADR-007, ADR-009).
 import {
-  BoxGeometry, CapsuleGeometry, CircleGeometry, CylinderGeometry, Group, Mesh, MeshBasicMaterial, SphereGeometry,
-  type Object3D,
+  BoxGeometry, CapsuleGeometry, CircleGeometry, CylinderGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, SphereGeometry,
+  type Object3D, type Vector3,
 } from 'three';
 import { lerp } from '../math.ts';
 import type { PlayerPose } from '../playback/pose.ts';
 import { COLOURS, LOOK, RIG } from '../tuning/index.ts';
-import { atReach, leftArmParts, RacketArm, swingTarget } from './arm.ts';
-import { groundToThree, yawFor } from './coords.ts';
+import { aimedTarget, atReach, contactWeight, leftArmParts, RacketArm, contactShift, swingTarget } from './arm.ts';
+import { groundToThree, toThree, yawFor } from './coords.ts';
 import { lit } from './materials.ts';
 import { addOutline } from './outline.ts';
 
@@ -68,6 +68,16 @@ export class MannequinRig implements PlayerRig {
     outlined.forEach(addOutline);
   }
 
+  /** A world point in the frame at the end of `chain` (from the rig root down), whatever the rig's parent is. */
+  private inFrame(point: Vector3, chain: Object3D[]): Vector3 {
+    const m = new Matrix4();
+    for (const o of chain) {
+      o.updateMatrix();
+      m.multiply(o.matrix);
+    }
+    return point.applyMatrix4(m.invert());
+  }
+
   private leg(side: 'left' | 'right'): Group {
     const thigh = new Group();
     thigh.name = `leg-${side}`;
@@ -91,7 +101,8 @@ export class MannequinRig implements PlayerRig {
     // Crouch: knees forward by α and shins back by 2α keep the feet on the ground as the hips drop.
     const legLength = 2 * RIG.legSegment;
     const alpha = Math.acos((legLength - RIG.crouchDrop * pose.crouch) / legLength);
-    this.hips.position.y = legLength * Math.cos(alpha) + RIG.splitStepHop * pose.splitStep;
+    const serveJump = pose.swing?.kind === 'serve' && pose.swing.contact ? RIG.serveJump * contactWeight(pose.swing.phase) : 0;
+    this.hips.position.y = legLength * Math.cos(alpha) + RIG.splitStepHop * pose.splitStep + serveJump;
     const stride = RIG.gaitSwing * pose.gait.amount * Math.sin(pose.gait.phase);
     const knee = RIG.gaitKnee * pose.gait.amount;
     this.legs.forEach(({ thigh, shin }, i) => {
@@ -104,8 +115,22 @@ export class MannequinRig implements PlayerRig {
     let rest = atReach(RIG.idle);
     if (pose.reaction === 'celebrate') rest = rest.lerp(atReach(RIG.celebrate), pose.reactionWeight);
     else if (pose.reaction === 'dejected') lean = lerp(lean, RIG.dejectedLean, pose.reactionWeight);
-    this.torso.rotation.x = lean;
-    this.arm.reach(pose.swing ? swingTarget(pose.swing.kind, pose.swing.phase, rest) : rest);
+    const swing = pose.swing;
+    this.hips.position.x = 0;
+    let side = 0;
+    if (swing?.contact && swing.kind !== 'serve') {
+      const w = contactWeight(swing.phase);
+      const shift = contactShift(this.inFrame(toThree(swing.contact), [this.object3d, this.hips]));
+      side = w * shift.lean;
+      this.hips.position.x = w * shift.lunge;
+    }
+    this.torso.rotation.set(lean, 0, side);
+    if (!swing) this.arm.reach(rest);
+    else if (!swing.contact) this.arm.reach(swingTarget(swing.kind, swing.phase, rest));
+    else {
+      const contact = this.inFrame(toThree(swing.contact), [this.object3d, this.hips, this.torso]).sub(this.arm.shoulder.position);
+      this.arm.reach(aimedTarget(swing.kind, swing.phase, rest, contact));
+    }
     this.leftArm.rotation.set(0, RIG.leftArm.forward, lerp(RIG.leftArm.down, RIG.leftArm.up, pose.toss));
   }
 }

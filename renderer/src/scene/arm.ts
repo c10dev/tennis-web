@@ -45,6 +45,32 @@ export function swingTarget(kind: SwingKind, phase: number, rest: Vector3): Vect
   return rest.clone().lerp(atReach(swingAngles(kind, phase)), k);
 }
 
+/** How strongly a swing at `phase` is pulled onto its contact point: 1 at contact, 0 outside `RIG.contactBlend`. */
+export const contactWeight = (phase: number): number => smoothstep(1 - Math.abs(phase - 0.5) / RIG.contactBlend);
+
+/** The swing's path moved so it passes through `contact` (from the shoulder, torso axes) at phase 0.5 (ADR-023). */
+export function aimedTarget(kind: SwingKind, phase: number, rest: Vector3, contact: Vector3): Vector3 {
+  const target = swingTarget(kind, phase, rest);
+  const w = contactWeight(phase);
+  return w > 0 ? target.addScaledVector(contact.clone().sub(atReach(swingAngles(kind, 0.5))), w) : target;
+}
+
+/**
+ * How a groundstroke meets a contact point given in the rig's frame: a sideways torso lean (radians about the hips,
+ * + tips the shoulders to the left) within `RIG.contactLeanMax`, then a sideways lunge of the hips (metres, + to the
+ * left) within `RIG.lungeMax`, so the racket shoulder ends up `RIG.contactReach` from the ball.
+ */
+export function contactShift(contact: Vector3): { lean: number; lunge: number } {
+  const sx = -RIG.shoulderOffset;
+  const sy = RIG.shoulderHeight;
+  const root = Math.sqrt(Math.max(0, RIG.contactReach ** 2 - (contact.y - sy) ** 2 - contact.z ** 2));
+  // Of the two shoulder spots at that reach, the one nearer where the shoulder already is.
+  const x = Math.abs(contact.x - root - sx) < Math.abs(contact.x + root - sx) ? contact.x - root : contact.x + root;
+  const most = sy * Math.sin(RIG.contactLeanMax);
+  const leanX = clamp(x - sx, -most, most);
+  return { lean: Math.asin(-leanX / sy), lunge: clamp(x - sx - leanX, -RIG.lungeMax, RIG.lungeMax) };
+}
+
 /** A mesh laid along −x (out to the right of its pivot) from `start` for `length`; +x with `sign` 1. */
 function along(mesh: Mesh, start: number, length: number, sign = -1): Mesh {
   mesh.rotation.z = Math.PI / 2;

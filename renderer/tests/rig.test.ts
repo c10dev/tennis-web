@@ -13,6 +13,7 @@ const world = (o: Object3D) => {
   return new Vector3().setFromMatrixPosition(o.matrixWorld);
 };
 const head = (rig: MannequinRig) => world(rig.object3d.getObjectByName('racket-head')!);
+const y = (rig: MannequinRig, name: string) => world(rig.object3d.getObjectByName(name)!).y;
 
 describe('MannequinRig', () => {
   it('stands on the ground at the pose position, about 1.85 m tall', () => {
@@ -55,6 +56,24 @@ describe('MannequinRig', () => {
     expect(at('backhand', 0.5).z).toBeLessThan(11);
   });
 
+  it('aims the racket head at the contact point through the middle of a swing (ADR-023)', () => {
+    const rig = new MannequinRig(0xff0000);
+    // Player at (1, −11) facing the far end: the ball 0.7 m to their right, 0.25 m in front, knee high.
+    const contact = { x: 1.7, y: -10.75, z: 0.55 };
+    rig.apply(pose({ swing: { kind: 'forehand', phase: 0.5, contact } }));
+    expect(head(rig).distanceTo(new Vector3(1.7, 0.55, 10.75))).toBeLessThan(0.02);
+    rig.apply(pose({ swing: { kind: 'forehand', phase: RIG.swingEase, contact } }));
+    expect(head(rig).z).toBeGreaterThan(11);
+  });
+
+  it('jumps into the serve so the racket reaches a toss struck at 2.9 m', () => {
+    const rig = new MannequinRig(0xff0000);
+    const contact = { x: 1, y: -10.7, z: 2.9 };
+    rig.apply(pose({ swing: { kind: 'serve', phase: 0.5, contact } }));
+    expect(head(rig).distanceTo(new Vector3(1, 2.9, 10.7))).toBeLessThan(0.15);
+    expect(y(rig, 'foot-left')).toBeGreaterThan(0.2);
+  });
+
   it('reaches up above the head at serve contact', () => {
     const rig = new MannequinRig(0xff0000);
     rig.apply(pose({ swing: { kind: 'serve', phase: 0.5 } }));
@@ -77,8 +96,6 @@ describe('MannequinRig', () => {
     expect(slump).toBeGreaterThan(0.1);
     expect(run).toBeGreaterThan(0.1);
   });
-
-  const y = (rig: MannequinRig, name: string) => world(rig.object3d.getObjectByName(name)!).y;
 
   it('swings its legs in opposition while running, and stands straight when still', () => {
     const rig = new MannequinRig(0xff0000);

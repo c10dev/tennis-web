@@ -76,6 +76,16 @@ export const RIG = {
   celebrate: { yaw: 0.2, roll: -1.3 },
   /** Share of a swing at each end spent easing from and back to the racket's rest position. */
   swingEase: 0.15,
+  /** Share of a swing either side of contact over which its path bends onto the contact point. */
+  contactBlend: 0.35,
+  /** How high the hips rise at serve contact, so the racket reaches a toss struck at 2.6–2.9 m. */
+  serveJump: 0.4,
+  /** At a groundstroke's contact the torso leans sideways (up to `contactLeanMax` rad) to keep the racket shoulder
+   * about `contactReach` from the ball: elbow bent, neither folded flat nor locked straight. */
+  contactReach: 0.85,
+  contactLeanMax: 0.6,
+  /** When leaning is not enough (a stretched ball), the player lunges sideways by up to this much at contact. */
+  lungeMax: 0.9,
   dejectedLean: 0.3,
   /** How far the hips drop at full crouch, the split-step hop, and the leg swing of a full stride. */
   crouchDrop: 0.22,
