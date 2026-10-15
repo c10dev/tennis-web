@@ -66,6 +66,18 @@ describe('MannequinRig', () => {
     expect(head(rig).z).toBeGreaterThan(11);
   });
 
+  it('lunges sideways for a stretched ball, its shadow going with it', () => {
+    const rig = new MannequinRig(0xff0000);
+    const contact = { x: 2.9, y: -10.9, z: 0.8 };
+    rig.apply(pose({ swing: { kind: 'forehand', phase: 0.5, contact } }));
+    expect(head(rig).distanceTo(new Vector3(2.9, 0.8, 10.9))).toBeLessThan(0.05);
+    const hips = world(rig.object3d.getObjectByName('hips')!);
+    expect(hips.x).toBeGreaterThan(1.3);
+    expect(world(rig.object3d.getObjectByName('shadow')!).x).toBeCloseTo(hips.x, 9);
+    rig.apply(pose());
+    expect(world(rig.object3d.getObjectByName('shadow')!).x).toBeCloseTo(1, 9);
+  });
+
   it('jumps into the serve so the racket reaches a toss struck at 2.9 m', () => {
     const rig = new MannequinRig(0xff0000);
     const contact = { x: 1, y: -10.7, z: 2.9 };

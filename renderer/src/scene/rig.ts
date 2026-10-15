@@ -36,6 +36,7 @@ export class MannequinRig implements PlayerRig {
   private readonly arm = new RacketArm();
   private readonly leftArm = new Group();
   private readonly legs: { thigh: Group; shin: Group }[] = [];
+  private readonly shadow = new Mesh(new CircleGeometry(RIG.shadowRadius, 16), new MeshBasicMaterial({ color: COLOURS.shadow, transparent: true, opacity: 0.28 }));
 
   constructor(shirt: number) {
     this.hips.name = 'hips';
@@ -57,7 +58,7 @@ export class MannequinRig implements PlayerRig {
     this.torso.add(body, head, visor, this.arm.shoulder, this.leftArm);
     for (const side of ['left', 'right'] as const) this.hips.add(this.leg(side));
     this.hips.add(this.torso);
-    const shadow = new Mesh(new CircleGeometry(RIG.shadowRadius, 16), new MeshBasicMaterial({ color: COLOURS.shadow, transparent: true, opacity: 0.28 }));
+    const shadow = this.shadow;
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.004;
     shadow.name = 'shadow';
@@ -124,6 +125,7 @@ export class MannequinRig implements PlayerRig {
       side = w * shift.lean;
       this.hips.position.x = w * shift.lunge;
     }
+    this.shadow.position.x = this.hips.position.x;
     this.torso.rotation.set(lean, 0, side);
     if (!swing) this.arm.reach(rest);
     else if (!swing.contact) this.arm.reach(swingTarget(swing.kind, swing.phase, rest));

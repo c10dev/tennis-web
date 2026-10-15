@@ -41,7 +41,7 @@ describe('racket at contact', () => {
 
 describe('racket motion', () => {
   // Measured on the body, so this guards the arm alone; the whole body still turns in one frame when the ball goes
-  // dead (facing snaps from the ball to the net), tracked in tech-debt.md (A1 facing snap).
+  // dead (facing snaps from the ball to the net), which is TD-057.
   it('never jumps more than 0.7 m on the body between 60 fps frames, entering and leaving swings included', () => {
     const tl = buildTimeline(match(2, 'clay'));
     for (const id of ['A', 'B'] as const) {
