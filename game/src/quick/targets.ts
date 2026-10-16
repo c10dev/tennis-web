@@ -31,6 +31,15 @@ export const QUICK_TARGETS = {
     /** How often an opponent plays its habit card when its habit applies. */
     habitShare: { min: 0.6, max: 0.75 },
   },
+  /** Game plans (ADR-025, TD-031): random cards against style-shaped opponents. */
+  plan: {
+    /** Each plan's win share averaged over the four styles. */
+    mean: { min: 0.47, max: 0.53 },
+    /** The best plan's average minus the worst's: no dominant plan. */
+    spread: { min: 0, max: 0.02 },
+    /** Against a specialist, the plan its tip names beats each other plan by at least this much. */
+    tipEdge: { min: 0.02, max: 1 },
+  },
   result: {
     /** Won matches where a rating shown on the 0–100 scale goes up. */
     visibleGainOnWin: { min: 0.8, max: 1 },

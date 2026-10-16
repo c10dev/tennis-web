@@ -13,14 +13,14 @@ import { finishQuick, newLadder, rankOf } from './ladder.ts';
 import { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, type QuickMatch } from './match.ts';
 import { broadcastSeconds } from './pace.ts';
 import { personaOf } from './persona.ts';
-import { planTactic } from './plan.ts';
+import { opponentTactic, planTactic } from './plan.ts';
 import type { DecisionRecord, GamePlan, Persona } from './types.ts';
 
 export const STYLES: PlayStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
 const SURFACES: Surface[] = ['hard', 'clay', 'grass'];
 
 export const tiebreakConfig = (a: PlayerProfile, b: PlayerProfile, i: number, plan: GamePlan = 'balanced'): MatchConfig =>
-  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...TIEBREAK_RULES }, tactics: [planTactic(plan), planTactic('balanced')], firstServer: i % 2 ? 'B' : 'A' });
+  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...TIEBREAK_RULES }, tactics: [planTactic(plan), opponentTactic(b.style, plan)], firstServer: i % 2 ? 'B' : 'A' });
 
 /** What `bot` sees at the pending decision of `m`. */
 export function botView(m: QuickMatch, rngSeed: number): BotView {

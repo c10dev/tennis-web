@@ -3,6 +3,7 @@
 import type { QuickState } from '../quick/ladder.ts';
 import type { QuickMatch } from '../quick/match.ts';
 import { personaOf } from '../quick/persona.ts';
+import { planTip } from '../quick/plan.ts';
 import type { Habit, OpponentRead, RivalRecord } from '../quick/types.ts';
 import { en } from '../text/en.ts';
 import type { Messages } from '../text/types.ts';
@@ -29,9 +30,10 @@ export function opponentRead(m: QuickMatch, t: Messages = en): OpponentRead {
   };
 }
 
-/** The habit and rival lines for an opponent on the ladder home, before the match. */
-export function opponentScouting(s: QuickState, id: string, t: Messages = en): { habit: string; rival: string | null } {
+/** The habit, rival and plan-tip lines for an opponent on the ladder home, before the match. */
+export function opponentScouting(s: QuickState, id: string, t: Messages = en): { habit: string; rival: string | null; plan: string | null } {
   const p = s.world.players.find((x) => x.id === id)!;
   const rival = s.rivals[id];
-  return { habit: habitLine(p.name, personaOf(s.seed, id).habit, t), rival: rival ? rivalLine(rival, t) : null };
+  const tip = planTip(p.style);
+  return { habit: habitLine(p.name, personaOf(s.seed, id).habit, t), rival: rival ? rivalLine(rival, t) : null, plan: tip ? t.planTip(tip, p.style) : null };
 }

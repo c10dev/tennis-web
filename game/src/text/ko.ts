@@ -1,6 +1,6 @@
 // Korean (ADR-022), for the Apps in Toss build. Particles follow the card names (공격이, 수비가); after a player's
 // (Latin) name the lines use a dash instead, so no particle has to be guessed.
-import type { Card, ShotType } from '@tennis/engine';
+import type { Card, PlayStyle, ShotType } from '@tennis/engine';
 import type { Habit } from '../quick/types.ts';
 import { surname, type Messages } from './types.ts';
 
@@ -18,6 +18,12 @@ const HABIT: Record<Habit, string> = {
   defend_unless_behind: '뒤지지 않으면 안전하게 수비해요',
   copy_user: '지난 승부처의 내 카드를 따라 해요',
   beat_user_last: '지난 승부처의 내 카드를 이기는 카드를 내요',
+};
+
+const WHY: Partial<Record<PlayStyle, string>> = {
+  big_server: '빅 서버는 긴 랠리에서 리듬을 잃어요',
+  baseliner: '베이스라이너의 시간을 빼앗으세요',
+  counter_puncher: '카운터펀처에게 속도를 주지 말되, 물러서지도 마세요',
 };
 
 const CARD: Record<Card, string> = { attack: '공격', defend: '수비', counter: '카운터' };
@@ -51,6 +57,7 @@ export const ko: Messages = {
   habit: (name, h) => `${surname(name)} — ${HABIT[h]}`,
   scouting: (name, style, h) => `${name} · ${style} — ${HABIT[h]}`,
   rival: ({ wins, losses }, most) => `상대 전적 ${wins}승 ${losses}패${most ? ` · 승부처 ${most.of}번 중 ${most.n}번 ${CARD[most.card]}` : ''}`,
+  planTip: (plan, style) => `작전 팁: ${ko.plan[plan].label}${WHY[style] ? ` — ${WHY[style]}` : ''}`,
   tells: {
     attack: ['발끝으로 통통 뛰며 들어올 기세예요', '베이스라인 안쪽으로 슬금슬금 들어와요', '라켓을 꽉 쥐고 라인을 노려봐요', '공을 빠르게 튀기며 조급해 보여요'],
     defend: ['베이스라인 뒤로 물러나요', '무릎을 굽히고 깊숙이 자리 잡아요', '숨을 길게 고르며 템포를 늦춰요', '수건으로 땀을 닦으며 여유를 부려요'],

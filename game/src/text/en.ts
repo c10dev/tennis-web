@@ -1,5 +1,5 @@
 // English (ADR-022): the words the quick match was written in.
-import type { Card } from '@tennis/engine';
+import type { Card, PlayStyle } from '@tennis/engine';
 import type { Habit } from '../quick/types.ts';
 import { surname, type Messages } from './types.ts';
 
@@ -10,6 +10,12 @@ const HABIT: Record<Habit, string> = {
   defend_unless_behind: 'plays safe unless behind',
   copy_user: 'copies your card from the last big point',
   beat_user_last: 'plays what beats your last big-point card',
+};
+
+const WHY: Partial<Record<PlayStyle, string>> = {
+  big_server: 'big servers lose their rhythm in long rallies',
+  baseliner: 'take time away from a baseliner',
+  counter_puncher: 'give a counter-puncher no pace, but don\'t sit back',
 };
 
 const PLAYED: Record<Card, string> = { attack: 'attacked', defend: 'defended', counter: 'countered' };
@@ -44,6 +50,7 @@ export const en: Messages = {
     const h2h = `Head to head ${wins}-${losses}${wins === losses ? '' : wins > losses ? ' to you' : ' to them'}`;
     return most ? `${h2h}; they ${PLAYED[most.card]} ${most.n} of ${most.of} big point${most.of === 1 ? '' : 's'}` : h2h;
   },
+  planTip: (plan, style) => `Plan tip: ${en.plan[plan].label}${WHY[style] ? ` — ${WHY[style]}` : ''}`,
   tells: {
     attack: ['bounces on the toes, looking to step in', 'creeps up inside the baseline', 'grips the racket hard, eyes on the lines', 'bounces the ball fast, impatient'],
     defend: ['drifts back behind the baseline', 'settles deep, knees bent', 'takes a long breath and slows down', 'towels off, in no hurry'],

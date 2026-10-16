@@ -23,6 +23,8 @@ export interface Messages {
   habit(name: string, habit: Habit): string;
   scouting(name: string, style: string, habit: Habit): string;
   rival(record: { wins: number; losses: number }, most: { card: Card; n: number; of: number } | null): string;
+  /** The plan that throws this style off balance, said before the match (ADR-025). */
+  planTip(plan: GamePlan, style: PlayStyle): string;
   /** Tells per card; the game draws an index, so every language needs the same count. */
   tells: Record<Card, readonly string[]>;
   /** The decisive point named: `matchup` > 0 when the user's card beat theirs; `won` when the user won the point. */

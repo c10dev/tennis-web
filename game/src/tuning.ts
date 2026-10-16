@@ -203,11 +203,20 @@ export const QUICK_MOMENTS = {
   maxDecisions: 5,
 } as const;
 
-/** The user's game plan as the tactic for the points played without cards. */
+/** The user's game plan as the tactic for the points played without cards, and the opponent's answer (ADR-025). */
 export const QUICK_PLAN = {
-  aggressive: { aggression: 0.8 },
+  aggressive: { aggression: 0.7 },
   balanced: { aggression: 0.5 },
-  defensive: { aggression: 0.2 },
+  defensive: { aggression: 0.3 },
+  /** Risk pays for both players in the engine, so the opponent matches the plan's tempo: its aggression moves `tempo`
+   *  times the user's away from 0.5 (the user's +0.2 is worth about +2.2 pp, the opponent's about −1.9 pp). A
+   *  specialist is thrown off balance by the plan its tip names (`offBalance` less aggression) and lifted by the
+   *  other two (half as much more); an all-court player has no tip. Random cards, style-shaped opponents. */
+  opponent: {
+    tempo: 1.05,
+    offBalance: 0.3,
+    tips: { big_server: 'defensive', baseliner: 'aggressive', counter_puncher: 'balanced' },
+  },
 } as const;
 
 /** Opponent personas, tells and rival memory. */

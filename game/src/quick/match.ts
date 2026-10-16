@@ -12,7 +12,7 @@ import { aiDecision } from './ai.ts';
 import { nextOpponent, type QuickState } from './ladder.ts';
 import { isDecisionPoint } from './moments.ts';
 import { personaOf } from './persona.ts';
-import { planTactic } from './plan.ts';
+import { opponentTactic, planTactic } from './plan.ts';
 import type { AiDecision, DecisionContext, DecisionRecord, GamePlan, Persona, RivalRecord } from './types.ts';
 
 export interface QuickMatchInit {
@@ -44,7 +44,7 @@ export function startQuick(s: QuickState, plan: GamePlan = 'balanced'): QuickMat
   const config = createConfig([profileOf(me), profileOf(opp)], {
     surface: QUICK.surfaces[s.matchNo % QUICK.surfaces.length] as Surface,
     rules: { ...TIEBREAK_RULES },
-    tactics: [planTactic(plan), planTactic('balanced')],
+    tactics: [planTactic(plan), opponentTactic(opp.style, plan)],
     firstServer: streamSeed(s.seed, 'quick-toss', s.matchNo) % 2 === 0 ? 'A' : 'B',
   });
   const seed = streamSeed(s.seed, 'quick', s.matchNo);
