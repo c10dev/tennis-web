@@ -921,3 +921,79 @@ Format: one entry per decision, newest at the bottom.
   net line. `playerPose` no longer takes the frame's ball. Over eight further matches (1.9 M frames) the fastest
   turn is 0.25 rad per 60 fps frame (was up to π); a test keeps it under 0.35, and the racket continuity test is
   back in world space.
+
+## ADR-025: Quick-match balance: five card stops, situational plans, rivals that adapt
+- **Date:** 2026-10-16
+- **Status:** Accepted
+- **Context:** Three quick-match debts from M6. TD-030: the decision cap of 6 left one match in five at 6 stops
+  (quartiles 2/3/5), while GDD §14 asks for two to five. TD-031: with random cards an average player won most on
+  the aggressive plan against every style, because the engine rewards risk for both players and the plan only sets
+  the user's aggression. TD-034: the AI ignored the rival record, and the rival line named the most played card,
+  which says little for habits that follow earlier cards.
+- **Decision:**
+  - **Card stops (`QUICK_MOMENTS`).** The rule is unchanged ("from 5 points on, and every set or match point"), and
+    `maxDecisions` falls from 6 to 5. Starting later instead (5-3 on, 4-4 on, nine points played, or only match
+    points from 6-all) left 15–33% of matches with one stop, or piled them at the cap again. The cap costs about 2 pp
+    of reads (scouting 63.2% → 61.1%), so the habit target falls from 62% to 60%. Tells go from 0.6 to 0.58 accurate,
+    because at 0.6 they tied the scouting read. A new row checks that scouting still beats the tells. The report adds
+    the 90th percentile (target 2–5) and the share of matches stopped by the cap.
+  - **Plans (`QUICK_PLAN`, `plan.ts`).** The plans now set aggression 0.7 / 0.5 / 0.3 (were 0.8 / 0.5 / 0.2). The
+    opponent answers on card-free points (`opponentTactic`, applied by `startQuick` and the harness):
+    - Its aggression moves `tempo` = 1.05 times the user's away from 0.5. Risk pays about equally for both players
+      (user +0.2 ≈ +2.2 pp, opponent +0.2 ≈ −1.9 pp), so no plan wins on risk alone.
+    - A specialist is thrown off balance by one plan, which gets `offBalance` = 0.3 less opponent aggression. The
+      other two plans get half that more. Big server: defensive (long rallies). Baseliner: aggressive (take its time
+      away). Counter-puncher: balanced (no pace to feed on, no sitting back).
+    - An all-court player has no tip and simply matches the tempo.
+
+    The engine offers no other lever: target and serve choices barely interact with style (TD-066). The plan tip
+    (`planTip`, `Messages.planTip`) comes back from `opponentScouting().plan` for the ladder home. Showing it is a
+    UI follow-up (TD-065). `plan-balance.ts` measures every plan against every style. Opponents are average
+    players with their style's rating template, as on the ladder, with random cards and shared seeds. The CLI plays
+    twice the bots' matches a cell.
+  - **Rivals (`rivals.ts`, `ai.ts`, `QUICK_PERSONA.rival`).** The stance comes from the head to head, and only the
+    habit's share changes.
+    - **Wary** (the user leads): the habit card 0.65, the card that beats the user's answer to it 0.25, the third
+      card 0.10. Answering the habit still pays most: +0.40 a decision, against +0.15 for the next best card and
+      about +0.58 at a first meeting.
+    - **Confident** (the rival leads): the habit card 0.75, the rest in its style mix.
+    - At a rematch's first decision, `repeat_card` plays its last card from the last meeting.
+    - The rival line now says the stance, the switch card (for habits with a fixed card) and that last card, for
+      example: "Head to head 2-1 to you; wary of your read: may switch to Attack when the habit is due; last big
+      point: Defend". The most-played count is gone.
+    - `RivalRecord` and the save format are unchanged.
+  - **Files outside the stream's list:** `match.ts` (one line, the opponent's tactic), `views/quick-scout.ts`, and
+    `text/{types,en,ko}.ts`. No engine values changed.
+- **Consequences:** `npm run quick -- --n 2000 --seed 1`, before (`e364370`) and after:
+
+  | Metric | Before | After | Target |
+  |---|---|---|---|
+  | Decisions per match: median / 90th pct / most | 3 / 6 / 6 | 3 / 5 / 5 | 3–5 / 2–5 / ≤ 5 |
+  | Matches stopped by the cap | 19% (at 6) | 30% (at 5) | — |
+  | Matches with 2+ decisions | 100% | 100% | ≥ 90% |
+  | Points / seconds per match (median) | 11 / 23 s | 11 / 23 s | 10–14 / ≤ 60 s |
+  | Won matchup at a decision point | +24.5 pp | +24.5 pp | +20–30 pp |
+  | Win % by rating 11..15 vs 13 | 34/42/51/61/68 | 35/43/50/62/69 | rising |
+  | Places climbed in 30 matches | 20.5 | 20.7 | 10–25 |
+  | Knows the habit and style (scouting) | 63.2% | 61.1% | ≥ 60% (was 62%) |
+  | Follows the tells | 62.3% | 60.4% | ≥ 57%, below scouting |
+  | Random cards | 50.3% | 51.2% | 45–55% |
+  | Always attack / defend / counter | 48.3 / 48.4 / 46.7% | 48.0 / 48.4 / 47.6% | ≤ 55% |
+  | Habit card when it applies | 72.7% | 73.5% | 60–75% |
+  | Plans agg / bal / def, all styles* | 51.3 / 48.9 / 45.9% | 48.3 / 48.5 / 49.0% | 47–53%, spread ≤ 2 pp |
+  | Plans vs big server* | 48.5 / 46.2 / 43.2% | 44.3 / 44.6 / **50.0%** | tip best by ≥ 2 pp |
+  | Plans vs baseliner* | 49.5 / 46.7 / 43.2% | **49.0** / 44.3 / 45.2% | |
+  | Plans vs counter-puncher* | 54.0 / 52.6 / 48.9% | 49.5 / **55.1** / 50.0% | |
+  | Plans vs all-court* | 53.1 / 50.2 / 48.2% | 50.4 / 50.2 / 50.6% | no tip |
+  | Rematch, you lead: scouting / random | — | 57.4 / 50.7% (habit played 66%) | scouting − random ≥ 5 pp |
+  | Rematch, they lead: scouting / random | — | 62.2 / 50.3% (habit played 76%) | |
+  | Rematch, best fixed card (you / they lead) | — | 48.9 / 48.4% | ≤ 55% |
+  | Result rows (visible gain win / loss, decisive found) | 100 / 53.2 / 100% | 100 / 50.5 / 100% | unchanged |
+
+  \* `planTable(4000, 1)`. The "before" column is measured with the old plan values and no opponent answer.
+  The 60–75% habit-share band is for first meetings; a confident rival plays its habit 76% of the time by design.
+
+  A user who beat a rival meets a harder read next time (−3.7 pp), and one who lost meets an easier one (+1.1 pp),
+  so rematches change in a way the rival line explains. `npm test`, `npm run test:quick` (19 tests, including
+  `quick-plan.slow` and `quick-rival.slow`), typecheck and lint pass. The quick Playwright specs and the toss spec
+  pass on `E2E_PORT=5201`.
