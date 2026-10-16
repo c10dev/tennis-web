@@ -1007,4 +1007,21 @@ Format: one entry per decision, newest at the bottom.
   `sampleClips` takes per-clip times and aligns quaternions against the rest pose (order-independent). Measured
   per 60 fps frame on a foot in stance: running median 4.5 mm (the clip's own roll), walk median 5 mm, planted
   median 0 with a p95 of 7–8 cm where a reach step drags a foot.
+- **Step 4, game camera and director (2026-10-16).** `camera/chase.ts` is K2 as a pure function of the timeline,
+  my player and match time: 6.2 m up and 7.4 m behind my player (it follows my depth, in to the net and back behind
+  the baseline), 0.75 of my x, aimed 15.8 m down the court from the camera, my x and depth averaged over ± 0.4 s with
+  a smoothstep kernel (samples across the net, at a change of ends, are left out; the camera's end switches halfway
+  through the changeover). The ball is not followed: a windowed average of a ball that appears and vanishes jumps
+  (0.29 m in one frame). Vertical field of view 48° from the phone stage's 0.82 aspect up to a square view, the same
+  width across on narrower screens (51.9° at 0.75), easing to 36° by 1.4. Over the first 25 points of three sample
+  matches, every 0.25 s of live play at aspects 0.75–0.95, my player fills the bottom third (head never above 66 %
+  of the stage height down, feet never below 91.4 %), the far baseline is never above 26.8 % down (clear of the
+  score bug), and the opponent stays inside the frame; the camera moves under
+  0.25 m and turns under 0.03 rad per 60 fps frame. `cameraTrack(timeline, { style: 'game' })` lays the chase
+  through live play, the side camera at changeovers and a close-up (`closeup`, M5) on the winner of a decisive point
+  (`isDecisive`: an ace or winner on a big point, a converted break, the last point of a set or match), with no TV
+  main or serve camera; `tell` (M2) frames a player from between them and the net. The viewer computes the chase
+  (only the TV main camera still pans with per-frame state) and takes a held shot (`Viewer.hold`, `Broadcast.hold`,
+  `heldShot`): with `?rig=gltf` the quick match holds the tell on the opponent while the cards are up and plays its
+  decision clips at 1× for the preview (production pacing is TD-060). `CameraShot` is exported for the ui.
 

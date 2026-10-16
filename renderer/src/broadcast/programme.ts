@@ -1,7 +1,7 @@
 // Builds the broadcast programme: the clips a viewing mode shows, cut by the director's cameras (ADR-009).
 import type { Timeline } from '../playback/timeline.ts';
 import { BROADCAST } from '../tuning/index.ts';
-import { cameraTrack, type TrackShot } from './director.ts';
+import { cameraTrack, type DirectorStyle, type TrackShot } from './director.ts';
 import { selectPoints } from './modes.ts';
 import { replayInserts } from './replay.ts';
 import type { Clip, Programme, ViewMode } from './types.ts';
@@ -13,7 +13,7 @@ export interface Insert {
 }
 export type Inserts = (timeline: Timeline, index: number) => Insert | null;
 
-export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts, options: { intro?: boolean } = {}): Programme {
+export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts, options: { intro?: boolean; style?: DirectorStyle } = {}): Programme {
   const clips: Clip[] = [];
   const pointStarts: number[] = [];
   let t = 0;
@@ -27,7 +27,7 @@ export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inse
     return { mode, clips, totalSec: t, pointStarts: [0], timeline };
   }
   if (options.intro !== false) push({ kind: 'intro', duration: BROADCAST.introSec, matchFrom: 0, rate: 0, camera: 'side', pointIndex: 0 });
-  const track = cameraTrack(timeline);
+  const track = cameraTrack(timeline, { style: options.style ?? 'broadcast' });
   const live = (from: number, to: number, pointIndex: number) => {
     for (const shot of shotsBetween(track, from, to)) {
       const { camera, focus } = shot;

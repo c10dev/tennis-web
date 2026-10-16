@@ -1,9 +1,12 @@
 // WebGL shell around a Stage: renderer, broadcast cameras and resizing. The only renderer file that needs a browser,
 // so it is kept free of logic and not unit-tested; everything it calls is.
 import { PerspectiveCamera, WebGLRenderer } from 'three';
+import type { PlayerId } from '@tennis/engine';
+import { heldShot } from './broadcast/director.ts';
 import type { BroadcastFrame } from './broadcast/frame.ts';
-import type { CameraId } from './broadcast/types.ts';
+import type { CameraId, CameraShot } from './broadcast/types.ts';
 import { cameraPose } from './camera/cameras.ts';
+import { chasePose } from './camera/chase.ts';
 import { fitFov } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
 import type { Timeline } from './playback/timeline.ts';
@@ -16,6 +19,8 @@ export interface Viewer {
   resize(width: number, height: number): void;
   /** Draw a frame; dt is the real time since the last draw, for camera easing. */
   render(frame: BroadcastFrame, dt: number): void;
+  /** Lay a shot over every frame until cleared (the decision hold, ADR-024 S2), or null to clear it. */
+  hold(shot: CameraShot | null): void;
   dispose(): void;
 }
 
@@ -23,8 +28,15 @@ export interface Viewer {
  * `tier` is the quality to start on (M7, ADR-022); antialiasing is fixed by it, the rest can change. The viewer
  * measures its frames and steps down to low once if they stay slow, telling `onTier`.
  */
+export interface ViewerOptions {
+  /** Skinned players (ADR-024 slice); the mannequin without them. */
+  model?: PlayerModel | null;
+  /** The player the chase camera follows (ADR-024); A by default. */
+  me?: PlayerId;
+}
+
 export function createViewer(
-  canvas: HTMLCanvasElement, timeline: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void, model: PlayerModel | null = null,
+  canvas: HTMLCanvasElement, timeline: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void, { model = null, me = 'A' }: ViewerOptions = {},
 ): Viewer {
   const renderer = new WebGLRenderer({ canvas, antialias: tierSettings(tier).antialias });
   const stage = createStage(timeline, { model });
@@ -40,6 +52,7 @@ export function createViewer(
   let pan = 0;
   let shown: CameraId | null = null;
   let projected = { fov: 0, aspect: 0 };
+  let held: CameraShot | null = null;
   return {
     resize(width, height) {
       size = { w: width, h: height };
@@ -47,19 +60,27 @@ export function createViewer(
       camera.aspect = width / height;
       stage.setAspect(camera.aspect);
     },
-    render(frame, dt) {
+    hold(shot) {
+      held = shot;
+    },
+    render(given, dt) {
       if (meter.push(dt)) {
         apply(meter.tier);
         onTier?.(meter.tier);
       }
+      const shot = heldShot(given, held);
+      const frame: BroadcastFrame = { ...given, ...shot };
+      if (!shot.focus) delete frame.focus;
       stage.applyFrame(frame);
-      // A cut starts the pan where it wants to be; within a shot it eases there.
+      // A cut starts the pan where it wants to be; within a shot it eases there. Only the TV main camera pans: the
+      // chase is a pure function of match time (ADR-024).
       pan = frame.camera === shown ? dampPan(pan, panTarget(frame.ball), dt) : panTarget(frame.ball);
       shown = frame.camera;
       // The frame follows the view's shape (M7): an upright phone gets the portrait main camera, every camera a
       // minimum width; the projection is rebuilt when the field of view or the shape changes.
-      const pose = cameraPose(frame, pan, camera.aspect);
-      camera.fov = fitFov(pose, frame.camera, camera.aspect);
+      const chase = frame.camera === 'chase';
+      const pose = chase ? chasePose(timeline, me, frame.matchT, camera.aspect) : cameraPose(frame, pan, camera.aspect);
+      camera.fov = chase ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
       if (camera.fov !== projected.fov || camera.aspect !== projected.aspect) {
         camera.updateProjectionMatrix();
         projected = { fov: camera.fov, aspect: camera.aspect };

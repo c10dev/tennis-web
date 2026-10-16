@@ -9,7 +9,7 @@ export { lineCall, type LineCall } from './broadcast/hawkeye.ts';
 export { selectPoints } from './broadcast/modes.ts';
 export { isCloseCall, replayInserts, wantsReplay } from './broadcast/replay.ts';
 export { buildProgramme, clipAt, programmeTimeFor } from './broadcast/programme.ts';
-export type { CameraId, Clip, ClipKind, Programme, ViewMode } from './broadcast/types.ts';
+export type { CameraId, CameraShot, Clip, ClipKind, Programme, ViewMode } from './broadcast/types.ts';
 export { cameraPose } from './camera/cameras.ts';
 export { dampPan, mainCamPose, panTarget, type CamPose } from './camera/mainCam.ts';
 export { scoreBugModel, type ScoreBugModel, type ScoreBugRow } from './overlay/scoreBug.ts';

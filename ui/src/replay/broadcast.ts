@@ -4,7 +4,7 @@
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, initialTier, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type Mixer, type PlayerModel, type QualityTier, type ViewMode,
+  type CameraShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
@@ -17,6 +17,8 @@ export interface Broadcast {
   dispatch(action: ClockAction): void;
   /** Plays match seconds [from, to] at `speed`, then stops; resolves when done (quick matches). */
   playWindow(from: number, to: number, speed: number): Promise<void>;
+  /** Hold a shot over the picture until cleared (the quick match's decision hold, ADR-024 S2). */
+  hold(shot: CameraShot | null): void;
   dispose(): void;
 }
 
@@ -30,8 +32,9 @@ export interface BroadcastOptions {
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
   /** A shared mixer (the quick match's audio session, ADR-022) instead of this player's own sound panel. */
   audio?(): Mixer | null;
-  /** Skinned players (ADR-024 slice); the mannequin without it. */
+  /** Skinned players and the game camera (ADR-024 slice); the mannequin and the TV director without them. */
   model?: PlayerModel | null;
+  style?: 'broadcast' | 'game';
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
@@ -59,7 +62,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   root.append(canvas, score, graphics);
   if (!options.audio) root.append(soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
-  const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
+  const style = options.style ?? 'broadcast';
+  let held: CameraShot | null = null;
+  const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false, style }) : buildProgramme(timeline, mode, undefined, { style }));
   let clipWindow: { end: number; speed: number; done: () => void } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
@@ -134,7 +139,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const timeline = buildTimeline(input);
       if (!viewer || surface !== timeline.surface || !opts.keepTime) {
         viewer?.dispose();
-        viewer = createViewer(canvas, timeline, startTier(), stepDown, options.model ?? null);
+        viewer = createViewer(canvas, timeline, startTier(), stepDown, { model: options.model ?? null });
+        viewer.hold(held);
         surface = timeline.surface;
         size = '';
         resize();
@@ -159,6 +165,10 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         clock = { ...clock, playing: false, t: programmeTimeFor(p, from) };
         clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done };
       });
+    },
+    hold(shot) {
+      held = shot;
+      viewer?.hold(shot);
     },
     dispose() {
       clipWindow?.done();

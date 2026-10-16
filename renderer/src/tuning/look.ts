@@ -23,7 +23,7 @@ export const BALL_LOOK = {
   /** Drawn radius, over three times the real 0.0335 m: ≥ 6 px at the far baseline from the main camera at 720p. */
   radius: 0.11,
   /** Close-ups would make that a beach ball; they draw it smaller. */
-  cameraScale: { main: 1, side: 0.8, serve: 0.45, reaction: 0.45, hawkeye: 0.45 },
+  cameraScale: { main: 1, side: 0.8, serve: 0.45, reaction: 0.45, hawkeye: 0.45, chase: 0.8, tell: 0.45, closeup: 0.45 },
   /** On an upright phone the court spans the narrow width, so the ball is drawn this much larger (M7, ADR-022). */
   portraitScale: 1.3,
   shadowOpacity: 0.35,

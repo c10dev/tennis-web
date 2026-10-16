@@ -37,4 +37,28 @@ export const CAMERAS = {
   /** Wide side shot from beyond the umpire, set back along the court so the chair is not in the middle. */
   side: { fov: 34, x: -19, y: -7, height: 9, replayX: -15, replayHeight: 4, replayFov: 30 },
   hawkeye: { fov: 40, height: 1.3, back: 0.9 },
+  /** Game cameras (ADR-024): the tell (M2), low between the opponent and the net, aimed at their chest; the close-up
+   * (M5), front three-quarter at head height. Metres from the player towards the net and to one side. */
+  tell: { fov: 34, toNet: 6.3, aside: 1.8, height: 1.5, aimHeight: 0.95 },
+  closeup: { fov: 34, toNet: 3.9, aside: 1.5, height: 1.4, aimHeight: 1.3 },
+} as const;
+
+/**
+ * The game camera K2 (ADR-024, docs/3d-redesign.md §3): `behind` m behind my player and `height` up, `myShare` of my
+ * x followed, aimed `aim` m down the court from the camera; it follows my depth, so it
+ * moves in with me to the net and back with me behind the baseline. Its inputs
+ * are averaged over ± `windowSec` of replay time with a smoothstep kernel, so it is smooth and closed-form in time.
+ */
+export const CHASE = {
+  height: 6.2,
+  behind: 7.4,
+  aim: 15.8,
+  /** The ball is not followed: it appears and vanishes, which a windowed average turns into a jump. */
+  myShare: 0.75,
+  /** Share of the camera's x the aim point keeps (the view leans in towards the centre). */
+  aimShare: 0.6,
+  /** Vertical field of view on an upright phone (up to a square view) and on a wide screen. */
+  fov: { portrait: 48, landscape: 36 },
+  windowSec: 0.4,
+  samples: 9,
 } as const;

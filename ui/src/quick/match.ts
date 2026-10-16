@@ -38,7 +38,9 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const sound = ctx.fastMode ? null : soundToggle();
   const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel, sound?.element);
   const audio = getAudio();
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: audio.mixer, model: await (await import('../replay/model.ts')).playerModelFromQuery() });
+  // The 3D redesign's slice (ADR-024, `?rig=gltf`): skinned players, the game camera and its decision hold.
+  const slice = ctx.fastMode ? null : await (await import('../replay/model.ts')).sliceFromQuery();
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: audio.mixer, ...(slice ?? {}) });
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
   let disposed = false;
@@ -84,6 +86,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('span', { class: 'rule' }, U.beats(T.card[c.beats])),
         h('span', { class: 'strength', title: U.strengthHint, role: 'img', 'aria-label': U.strengthHint }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
+    // While the cards are up, the slice holds a shot of the opponent, whose body shows the tell (TD-061).
+    if (slice) broadcast?.hold({ camera: 'tell', focus: 'B' });
     phase('choose');
   }
 
@@ -106,8 +110,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     if (!disposed) buzz(r.matchup === 'won' ? 'read' : r.matchup === 'lost' ? 'misread' : 'same');
     if (broadcast && !disposed) {
       load();
+      broadcast.hold(null);
       phase('clip');
-      await playClip(point, QUICK_PACE.speed);
+      // The slice previews its decision points at 1× (production pacing is TD-060).
+      await playClip(point, slice ? 1 : QUICK_PACE.speed);
     }
     if (disposed) return;
     panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, `${r.how} · ${U.pointFor(r.winner === 'you').toLocaleLowerCase()} · ${scoreLine(qm!)}`));

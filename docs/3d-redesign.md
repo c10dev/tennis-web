@@ -153,7 +153,11 @@ at t ± 0.4 s, weighted by a smoothstep kernel) the way `playback/facing.ts` `wa
 speeds then show the same frame for the same time. Hit-stop and slow motion are programme clips (`rate` 0 and 0.25),
 like today's Hawk-Eye clip, so they are seekable too.
 
-Chase rig (tuning, `renderer/src/tuning/camera.ts`): x = 0.5 · my x + 0.15 · ball x (windowed); z = my end's
+**As built (ADR-024 step 4):** 7.4 m behind *my player* (following my depth both ways), 6.2 m up, aimed 15.8 m down
+the court from the camera, 0.75 of my x, no ball term (a windowed ball jumps when it appears or vanishes), 48°
+vertical from 0.82 up to a square view. The design numbers below were the starting point.
+
+Chase rig as designed (tuning, `renderer/src/tuning/camera.ts`): x = 0.5 · my x + 0.15 · ball x (windowed); z = my end's
 baseline + 7.7 m, dollying forward by 0.5 × how far my player is inside the baseline (net approaches); height 6.2 m;
 aim 10.8 m ahead, x = 0.4 · my x; vertical FOV 48° at aspect ≤ 0.82, and on wider screens the same vertical FOV (the
 landscape web build simply sees more width). Safe frame: the far baseline must sit below 25% of the stage height

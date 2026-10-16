@@ -2,7 +2,8 @@
 import type { PlayerId } from '@tennis/engine';
 import type { Timeline } from '../playback/timeline.ts';
 
-export type CameraId = 'main' | 'serve' | 'reaction' | 'side' | 'hawkeye';
+/** Broadcast cameras, and the game cameras of ADR-024: the chase (K2), the tell on the opponent and the close-up. */
+export type CameraId = 'main' | 'serve' | 'reaction' | 'side' | 'hawkeye' | 'chase' | 'tell' | 'closeup';
 export type ClipKind = 'live' | 'replay' | 'hawkeye' | 'intro' | 'result';
 export type ViewMode = 'full' | 'key' | 'highlights' | 'result';
 
