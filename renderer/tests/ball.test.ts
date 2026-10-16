@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PointEvent, Surface } from '@tennis/engine';
-import { ballAt } from '../src/playback/ball.ts';
+import { ballAt, ballSpans } from '../src/playback/ball.ts';
 import { BALL, PLAYBACK } from '../src/tuning/index.ts';
 import { SAMPLE } from './fixtures.ts';
 
@@ -90,5 +90,23 @@ describe('ballAt', () => {
       return peak;
     };
     expect(hop('clay')).toBeGreaterThan(hop('grass'));
+  });
+});
+
+describe('ballSpans', () => {
+  it('lists exactly the stretches of point time when the ball is on screen (TD-057)', () => {
+    for (const { p, surface } of points.slice(0, 120)) {
+      const spans = ballSpans(p);
+      spans.forEach((sp, i) => {
+        expect(sp.to).toBeGreaterThan(sp.from);
+        if (i > 0) expect(sp.from).toBeGreaterThanOrEqual(spans[i - 1]!.to);
+      });
+      const last = spans.at(-1)!;
+      for (let tau = -PLAYBACK.tossLeadSec - 0.5; tau < last.to + 0.5; tau += 0.01) {
+        const inside = spans.some((sp) => tau >= sp.from && tau <= sp.to);
+        const near = spans.some((sp) => Math.abs(tau - sp.from) < 1e-6 || Math.abs(tau - sp.to) < 1e-6);
+        if (!near) expect(ballAt(p, tau, surface) !== null, `tau ${tau.toFixed(2)}`).toBe(inside);
+      }
+    }
   });
 });

@@ -13,6 +13,25 @@ export function ballAt(point: PointEvent, tau: number, surface: Surface): Vec3 |
   return null;
 }
 
+/**
+ * The stretches of point time [from, to] when `ballAt` shows a ball. A rally is one stretch; a fault ends its own,
+ * and the next serve's toss starts another, even when it starts before the fault has rolled out (TD-057).
+ */
+export function ballSpans(point: PointEvent): { from: number; to: number }[] {
+  const { shots } = point;
+  const start = (s: ShotEvent) => (s.shot === 'serve' ? s.t - PLAYBACK.tossLeadSec : s.t);
+  const spans: { from: number; to: number }[] = [];
+  let open = false;
+  shots.forEach((s, i) => {
+    const next = shots[i + 1];
+    const to = next && s.outcome === 'in' ? start(next) : Math.min(s.t + s.flightSec + BALL.rollSec, next ? start(next) : Infinity);
+    if (open) spans.at(-1)!.to = to;
+    else spans.push({ from: start(s), to });
+    open = !!next && s.outcome === 'in';
+  });
+  return spans;
+}
+
 /** Shot `s` owns the ball from its toss (serves) or contact until the next shot's toss or contact. */
 function phase(s: ShotEvent, next: ShotEvent | undefined, tau: number, surface: Surface): Vec3 | null {
   if (tau < s.t) return tossPosition(s, (tau - (s.t - PLAYBACK.tossLeadSec)) / PLAYBACK.tossLeadSec);

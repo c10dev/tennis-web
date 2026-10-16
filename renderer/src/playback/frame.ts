@@ -29,7 +29,7 @@ export function matchFrameAt(timeline: Timeline, time: number, scoreTime = time)
     t,
     pointIndex,
     ball,
-    players: { A: playerPose(timeline, 'A', t, ball), B: playerPose(timeline, 'B', t, ball) },
+    players: { A: playerPose(timeline, 'A', t), B: playerPose(timeline, 'B', t) },
     scoreBug: scoreBugModel(scoreAt(timeline, shownAt), timeline.names, { noAd: timeline.noAd, winner: over ? timeline.winner : null, games: !timeline.tiebreakOnly }),
   };
 }

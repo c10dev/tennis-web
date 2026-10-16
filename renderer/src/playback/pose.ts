@@ -2,6 +2,7 @@
 import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
 import { smoothstep } from '../math.ts';
 import { PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
+import { facingAt } from './facing.ts';
 import { positionAt } from './movement.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
@@ -29,17 +30,18 @@ export interface PlayerPose {
   toss: number;
 }
 
-export function playerPose(timeline: Timeline, id: PlayerId, t: number, ball: Vec3 | null): PlayerPose {
+export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
   const pos = positionAt(timeline, id, t);
   const dt = RIG_MOTION.speedSampleSec;
   const before = positionAt(timeline, id, Math.max(0, t - dt));
   const after = positionAt(timeline, id, Math.min(timeline.totalSec, t + dt));
   const speed = Math.hypot(after.x - before.x, after.y - before.y) / (2 * dt);
-  const seg = timeline.segments[segmentAt(timeline, t)]!;
+  const index = segmentAt(timeline, t);
+  const seg = timeline.segments[index]!;
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
   return {
-    pos, facing: turnToShot(facing(pos, ball), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
+    pos, facing: turnToShot(facingAt(timeline, id, index, t, pos), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
     splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
@@ -60,14 +62,6 @@ function toss(serves: { t: number }[], tau: number): number {
     if (tau >= start && tau <= s.t) return Math.min(1, (tau - start) / (RIG_MOTION.tossRiseShare * PLAYBACK.tossLeadSec));
   }
   return 0;
-}
-
-function facing(pos: Vec2, ball: Vec3 | null): Vec2 {
-  if (ball) {
-    const d = Math.hypot(ball.x - pos.x, ball.y - pos.y);
-    if (d > 0.5) return { x: (ball.x - pos.x) / d, y: (ball.y - pos.y) / d };
-  }
-  return { x: 0, y: -Math.sign(pos.y) };
 }
 
 /** Near their own contact a player turns towards where the shot goes, so the ball meets them side-on (ADR-023). */

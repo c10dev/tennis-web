@@ -20,8 +20,8 @@ describe('matchFrameAt', () => {
     const f = matchFrameAt(tl, t);
     expect(f.pointIndex).toBe(10);
     expect(f.ball).toEqual(ballAt(seg.point, t - seg.zero, tl.surface));
-    expect(f.players.A).toEqual(playerPose(tl, 'A', t, f.ball));
-    expect(f.players.B).toEqual(playerPose(tl, 'B', t, f.ball));
+    expect(f.players.A).toEqual(playerPose(tl, 'A', t));
+    expect(f.players.B).toEqual(playerPose(tl, 'B', t));
     expect(f.scoreBug).toEqual(scoreBugModel(scoreAt(tl, t), tl.names, { noAd: tl.noAd, winner: null }));
   });
 

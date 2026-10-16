@@ -53,6 +53,13 @@ export const RIG_MOTION = {
   splitStepSec: 0.15,
   /** Around their own contact a player turns from the ball towards where the shot goes, over this long each side. */
   contactTurnSec: 0.25,
+  /**
+   * Facing (TD-057): a player turns towards the ball over `settleSec` after it appears and back to the net over the
+   * same after it goes out of play; a ball closer than `nearMin` m is not followed and one beyond `nearFull` fully.
+   * Changing ends they face their smoothed walk (velocity over ± `walkWindowSec`), easing in and out over
+   * `walkTurnShare` of the walk. No turn is faster than `maxTurnPerFrame` rad between 60 fps frames (21 rad/s).
+   */
+  facing: { settleSec: 0.4, nearMin: 0.8, nearFull: 3, walkWindowSec: 0.3, walkTurnShare: 0.15, maxTurnPerFrame: 0.35 },
   /** The tossing arm reaches the top this far into the toss. */
   tossRiseShare: 0.4,
   /** Share of each move spent speeding up and slowing down. */

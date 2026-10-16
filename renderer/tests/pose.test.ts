@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayerId, Vec2 } from '@tennis/engine';
-import { ballAt } from '../src/playback/ball.ts';
+import { ballAt, ballSpans } from '../src/playback/ball.ts';
 import { positionAt } from '../src/playback/movement.ts';
 import { playerPose } from '../src/playback/pose.ts';
 import { buildTimeline, segmentAt, type Timeline } from '../src/playback/timeline.ts';
@@ -93,18 +93,58 @@ describe('playerPose', () => {
     return seg.point.shots.some((s) => s.hitter === id && Math.abs(t - seg.zero - s.t) < RIG_MOTION.contactTurnSec);
   };
 
-  it('faces the ball when it is in play, and the net when it is not', () => {
+  const F = RIG_MOTION.facing;
+  const angle = (v: Vec2) => Math.atan2(v.y, v.x);
+  const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
+  const net = (pos: Vec2): Vec2 => ({ x: 0, y: pos.y < 0 ? 1 : -1 });
+  /** What a player at replay time t should settle on, or null while a change is still being eased (TD-057). */
+  const settledOn = (id: PlayerId, t: number): 'ball' | 'net' | null => {
+    const seg = tl.segments[segmentAt(tl, t)]!;
+    const tau = t - seg.zero;
+    const next = tl.segments[segmentAt(tl, t) + 1];
+    if (turning(id, t) || (next && t >= seg.end - F.settleSec)) return null;
+    const spans = ballSpans(seg.point);
+    const now = spans.find((sp) => tau >= sp.from && tau <= sp.to);
+    if (now) return tau - now.from >= F.settleSec ? 'ball' : null;
+    const ended = spans.filter((sp) => sp.to <= tau).at(-1);
+    return !ended || tau - ended.to >= F.settleSec ? 'net' : null;
+  };
+
+  it('faces the ball once it has been in play a moment, and the net once it has been out (TD-057)', () => {
+    let onBall = 0;
+    let onNet = 0;
     for (let t = 0; t < 300; t += 0.37) {
       const ball = ballFor(tl, t);
       for (const id of IDS) {
-        const pose = playerPose(tl, id, t, ball);
+        const pose = playerPose(tl, id, t);
         expect(Math.hypot(pose.facing.x, pose.facing.y)).toBeCloseTo(1, 9);
-        if (turning(id, t)) continue;
-        if (ball && dist(ball, pose.pos) > 0.5) {
-          const d = dist(ball, pose.pos);
-          expect(pose.facing.x * (ball.x - pose.pos.x) / d + pose.facing.y * (ball.y - pose.pos.y) / d).toBeCloseTo(1, 6);
-        } else if (!ball) {
-          expect(pose.facing).toEqual({ x: 0, y: -Math.sign(pose.pos.y) });
+        const settled = settledOn(id, t);
+        if (settled === 'net') {
+          expect(pose.facing.x).toBeCloseTo(0, 9);
+          expect(pose.facing.y).toBeCloseTo(net(pose.pos).y, 9);
+          onNet++;
+        } else if (settled === 'ball' && ball) {
+          const to = { x: ball.x - pose.pos.x, y: ball.y - pose.pos.y };
+          // A ball nearby or behind the player is followed only partly: they look over the shoulder, not round.
+          if (Math.hypot(to.x, to.y) < F.nearFull || Math.abs(wrap(angle(to) - angle(net(pose.pos)))) > Math.PI / 2) continue;
+          expect(Math.abs(wrap(angle(pose.facing) - angle(to)))).toBeLessThan(1e-6);
+          onBall++;
+        }
+      }
+    }
+    expect(onBall).toBeGreaterThan(50);
+    expect(onNet).toBeGreaterThan(50);
+  });
+
+  it('never turns faster than RIG_MOTION.facing.maxTurnPerFrame between 60 fps frames, ends changed included', () => {
+    for (const r of SAMPLE.slice(0, 3)) {
+      const timeline = buildTimeline(r);
+      for (const id of IDS) {
+        let prev = playerPose(timeline, id, 0).facing;
+        for (let t = 1 / 60; t < timeline.totalSec; t += 1 / 60) {
+          const f = playerPose(timeline, id, t).facing;
+          expect(Math.abs(wrap(angle(f) - angle(prev))), `${id} at ${t.toFixed(3)} s`).toBeLessThan(F.maxTurnPerFrame);
+          prev = f;
         }
       }
     }
@@ -115,7 +155,7 @@ describe('playerPose', () => {
     for (const seg of tl.segments.slice(0, 30)) {
       for (const s of seg.point.shots) {
         const t = seg.zero + s.t;
-        const pose = playerPose(tl, s.hitter, t, ballFor(tl, t));
+        const pose = playerPose(tl, s.hitter, t);
         if (s.bounce) {
           const d = dist(s.bounce, s.from);
           expect(pose.facing.x * (s.bounce.x - s.from.x) / d + pose.facing.y * (s.bounce.y - s.from.y) / d).toBeGreaterThan(0.99);
@@ -133,7 +173,7 @@ describe('playerPose', () => {
   it('swings with the shot recorded: serve or wing, half-way through at contact', () => {
     for (const seg of tl.segments.slice(0, 30)) {
       for (const s of seg.point.shots) {
-        const at = (dt: number) => playerPose(tl, s.hitter, seg.zero + s.t + dt, null).swing;
+        const at = (dt: number) => playerPose(tl, s.hitter, seg.zero + s.t + dt).swing;
         const kind = s.shot === 'serve' ? 'serve' : s.wing;
         expect(at(0)!.kind).toBe(kind);
         expect(at(0)!.phase).toBeCloseTo(0.5, 9);
@@ -141,7 +181,7 @@ describe('playerPose', () => {
         expect(at(-0.1)!.phase).toBeLessThan(0.5);
         expect(at(0.1)!.phase).toBeGreaterThan(0.5);
         expect(at(0.5)).toBeNull();
-        expect(playerPose(tl, other(s.hitter), seg.zero + s.t, null).swing).toBeNull();
+        expect(playerPose(tl, other(s.hitter), seg.zero + s.t).swing).toBeNull();
       }
     }
   });
@@ -151,10 +191,10 @@ describe('playerPose', () => {
       const last = seg.point.shots.at(-1)!;
       const landed = seg.zero + last.t + last.flightSec;
       const { winner } = seg.point;
-      expect(playerPose(tl, winner, landed - 0.05, null).reaction).toBe('none');
-      expect(playerPose(tl, winner, landed + 0.2, null).reaction).toBe('celebrate');
-      expect(playerPose(tl, other(winner), landed + 0.2, null).reaction).toBe('dejected');
-      expect(playerPose(tl, winner, seg.next, null).reaction).toBe('none');
+      expect(playerPose(tl, winner, landed - 0.05).reaction).toBe('none');
+      expect(playerPose(tl, winner, landed + 0.2).reaction).toBe('celebrate');
+      expect(playerPose(tl, other(winner), landed + 0.2).reaction).toBe('dejected');
+      expect(playerPose(tl, winner, seg.next).reaction).toBe('none');
     }
   });
 
@@ -164,7 +204,7 @@ describe('playerPose', () => {
       const landed = seg.zero + last.t + last.flightSec;
       const end = Math.min(landed + RIG_MOTION.reactionSec, seg.next);
       const ramp = RIG_MOTION.reactionRampSec;
-      const weight = (t: number) => playerPose(tl, seg.point.winner, t, null).reactionWeight;
+      const weight = (t: number) => playerPose(tl, seg.point.winner, t).reactionWeight;
       expect(weight(landed + 1e-6)).toBeLessThan(0.01);
       if (end - landed > 2 * ramp) expect(weight(landed + ramp)).toBeCloseTo(1, 9);
       expect(weight(end - 1e-6)).toBeLessThan(0.01);
@@ -175,9 +215,9 @@ describe('playerPose', () => {
     const seg = tl.segments.find((s) => s.point.shots.length > 4)!;
     const s = seg.point.shots[2]!;
     const mid = seg.zero + (s.t + seg.point.shots[3]!.t) / 2;
-    const pose = playerPose(tl, s.hitter, mid, null);
+    const pose = playerPose(tl, s.hitter, mid);
     expect(pose.speed).toBeGreaterThan(0);
-    expect(playerPose(tl, 'A', tl.totalSec, null).speed).toBe(0);
+    expect(playerPose(tl, 'A', tl.totalSec).speed).toBe(0);
   });
 });
 
@@ -185,10 +225,10 @@ describe('playerPose body language (mannequin rig)', () => {
   const tl = buildTimeline(match(2, 'clay'));
   const seg = tl.segments.find((s) => s.point.shots.filter((x) => x.outcome !== 'fault').length >= 5)!;
   const rally = seg.point.shots.filter((x) => x.outcome !== 'fault');
-  const at = (id: PlayerId, tau: number) => playerPose(tl, id, seg.zero + tau, null);
+  const at = (id: PlayerId, tau: number) => playerPose(tl, id, seg.zero + tau);
 
   it('walks or runs with a gait that grows with speed and stops when standing', () => {
-    const still = playerPose(tl, 'A', tl.totalSec, null);
+    const still = playerPose(tl, 'A', tl.totalSec);
     expect(still.gait.amount).toBe(0);
     const moving = [...Array(200).keys()].map((k) => at(rally[2]!.hitter, rally[1]!.t + (k / 200) * (rally[2]!.t - rally[1]!.t)));
     const fastest = moving.reduce((a, b) => (b.speed > a.speed ? b : a));
