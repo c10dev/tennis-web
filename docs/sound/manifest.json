@@ -33,7 +33,7 @@
   "trim": {
     "oneShot": "Remove leading silence (silenceremove=start_periods=1:start_threshold=-45dB) so the transient starts within the first 5 ms; cut to keepSec; 15 ms fade-out; no fade-in",
     "crowd": "50 ms fade-in; keep the swell's natural rise; fade out over the last 0.6 s",
-    "loop": "Seamless loop: take keepSec + 0.5 s from a steady stretch, equal-power crossfade the last 0.5 s over the first 0.5 s, drop the first 0.5 s; check by looping it in an audio player for a click or level jump",
+    "loop": "Seamless loop with 50 ms margins: the mixer loops from 0.05 s to (duration - 0.05 s), clear of codec padding. Take keepSec + 0.5 s from a steady stretch, equal-power crossfade its last 0.5 s over its first 0.5 s and drop the first 0.5 s, giving a loop L of keepSec seconds whose end runs into its start; then write the file as [last 50 ms of L] + L + [first 50 ms of L] (keepSec + 0.1 s long). Check by looping L in an audio player for a click or level jump",
     "sting": "Remove leading silence; 200 ms fade-out; must end by keepSec"
   },
   "sounds": [
