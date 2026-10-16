@@ -169,6 +169,11 @@ export const QUICK = {
   surfaces: ['hard', 'clay', 'grass'],
 } as const;
 
+/** The quick save (ADR-026): how many of the last matches keep their recipe; older ones keep a summary. */
+export const QUICK_SAVE = {
+  recipes: 5,
+} as const;
+
 /** How a quick match is shown (ADR-017). A point without cards: its last `autoClipSec` in 3D at `autoSpeed`, then a
  *  ticker beat of `autoSec` (fast mode: the beat only). A decision point: the card reveal, the whole point (its last
  *  `keyMaxSec` at most) at `speed`, and the score. The UI plays exactly these windows; the balance report adds them up. */

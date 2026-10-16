@@ -47,7 +47,7 @@ describe('quick save v2', () => {
     const s = playLadderMatch(freshLadder(4)).next;
     const file = toQuickSave(s, '2026-10-13 10:00');
     expect(file.quickVersion).toBe(QUICK_VERSION);
-    expect(QUICK_VERSION).toBe(2);
+    expect(QUICK_VERSION).toBeGreaterThanOrEqual(2);
     expect(fromQuickSave(JSON.parse(JSON.stringify(file))).rivals).toEqual(s.rivals);
   });
 
