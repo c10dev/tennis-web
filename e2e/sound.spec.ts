@@ -1,7 +1,12 @@
+import { readdirSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 // Sound in the quick match (ADR-022, M7 step 6): one on/off setting, remembered; sound starts on the Play tap,
-// stops when the page goes to the background and comes back on return.
+// stops when the page goes to the background and comes back on return. The generated samples (ADR-027) load on
+// that tap, never before, and the game plays on (synthesised) when they are missing.
+
+/** The samples on disk: until the generated files land, only the notice, and the loader is expected to fail quietly. */
+const samplesOnDisk = readdirSync(new URL('../ui/public/audio/', import.meta.url)).filter((f) => f.endsWith('.ogg'));
 
 async function startLadder(page: Page) {
   await page.goto('/#/quick');
@@ -50,6 +55,25 @@ test.describe('quick-match sound', () => {
     await setHidden(page, true);
     await setHidden(page, false);
     await expect.poll(() => page.evaluate(() => document.body.dataset.audio)).toBe('off');
+    expect(errors).toEqual([]);
+  });
+
+  test('loads the samples on the Play tap, not before, one Opus file each', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const requests: string[] = [];
+    page.on('request', (r) => {
+      const path = new URL(r.url()).pathname;
+      if (/\/audio\/[^/]+\.(ogg|m4a)$/.test(path)) requests.push(path);
+    });
+    await startLadder(page);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.audioSamples)).toBe('none');
+    expect(requests).toEqual([]);
+    await page.locator('#quick-play').click();
+    await expect.poll(() => page.evaluate(() => document.body.dataset.audioSamples), { timeout: 15_000 })
+      .toMatch(samplesOnDisk.length === 12 ? /^ready$/ : /^(partial|failed)$/);
+    expect(requests).toHaveLength(12);
+    for (const r of requests) expect(r).toMatch(/\/audio\/[a-z-]+\.ogg$/);
     expect(errors).toEqual([]);
   });
 });
