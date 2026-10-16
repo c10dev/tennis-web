@@ -48,4 +48,5 @@ export const enUi: UiText = {
   playAgain: 'Play again',
   ladder: 'Ladder',
   skipHint: 'Click, Space or Enter to skip',
+  skipHintTouch: 'Tap to skip',
 };

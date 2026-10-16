@@ -40,7 +40,17 @@
   --font-body: 'Nunito', 'Pretendard', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-tv: 'Barlow Condensed', 'Roboto Condensed', 'Arial Narrow', sans-serif;
   color-scheme: light;
+  /* Phones (ADR-022): the safe area (notch, home bar; Toss reports its own values), and the top-right corner kept free
+     for Toss's close and more buttons (none on the web). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --nav-reserve: 0px;
+  --gutter: 16px;
 }
+:root[data-target='toss'] { --nav-reserve: 104px; }
+@media (max-width: 640px) { :root { --gutter: 10px; } }
 
 /* Paper surfaces: ink text, and the surface tokens re-pointed for white. */
 .paper, .card, .card-btn, .chip, .gain, .decisive, .overtake, .match-panel, .note-banner, header.top,
@@ -68,10 +78,10 @@ a { color: var(--link); }
 
 button, select, input { font: inherit; background: var(--paper); border: 2px solid var(--ink); border-radius: 10px; padding: 4px 10px; }
 button { cursor: pointer; font-weight: 800; box-shadow: 0 3px 0 var(--ink); }
-button:hover { background: var(--paper-2); }
+@media (hover: hover) { button:hover { background: var(--paper-2); } }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.primary { background: var(--optic); }
-button.primary:hover { background: #e2fa6a; }
+@media (hover: hover) { button.primary:hover { background: #e2fa6a; } }
 button.big { font: 400 22px/1.1 var(--font-display); letter-spacing: 0.02em; padding: 10px 30px; border-width: 3px; border-radius: 14px;
   box-shadow: var(--lift); }
 input[type='checkbox'], input[type='range'] { accent-color: var(--court-2); }

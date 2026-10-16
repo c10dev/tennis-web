@@ -785,6 +785,19 @@ Format: one entry per decision, newest at the bottom.
     syllables, about 270 KB each) are self-hosted unmodified, as the OFL reserves the name. They join the body and
     display stacks behind Nunito and Lilita One with a Hangul-only `unicode-range`, so Latin and digits keep the
     Rally Pop faces and an English page never fetches them (an e2e test checks); a Korean page preloads both.
+  - **Phones (step 4).** The viewport covers the notch (`viewport-fit=cover`) without pinch zoom. `theme.css` has
+    `--safe-top/right/bottom/left` (CSS `env()` by default; in Toss `followSafeArea` writes the SDK's insets) and
+    `--nav-reserve`, the top-right corner kept free for Toss's close and more buttons (104 px in the toss build,
+    0 on the web; `:root[data-target]`). `ui/src/quick/phone.css` (imported last, `max-width: 640px`) lays the
+    match out in portrait: the 3D stage is the top 60dvh, the panel is pinned to the bottom and always fills the
+    area under the stage (a short reveal sits in its middle, a tall decision panel rises over the stage's edge),
+    the three cards stay in one row without key numbers, and the score bug, the broadcast graphics and the sound
+    toggle sit on the stage inside the safe area, clear of the Toss corner. The shell header and page pad for the
+    safe area and the corner; touch targets are at least 44 px; the result keeps its three tiles side by side.
+    Hover lifts and fills only apply under `(hover: hover)` (a touch browser keeps `:hover` on the last tap), the
+    result says "탭해서 건너뛰기" / "Tap to skip" on a coarse pointer, and a card's score in "Their cards" is shown,
+    not a title tooltip. A `mobile` Playwright project (Pixel 7, touch) checks the toss build for overlaps, side
+    scrolling, the Toss corner, touch-target sizes and the stuck hover.
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
   gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. Untested on a device until the console
   registration (TD-049).

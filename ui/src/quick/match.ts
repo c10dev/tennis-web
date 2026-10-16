@@ -75,7 +75,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       h('div', { class: 'cards' }, cardChoices(qm!, T).map((c, i) => h('button', { class: `card-btn ${c.card} is-dealt`, id: `card-${c.card}`, onclick: () => void choose(c.card) },
         h('span', { class: 'key' }, String(i + 1)), h('strong', null, cardIcon(c.card), ' ', c.label), h('span', { class: 'flavour' }, c.flavour),
         h('span', { class: 'rule' }, U.beats(T.card[c.beats])),
-        h('span', { class: 'strength', title: U.strengthHint }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
+        h('span', { class: 'strength', title: U.strengthHint, role: 'img', 'aria-label': U.strengthHint }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
     phase('choose');
   }

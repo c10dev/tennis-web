@@ -8,7 +8,7 @@ export function renderRead(read: OpponentRead): HTMLElement {
   return h('div', { class: 'read', id: 'opponent-read' },
     h('span', { class: 'scouting', id: 'scouting' }, read.scouting),
     read.history.length ? h('span', { class: 'history', id: 'their-cards' }, h('span', { class: 'label' }, U.theirCards),
-      read.history.map((x) => h('span', { class: `chip ${x.card}`, title: U.atScore(x.score) }, cardIcon(x.card, 14), ` ${T.card[x.card]}`))) : null,
+      read.history.map((x) => h('span', { class: `chip ${x.card}`, title: U.atScore(x.score) }, cardIcon(x.card, 14), ` ${T.card[x.card]} `, h('small', { class: 'at' }, x.score)))) : null,
     read.tell ? h('span', { class: 'tell', id: 'tell' }, icon('eye', 16), h('span', { class: 'label' }, U.tell), read.tell) : null,
     read.rival ? h('span', { class: 'rival', id: 'rival' }, read.rival) : null);
 }

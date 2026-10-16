@@ -3,6 +3,8 @@
 .read .scouting { color: var(--muted); flex-basis: 100%; }
 .read .history { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 .read .history .chip { font-size: 13px; padding: 1px 9px; }
+/* The score each card came at, shown (a title tooltip needs a hover a touch screen does not have). */
+.read .history .chip .at { color: var(--ink-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .read .label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; font-style: normal; }
 /* The tell: one eye icon in optic, the line in white on a lighter band of the court. */
 .read .tell { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.12);

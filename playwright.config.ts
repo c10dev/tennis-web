@@ -14,8 +14,10 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: `http://localhost:${PORT}`, viewport: { width: 1280, height: 720 } },
   projects: [
-    { name: 'chromium', testIgnore: /toss\.spec\.ts/, use: desktop },
+    { name: 'chromium', testIgnore: /(toss|mobile)\.spec\.ts/, use: desktop },
     { name: 'toss', testMatch: /toss\.spec\.ts/, use: { ...desktop, baseURL: `http://localhost:${TOSS_PORT}` } },
+    // A phone in portrait with touch (M7 step 4) on the toss build.
+    { name: 'mobile', testMatch: /mobile\.spec\.ts/, use: { ...devices['Pixel 7'], baseURL: `http://localhost:${TOSS_PORT}` } },
   ],
   webServer: [
     { command: `npx vite --port ${PORT} --strictPort`, url: `http://localhost:${PORT}`, reuseExistingServer: false },

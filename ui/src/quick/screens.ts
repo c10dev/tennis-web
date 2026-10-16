@@ -8,6 +8,7 @@ import './quick-match.css';
 import './quick-result.css';
 import './quick-scout.css';
 import './motion.css';
+import './phone.css';
 
 export function quickScreen(ctx: Ctx, params: string[]): Screen | Promise<Screen> {
   if (params[0] === 'match') return quickMatchScreen(ctx);

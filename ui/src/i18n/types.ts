@@ -46,4 +46,5 @@ export interface UiText {
   playAgain: string;
   ladder: string;
   skipHint: string;
+  skipHintTouch: string;
 }

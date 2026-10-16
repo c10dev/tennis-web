@@ -20,7 +20,9 @@
 .card-btn { transition: transform var(--dur-short) ease-out, opacity var(--dur-short) ease-out; }
 .card-btn.is-dealt { animation: card-deal 360ms var(--ease-back) calc(120ms + var(--i, 0) * var(--stagger-deal)) backwards; }
 @keyframes card-deal { from { transform: translateY(56px) scale(0.9) rotate(-2deg); opacity: 0; } }
-.card-btn:hover, .card-btn:focus-visible { transform: translateY(-12px) scale(1.05); }
+/* The lift follows focus, and hover only where there is one (a touch screen keeps :hover on the last tap). */
+.card-btn:focus-visible { transform: translateY(-12px) scale(1.05); }
+@media (hover: hover) { .card-btn:hover { transform: translateY(-12px) scale(1.05); } }
 .cards.is-picked .card-btn.is-selected { transform: translateY(-24px) scale(1.08); }
 .cards.is-picked .card-btn:not(.is-selected) { transform: scale(0.96); opacity: 0.5; }
 

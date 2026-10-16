@@ -7,6 +7,7 @@ import { IndexedDbStore } from '../storage/indexedDb.ts';
 import { landingFor, routesFor, TARGET } from '../target.ts';
 import { getPlatform } from '../platform/index.ts';
 import { LANG, U } from '../i18n/index.ts';
+import { followSafeArea } from '../lib/safe-area.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
 import { homeScreen } from './screens/home.ts';
@@ -142,8 +143,12 @@ async function render(): Promise<void> {
 }
 
 window.addEventListener('hashchange', () => void render());
-// The game is portrait-only in Toss (ADR-022); the web platform ignores this.
-void getPlatform().then((p) => p.lockPortrait());
+// The game is portrait-only in Toss (ADR-022), and follows Toss's safe area; the web platform ignores both.
+document.documentElement.dataset.target = TARGET;
+void getPlatform().then((p) => {
+  followSafeArea(p, document.documentElement);
+  return p.lockPortrait();
+});
 document.title = 'TennisSim';
 document.documentElement.lang = LANG;
 // Korean pages need Pretendard at once (the CSS fetches it only when Hangul is laid out); the path is relative to

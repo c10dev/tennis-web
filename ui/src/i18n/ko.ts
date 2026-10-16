@@ -47,5 +47,6 @@ export const koUi: UiText = {
   nextGoal: '다음 목표',
   playAgain: '한 판 더',
   ladder: '래더',
-  skipHint: '탭하거나 Space·Enter로 건너뛰기',
+  skipHint: '클릭하거나 Space·Enter로 건너뛰기',
+  skipHintTouch: '탭해서 건너뛰기',
 };

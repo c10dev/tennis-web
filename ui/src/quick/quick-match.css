@@ -1,5 +1,5 @@
 /* The quick match screen (ADR-017), Rally Pop look (ADR-020): a court-blue panel with sticker cards. */
-.quick-match.fast { min-height: 100vh; background: radial-gradient(circle at 50% 30%, var(--court-2), var(--court) 70%); }
+.quick-match.fast { min-height: 100dvh; background: radial-gradient(circle at 50% 30%, var(--court-2), var(--court) 70%); }
 .quick-panel { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5; width: min(780px, calc(100vw - 32px));
   background: rgba(18, 58, 140, 0.95); border: var(--outline); border-radius: 18px; padding: 14px 18px 18px; box-shadow: 0 6px 0 var(--ink); }
 .quick-match.fast .quick-panel { bottom: auto; top: 24vh; }
@@ -24,7 +24,7 @@
 .card-btn .rule { color: var(--ink-muted); font-size: 13px; }
 .card-btn .strength { height: 10px; margin-top: 4px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; }
 .card-btn .strength .fill { display: block; height: 100%; background: var(--c); }
-.card-btn:hover { background: var(--paper); box-shadow: 0 7px 0 var(--ink); }
+@media (hover: hover) { .card-btn:hover { background: var(--paper); box-shadow: 0 7px 0 var(--ink); } }
 .card-btn:focus-visible { outline: 3px solid var(--optic); outline-offset: 3px; }
 /* The reveal: both cards as chips, the verdict as a sticker word with its symbol. */
 .reveal { display: grid; gap: 10px; justify-items: center; text-align: center; }
