@@ -63,5 +63,7 @@
     const p = new THREE.Vector3(l.x, l.y, 0).project(cam);
     add('label', { left: `${((p.x + 1) / 2) * w}px`, top: `${((1 - p.y) / 2) * h - 4}px` }, `${l.text}${l.sub ? `<small>${l.sub}</small>` : ''}`);
   }
+  const { calls, triangles } = renderer.info.render;
+  Object.assign(document.body.dataset, { calls: String(calls), triangles: String(triangles) });
   document.body.dataset.ready = Object.keys(FRAMES).join(',');
 </script>
