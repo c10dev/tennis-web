@@ -24,7 +24,8 @@ export const PLAYER_RIG = {
   /** Uniform scale on the head bone (a leaf: nothing below it can shear): about three heads tall. */
   headScale: 0.57,
   /** Grip to racket-head centre, head radius and its width share, metres. */
-  racket: { length: 0.68, headRadius: 0.16, headAspect: 0.8 },
+  /** `handleRadius`: thick enough to read at chase distance (TD-063; 0.02 m vanished there). */
+  racket: { length: 0.68, headRadius: 0.16, headAspect: 0.8, handleRadius: 0.032 },
   /** The arm may lengthen by this share near contact (child bones slide out along it: no shear), squash-and-stretch. */
   stretchMax: 0.15,
   /** Racket-head centre at full stretch straight up, standing: shoulders 1.09 m + arm 0.576 m × 1.15 + racket 0.68 m.

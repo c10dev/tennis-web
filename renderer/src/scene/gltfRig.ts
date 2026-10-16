@@ -34,7 +34,7 @@ function racket(): Group {
   g.name = 'racket';
   // Handle and throat run from just below the grip to the head's rim.
   const shaft = R.length - R.headRadius + 0.08;
-  const handle = new Mesh(new CylinderGeometry(0.02, 0.024, shaft, 6), lit(COLOURS.racket));
+  const handle = new Mesh(new CylinderGeometry(R.handleRadius, R.handleRadius * 1.15, shaft, 8), lit(COLOURS.racket));
   handle.position.y = shaft / 2 - 0.08;
   const head = new Mesh(new CylinderGeometry(R.headRadius, R.headRadius, 0.022, 16), lit(COLOURS.strings));
   head.name = 'racket-head';
