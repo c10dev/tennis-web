@@ -6,7 +6,9 @@
 import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
+import { getAudio } from '../audio/session.ts';
 import { T, U } from '../i18n/index.ts';
+import { buzz } from '../lib/haptics.ts';
 import { h } from '../lib/h.ts';
 import { countUp, createSequence, onSkipInput, prefersReducedMotion, signed, stagger, type Sequence } from '../lib/motion.ts';
 
@@ -22,6 +24,7 @@ export function quickResult(ctx: Ctx): Screen {
     return { element: h('div') };
   }
   const v = quickResultView(ctx.quick, T);
+  buzz(v.won ? 'win' : 'loss');
   const record = ctx.quick.history.at(-1)!;
   const again = () => {
     ctx.quickMatch = startQuick(ctx.quick!);
@@ -119,14 +122,14 @@ export function quickResult(ctx: Ctx): Screen {
   /** The decisive point in 3D, full screen with the line as a caption; removed when it ends or on skip. */
   async function replay3d(s: Sequence) {
     const stage = h('div', { class: 'decisive-replay', id: 'decisive-replay' });
-    const caption = h('div', { class: 'replay-caption' }, h('span', { class: 'kicker' }, `The decisive point · ${v.decisive.score}`), h('strong', null, v.decisive.line));
+    const caption = h('div', { class: 'replay-caption' }, h('span', { class: 'kicker' }, `${U.decisivePoint} · ${v.decisive.score}`), h('strong', null, v.decisive.line));
     element.append(stage);
     const { mountBroadcast } = await import('../replay/broadcast.ts');
     if (s.skipped) {
       stage.remove();
       return;
     }
-    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true });
+    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: getAudio().mixer });
     stage.append(caption);
     let open = true;
     const close = () => {

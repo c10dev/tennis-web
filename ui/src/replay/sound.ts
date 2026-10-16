@@ -4,6 +4,8 @@ import { createMixer, type Bus, type Mixer } from '@tennis/renderer';
 export interface Sound {
   /** The mixer while sound is on; null when off or never started. */
   readonly mixer: Mixer | null;
+  /** Closes the mixer this panel made, muted or not. */
+  dispose(): void;
 }
 
 const BUSES: [Bus, string][] = [['master', 'Master'], ['sfx', 'Ball'], ['crowd', 'Crowd'], ['umpire', 'Umpire']];
@@ -30,6 +32,10 @@ export function createSound(root: HTMLElement): Sound {
   return {
     get mixer() {
       return mixer && !mixer.muted ? mixer : null;
+    },
+    dispose() {
+      mixer?.dispose();
+      mixer = null;
     },
   };
 }

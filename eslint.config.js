@@ -71,7 +71,7 @@ export default tseslint.config(
         'error',
         {
           patterns: [
-            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*'], message: 'Import workspace packages by name.' },
+            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*', '!@tennis/renderer/audio'], message: 'Import workspace packages by name (or @tennis/renderer/audio, the mixer without Three.js).' },
           ],
         },
       ],

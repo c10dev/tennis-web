@@ -8,7 +8,10 @@ import {
   tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
+import { getAudio } from '../audio/session.ts';
+import { soundToggle } from '../audio/toggle.ts';
 import { T, U } from '../i18n/index.ts';
+import { buzz } from '../lib/haptics.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
 import { stagger } from '../lib/motion.ts';
@@ -30,8 +33,11 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   }
   const stage = h('div');
   const panel = h('div', { class: 'quick-panel', id: 'quick-panel' });
-  const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel);
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true });
+  // Sound only plays with the 3D clips, so the switch only shows with them.
+  const sound = ctx.fastMode ? null : soundToggle();
+  const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel, sound?.element);
+  const audio = getAudio();
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: audio.mixer });
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
   let disposed = false;
@@ -83,6 +89,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   async function choose(card: Card) {
     if (busy || !qm!.pending) return;
     busy = true;
+    buzz('pick');
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point, T);
     phase('reveal');
@@ -95,6 +102,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     const reveal = revealElement(r, opponent);
     panel.replaceChildren(reveal);
     await playReveal(reveal, () => !disposed);
+    if (!disposed) buzz(r.matchup === 'won' ? 'read' : r.matchup === 'lost' ? 'misread' : 'same');
     if (broadcast && !disposed) {
       load();
       phase('clip');
@@ -132,6 +140,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     dispose: () => {
       disposed = true;
       window.removeEventListener('keydown', onKey);
+      sound?.dispose();
       broadcast?.dispose();
     },
   };

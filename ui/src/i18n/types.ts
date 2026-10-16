@@ -47,4 +47,6 @@ export interface UiText {
   ladder: string;
   skipHint: string;
   skipHintTouch: string;
+  soundOn: string;
+  soundOff: string;
 }

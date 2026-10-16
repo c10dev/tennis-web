@@ -809,6 +809,20 @@ Format: one entry per decision, newest at the bottom.
     framing.ts) keeps every camera a minimum width across: the side camera 46°, the close-ups 32°
     (`closeMinHorizontalFov`), the main camera 46° easing to its portrait 27°; nothing changes at 16:9. The viewer
     now rebuilds the projection when the aspect changes too (it only did on a field-of-view change).
+  - **Sound, background, haptics (step 6).** The quick match shares one mixer through an audio session
+    (`ui/src/audio/session.ts`) instead of each broadcast's slider panel (`mountBroadcast({ audio })`; the replay
+    page and the season mode keep their panel, which now closes its mixer even when muted). One on/off setting
+    (`tennis-sound` in the platform settings, on by default) is shown by one switch, `#sound-toggle`, on the ladder
+    and over the 3D match, left of the Toss corner (icon only on a phone). The mixer is made inside the Play tap or
+    the switch's tap (iOS starts audio only from a gesture); a hidden page (`visibilitychange`, `pagehide`)
+    suspends the audio context at once, a return resumes it if sound is on, and a resume the browser refuses is
+    retried on the next tap. `Mixer` gained `suspend()`, `resume()` and `state`. The plan put the switch on Toss's
+    accessory button, but its monotone icon names cannot be checked without a device, so it is an in-screen button
+    for now (TD-054). Haptics (`ui/src/lib/haptics.ts`): tap on a pick, success on a read, error on a misread, tap on
+    the same card, confetti on a win, basicMedium on a loss; the web platform ignores them. The session imports the
+    mixer through a new `@tennis/renderer/audio` entry (package `exports`, allowed in lint), so the first chunk
+    still has no Three.js (TD-014); the career e2e check now looks for Three.js and the broadcast modules by path.
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
-  gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. Untested on a device until the console
+  gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. The first chunk carries the mixer (22 KB,
+  9 KB gzip). Untested on a device until the console
   registration (TD-049).

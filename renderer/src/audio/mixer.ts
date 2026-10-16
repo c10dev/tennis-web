@@ -13,6 +13,11 @@ export interface Mixer {
   volume(bus: Bus): number;
   setMuted(muted: boolean): void;
   readonly muted: boolean;
+  /** Stops all audio at once (the page went to the background); resume() brings it back. */
+  suspend(): Promise<void>;
+  resume(): Promise<void>;
+  /** The audio context's state: 'running', 'suspended' (or 'closed' after dispose). */
+  readonly state: AudioContextState;
   dispose(): void;
 }
 
@@ -121,6 +126,14 @@ export function createMixer(): Mixer {
     },
     get muted() {
       return muted;
+    },
+    suspend() {
+      voice.cancel();
+      return ctx.suspend();
+    },
+    resume: () => ctx.resume(),
+    get state() {
+      return ctx.state;
     },
     dispose() {
       voice.cancel();

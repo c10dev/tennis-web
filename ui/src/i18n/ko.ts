@@ -49,4 +49,6 @@ export const koUi: UiText = {
   ladder: '래더',
   skipHint: '클릭하거나 Space·Enter로 건너뛰기',
   skipHintTouch: '탭해서 건너뛰기',
+  soundOn: '소리 켬',
+  soundOff: '소리 끔',
 };

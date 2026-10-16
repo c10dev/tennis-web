@@ -70,7 +70,8 @@ test.describe('phone layout (toss build)', () => {
     expect(bug.y).toBeGreaterThanOrEqual(t.safeTop);
     expect(overlaps(bug, panel)).toBe(false);
     expect(overlaps(bug, tossCorner(t))).toBe(false);
-    const sound = await box(page.locator('#sound'));
+    const sound = await box(page.locator('#sound-toggle'));
+    expect(sound.height).toBeGreaterThanOrEqual(44);
     for (const other of [panel, bug, tossCorner(t)]) expect(overlaps(sound, other)).toBe(false);
     await noSideScroll(page);
     // A tap picks the card; no hover lift sticks on a touch screen.

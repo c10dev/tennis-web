@@ -1,9 +1,10 @@
 // The broadcast player: canvas, score bug, graphics, sound and transport for one programme. Used by the replay
-// page and the career match screen; dispose() removes it and its listeners.
+// page, the career match screen and the quick match (with the shared audio session); dispose() removes it and its
+// listeners.
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type ViewMode,
+  type Mixer, type ViewMode,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
@@ -27,6 +28,8 @@ export interface BroadcastOptions {
   bare?: boolean;
   /** After every drawn frame. */
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
+  /** A shared mixer (the quick match's audio session, ADR-022) instead of this player's own sound panel. */
+  audio?(): Mixer | null;
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
@@ -35,7 +38,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   document.body.classList.add('broadcast-page');
   const canvas = Object.assign(document.createElement('canvas'), { id: 'view' });
   const [score, graphics, soundRoot, controlsRoot] = ['score', 'graphics', 'sound', 'controls'].map(div) as [HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLDivElement];
-  root.append(canvas, score, graphics, soundRoot);
+  root.append(canvas, score, graphics);
+  if (!options.audio) root.append(soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
   let clipWindow: { end: number; speed: number; done: () => void } | null = null;
@@ -43,7 +47,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   score.append(scoreBug.element);
   const overlays = createOverlays();
   graphics.append(overlays.element);
-  const sound = createSound(soundRoot);
+  const sound = options.audio ? null : createSound(soundRoot);
+  const mixer = () => (options.audio ? options.audio() : sound!.mixer);
 
   let mode = options.mode;
   let programme: Programme | null = null;
@@ -81,7 +86,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const before = clock.t;
       if (clipWindow) {
         clock = { ...clock, t: Math.min(clipWindow.end, clock.t + Math.min(dt, 0.25) * clipWindow.speed) };
-        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) sound.mixer.play(cue);
+        const m = mixer();
+        if (m) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) m.play(cue);
         if (clock.t >= clipWindow.end) {
           const { done } = clipWindow;
           clipWindow = null;
@@ -89,7 +95,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         }
       } else {
         clock = clockReducer(programme, clock, { type: 'tick', dt });
-        if (sound.mixer && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) sound.mixer.play(cue);
+        const m = mixer();
+        if (m && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) m.play(cue);
       }
       const frame = broadcastFrameAt(programme, clock.t);
       viewer.render(frame, dt);
@@ -140,7 +147,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       clipWindow = null;
       cancelAnimationFrame(raf);
       controls?.dispose();
-      sound.mixer?.dispose();
+      sound?.dispose();
       viewer?.dispose();
       root.replaceChildren();
       document.body.classList.remove('broadcast-page');

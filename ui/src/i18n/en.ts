@@ -49,4 +49,6 @@ export const enUi: UiText = {
   ladder: 'Ladder',
   skipHint: 'Click, Space or Enter to skip',
   skipHintTouch: 'Tap to skip',
+  soundOn: 'Sound on',
+  soundOff: 'Sound off',
 };

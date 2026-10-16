@@ -26,3 +26,8 @@ ul.recent .lost { color: var(--loss); }
 .plan-btn { flex: 1; min-width: 96px; padding: 7px 10px; }
 .plan-btn.selected, .plan-btn.selected:hover { background: var(--court); color: var(--paper); }
 .plan-line { font-size: 13px; }
+/* The sound switch (ADR-022): on the ladder above the rank card, over the match at the top right (left of the
+   corner Toss keeps for its buttons). */
+.home-tools { display: flex; justify-content: flex-end; margin-bottom: -6px; }
+.sound-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.quick-match .sound-switch { position: fixed; z-index: 6; top: calc(var(--safe-top) + 16px); right: calc(var(--safe-right) + var(--nav-reserve) + 16px); }

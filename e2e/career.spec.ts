@@ -144,6 +144,7 @@ test.describe('career', () => {
     });
     await newCareer(page);
     expect(scripts.some((u) => /career\/app/.test(u))).toBe(true);
-    expect(scripts.some((u) => /three|broadcast/.test(u))).toBe(false);
+    // Three.js, the renderer's broadcast modules and the broadcast player; the mixer's tuning constants may load (ADR-022).
+    expect(scripts.some((u) => /three|\/broadcast\/|replay\/broadcast/.test(u))).toBe(false);
   });
 });
