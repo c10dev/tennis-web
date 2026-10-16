@@ -38,7 +38,7 @@ export { PLANS, planTactic } from './quick/plan.ts';
 export { cardReward, displayRating, matchReward } from './quick/rewards.ts';
 export { decisiveMoment, highlightOf, type Highlight } from './quick/highlight.ts';
 export { fromQuickSave, QUICK_VERSION, toQuickSave, type QuickSave } from './quick/save.ts';
-export { broadcastSeconds, clipFor, decisive, pointSeconds } from './quick/pace.ts';
+export { broadcastSeconds, clipFor, clipSpeed, decisive, pointSeconds, showsImpact, type PaceStyle } from './quick/pace.ts';
 export type * from './quick/types.ts';
 export { quickHomeView } from './views/quick-home.ts';
 export { CARD_LABEL, cardChoices, decisionSituation, momentLabel, planChoices, revealView, scoreLine, tickerView } from './views/quick-match.ts';

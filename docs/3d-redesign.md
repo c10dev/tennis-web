@@ -401,7 +401,8 @@ director, impact programme and look), `npm run test:e2e` 45 passed (the producti
 
 **Left before the slice can be the default:**
 - TD-059: frame times on the user's phone, high and low tier (the desktop GPU is measured above).
-- TD-060: the quick match's pacing (decision points at 1×, card-less points as their last shot) in the game layer.
+- ~~TD-060: the quick match's pacing~~ done behind `?rig=gltf` (ADR-024 notes): decision points from their last three
+  shots, card-less points from their last, all at 1×; median 43 s a match.
 - TD-061: the decision hold shows the opponent mid-reaction; seek the hold to their ready stance with the tell.
 - TD-062: both players wear KayKit's Rogue outfit; kit palette swap per player, then the final look (modified
   KayKit, a TRELLIS draft on the B200 re-skinned to this skeleton, Tripo, or a commission).

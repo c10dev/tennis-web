@@ -1057,4 +1057,13 @@ Format: one entry per decision, newest at the bottom.
   today at high tier (1.0 against 0.7 at low), with at most 74 draws / 19.3k triangles at the chase camera against
   116 / 6.1k at today's main camera. The desktop half of TD-059 is done; the phone half decides whether high stays
   the phone default (docs/3d-redesign.md §9).
+- **After the slice: the game pace (TD-060, 2026-10-16).** `game/src/quick/pace.ts` takes a `PaceStyle`: `'tv'`
+  (today's sped-up clips, the default) or `'game'`, which the quick match uses with `?rig=gltf`. The game pace plays
+  every point at 1× (`clipSpeed`) and shows less of it (`clipFor(p, 'game')`): a decision point from 0.7 s before
+  its third-last contact, a point without cards from 0.7 s before its last (the toss when that contact is the serve),
+  still capped at `keyMaxSec`. The pace model counts the impact moment's 1.57 s where the renderer splices it in
+  (`showsImpact`: an ace or winner on a big or decisive point, not right after another); a ui test checks that rule
+  and those seconds against the bare game-style programme over 40 tiebreaks, since the game layer cannot import the
+  renderer. Median screen time over 2,000 matches: 43 s at the game pace, 23 s at the TV pace (target ≤ 60 s;
+  `npm run quick` and `test:quick` report and guard both).
 

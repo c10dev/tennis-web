@@ -186,6 +186,12 @@ export const QUICK_PACE = {
   tossSec: 1,
   /** Even a decision point shows at most its last this-many seconds (a long point with a second serve runs 20 s+). */
   keyMaxSec: 8,
+  /** The game pace (ADR-024, TD-060), with the slice's skinned players: every point at 1×, less of each. A decision
+   *  point shows its last `keyShots` contacts, a point without cards its last; each window opens `leadSec` before
+   *  its first contact (a stroke's lead-in is 0.5 s) or at the toss when that is the serve. `impactSec` is the
+   *  screen time the renderer's impact moment adds: (0.15 + 0.35) s at 0.25× plus a 0.07 s hit-stop, less the
+   *  0.5 s it stands in for (renderer BROADCAST.impact). */
+  game: { keyShots: 3, leadSec: 0.7, impactSec: 1.57 },
 } as const;
 
 // ---- M6 (ADR-017). Each block belongs to one workstream: flow (TIEBREAK_RULES, QUICK_MOMENTS, QUICK_PLAN),
