@@ -14,7 +14,7 @@ const model = buildPlayerModel(readGlb(new Uint8Array(readFileSync(new URL('../.
 
 const pose = (over: Partial<PlayerPose> = {}): PlayerPose => ({
   pos: { x: 1, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 0,
-  gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, t: 0, stroke: null, ...over,
+  gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, t: 0, stroke: null, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, ...over,
 });
 
 function skinnedBox(rig: GltfRig): Box3 {

@@ -10,8 +10,9 @@ export const PLAYER_MODEL = {
     'upperarm.l', 'lowerarm.l', 'wrist.l', 'hand.l', 'upperarm.r', 'lowerarm.r', 'wrist.r', 'hand.r',
     'upperleg.l', 'lowerleg.l', 'foot.l', 'toes.l', 'upperleg.r', 'lowerleg.r', 'foot.r', 'toes.r',
   ],
-  /** Locomotion and reactions; strokes are effector keys, not clips (ADR-024). */
-  clips: ['Idle', 'Running_A', 'Running_Strafe_Left', 'Running_Strafe_Right', 'Walking_A', 'Walking_Backwards', 'Cheer', 'Hit_A'],
+  /** Locomotion and reactions; strokes are effector keys, not clips (ADR-024). KayKit's strafes run forward with a
+   * twist (their feet hardly move sideways), so sideways moves turn the legs instead (PLAYER_RIG.legTurnMax). */
+  clips: ['Idle', 'Running_A', 'Walking_A', 'Walking_Backwards', 'Cheer', 'Hit_A'],
   /** Ceiling on the committed glb (bytes, uncompressed). */
   maxBytes: 400_000,
 } as const;
@@ -31,6 +32,16 @@ export const PLAYER_RIG = {
   standingReach: 2.43,
   /** Contact the body cannot reach by leaning is met by shifting the whole body up to this far (feet slide: TD-058). */
   lungeMax: 0.9,
+  /** Metres travelled per cycle of each locomotion clip (measured from the clips by a test): the clip's phase is
+   * distance / stride, so feet in stance stay put (ADR-024). */
+  strides: { Running_A: 1.91, Walking_A: 0.58, Walking_Backwards: 0.54 },
+  /** Speeds (m/s) where walking starts and where the run has fully taken over (a narrow band: walk and run cycles
+   * blended at their own phases slide the feet); backpedalling only below `backMax`. */
+  gait: { moveFrom: 0.15, moveFull: 0.6, runFrom: 1.4, runFull: 2, backMax: 2.5 },
+  /** Moving sideways or back-diagonally, the hips and legs turn towards the move by up to this (radians) while the
+   * chest keeps facing; further round than `backFrom` the player backpedals instead. */
+  legTurnMax: 1.75,
+  backFrom: 2.0,
   /** Extra crouch for a low ball, metres. */
   dropMax: 0.15,
   /** Ring on the ground under *my* player (Mini Tennis's device), in the accent colour. */

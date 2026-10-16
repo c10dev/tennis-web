@@ -31,6 +31,8 @@ export interface StrokePose {
   hop: number;
   /** Key times in point seconds, for tests. */
   keyTimes: number[];
+  /** Where the feet plant (court x, y), and how firmly, 0–1. */
+  plant: { l: Vec2; r: Vec2; weight: number };
 }
 
 /** A court point in the frame of a player standing at `pos` facing `facing`. */
@@ -98,9 +100,25 @@ export function strokeAt(timeline: Timeline, id: PlayerId, t: number, pos: Vec2,
     const { riseSec, fallSec } = STROKE.serve;
     const hop = hopPeak * (tau < s.t ? smoothstep(1 - (s.t - tau) / riseSec) : smoothstep(1 - (tau - s.t) / fallSec));
     return {
-      kind, weight, keys: sample(keys, times, tau), contact: toLocal(s.from, pos, facing),
+      kind, weight, keys: sample(keys, times, tau), contact: toLocal(s.from, pos, facing), plant: plantAt(s, kind, tau),
       contactWeight: smoothstep(1 - Math.abs(tau - s.t) / (kind === 'serve' ? STROKE.serve.contactBlendSec : STROKE.contactBlendSec)), hop, keyTimes: times,
     };
   }
   return null;
 }
+
+/** The stroke's stance placed in the frame the player has at contact: at `hitterPos`, facing where the shot goes. */
+function plantAt(s: ShotEvent, kind: SwingKind, tau: number): StrokePose['plant'] {
+  const P = STROKE.plant;
+  const to = s.bounce ? { x: s.bounce.x - s.from.x, y: s.bounce.y - s.from.y } : { x: 0, y: -Math.sign(s.from.y) };
+  const n = Math.hypot(to.x, to.y) || 1;
+  const f = { x: to.x / n, y: to.y / n };
+  const at = ([x, z]: readonly [number, number]): Vec2 => ({ x: s.hitterPos.x - f.y * x + f.x * z, y: s.hitterPos.y + f.x * x + f.y * z });
+  const [l, r] = STROKE.stance[kind];
+  const t = tau - s.t;
+  const from = kind === 'serve' ? P.serveIn : P.in0;
+  const into = kind === 'serve' ? P.serveIn + 0.12 : P.in1;
+  const weight = t < P.hold ? smoothstep((t - from) / (into - from)) : 1 - smoothstep((t - P.hold) / (P.out - P.hold));
+  return { l: at(l), r: at(r), weight };
+}
+

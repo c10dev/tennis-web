@@ -29,15 +29,25 @@ interface Rest { quaternion: Quaternion; position: Vector3 }
 export const restPose = (bones: Record<string, Bone>): Map<Bone, Rest> =>
   new Map(Object.values(bones).map((b) => [b, { quaternion: b.quaternion.clone(), position: b.position.clone() }]));
 
-/** Pose the bones at time t from the clips with these weights (missing weights are 0). */
-export function sampleClips(clips: SampledClip[], weights: Record<string, number>, t: number, rest: Map<Bone, Rest>): void {
+/** One clip in the blend: its weight and the time (seconds into the clip, already looped or held by the caller). */
+export interface Layer { name: string; weight: number; time: number }
+
+/** Clip time for a looping clip at `phase` cycles (any real number). */
+export const loopTime = (clip: SampledClip | undefined, phase: number): number => (clip ? (phase - Math.floor(phase)) * clip.duration : 0);
+
+/**
+ * Pose the bones from the layers. Rotations blend by nlerp, each clip's quaternion taken on the rest pose's
+ * hemisphere so the result does not depend on clip order; weight short of 1 is filled with the rest pose.
+ */
+export function sampleClips(clips: SampledClip[], layers: Layer[], rest: Map<Bone, Rest>): void {
   const quats = new Map<Bone, { q: Quaternion; w: number }>();
   const positions = new Map<Bone, { p: Vector3; w: number }>();
   const q = new Quaternion();
-  for (const clip of clips) {
-    const w = weights[clip.name] ?? 0;
-    if (w <= 0) continue;
-    const time = clip.duration > 0 ? ((t % clip.duration) + clip.duration) % clip.duration : 0;
+  for (const layer of layers) {
+    const clip = clips.find((c) => c.name === layer.name);
+    const w = layer.weight;
+    if (!clip || w <= 0) continue;
+    const time = Math.min(Math.max(layer.time, 0), clip.duration);
     for (const c of clip.channels) {
       const v = c.interpolant.evaluate(time);
       if (c.position) {
@@ -49,15 +59,11 @@ export function sampleClips(clips: SampledClip[], weights: Record<string, number
         positions.set(c.bone, acc);
       } else {
         q.set(v[0]!, v[1]!, v[2]!, v[3]!);
-        const acc = quats.get(c.bone);
-        if (!acc) {
-          quats.set(c.bone, { q: new Quaternion(q.x * w, q.y * w, q.z * w, q.w * w), w });
-          continue;
-        }
-        // Blend on the same hemisphere, then normalise (nlerp).
-        const s = acc.q.dot(q) < 0 ? -w : w;
+        const acc = quats.get(c.bone) ?? { q: new Quaternion(0, 0, 0, 0), w: 0 };
+        const s = q.dot(rest.get(c.bone)!.quaternion) < 0 ? -w : w;
         acc.q.set(acc.q.x + q.x * s, acc.q.y + q.y * s, acc.q.z + q.z * s, acc.q.w + q.w * s);
         acc.w += w;
+        quats.set(c.bone, acc);
       }
     }
   }
@@ -65,8 +71,7 @@ export function sampleClips(clips: SampledClip[], weights: Record<string, number
     const qa = quats.get(bone);
     if (qa) {
       const left = Math.max(0, 1 - qa.w);
-      const s = qa.q.dot(r.quaternion) < 0 ? -left : left;
-      bone.quaternion.set(qa.q.x + r.quaternion.x * s, qa.q.y + r.quaternion.y * s, qa.q.z + r.quaternion.z * s, qa.q.w + r.quaternion.w * s).normalize();
+      bone.quaternion.set(qa.q.x + r.quaternion.x * left, qa.q.y + r.quaternion.y * left, qa.q.z + r.quaternion.z * left, qa.q.w + r.quaternion.w * left).normalize();
     } else bone.quaternion.copy(r.quaternion);
     const pa = positions.get(bone);
     if (pa) bone.position.copy(pa.p).addScaledVector(r.position, Math.max(0, 1 - pa.w));

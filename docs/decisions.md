@@ -991,4 +991,20 @@ Format: one entry per decision, newest at the bottom.
   twice). `scene/clipSampler.ts` samples the clips' interpolants at `pose.t` and blends them (nlerp, the rest pose for
   missing weight) on every apply, which makes every pose a pure function of time again. `ui/rig.html` (dev server
   only, not built) draws one player up close at chosen times around a shot, for tuning keys.
+- **Step 3, gait and plants (2026-10-16).** `distanceAt` (`playback/movement.ts`) gives the metres a player has
+  moved along the exact eased paths `positionAt` follows (each move's length times its trapezoid share, segment
+  offsets cached per timeline), so a locomotion clip's phase is `distance / stride`, closed-form. Strides are
+  measured from the clips by a test (the median slide of a foot in stance times the clip length): Running_A 1.91 m,
+  Walking_A 0.58 m, Walking_Backwards 0.54 m per cycle. KayKit's "strafe" clips run forward with a twist (their feet
+  move 5 mm sideways per cycle), so they were dropped from the model (326 KB, six clips); a sideways or diagonal run
+  turns the hips and legs towards the move (up to 1.75 rad) while the spine turns back so the chest keeps facing,
+  and further round than 2 rad below 2.5 m/s the player backpedals. Walk and run blend over 1.4–2 m/s only (two
+  cycles at their own phases slide the feet). Idle plays at replay time and the reactions from the landing
+  (`PlayerPose.reactionT`, held at the end). The split step lifts the whole body. Strokes plant the feet: the
+  planner places a stance per stroke (`STROKE.stance`) in the frame the player has at contact (`hitterPos`, facing
+  where the shot goes) and fades it in from 0.2 s before contact (a serve from its toss) to 0.15 s after, out by
+  0.32 s; the solver draws the clip's feet onto it, and a leg that cannot reach steps its foot in towards the hip.
+  `sampleClips` takes per-clip times and aligns quaternions against the rest pose (order-independent). Measured
+  per 60 fps frame on a foot in stance: running median 4.5 mm (the clip's own roll), walk median 5 mm, planted
+  median 0 with a p95 of 7–8 cm where a reach step drags a foot.
 

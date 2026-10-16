@@ -2,22 +2,30 @@
 // hull, a racket in the right hand, and locomotion clips sampled at replay time. Strokes (effector keys and IK) come
 // from `PlayerPose.stroke`, solved over the clips (strokeSolver.ts). Same `PlayerRig` interface as the mannequin.
 import {
-  CircleGeometry, CylinderGeometry, Group, Mesh, MeshBasicMaterial, MeshToonMaterial, type Bone, type Object3D, type Quaternion, type SkinnedMesh,
-  type Vector3,
+  CircleGeometry, CylinderGeometry, Group, Mesh, MeshBasicMaterial, MeshToonMaterial, Quaternion, Vector3, type Bone, type Object3D,
+  type SkinnedMesh,
 } from 'three';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { smoothstep } from '../math.ts';
+import { clamp, smoothstep } from '../math.ts';
 import type { PlayerPose } from '../playback/pose.ts';
-import { COLOURS, PLAYER_RIG, RIG, RIG_MOTION } from '../tuning/index.ts';
+import { COLOURS, PLAYER_RIG, RIG } from '../tuning/index.ts';
 import { groundToThree, yawFor } from './coords.ts';
 import { lit, toonGradient } from './materials.ts';
-import { bindClips, restPose, sampleClips, type SampledClip } from './clipSampler.ts';
+import { bindClips, loopTime, restPose, sampleClips, type Layer, type SampledClip } from './clipSampler.ts';
 import { addOutline, addSkinnedOutline } from './outline.ts';
 import type { PlayerModel } from './playerModel.ts';
 import type { PlayerRig } from './rig.ts';
 import { solveStroke, type Bones } from './strokeSolver.ts';
 
-type Clip = 'Idle' | 'Running_A' | 'Cheer' | 'Hit_A';
+type Clip = 'Idle' | 'Running_A' | 'Walking_A' | 'Walking_Backwards' | 'Cheer' | 'Hit_A';
+const UP = new Vector3(0, 1, 0);
+
+/** Angle of the run from the facing direction (radians, + towards the player's left), 0 when standing. */
+function moveAngle(pose: PlayerPose): number {
+  if (pose.speed < 1e-3) return 0;
+  const a = Math.atan2(pose.velocity.y, pose.velocity.x) - Math.atan2(pose.facing.y, pose.facing.x);
+  return Math.atan2(Math.sin(a), Math.cos(a));
+}
 
 function racket(): Group {
   const R = PLAYER_RIG.racket;
@@ -67,28 +75,47 @@ export class GltfRig implements PlayerRig {
     shadow.position.y = 0.004;
     shadow.name = 'shadow';
     this.object3d.add(body, shadow);
-    const used: Clip[] = ['Idle', 'Running_A', 'Cheer', 'Hit_A'];
+    const used: Clip[] = ['Idle', 'Running_A', 'Walking_A', 'Walking_Backwards', 'Cheer', 'Hit_A'];
     for (const name of used) if (!model.clips.some((c) => c.name === name)) throw new Error(`player model lacks ${name}`);
     this.clips = bindClips(model.clips.filter((c) => (used as string[]).includes(c.name)), this.bones);
   }
 
-  apply(pose: PlayerPose): void {
-    this.object3d.position.copy(groundToThree(pose.pos));
-    this.object3d.rotation.y = yawFor(pose.facing);
-    const run = smoothstep(Math.min(1, pose.speed / RIG_MOTION.fullRunSpeed));
+  /** Clip layers for this pose: idle at replay time, walk, run and backpedal at the phase distance sets, reactions
+   * from the landing. */
+  private layers(pose: PlayerPose): Layer[] {
+    const G = PLAYER_RIG.gait;
+    const S = PLAYER_RIG.strides;
+    const clip = (name: Clip) => this.clips.find((c) => c.name === name);
+    const move = smoothstep((pose.speed - G.moveFrom) / (G.moveFull - G.moveFrom));
+    const run = smoothstep((pose.speed - G.runFrom) / (G.runFull - G.runFrom));
+    const back = smoothstep((Math.abs(moveAngle(pose)) - PLAYER_RIG.backFrom) / 0.4) * (1 - smoothstep((pose.speed - G.backMax) / 0.5));
     const react = pose.reactionWeight;
     const rest = 1 - react;
-    const weights: Record<Clip, number> = {
-      Idle: rest * (1 - run),
-      Running_A: rest * run,
-      Cheer: pose.reaction === 'celebrate' ? react : 0,
-      Hit_A: pose.reaction === 'dejected' ? react : 0,
-    };
+    const forward = rest * move * (1 - back);
+    return [
+      { name: 'Idle', weight: rest * (1 - move), time: loopTime(clip('Idle'), pose.t / (clip('Idle')?.duration ?? 1)) },
+      { name: 'Walking_A', weight: forward * (1 - run), time: loopTime(clip('Walking_A'), pose.distance / S.Walking_A) },
+      { name: 'Running_A', weight: forward * run, time: loopTime(clip('Running_A'), pose.distance / S.Running_A) },
+      { name: 'Walking_Backwards', weight: rest * move * back, time: loopTime(clip('Walking_Backwards'), pose.distance / S.Walking_Backwards) },
+      { name: 'Cheer', weight: pose.reaction === 'celebrate' ? react : 0, time: pose.reactionT },
+      { name: 'Hit_A', weight: pose.reaction === 'dejected' ? react : 0, time: pose.reactionT },
+    ];
+  }
+
+  apply(pose: PlayerPose): void {
+    const hop = RIG.splitStepHop * pose.splitStep;
+    this.object3d.position.copy(groundToThree(pose.pos, hop));
+    this.object3d.rotation.y = yawFor(pose.facing);
     // Every bone is set from replay time alone, so any pose can be drawn without the ones before it.
-    sampleClips(this.clips, weights, pose.t, this.restPose);
+    const layers = this.layers(pose);
+    sampleClips(this.clips, layers, this.restPose);
+    // A sideways move turns the legs towards it while the chest keeps facing the ball.
+    const forward = layers[1]!.weight + layers[2]!.weight;
+    const legs = clamp(moveAngle(pose), -PLAYER_RIG.legTurnMax, PLAYER_RIG.legTurnMax) * forward;
+    this.bones.hips!.quaternion.premultiply(new Quaternion().setFromAxisAngle(UP, legs));
+    this.bones.spine!.quaternion.premultiply(new Quaternion().setFromAxisAngle(UP, -legs));
     this.model.position.set(0, 0, 0);
     if (pose.stroke) solveStroke(this.object3d, this.model, this.bones, this.slot, pose.stroke, this.rest);
-    this.shadow.position.x = this.model.position.x;
-    this.shadow.position.z = this.model.position.z;
+    this.shadow.position.set(this.model.position.x, 0.004 - hop, this.model.position.z);
   }
 }

@@ -4,7 +4,7 @@ import { smoothstep } from '../math.ts';
 import { PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
 import { facingAt } from './facing.ts';
 import { strokeAt, type StrokePose } from './stroke.ts';
-import { positionAt } from './movement.ts';
+import { distanceAt, positionAt } from './movement.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
 export type SwingKind = 'serve' | 'forehand' | 'backhand';
@@ -33,6 +33,11 @@ export interface PlayerPose {
   t: number;
   /** The stroke in progress for the skinned rig (ADR-024, effector keys), or null. */
   stroke: StrokePose | null;
+  /** Running velocity in court coordinates (m/s) and metres moved since the match began (strides follow it). */
+  velocity: Vec2;
+  distance: number;
+  /** Seconds since the point's last ball landed (negative before): reaction clips play from it. */
+  reactionT: number;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -41,6 +46,7 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
   const before = positionAt(timeline, id, Math.max(0, t - dt));
   const after = positionAt(timeline, id, Math.min(timeline.totalSec, t + dt));
   const speed = Math.hypot(after.x - before.x, after.y - before.y) / (2 * dt);
+  const velocity = { x: (after.x - before.x) / (2 * dt), y: (after.y - before.y) / (2 * dt) };
   const index = segmentAt(timeline, t);
   const seg = timeline.segments[index]!;
   const tau = t - seg.zero;
@@ -54,6 +60,9 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
     toss: toss(seg.point.shots.filter((s) => s.hitter === id && s.shot === 'serve'), tau),
     t,
     stroke: strokeAt(timeline, id, t, pos, facing),
+    velocity,
+    distance: distanceAt(timeline, id, t),
+    reactionT: t - seg.landed,
   };
 }
 

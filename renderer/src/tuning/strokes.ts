@@ -29,6 +29,15 @@ export const STROKE = {
   /** Serve: the hop that lifts a body too short for the toss (rule: what reach lacks, within hopMax), its rise and
    * fall, and a wider bend onto the ball, so the racket's fastest frame stays under 0.7 m. */
   serve: { hopMax: 0.55, riseSec: 0.28, fallSec: 0.32, contactBlendSec: 0.26 },
+  /** Feet planted for the stroke, from contact: in over [in0, in1], held to hold, out by out (seconds; a serve's feet
+   * plant from the toss). Positions are the stance below, placed in the frame the player has at contact. */
+  plant: { in0: -0.2, in1: -0.08, hold: 0.15, out: 0.32, serveIn: -0.9 },
+  /** Stance at contact per stroke, [left foot, right foot] as [x, z] in the player's frame (metres). */
+  stance: {
+    forehand: [[0.28, 0.12], [-0.3, -0.05]],
+    backhand: [[0.3, -0.08], [-0.08, 0.3]],
+    serve: [[0.15, 0.2], [-0.2, -0.15]],
+  },
 } as const;
 
 const k = (at: number, pelvis: number, turn: number, lean: number, drop: number, hand: StrokeKey['hand'], dir: StrokeKey['dir'], free: StrokeKey['free']): StrokeKey =>

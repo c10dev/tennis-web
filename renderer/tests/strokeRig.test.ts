@@ -84,9 +84,9 @@ describe('serve reach', () => {
     const v = (a: readonly number[]) => ({ x: a[0]!, y: a[1]!, z: a[2]! });
     rig.apply({
       pos: { x: 0, y: -12 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 0, gait: { phase: 0, amount: 0 },
-      crouch: 0, splitStep: 0, toss: 0, t: 0,
+      crouch: 0, splitStep: 0, toss: 0, t: 0, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1,
       stroke: {
-        kind: 'serve', weight: 1, contactWeight: 1, hop: 0, keyTimes: [], contact: { x: -0.2, y: 4, z: 0.25 },
+        kind: 'serve', weight: 1, contactWeight: 1, hop: 0, keyTimes: [], contact: { x: -0.2, y: 4, z: 0.25 }, plant: { l: { x: 0, y: 0 }, r: { x: 0, y: 0 }, weight: 0 },
         keys: { pelvis: key.pelvis, turn: key.turn, lean: key.lean, drop: 0, hand: v(key.hand), dir: v(key.dir), free: v(key.free) },
       },
     });

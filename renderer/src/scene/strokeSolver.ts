@@ -86,7 +86,17 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
   frame.updateMatrixWorld(true);
   const shiftWorld = shift.clone().applyQuaternion(worldQuat(frame));
   (['l', 'r'] as const).forEach((side, i) => {
-    const target = feet[i]!.p.clone().add(shiftWorld).add(new Vector3(0, s.hop * w, 0));
+    // The clip's foot (moved with the body), drawn onto the planted spot; a leg that cannot reach steps in.
+    const target = feet[i]!.p.clone().add(shiftWorld);
+    const plant = s.plant[side];
+    target.x += (plant.x - target.x) * s.plant.weight;
+    target.z += (-plant.y - target.z) * s.plant.weight;
+    target.y += s.hop * w;
+    const hip = worldPos(b[`upperleg${side}`]!);
+    const legLength = b[`lowerleg${side}`]!.position.length() + b[`foot${side}`]!.position.length() - 0.01;
+    const flat = new Vector3(target.x - hip.x, 0, target.z - hip.z);
+    const room = Math.sqrt(Math.max(0, legLength ** 2 - (target.y - hip.y) ** 2));
+    if (flat.length() > room) target.set(hip.x, target.y, hip.z).add(flat.setLength(room));
     const pole = LEG_POLE.clone().applyQuaternion(worldQuat(frame));
     limb(b[`upperleg${side}`]!, b[`lowerleg${side}`]!, b[`foot${side}`]!, target, pole, 1);
     orient(b[`foot${side}`]!, feet[i]!.q, 1);
