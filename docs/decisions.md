@@ -893,7 +893,8 @@ Format: one entry per decision, newest at the bottom.
   - **Tests.** `renderer/tests/contact.test.ts`: per stroke, the racket-head centre is within 0.15 m of the ball at
     p95 and 0.3 m at worst over the six sample matches; the racket never moves more than 0.7 m on the body between
     60 fps frames. `ik.test.ts` covers the solver.
-- **Roadmap (each step approved separately):**
+- **Roadmap (each step approved separately; A2–A5 superseded by ADR-024 on 2026-10-16, their goals moved into its
+  stroke planner):**
   - **A2 body and stroke shape:** pelvis and chest split (unit turn, hip–shoulder separation), wrist and racket face,
     head tracking the ball, key poses per stroke (ready, unit turn, backswing, contact, finish), swing start timed
     from the incoming ball's flight instead of a fixed 0.3 s, two-handed backhand.
@@ -921,3 +922,36 @@ Format: one entry per decision, newest at the bottom.
   net line. `playerPose` no longer takes the frame's ball. Over eight further matches (1.9 M frames) the fastest
   turn is 0.25 rad per 60 fps frame (was up to π); a test keeps it under 0.35, and the racket continuity test is
   back in world space.
+
+
+## ADR-024: 3D redesign: game camera, Pop character, effector-key motion, sunny club
+- **Date:** 2026-10-16
+- **Status:** Accepted (grows with each vertical-slice step)
+- **Context:** The user asked for the 3D to be redone from design up (camera, character, motion, look), priority
+  motion → camera → character → arena, in a mobile casual tone (Tennis Clash's composition, Mario Tennis Aces'
+  exaggeration and impact) with the Rally Pop palette. `docs/3d-redesign.md` diagnosed today's build (the decision
+  hold is whatever frame the last clip left, usually Reaction Cam on the last point's winner; the near player is 10%
+  of the portrait stage and the far one at changeovers; points play at 2–3×; a faceless capsule mannequin whose lunge
+  slides both feet), compared 2–3 options per area with style frames (`docs/design/3d-redesign/`) and recommended a
+  set; the user took it.
+- **Decision:**
+  - **Camera:** a game camera, K2 chase, behind *my* player (6.2 m up, 7.7 m behind the baseline, 48° vertical),
+    sampled from the timeline over a window so it stays closed-form in time (ADR-007). Shots: S1 chase, S2 decision
+    hold on the opponent's tell, S3 impact close-up with hit-stop and slow motion on decisive shots only, S4 reaction
+    close-up, S5 replays with the kept broadcast cameras (Side, Hawk-Eye). Applies to the quick match and the replay
+    page; the season mode keeps the broadcast director for now.
+  - **Character:** C1 Pop, 3–3.5 heads at full adult height, a readable face, cap or headband; serve reach from a hop
+    scaled by contact height plus arm stretch at contact.
+  - **Motion:** D2 effector key poses (racket hand, racket direction, free hand, feet, pelvis, chest, crouch, head)
+    timed from shot events and solved with A1's two-bone IK onto `shot.from`, planting the front foot instead of
+    sliding the hips; CC0 KayKit clips for locomotion and reactions, sampled with `AnimationMixer.setTime`.
+  - **Arena:** A1 sunny club; A2 stadium kept for later.
+  - **Vertical slice first:** one point (serve, a short rally, a winner, the reaction, a replay) on the replay page
+    and the toss build, in steps: body pipeline (KayKit Adventurers, CC0, pruned and committed), effector-key strokes,
+    gait and reactions, chase camera and director, impact, the point end to end with phone measurements. The final
+    character look (commission, Tripo, or a modified KayKit) is decided from the slice.
+  - **Assets and tools:** only CC0 assets in the repo (it is public); a Node script with no new dependency prunes the
+    glb; meshopt and gltf-transform only if that falls short (each a separate approval).
+- **Consequences:** ADR-023's A2–A5 are superseded; TD-012, TD-039 and TD-058 move to this track. The quick match's
+  pacing (TD-060) and its decision-hold frame (TD-061) need game-layer and UI changes outside the renderer slice.
+
