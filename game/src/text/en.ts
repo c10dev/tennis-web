@@ -1,5 +1,5 @@
 // English (ADR-022): the words the quick match was written in.
-import type { Card, PlayStyle } from '@tennis/engine';
+import type { PlayStyle } from '@tennis/engine';
 import type { Habit } from '../quick/types.ts';
 import { surname, type Messages } from './types.ts';
 
@@ -18,7 +18,6 @@ const WHY: Partial<Record<PlayStyle, string>> = {
   counter_puncher: 'give a counter-puncher no pace, but don\'t sit back',
 };
 
-const PLAYED: Record<Card, string> = { attack: 'attacked', defend: 'defended', counter: 'countered' };
 const habit = (name: string, h: Habit) => `${surname(name)} ${HABIT[h]}`;
 const who = (user: boolean) => (user ? 'Your' : 'Their');
 
@@ -46,9 +45,10 @@ export const en: Messages = {
   },
   habit,
   scouting: (name, style, h) => `${name} · ${style} — ${habit(name, h)}`,
-  rival({ wins, losses }, most) {
+  rival({ wins, losses }, stance, last) {
     const h2h = `Head to head ${wins}-${losses}${wins === losses ? '' : wins > losses ? ' to you' : ' to them'}`;
-    return most ? `${h2h}; they ${PLAYED[most.card]} ${most.n} of ${most.of} big point${most.of === 1 ? '' : 's'}` : h2h;
+    const how = !stance ? '' : stance.kind === 'wary' ? `; wary of your read: may switch to ${stance.card ? en.card[stance.card] : 'what beats your answer'} when the habit is due` : '; confident: sticks to the habit';
+    return `${h2h}${how}${last ? `; last big point: ${en.card[last]}` : ''}`;
   },
   planTip: (plan, style) => `Plan tip: ${en.plan[plan].label}${WHY[style] ? ` — ${WHY[style]}` : ''}`,
   tells: {

@@ -57,8 +57,9 @@ describe('Korean screens', () => {
   });
 
   it('says the head to head', () => {
-    expect(rivalLine({ met: 3, wins: 2, losses: 1, seen: ['attack', 'attack', 'defend', 'attack'] }, ko)).toBe('상대 전적 2승 1패 · 승부처 4번 중 3번 공격');
-    expect(rivalLine({ met: 2, wins: 1, losses: 1, seen: [] }, ko)).toBe('상대 전적 1승 1패');
+    expect(rivalLine({ met: 3, wins: 2, losses: 1, seen: ['attack', 'attack', 'defend', 'attack'] }, 'big_point_attack', ko))
+      .toBe('상대 전적 2승 1패 · 습관을 읽힌 걸 알아요: 습관 대신 수비로 바꿀 수 있어요 · 지난 승부처: 공격');
+    expect(rivalLine({ met: 2, wins: 1, losses: 1, seen: [] }, 'big_point_attack', ko)).toBe('상대 전적 1승 1패');
   });
 
   it('names the decisive choice with the right particles', () => {

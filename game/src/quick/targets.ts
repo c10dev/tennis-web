@@ -31,6 +31,12 @@ export const QUICK_TARGETS = {
     /** How often an opponent plays its habit card when its habit applies. */
     habitShare: { min: 0.6, max: 0.75 },
   },
+  /** Rematches after one meeting (ADR-025, TD-034): the rival adapts, the read still pays, no card dominates. */
+  rematch: {
+    /** Knows the habit and style, minus random cards, whichever side won the first meeting. */
+    scoutOverRandom: { min: 0.05, max: 1 },
+    fixedCardWin: { min: 0, max: 0.55 },
+  },
   /** Game plans (ADR-025, TD-031): random cards against style-shaped opponents. */
   plan: {
     /** Each plan's win share averaged over the four styles. */

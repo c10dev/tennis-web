@@ -2,21 +2,23 @@
 // match's decisions, the tell, and the record of earlier meetings.
 import type { QuickState } from '../quick/ladder.ts';
 import type { QuickMatch } from '../quick/match.ts';
-import { personaOf } from '../quick/persona.ts';
+import { fixedHabitCard, personaOf } from '../quick/persona.ts';
 import { planTip } from '../quick/plan.ts';
+import { rivalStance, switchCard } from '../quick/rivals.ts';
 import type { Habit, OpponentRead, RivalRecord } from '../quick/types.ts';
 import { en } from '../text/en.ts';
-import type { Messages } from '../text/types.ts';
+import type { Messages, RivalLine } from '../text/types.ts';
 
 /** "Kim goes for broke on match points": the habit, said about the player by surname. */
 export const habitLine = (name: string, habit: Habit, t: Messages = en): string => t.habit(name, habit);
 
-/** "Head to head 2-1 to you; they attacked 3 of 4 big points": the record and their most played big-point card. */
-export function rivalLine(r: RivalRecord, t: Messages = en): string {
-  if (!r.seen.length) return t.rival(r, null);
-  const counts = (['attack', 'defend', 'counter'] as const).map((c) => [c, r.seen.filter((x) => x === c).length] as const);
-  const [card, n] = counts.reduce((a, b) => (b[1] > a[1] ? b : a));
-  return t.rival(r, { card, n, of: r.seen.length });
+/** "Head to head 2-1 to you; wary of your read: may switch to Attack …; last big point: Defend": the record, how the
+ *  rival has adapted to it (ADR-025) and its last big-point card (a card-repeater's habit card at a rematch's start). */
+export function rivalLine(r: RivalRecord, habit: Habit, t: Messages = en): string {
+  const stance = rivalStance(r);
+  const card = fixedHabitCard(habit);
+  const line: RivalLine = stance === 'wary' ? { kind: 'wary', card: card && switchCard(card) } : stance ? { kind: stance } : null;
+  return t.rival(r, line, r.seen.at(-1) ?? null);
 }
 
 export function opponentRead(m: QuickMatch, t: Messages = en): OpponentRead {
@@ -26,7 +28,7 @@ export function opponentRead(m: QuickMatch, t: Messages = en): OpponentRead {
     scouting: t.scouting(opp.name, t.style[opp.style], m.persona.habit),
     history: m.decisions.map((d) => ({ score: `${d.score[0]}-${d.score[1]}`, card: d.ai })),
     tell: tell ? t.tells[tell.card][tell.index]! : null,
-    rival: m.rival ? rivalLine(m.rival, t) : null,
+    rival: m.rival ? rivalLine(m.rival, m.persona.habit, t) : null,
   };
 }
 
@@ -35,5 +37,5 @@ export function opponentScouting(s: QuickState, id: string, t: Messages = en): {
   const p = s.world.players.find((x) => x.id === id)!;
   const rival = s.rivals[id];
   const tip = planTip(p.style);
-  return { habit: habitLine(p.name, personaOf(s.seed, id).habit, t), rival: rival ? rivalLine(rival, t) : null, plan: tip ? t.planTip(tip, p.style) : null };
+  return { habit: habitLine(p.name, personaOf(s.seed, id).habit, t), rival: rival ? rivalLine(rival, personaOf(s.seed, id).habit, t) : null, plan: tip ? t.planTip(tip, p.style) : null };
 }

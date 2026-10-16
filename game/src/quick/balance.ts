@@ -14,7 +14,7 @@ import { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQu
 import { broadcastSeconds } from './pace.ts';
 import { personaOf } from './persona.ts';
 import { opponentTactic, planTactic } from './plan.ts';
-import type { DecisionRecord, GamePlan, Persona } from './types.ts';
+import type { DecisionRecord, GamePlan, Persona, RivalRecord } from './types.ts';
 
 export const STYLES: PlayStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
 const SURFACES: Surface[] = ['hard', 'clay', 'grass'];
@@ -38,8 +38,8 @@ export function playMatch(m: QuickMatch, bot: Bot, botSeed: number, opponent?: B
   }
 }
 
-export function botMatch(config: MatchConfig, seed: number, bot: Bot, opts: { persona?: Persona; opponent?: Bot } = {}): { result: MatchResult; decisions: DecisionRecord[] } {
-  const m = createQuickMatch({ config, seed, matchNo: 0, opponent: 'ai', plan: 'balanced', persona: opts.persona ?? personaOf(seed, 'ai'), rival: null });
+export function botMatch(config: MatchConfig, seed: number, bot: Bot, opts: { persona?: Persona; opponent?: Bot; rival?: RivalRecord | null } = {}): { result: MatchResult; decisions: DecisionRecord[] } {
+  const m = createQuickMatch({ config, seed, matchNo: 0, opponent: 'ai', plan: 'balanced', persona: opts.persona ?? personaOf(seed, 'ai'), rival: opts.rival ?? null });
   playMatch(m, bot, seed, opts.opponent);
   return { result: finish(m.live), decisions: m.decisions };
 }

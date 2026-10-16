@@ -56,7 +56,10 @@ export const ko: Messages = {
   },
   habit: (name, h) => `${surname(name)} — ${HABIT[h]}`,
   scouting: (name, style, h) => `${name} · ${style} — ${HABIT[h]}`,
-  rival: ({ wins, losses }, most) => `상대 전적 ${wins}승 ${losses}패${most ? ` · 승부처 ${most.of}번 중 ${most.n}번 ${CARD[most.card]}` : ''}`,
+  rival({ wins, losses }, stance, last) {
+    const how = !stance ? '' : stance.kind === 'wary' ? ` · 습관을 읽힌 걸 알아요: 습관 대신 ${stance.card ? withJosa(CARD[stance.card], '으로', '로') : '내 대응을 이기는 카드로'} 바꿀 수 있어요` : ' · 자신만만: 습관을 더 고집해요';
+    return `상대 전적 ${wins}승 ${losses}패${how}${last ? ` · 지난 승부처: ${CARD[last]}` : ''}`;
+  },
   planTip: (plan, style) => `작전 팁: ${ko.plan[plan].label}${WHY[style] ? ` — ${WHY[style]}` : ''}`,
   tells: {
     attack: ['발끝으로 통통 뛰며 들어올 기세예요', '베이스라인 안쪽으로 슬금슬금 들어와요', '라켓을 꽉 쥐고 라인을 노려봐요', '공을 빠르게 튀기며 조급해 보여요'],

@@ -228,6 +228,14 @@ export const QUICK_PERSONA = {
   habitShare: 0.72,
   /** A rival record keeps the opponent's cards at this many latest decision points. */
   rivalSeen: 12,
+  /** A rival adapts to the head to head (ADR-025, TD-034), only where its habit applies. Wary (the user leads): the
+   *  habit card at `habitShare`, the card that beats the user's answer to it at `switchShare`, the third the rest, so
+   *  answering the habit still pays most (+0.40 a decision against +0.15 for the next best; about +0.58 at a first
+   *  meeting). Confident (the rival leads): the habit card more often, the rest in its style mix. */
+  rival: {
+    wary: { habitShare: 0.65, switchShare: 0.25 },
+    confident: { habitShare: 0.75 },
+  },
 } as const;
 
 /** The result screen's rewards: ratings shown on a 0–100 scale; a win lifts one rating to its next whole number. */
