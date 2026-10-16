@@ -1,5 +1,5 @@
 // The ladder: where you stand, how far the next place is, who is next. One button to play.
-import { createPlayer, defaultAllocation, newLadder, opponentScouting, quickHomeView, startQuick, type CreatableStyle } from '@tennis/game';
+import { createPlayer, defaultAllocation, newLadder, opponentScouting, planTip, quickHomeView, startQuick, type CreatableStyle } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { getAudio } from '../audio/session.ts';
 import { soundToggle } from '../audio/toggle.ts';
@@ -13,8 +13,9 @@ const STYLES: CreatableStyle[] = ['big_server', 'baseliner', 'counter_puncher', 
 export function quickHome(ctx: Ctx): Screen {
   if (!ctx.quick) return startForm(ctx);
   const v = quickHomeView(ctx.quick, T);
-  const picker = planPicker();
   const scout = opponentScouting(ctx.quick, v.opponent.id, T);
+  const tip = planTip(ctx.quick.world.players.find((p) => p.id === v.opponent.id)!.style);
+  const picker = planPicker(tip && scout.plan ? { plan: tip, line: scout.plan } : null);
   const sound = soundToggle();
   const play = () => {
     // The tap that starts the match also starts the audio (iOS allows it only inside a gesture).

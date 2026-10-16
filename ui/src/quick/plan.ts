@@ -1,4 +1,5 @@
-// The game plan picker on the ladder (ADR-017): three toggles next to Play. The last plan is remembered.
+// The game plan picker on the ladder (ADR-017): three toggles next to Play. The last plan is remembered. Against a
+// specialist the plan that throws them off balance is marked and its tip shown under the buttons (ADR-025).
 import { planChoices, type GamePlan } from '@tennis/game';
 import { T, U } from '../i18n/index.ts';
 import { h } from '../lib/h.ts';
@@ -23,10 +24,16 @@ function savePlan(plan: GamePlan) {
   }
 }
 
-export function planPicker(): { element: HTMLElement; plan: () => GamePlan } {
+/** The plan an opponent's style tips and the line that says why (`opponentScouting().plan`). */
+export type PlanTip = { plan: GamePlan; line: string } | null;
+
+export function planPicker(tip: PlanTip = null): { element: HTMLElement; plan: () => GamePlan } {
   let plan = readPlan();
   const line = h('span', { class: 'muted plan-line', id: 'plan-line' });
-  const buttons = PLANS.map((p) => h('button', { class: 'plan-btn', id: `plan-${p.plan}`, type: 'button', onclick: () => select(p.plan) }, p.label));
+  const buttons = PLANS.map((p) => h('button', {
+    class: p.plan === tip?.plan ? 'plan-btn tipped' : 'plan-btn', id: `plan-${p.plan}`, type: 'button',
+    'aria-describedby': p.plan === tip?.plan ? 'plan-tip' : null, onclick: () => select(p.plan),
+  }, p.label));
   function select(next: GamePlan) {
     plan = next;
     savePlan(next);
@@ -35,6 +42,7 @@ export function planPicker(): { element: HTMLElement; plan: () => GamePlan } {
   }
   select(plan);
   const element = h('div', { class: 'plan-picker', id: 'plan-picker' },
-    h('span', { class: 'muted' }, U.gamePlan), h('div', { class: 'plan-buttons', role: 'group' }, buttons), line);
+    h('span', { class: 'muted' }, U.gamePlan), h('div', { class: 'plan-buttons', role: 'group' }, buttons), line,
+    tip ? h('p', { class: 'plan-tip', id: 'plan-tip' }, tip.line) : null);
   return { element, plan: () => plan };
 }
