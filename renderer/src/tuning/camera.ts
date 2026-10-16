@@ -16,6 +16,17 @@ export const CAMERA = {
   positionPanShare: 0.4,
   /** Seconds for the pan to close ~63% of the gap to its target. */
   panTimeConstant: 0.6,
+  /** At this aspect (width / height) and wider the main camera is the TV angle above. */
+  landscapeAspect: 1.4,
+  /** Close-ups (serve, reaction, hawkeye) keep at least this much across on narrow screens. */
+  closeMinHorizontalFov: 32,
+  /**
+   * A phone held upright (M7, ADR-022), reached at `aspect` and kept narrower: higher and further back, with a frame
+   * `horizontalFov` across, so the doubles court and both players fit the stage's width (searched over 0.7–0.85
+   * aspects at every pan; the far ball can then be no wider than about 3.7 px on a 412 px stage, hence
+   * BALL_LOOK.portraitScale). Between the two aspects the camera moves smoothly from the TV angle.
+   */
+  portrait: { aspect: 0.82, height: 22, behindBaseline: 23, lookZ: 5.5, horizontalFov: 27 },
 } as const;
 
 /** The other broadcast cameras (GDD §8.1), in metres; fov is vertical, degrees. */

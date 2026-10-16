@@ -2,6 +2,7 @@
 import { CircleGeometry, Mesh, MeshBasicMaterial, Scene } from 'three';
 import type { LineCall } from '../broadcast/hawkeye.ts';
 import type { CameraId, ClipKind } from '../broadcast/types.ts';
+import { portraitBallScale } from '../camera/framing.ts';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
 import { BALL, BALL_LOOK, COLOURS } from '../tuning/index.ts';
@@ -19,6 +20,8 @@ export type StageFrame = Frame & { hawkeye?: LineCall | null; camera?: CameraId;
 export interface Stage {
   readonly scene: Scene;
   applyFrame(frame: StageFrame): void;
+  /** The view's width / height: an upright phone draws the ball larger (portraitBallScale). */
+  setAspect(aspect: number): void;
 }
 
 export function createStage(timeline: Timeline): Stage {
@@ -30,6 +33,7 @@ export function createStage(timeline: Timeline): Stage {
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';
   const ball = createBall();
+  let ballScale = 1;
   const mark = new Mesh(new CircleGeometry(BALL.radius * 1.6, 16), new MeshBasicMaterial({ color: COLOURS.mark, transparent: true, opacity: 0.85 }));
   mark.rotation.x = -Math.PI / 2;
   mark.scale.set(1.6, 1, 1);
@@ -38,10 +42,13 @@ export function createStage(timeline: Timeline): Stage {
   scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d, mark);
   return {
     scene,
+    setAspect(aspect) {
+      ballScale = portraitBallScale(aspect);
+    },
     applyFrame(frame) {
       rigs.A.apply(frame.players.A);
       rigs.B.apply(frame.players.B);
-      ball.apply(frame.ball, ballLook(timeline, frame));
+      ball.apply(frame.ball, ballLook(timeline, frame, ballScale));
       mark.visible = !!frame.hawkeye;
       if (frame.hawkeye) mark.position.copy(groundToThree(frame.hawkeye.mark, 0.006));
     },
@@ -49,8 +56,8 @@ export function createStage(timeline: Timeline): Stage {
 }
 
 /** Camera scale, contact pop and trail for the ball in this frame. */
-function ballLook(timeline: Timeline, frame: StageFrame): BallLook {
-  const scale = BALL_LOOK.cameraScale[frame.camera ?? 'main'];
+function ballLook(timeline: Timeline, frame: StageFrame, aspectScale: number): BallLook {
+  const scale = BALL_LOOK.cameraScale[frame.camera ?? 'main'] * aspectScale;
   const trailSec = BALL_LOOK.trail.sec * (frame.clip === 'replay' ? BALL_LOOK.trail.replayShare : 1);
   const seg = timeline.segments[frame.pointIndex];
   if (!seg || !frame.ball) return { scale, pop: 1, trail: [], trailSec };

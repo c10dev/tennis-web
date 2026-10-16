@@ -798,6 +798,17 @@ Format: one entry per decision, newest at the bottom.
     result says "탭해서 건너뛰기" / "Tap to skip" on a coarse pointer, and a card's score in "Their cards" is shown,
     not a title tooltip. A `mobile` Playwright project (Pixel 7, touch) checks the toss build for overlaps, side
     scrolling, the Toss corner, touch-target sizes and the stuck hover.
+  - **Portrait camera (step 5).** On a 60dvh phone stage (aspect about 0.82) the old rule widened the main camera to
+    about 55° vertical from the same spot: sky above, empty surround below, a small court. `mainCamPose(pan,
+    aspect)` now moves from the TV angle (aspect 1.4 and wider, unchanged) to `CAMERA.portrait` (reached at 0.82):
+    22 m up, 23 m behind the near baseline (beyond the end stand's last tier), looking 5.5 m into the near half,
+    with a frame 27° across fitted to the aspect. The values come from a search over 0.70–0.85 aspects at every pan
+    that keeps the doubles court and both players inside the frame; with the court across the whole width the far
+    ball cannot be drawn wider than about 3.7 px on a 412 px stage, so an upright phone draws it
+    `BALL_LOOK.portraitScale` (1.3×) larger (`Stage.setAspect`), about 4.8 px. `fitFov` (renderer/src/camera/
+    framing.ts) keeps every camera a minimum width across: the side camera 46°, the close-ups 32°
+    (`closeMinHorizontalFov`), the main camera 46° easing to its portrait 27°; nothing changes at 16:9. The viewer
+    now rebuilds the projection when the aspect changes too (it only did on a field-of-view change).
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
   gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. Untested on a device until the console
   registration (TD-049).

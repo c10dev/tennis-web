@@ -9,10 +9,11 @@ const three = (x: number, y: number, h: number) => ({ x, y: h, z: -y });
 
 export type CameraFrame = Pick<BroadcastFrame, 'camera' | 'focus' | 'ball' | 'players' | 'hawkeye' | 'clip'>;
 
-export function cameraPose(frame: CameraFrame, pan: number): CamPose {
+/** `aspect` is the view's width / height; only the main camera re-frames for it (fitFov widens the others). */
+export function cameraPose(frame: CameraFrame, pan: number, aspect?: number): CamPose {
   switch (frame.camera) {
     case 'main':
-      return mainCamPose(pan);
+      return mainCamPose(pan, aspect);
     case 'serve': {
       // Low behind the server, aimed down the court past them.
       const s = frame.players[frame.focus ?? 'A'].pos;
