@@ -1103,4 +1103,10 @@ Format: one entry per decision, newest at the bottom.
   (4 cm, 28 Hz, decaying to still by its end), position and aim together. A test takes court points through the
   planner's `toLocal` and back through the rig's `yawFor`. `/rig.html?clip=hitstop` draws frames as the moment's.
   The smear costs about 0.9 ms a frame on the desktop CPU while it shows, so the low tier leaves it out.
+- **After the slice: the character under the TV cameras (2026-10-16).** `?rig=gltf&cams=tv` keeps the skinned
+  players under today's TV director (and the TV pace in the quick match), to compare the looks. At 1280×720 and
+  412×915: the reaction close-up reads better than the mannequin; the main camera shows both players clearly; the
+  serve camera, framed for the taller mannequin, crops the shorter, wider body with its head filling the frame's
+  edge (its framing would need retuning if the TV cameras stay for replays); the trail keeps its shot colour there
+  too, since the look follows the model.
 
