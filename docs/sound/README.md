@@ -3,8 +3,7 @@
 Generated sound samples for the quick match (TD-016), made with
 [agent-audio](https://github.com/AIEGOBOT/agent-audio) (Stable Audio 3 Medium) on the MacBook's MLX backend.
 `manifest.json` is the work order: one entry per sound with its prompt, generation length, kept length, loudness
-and trim rules, format bitrate and byte budget. It is provisional until the sound stream's open questions
-(formats, budget, sound list, stingers) are answered.
+and trim rules, format bitrate and byte budget, as approved by the user on 2026-10-16.
 
 ## Where the files go
 - Final files: `ui/public/audio/<id>.ogg` (Opus, primary) and `ui/public/audio/<id>.m4a` (AAC, fallback), mono,

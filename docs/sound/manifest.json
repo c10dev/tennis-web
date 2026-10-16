@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "Provisional: formats, budget, sound list and stingers follow the proposed defaults (questions 5-8 of the sound stream) until the user answers; a change is a new commit to this file.",
+  "status": "Approved by the user on 2026-10-16 (questions 4-9 of the sound stream at their defaults).",
   "generator": {
     "tool": "agent-audio (https://github.com/AIEGOBOT/agent-audio)",
     "model": "Stable Audio 3 Medium (stabilityai/stable-audio-3-optimized)",
