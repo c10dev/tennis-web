@@ -1066,4 +1066,14 @@ Format: one entry per decision, newest at the bottom.
   and those seconds against the bare game-style programme over 40 tiebreaks, since the game layer cannot import the
   renderer. Median screen time over 2,000 matches: 43 s at the game pace, 23 s at the TV pace (target ≤ 60 s;
   `npm run quick` and `test:quick` report and guard both).
+- **After the slice: the tell stance (TD-061, 2026-10-16).** The decision hold no longer freezes the last frame of
+  the previous point (in captures, the opponent mid-cheer). `Viewer.hold` takes a `HoldShot`: with `ready`, both
+  players stand where the next point will start (`readyPositions`: the server by the centre mark, the receiver wide
+  and deep, on the ends they will play from, in the deuce or advantage court by the score's parity; checked against
+  where the engine really starts the next point in three tiebreaks and an exhibition match) in a ready stance, and
+  the opponent's body shows the tell: one `StanceCue` per tell text (`HOLD_STANCES`, renderer/src/tuning/stances.ts;
+  depth, lean, drop, arms, a side-to-side sway, an in-and-out step or a bounce), solved by the stroke solver as a
+  stroke with no contact. The idle and any sway run on the hold's own seconds, so match time stays still. Timeline
+  segments gained `changesEnds` (a changeover after the point, also at a set's end). The ball is out of play during
+  the hold. `/rig.html?point=15&hold=none,defend:1,counter:2` draws the stances for tuning.
 

@@ -88,8 +88,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('span', { class: 'rule' }, U.beats(T.card[c.beats])),
         h('span', { class: 'strength', title: U.strengthHint, role: 'img', 'aria-label': U.strengthHint }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
-    // While the cards are up, the slice holds a shot of the opponent, whose body shows the tell (TD-061).
-    if (slice) broadcast?.hold({ camera: 'tell', focus: 'B' });
+    // While the cards are up, the slice holds a shot of the opponent waiting for the point, whose body shows the tell
+    // (TD-061).
+    const tell = qm!.pending?.tell;
+    if (slice) broadcast?.hold({ camera: 'tell', focus: 'B', ready: { tell: tell ? { player: 'B', card: tell.card, index: tell.index } : null } });
     phase('choose');
   }
 

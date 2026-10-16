@@ -4,7 +4,7 @@
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, initialTier, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type CameraShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
+  type HoldShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
@@ -18,7 +18,7 @@ export interface Broadcast {
   /** Plays match seconds [from, to] at `speed`, then stops; resolves when done (quick matches). */
   playWindow(from: number, to: number, speed: number): Promise<void>;
   /** Hold a shot over the picture until cleared (the quick match's decision hold, ADR-024 S2). */
-  hold(shot: CameraShot | null): void;
+  hold(shot: HoldShot | null): void;
   dispose(): void;
 }
 
@@ -63,7 +63,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   if (!options.audio) root.append(soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
   const style = options.style ?? 'broadcast';
-  let held: CameraShot | null = null;
+  let held: HoldShot | null = null;
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false, style }) : buildProgramme(timeline, mode, undefined, { style }));
   let clipWindow: { end: number; speed: number; done: () => void } | null = null;
   const scoreBug = createScoreBug();

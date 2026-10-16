@@ -1,16 +1,24 @@
 // Rig viewer (dev only, ADR-024 slice): one player of a simulated match up close, for tuning stroke keys.
 //   /rig.html?seed=42&surface=hard&point=15&shot=2&dt=-0.3,-0.1,0,0.2&view=front
 // Draws one frame per `dt` (seconds from that shot's contact) side by side, from `view`: front, side, back or chase.
-import { exhibitionConfig, simulateMatch, type Surface } from '@tennis/engine';
-import { buildTimeline, createStage, loadPlayerModel, matchFrameAt } from '@tennis/renderer';
+// `hold=none,defend:1,counter:2` draws the decision hold's stances instead (TD-061): B waiting for the point after
+// `point`, with that tell (card:index, or none), `ht` seconds into the hold.
+import { exhibitionConfig, simulateMatch, type Card, type Surface } from '@tennis/engine';
+import { buildTimeline, createStage, heldPlayers, loadPlayerModel, matchFrameAt } from '@tennis/renderer';
 import { PerspectiveCamera, WebGLRenderer } from 'three';
 
 const q = new URLSearchParams(location.search);
 const surface = (q.get('surface') ?? 'hard') as Surface;
-const timeline = buildTimeline(simulateMatch(exhibitionConfig(surface), Number(q.get('seed') ?? 42)));
-const seg = timeline.segments[Number(q.get('point') ?? 0)]!;
+const result = simulateMatch(exhibitionConfig(surface), Number(q.get('seed') ?? 42));
+const pointAt = Number(q.get('point') ?? 0);
+const timeline = buildTimeline(result);
+const seg = timeline.segments[pointAt]!;
+// The match as it stood after `point`, for the hold (the next point not played yet).
+const cut = result.events.findIndex((e) => e.type === 'point' && e.index > seg.point.index);
+const before = buildTimeline({ ...result, events: cut < 0 ? result.events : result.events.slice(0, cut) });
 const shot = seg.point.shots[Number(q.get('shot') ?? 0)]!;
-const dts = (q.get('dt') ?? '-0.3,-0.15,0,0.15,0.3').split(',').map(Number);
+const holds = q.get('hold')?.split(',').map((h) => (h === 'none' ? null : { player: 'B' as const, card: h.split(':')[0] as Card, index: Number(h.split(':')[1]) }));
+const dts = holds ? holds.map(() => 0) : (q.get('dt') ?? '-0.3,-0.15,0,0.15,0.3').split(',').map(Number);
 const view = q.get('view') ?? 'front';
 const size = Number(q.get('size') ?? 360);
 const mannequin = q.get('rig') === 'mannequin';
@@ -24,8 +32,10 @@ document.body.append(renderer.domElement);
 const camera = new PerspectiveCamera(34, 1, 0.1, 400);
 dts.forEach((dt, i) => {
   const frame = matchFrameAt(timeline, seg.zero + shot.t + dt);
+  if (holds) frame.players = heldPlayers(before, holds[i]!, Number(q.get('ht') ?? 0.4));
+  if (holds) frame.ball = null;
   stage.applyFrame(frame);
-  const p = frame.players[shot.hitter];
+  const p = frame.players[holds ? 'B' : shot.hitter];
   // Three coordinates: court (x, y) → (x, ·, −y); the player faces `facing`.
   const fx = p.facing.x;
   const fz = -p.facing.y;

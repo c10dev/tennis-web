@@ -4,12 +4,13 @@ import { PerspectiveCamera, WebGLRenderer } from 'three';
 import type { PlayerId } from '@tennis/engine';
 import { heldShot } from './broadcast/director.ts';
 import type { BroadcastFrame } from './broadcast/frame.ts';
-import type { CameraId, CameraShot } from './broadcast/types.ts';
+import type { CameraId, HoldShot } from './broadcast/types.ts';
 import { cameraPose } from './camera/cameras.ts';
 import { chasePose } from './camera/chase.ts';
 import { impactPose } from './camera/impact.ts';
 import { fitFov } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
+import { heldPlayers } from './playback/hold.ts';
 import type { Timeline } from './playback/timeline.ts';
 import { createFrameMeter, tierSettings, type QualityTier } from './quality.ts';
 import type { PlayerModel } from './scene/playerModel.ts';
@@ -21,7 +22,7 @@ export interface Viewer {
   /** Draw a frame; dt is the real time since the last draw, for camera easing. */
   render(frame: BroadcastFrame, dt: number): void;
   /** Lay a shot over every frame until cleared (the decision hold, ADR-024 S2), or null to clear it. */
-  hold(shot: CameraShot | null): void;
+  hold(shot: HoldShot | null): void;
   /** The match grew under the same view (same surface): the chase and impact cameras and the stage read this one. */
   setTimeline(timeline: Timeline): void;
   /** Draw calls and triangles of the last frame drawn (budget checks, ADR-024). */
@@ -58,7 +59,9 @@ export function createViewer(
   let pan = 0;
   let shown: CameraId | null = null;
   let projected = { fov: 0, aspect: 0 };
-  let held: CameraShot | null = null;
+  let held: HoldShot | null = null;
+  /** Seconds the current hold has been on screen: the ready stance's idle and sway run on it. */
+  let heldFor = 0;
   return {
     resize(width, height) {
       size = { w: width, h: height };
@@ -67,6 +70,7 @@ export function createViewer(
       stage.setAspect(camera.aspect);
     },
     hold(shot) {
+      if (shot !== held) heldFor = 0;
       held = shot;
     },
     setTimeline(next) {
@@ -84,6 +88,12 @@ export function createViewer(
       }
       const shot = heldShot(given, held);
       const frame: BroadcastFrame = { ...given, ...shot };
+      if (held?.ready) {
+        // The next point is not played yet: both players wait at its start, the ball out of play (TD-061).
+        heldFor += dt;
+        frame.players = heldPlayers(timeline, held.ready.tell, heldFor);
+        frame.ball = null;
+      }
       // A held shot without a focus must not keep the frame's (a tell on B over a close-up on A).
       if (!shot.focus) delete frame.focus;
       stage.applyFrame(frame);
