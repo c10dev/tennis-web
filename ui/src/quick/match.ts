@@ -4,13 +4,14 @@
 import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
-  autoPlay, cardChoices, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
+  autoPlay, cardChoices, concedeQuick, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
   tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { getAudio } from '../audio/session.ts';
 import { soundToggle } from '../audio/toggle.ts';
 import { T, U } from '../i18n/index.ts';
+import { dialogOpen } from '../lib/confirm.ts';
 import { buzz } from '../lib/haptics.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
@@ -130,6 +131,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   }
 
   const onKey = (e: KeyboardEvent) => {
+    if (dialogOpen()) return;
     const card = ({ Digit1: 'attack', Digit2: 'defend', Digit3: 'counter' } as Record<string, Card>)[e.code];
     if (card) void choose(card);
   };
@@ -137,6 +139,14 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   void run();
   return {
     element, bare: true,
+    concede() {
+      // Stop the flow where it is (every await checks `disposed`), then settle the match as a conceded loss.
+      if (disposed || matchOver(qm)) return;
+      disposed = true;
+      const next = concedeQuick(ctx.quick!, qm);
+      ctx.quickMatch = null;
+      void ctx.setQuick(next, '#/quick/result');
+    },
     dispose: () => {
       disposed = true;
       window.removeEventListener('keydown', onKey);

@@ -9,6 +9,7 @@ import { landingFor, routesFor, TARGET } from '../target.ts';
 import { getPlatform } from '../platform/index.ts';
 import { LANG, U } from '../i18n/index.ts';
 import { followSafeArea } from '../lib/safe-area.ts';
+import { installBack } from './back.ts';
 import type { Ctx, Screen } from './context.ts';
 import { historyScreen } from './screens/history.ts';
 import { homeScreen } from './screens/home.ts';
@@ -151,6 +152,7 @@ window.addEventListener('hashchange', () => void render());
 document.documentElement.dataset.target = TARGET;
 void getPlatform().then((p) => {
   followSafeArea(p, document.documentElement);
+  installBack(p, () => current);
   return p.lockPortrait();
 });
 document.title = 'TennisSim';

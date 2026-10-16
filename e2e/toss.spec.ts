@@ -98,3 +98,29 @@ test.describe('toss target saves', () => {
     await expect(page.locator('#ladder')).toContainText('Old Save');
   });
 });
+
+// The Android back button (ADR-022, M7 step 8), fired through the devtools mock.
+test.describe('toss target back button', () => {
+  test('asks before conceding in a match, goes to the ladder from a result, asks before leaving the ladder', async ({ page }) => {
+    const back = () => page.evaluate(() => (window as unknown as { __ait: { trigger(e: string): void } }).__ait.trigger('backEvent'));
+    await page.goto('/');
+    await page.locator('#quick-seed').fill('3');
+    await page.locator('#quick-start').click();
+    await page.locator('#fast-mode').check();
+    await page.locator('#quick-play').click();
+    await expect(page.locator('#quick-panel')).toBeVisible();
+    await back();
+    await expect(page.getByRole('dialog')).toContainText('기권할까요?');
+    await back();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await back();
+    await page.locator('#confirm-ok').click();
+    await expect(page.locator('#quick-result h1')).toHaveText(/^기권패 \d+-\d+$/);
+    await back();
+    await expect(page).toHaveURL(/#\/quick$/);
+    await back();
+    await expect(page.getByRole('dialog')).toContainText('게임을 종료할까요?');
+    await page.locator('#confirm-cancel').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+});

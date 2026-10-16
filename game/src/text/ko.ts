@@ -64,6 +64,7 @@ export const ko: Messages = {
   },
   noCards: (won) => (won ? '작전대로 밀어붙였어요' : '상대가 경기를 매듭지었어요'),
   headline: (won, score) => `${won ? '승리' : '패배'} ${score}`,
+  concededHeadline: (score) => `기권패 ${score}`,
   goal: { stay: '1위 지키기', first: '1위', top: (n) => `${n}위권`, line: (wins, label) => `${label}까지 ${wins}승` },
   pbp: {
     opening: (score, userServes) => `${score} · ${userServes ? '내 서브' : '상대 서브'}`,

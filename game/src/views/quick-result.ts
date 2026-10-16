@@ -26,7 +26,7 @@ const share = (value: number, shown: number) => Math.min(0.999, Math.max(0, valu
 export function quickResultView(s: QuickState, t: Messages = en) {
   const r = s.history.at(-1)!;
   const decisive = highlightOf(r, t);
-  const point = replayMatch(r.recipe).events.find((e): e is PointEvent => e.type === 'point' && e.index === decisive.point)!;
+  const point = decisive && replayMatch(r.recipe).events.find((e): e is PointEvent => e.type === 'point' && e.index === decisive.point)!;
   const goal = nextGoal(s, t);
   const ratings: RatingView[] = r.progress.map((p) => {
     const [before, after] = [displayRating(p.before), displayRating(p.after)];
@@ -34,9 +34,9 @@ export function quickResultView(s: QuickState, t: Messages = en) {
     return { key: p.key, label: t.rating[p.key] ?? p.key, before, after, rose, fill: share(p.after, after), fillBefore: rose ? 0 : share(p.before, before) };
   }).sort((x, y) => Number(y.rose) - Number(x.rose));
   return {
-    won: r.won, headline: t.headline(r.won, r.score), opponent: playerName(s, r.opponent), delta: r.pointsDelta,
+    won: r.won, conceded: !!r.conceded, headline: r.conceded ? t.concededHeadline(r.score) : t.headline(r.won, r.score), opponent: playerName(s, r.opponent), delta: r.pointsDelta,
     rankBefore: r.rankBefore, rankAfter: r.rankAfter, toNext: pointsToNext(s), points: s.points[USER_ID]!,
-    decisive, playByPlay: playByPlay(point, decisive, t), overtakes: r.overtakes ?? [], ratings, goal,
+    decisive, playByPlay: point && decisive ? playByPlay(point, decisive, t) : [], overtakes: r.overtakes ?? [], ratings, goal,
     goalLine: goal.winsNeeded === 0 ? goal.label : t.goal.line(goal.winsNeeded, goal.label),
   };
 }

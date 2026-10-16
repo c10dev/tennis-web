@@ -77,7 +77,7 @@ test.describe('quick result', () => {
     const v = nodeResult(3);
     // The tiles rise 120 ms apart (ADR-021).
     expect(await page.locator('#gains .gain').evaluateAll((els) => els.map((el) => getComputedStyle(el).transitionDelay.split(',')[0]))).toEqual(['0s', '0.12s', '0.24s']);
-    await expect(page.locator('#decisive-line')).toHaveText(v.decisive.line);
+    await expect(page.locator('#decisive-line')).toHaveText(v.decisive!.line);
     await expect(page.locator('#play-by-play li')).toHaveText(v.playByPlay);
     await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase), { timeout: 15_000 }).toBe('done');
     const phases = await page.evaluate(() => (window as unknown as { __phases: string[] }).__phases);
@@ -171,7 +171,7 @@ test.describe('quick result', () => {
     const errors = watchErrors(page);
     await playToResult(page, 3, false);
     await expect(page.locator('#decisive-replay #view')).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('#decisive-replay .replay-caption strong')).toHaveText(nodeResult(3).decisive.line);
+    await expect(page.locator('#decisive-replay .replay-caption strong')).toHaveText(nodeResult(3).decisive!.line);
     await expect.poll(() => page.locator('#view').evaluate((c) => (c as HTMLCanvasElement).width >= c.clientWidth && c.clientWidth > 300)).toBe(true);
     await page.mouse.click(640, 200);
     await expect(page.locator('#decisive-replay')).toHaveCount(0);

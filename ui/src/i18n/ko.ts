@@ -51,4 +51,6 @@ export const koUi: UiText = {
   skipHintTouch: '탭해서 건너뛰기',
   soundOn: '소리 켬',
   soundOff: '소리 끔',
+  concede: { title: '기권할까요?', body: '이 경기는 패배로 기록돼요.', ok: '기권', cancel: '계속하기' },
+  leave: { title: '게임을 종료할까요?', ok: '종료', cancel: '취소' },
 };

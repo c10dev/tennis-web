@@ -56,6 +56,7 @@ export const en: Messages = {
   },
   noCards: (won) => (won ? 'Your plan carried it' : 'They closed it out'),
   headline: (won, score) => `${won ? 'You won' : 'You lost'} ${score}`,
+  concededHeadline: (score) => `You conceded ${score}`,
   goal: { stay: 'Stay #1', first: '#1', top: (n) => `Top ${n}`, line: (wins, label) => `${wins} ${wins === 1 ? 'win' : 'wins'} to ${label}` },
   pbp: {
     opening: (score, userServes) => `${score} · ${userServes ? 'You serve' : 'They serve'}`,

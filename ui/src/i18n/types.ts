@@ -49,4 +49,6 @@ export interface UiText {
   skipHintTouch: string;
   soundOn: string;
   soundOff: string;
+  concede: { title: string; body: string; ok: string; cancel: string };
+  leave: { title: string; ok: string; cancel: string };
 }

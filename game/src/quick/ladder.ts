@@ -1,6 +1,6 @@
 // The quick-match ladder (ADR-016): 64 players by points, the next opponent just above, points for every win,
 // AI matches in the background so the ladder never stands still.
-import { createConfig, finish, fingerprint, simulateMatch, type MatchRecipe, type MatchResult, type PointEvent, type Surface } from '@tennis/engine';
+import { createConfig, finish, fingerprint, isOver, liveStatus, simulateMatch, type MatchRecipe, type MatchResult, type PointEvent, type Surface } from '@tennis/engine';
 import { USER_ID } from '../player/create.ts';
 import { overall } from '../player/overall.ts';
 import { adjust } from '../player/week.ts';
@@ -33,6 +33,8 @@ export interface QuickRecord {
   decisions?: DecisionRecord[];
   /** Players the user passed this match, the first passed first; absent in M5 records. */
   overtakes?: Overtake[];
+  /** The user conceded (M7, ADR-022): a loss at `score`, no fingerprint, and a recipe that does not end the match. */
+  conceded?: true;
 }
 
 export interface QuickState {
@@ -82,7 +84,21 @@ const delta = (won: boolean, rank: number, opponentRank: number) => (won ? QUICK
 
 export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
   const result = finish(m.live);
-  const won = result.winner === 'A';
+  return settle(s, m, { won: result.winner === 'A', score: finalScore(result), fingerprint: fingerprint(result) });
+}
+
+/**
+ * The user walks off (M7, ADR-022): a loss at the score so far, settled like any loss (points, ratings, rival,
+ * background matches) and flagged `conceded`. Only for a match still being played.
+ */
+export function concedeQuick(s: QuickState, m: QuickMatch): QuickState {
+  if (isOver(m.live)) throw new Error('This match is over: finish it instead');
+  const [a, b] = liveStatus(m.live).score.points;
+  return settle(s, m, { won: false, score: `${a}-${b}`, fingerprint: '', conceded: true });
+}
+
+function settle(s: QuickState, m: QuickMatch, end: { won: boolean; score: string; fingerprint: string; conceded?: true }): QuickState {
+  const { won, score } = end;
   const rankBefore = rankOf(s);
   const opponentRank = rankOf(s, m.opponent);
   const pointsDelta = delta(won, rankBefore, opponentRank);
@@ -101,11 +117,11 @@ export function finishQuick(s: QuickState, m: QuickMatch): QuickState {
 
   const next: QuickState = { ...s, world: { ...s.world, players }, points };
   background(next, s.matchNo);
-  const score = finalScore(result);
   const record: QuickRecord = {
     matchNo: s.matchNo, opponent: m.opponent, opponentRank, won, score, pointsDelta, rankBefore, rankAfter: rankOf(next),
-    fingerprint: fingerprint(result), recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
+    fingerprint: end.fingerprint, recipe: JSON.parse(JSON.stringify(m.recipe)) as MatchRecipe, progress,
     decisions: m.decisions.map((d) => ({ ...d, score: [...d.score] })), overtakes: overtakesBetween(ladderOrder(s), ladderOrder(next), next),
+    ...(end.conceded ? { conceded: true as const } : {}),
   };
   const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
   return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };

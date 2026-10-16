@@ -9,6 +9,8 @@ export interface Screen {
   /** Full-screen screens (the match) skip the header. */
   bare?: boolean;
   dispose?(): void;
+  /** The match screen: end the match now as a conceded loss (the back button, ADR-022). */
+  concede?(): void;
 }
 
 export interface Ctx {

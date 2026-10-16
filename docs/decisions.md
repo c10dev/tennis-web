@@ -832,6 +832,18 @@ Format: one entry per decision, newest at the bottom.
     format stays QuickSave v2. A save grows about 2.2 KB a match (31 KB new, 254 KB after 100 matches, 472 KB after
     200), all of it rewritten after every match (TD-055). Saves stay on the device: a new phone or a reinstalled
     Toss app starts a new ladder.
+  - **Back, exit, concede (step 8).** `concedeQuick(s, m)` (game/src/quick/ladder.ts) ends a match still being
+    played as a loss at the score so far: it shares `settle` with `finishQuick` (points, ratings, rival, background
+    matches) and records `conceded: true` with an empty fingerprint; the engine is untouched (no event-schema
+    change) and the save stays v2 (one optional field). A conceded record has no decisive point (`decisiveMoment`
+    and `highlightOf` return null, nothing is replayed) and its headline is `concededHeadline` ("You conceded 3-5"
+    / "기권패 3-5"). Conceding is a loss on purpose, so walking off a losing match costs the same. The back button
+    (`ui/src/lib/back.ts`, a pure reducer, carried out by `career/back.ts`): an open dialog closes first; in a
+    match it asks "기권할까요?" and concedes on yes; from the result it goes to the ladder; on the ladder or the
+    start form it asks "게임을 종료할까요?" and closes the mini app (`Screen.close`). The toss build subscribes to
+    `graniteEvent` `backEvent` (which blocks Toss's default back); on the web, Escape in a match does the same.
+    The dialog (`ui/src/lib/confirm.ts`) is modal with focus on the safe choice, and Escape, a tap outside or
+    the back button cancel it. The devtools mock's `__ait.trigger('backEvent')` drives an e2e test of the toss path.
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
   gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. The first chunk carries the mixer (22 KB,
   9 KB gzip). Untested on a device until the console

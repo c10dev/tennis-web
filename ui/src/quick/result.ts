@@ -32,9 +32,11 @@ export function quickResult(ctx: Ctx): Screen {
   };
   const step = (cls: string, id: string, ...children: Parameters<typeof h>[2][]) => h('div', { class: `step ${cls}`, id }, ...children);
   const lines = v.playByPlay.map((t) => h('li', { class: 'pbp' }, t));
-  const decisive = step('decisive', 'decisive', h('span', { class: 'kicker' }, v.decisive.user ? U.decisivePoint : U.lastPoint),
+  // A conceded match (ADR-022) has no decisive point: the result starts at the headline.
+  const moment = v.decisive;
+  const decisive = moment && step('decisive', 'decisive', h('span', { class: 'kicker' }, moment.user ? U.decisivePoint : U.lastPoint),
     h('ol', { id: 'play-by-play', class: ctx.fastMode ? '' : 'compact' }, lines),
-    h('p', { id: 'decisive-line', class: v.decisive.won ? 'you' : 'them' }, v.decisive.line));
+    h('p', { id: 'decisive-line', class: moment.won ? 'you' : 'them' }, moment.line));
   const count = h('strong', { 'aria-hidden': 'true' }, signed(v.delta));
   const headline = step('headline', 'headline', h('h1', null, v.headline), h('p', { class: 'muted' }, U.against(v.opponent)));
   const gains = step('gains', 'gains',
@@ -67,7 +69,7 @@ export function quickResult(ctx: Ctx): Screen {
     for (const el of element.querySelectorAll<HTMLElement>('.step, .pbp')) show(el);
     for (const el of rose) el.classList.add('is-ticked');
     goal.classList.add('is-locked');
-    decisive.classList.add('collapsed');
+    decisive?.classList.add('collapsed');
     element.classList.add('done');
   };
   seq.onSkip(showAll);
@@ -80,17 +82,19 @@ export function quickResult(ctx: Ctx): Screen {
       ['ratings', ratings, tickRatings],
       ['goal', goal, lockGoal],
     ];
-    phase('replay');
-    show(decisive);
-    if (ctx.fastMode) {
-      for (const li of lines) {
-        show(li);
-        await seq.wait(R.lineSec);
-      }
-    } else await replay3d(seq);
-    for (const li of lines) show(li);
-    await seq.wait(R.holdSec);
-    decisive.classList.add('collapsed');
+    if (moment && decisive) {
+      phase('replay');
+      show(decisive);
+      if (ctx.fastMode) {
+        for (const li of lines) {
+          show(li);
+          await seq.wait(R.lineSec);
+        }
+      } else await replay3d(seq, moment);
+      for (const li of lines) show(li);
+      await seq.wait(R.holdSec);
+      decisive.classList.add('collapsed');
+    }
     for (const [name, el, then] of steps) {
       if (seq.skipped) return;
       if (!el) continue;
@@ -120,9 +124,9 @@ export function quickResult(ctx: Ctx): Screen {
   }
 
   /** The decisive point in 3D, full screen with the line as a caption; removed when it ends or on skip. */
-  async function replay3d(s: Sequence) {
+  async function replay3d(s: Sequence, moment: NonNullable<typeof v.decisive>) {
     const stage = h('div', { class: 'decisive-replay', id: 'decisive-replay' });
-    const caption = h('div', { class: 'replay-caption' }, h('span', { class: 'kicker' }, `${U.decisivePoint} · ${v.decisive.score}`), h('strong', null, v.decisive.line));
+    const caption = h('div', { class: 'replay-caption' }, h('span', { class: 'kicker' }, `${U.decisivePoint} · ${moment.score}`), h('strong', null, moment.line));
     element.append(stage);
     const { mountBroadcast } = await import('../replay/broadcast.ts');
     if (s.skipped) {
@@ -141,7 +145,7 @@ export function quickResult(ctx: Ctx): Screen {
     s.onSkip(close);
     if (s.skipped) return;
     const timeline = broadcast.load({ schemaVersion: SCHEMA_VERSION, config: record.recipe.config, events: replayMatch(record.recipe).events });
-    const seg = timeline.segments.find((x) => x.point.index === v.decisive.point)!;
+    const seg = timeline.segments.find((x) => x.point.index === moment.point)!;
     const p: PointEvent = seg.point;
     phase('replay-3d');
     await broadcast.playWindow(seg.zero + Math.max(-QUICK_PACE.tossSec, p.durationSec - QUICK_PACE.keyMaxSec), seg.zero + p.durationSec, R.replaySpeed);

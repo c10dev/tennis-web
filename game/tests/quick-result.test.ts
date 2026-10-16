@@ -61,7 +61,7 @@ describe('highlightOf', () => {
 
   it('falls back to the final point, named differently, when no card was played', () => {
     const r = { ...playLadderMatch(freshLadder()).next.history[0]!, decisions: [] };
-    const h = highlightOf(r);
+    const h = highlightOf(r)!;
     const last = replayMatch(r.recipe).events.filter((e): e is PointEvent => e.type === 'point').at(-1)!;
     expect(h).toMatchObject({ point: last.index, score: `${last.scoreBefore.points[0]}-${last.scoreBefore.points[1]}`, user: null, ai: null, won: r.won });
     expect(h.line).toBe(r.won ? 'Your plan carried it' : 'They closed it out');

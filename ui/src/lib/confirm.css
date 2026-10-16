@@ -1,0 +1,9 @@
+/* The confirm dialog (ADR-022): a paper sticker over a dimmed screen, inside the safe area. */
+.confirm-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: calc(var(--safe-top) + 16px)
+  calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 16px) calc(var(--safe-left) + 16px); background: rgba(21, 23, 30, 0.6); }
+.confirm { --text: var(--ink); --muted: var(--ink-muted); width: min(360px, 100%); padding: 18px 20px; color: var(--ink); background: var(--paper);
+  border: var(--outline); border-radius: 18px; box-shadow: var(--lift); }
+.confirm h2 { margin: 0 0 6px; font-size: 24px; }
+.confirm p { margin: 0 0 4px; color: var(--ink-muted); }
+.confirm .actions { justify-content: flex-end; }
+.confirm button { min-height: 44px; padding: 8px 18px; }

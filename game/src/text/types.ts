@@ -29,6 +29,7 @@ export interface Messages {
   decisive(d: { score: string; user: Card; ai: Card; matchup: number; won: boolean }): string;
   noCards(won: boolean): string;
   headline(won: boolean, score: string): string;
+  concededHeadline(score: string): string;
   goal: { stay: string; first: string; top(n: number): string; line(wins: number, label: string): string };
   pbp: {
     opening(score: string, userServes: boolean): string;

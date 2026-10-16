@@ -22,8 +22,8 @@ describe('quickResultView', () => {
 
   it('replays the decisive moment with a play-by-play ending on who won the point', () => {
     expect(v.decisive).toEqual(highlightOf(rec));
-    const point = replayMatch(rec.recipe).events.find((e): e is PointEvent => e.type === 'point' && e.index === v.decisive.point)!;
-    expect(v.playByPlay[0]).toBe(`${v.decisive.score} · ${point.server === 'A' ? 'You serve' : 'They serve'}`);
+    const point = replayMatch(rec.recipe).events.find((e): e is PointEvent => e.type === 'point' && e.index === v.decisive!.point)!;
+    expect(v.playByPlay[0]).toBe(`${v.decisive!.score} · ${point.server === 'A' ? 'You serve' : 'They serve'}`);
     expect(v.playByPlay.at(-1)).toMatch(point.winner === 'A' ? /^Your point/ : /^Their point/);
     expect(v.playByPlay.join(' ')).toContain(point.winner === 'A' ? 'Your point' : 'Their point');
   });
@@ -57,7 +57,7 @@ describe('quickResultView', () => {
     const old = { ...next, history: [m5] };
     const w = quickResultView(old);
     expect(w.overtakes).toEqual([]);
-    expect(w.decisive.user).toBeNull();
+    expect(w.decisive!.user).toBeNull();
   });
 });
 
@@ -67,6 +67,6 @@ describe('play-by-play of a point without cards', () => {
     const rec = next.history.at(-1)!;
     const v = quickResultView({ ...next, history: [{ ...rec, decisions: [] }] });
     expect(v.playByPlay[1]).toBe('No cards: your game plan');
-    expect(v.decisive.line).toBe(rec.won ? 'Your plan carried it' : 'They closed it out');
+    expect(v.decisive!.line).toBe(rec.won ? 'Your plan carried it' : 'They closed it out');
   });
 });

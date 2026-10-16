@@ -21,9 +21,9 @@ const lineFor = (d: DecisionRecord, t: Messages) =>
  * won matchup among those first), in a loss the last one lost (the last lost matchup first); the last decision if
  * none went the match's way. Null only when the user made no decision.
  */
-export function decisiveMoment(r: { won: boolean; decisions?: readonly DecisionRecord[] }, t: Messages = en): DecisiveMoment | null {
+export function decisiveMoment(r: { won: boolean; decisions?: readonly DecisionRecord[]; conceded?: true }, t: Messages = en): DecisiveMoment | null {
   const all = r.decisions ?? [];
-  if (!all.length) return null;
+  if (!all.length || r.conceded) return null;
   const side = r.won ? 'A' : 'B';
   const sign = r.won ? 1 : -1;
   const went = all.filter((d) => d.winner === side);
@@ -31,8 +31,9 @@ export function decisiveMoment(r: { won: boolean; decisions?: readonly DecisionR
   return { point: pick.point, score: scoreOf(pick.score), user: pick.user, ai: pick.ai, won: pick.winner === 'A', line: lineFor(pick, t) };
 }
 
-/** What the result screen replays: the decisive moment, or the match's final point. */
-export function highlightOf(r: QuickRecord, t: Messages = en): Highlight {
+/** What the result screen replays: the decisive moment, or the match's final point; nothing for a conceded match. */
+export function highlightOf(r: QuickRecord, t: Messages = en): Highlight | null {
+  if (r.conceded) return null;
   const moment = decisiveMoment(r, t);
   if (moment) return moment;
   const last = replayMatch(r.recipe).events.filter((e): e is PointEvent => e.type === 'point').at(-1)!;

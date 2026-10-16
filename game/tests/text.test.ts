@@ -75,7 +75,7 @@ describe('Korean screens', () => {
     const e = quickResultView(s);
     expect(v.headline).toBe(`${r.won ? '승리' : '패배'} ${r.score}`);
     expect(v.decisive).toEqual(highlightOf(r, ko));
-    expect(v.decisive.point).toBe(e.decisive.point);
+    expect(v.decisive!.point).toBe(e.decisive!.point);
     expect(v.playByPlay).toHaveLength(e.playByPlay.length);
     expect(v.playByPlay.at(-1)).toMatch(/^(내|상대) 포인트/);
     expect(v.ratings.map((x) => x.key)).toEqual(e.ratings.map((x) => x.key));
