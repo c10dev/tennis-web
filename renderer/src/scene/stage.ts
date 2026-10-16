@@ -3,6 +3,8 @@ import { CircleGeometry, Mesh, MeshBasicMaterial, Scene } from 'three';
 import type { LineCall } from '../broadcast/hawkeye.ts';
 import type { CameraId, ClipKind } from '../broadcast/types.ts';
 import { portraitBallScale } from '../camera/framing.ts';
+import { tierSettings, type QualityTier } from '../quality.ts';
+import { isOutline } from './outline.ts';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
 import { BALL, BALL_LOOK, COLOURS } from '../tuning/index.ts';
@@ -22,6 +24,8 @@ export interface Stage {
   applyFrame(frame: StageFrame): void;
   /** The view's width / height: an upright phone draws the ball larger (portraitBallScale). */
   setAspect(aspect: number): void;
+  /** Shows or hides what the tier leaves out: the ink outlines and the sky dome. */
+  setQuality(tier: QualityTier): void;
 }
 
 export function createStage(timeline: Timeline): Stage {
@@ -44,6 +48,13 @@ export function createStage(timeline: Timeline): Stage {
     scene,
     setAspect(aspect) {
       ballScale = portraitBallScale(aspect);
+    },
+    setQuality(tier) {
+      const { outlines, sky } = tierSettings(tier);
+      scene.traverse((o) => {
+        if (isOutline(o)) o.visible = outlines;
+      });
+      scene.getObjectByName('sky')!.visible = sky;
     },
     applyFrame(frame) {
       rigs.A.apply(frame.players.A);

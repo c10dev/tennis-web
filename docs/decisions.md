@@ -844,6 +844,17 @@ Format: one entry per decision, newest at the bottom.
     `graniteEvent` `backEvent` (which blocks Toss's default back); on the web, Escape in a match does the same.
     The dialog (`ui/src/lib/confirm.ts`) is modal with focus on the safe choice, and Escape, a tap outside or
     the back button cancel it. The devtools mock's `__ait.trigger('backEvent')` drives an e2e test of the toss path.
+  - **Quality tiers (step 9).** `QUALITY` (renderer/src/tuning/quality.ts) has two tiers: high (pixel ratio up to 2,
+    antialiasing, ink outlines, sky dome) and low (pixel ratio up to 1.5, none of the three). A device with 4 or
+    fewer logical cores starts low (antialiasing is fixed when the WebGL renderer is made); otherwise a page starts
+    high and the viewer's frame meter (renderer/src/quality.ts) steps it down once to low when frames average over
+    33 ms across 2 s, after a 1 s warm-up and ignoring gaps over 0.25 s (a hidden tab). The tier lasts the page's
+    life across broadcasts, shows as `body.dataset.quality`, and `?quality=low|high` sets the start. Low draws 89
+    meshes against 114 at the main camera (no outline hulls) and about 44% fewer pixels at a 2× screen. Measured on
+    the dev VM (software WebGL, so only indicative): the toss build, cold, on a Pixel 7 profile with 4× CPU
+    slowdown and 9 Mbps / 170 ms: first screen 1.9 s, Play to the first 3D frame 0.9 s (checklist: 10 s); the
+    unthrottled VM steps high down to low within seconds, low then holds a 16.7 ms median frame. In a plain browser
+    the toss build's first screen takes 1.3 s with the real SDK (the bridge calls fail at once and fall back).
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
   gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. The first chunk carries the mixer (22 KB,
   9 KB gzip). Untested on a device until the console

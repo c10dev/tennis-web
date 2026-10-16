@@ -2,9 +2,9 @@
 // page, the career match screen and the quick match (with the shared audio session); dispose() removes it and its
 // listeners.
 import {
-  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, overlayAt,
+  broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, initialTier, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type Mixer, type ViewMode,
+  type Mixer, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
@@ -33,6 +33,22 @@ export interface BroadcastOptions {
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
+
+/**
+ * The render quality for this page's life (M7, ADR-022): `?quality=low|high` forces it (tests, debugging); otherwise
+ * low on a device with few cores, high elsewhere, and it only ever steps down. Shown as `body.dataset.quality`.
+ */
+let tier: QualityTier | null = null;
+function startTier(): QualityTier {
+  const forced = new URLSearchParams(location.search).get('quality');
+  tier ??= forced === 'low' || forced === 'high' ? forced : initialTier(navigator.hardwareConcurrency);
+  document.body.dataset.quality = tier;
+  return tier;
+}
+const stepDown = (next: QualityTier) => {
+  tier = next;
+  document.body.dataset.quality = next;
+};
 
 export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Broadcast {
   document.body.classList.add('broadcast-page');
@@ -116,7 +132,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const timeline = buildTimeline(input);
       if (!viewer || surface !== timeline.surface || !opts.keepTime) {
         viewer?.dispose();
-        viewer = createViewer(canvas, timeline);
+        viewer = createViewer(canvas, timeline, startTier(), stepDown);
         surface = timeline.surface;
         size = '';
         resize();

@@ -25,3 +25,4 @@ export { createStage, type Stage, type StageFrame } from './scene/stage.ts';
 export { buildVenue, standHeightAt } from './scene/venue.ts';
 export { AUDIO, BROADCAST, PLAYBACK } from './tuning/index.ts';
 export { createViewer, type Viewer } from './viewer.ts';
+export { initialTier, type QualityTier } from './quality.ts';
