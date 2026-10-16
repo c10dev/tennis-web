@@ -3,6 +3,7 @@ import { decide, startQuick } from '../src/quick/match.ts';
 import { HABITS } from '../src/quick/persona.ts';
 import { TELL_TEXTS } from '../src/quick/tells.ts';
 import { habitLine, opponentRead, opponentScouting, rivalLine } from '../src/views/quick-scout.ts';
+import { ko } from '../src/text/ko.ts';
 import { freshLadder, ladderWithDecision, playLadderMatch, toDecision } from './quick-helpers.ts';
 
 describe('opponentRead', () => {
@@ -39,10 +40,20 @@ describe('habitLine', () => {
 });
 
 describe('rivalLine', () => {
-  it('gives the head to head from the user\'s side and the card they played most at big points', () => {
-    expect(rivalLine({ met: 3, wins: 2, losses: 1, seen: ['attack', 'attack', 'defend', 'attack'] })).toBe('Head to head 2-1 to you; they attacked 3 of 4 big points');
-    expect(rivalLine({ met: 2, wins: 0, losses: 2, seen: ['counter'] })).toBe('Head to head 0-2 to them; they countered 1 of 1 big point');
-    expect(rivalLine({ met: 2, wins: 1, losses: 1, seen: [] })).toBe('Head to head 1-1');
+  it('gives the head to head from the user\'s side, how the rival has adapted to it, and its last big-point card', () => {
+    expect(rivalLine({ met: 3, wins: 2, losses: 1, seen: ['attack', 'attack', 'defend', 'attack'] }, 'counter_after_loss'))
+      .toBe('Head to head 2-1 to you; wary of your read: may switch to Attack when the habit is due; last big point: Attack');
+    expect(rivalLine({ met: 2, wins: 0, losses: 2, seen: ['counter'] }, 'repeat_card')).toBe('Head to head 0-2 to them; confident: sticks to the habit; last big point: Counter');
+    expect(rivalLine({ met: 2, wins: 1, losses: 1, seen: [] }, 'copy_user')).toBe('Head to head 1-1');
+    expect(rivalLine({ met: 1, wins: 1, losses: 0, seen: [] }, 'copy_user')).toBe('Head to head 1-0 to you; wary of your read: may switch to what beats your answer when the habit is due');
+  });
+
+  it('says the same in Korean', () => {
+    expect(rivalLine({ met: 3, wins: 2, losses: 1, seen: ['attack'] }, 'counter_after_loss', ko))
+      .toBe('상대 전적 2승 1패 · 습관을 읽힌 걸 알아요: 습관 대신 공격으로 바꿀 수 있어요 · 지난 승부처: 공격');
+    expect(rivalLine({ met: 1, wins: 0, losses: 1, seen: [] }, 'repeat_card', ko)).toBe('상대 전적 0승 1패 · 자신만만: 습관을 더 고집해요');
+    expect(rivalLine({ met: 2, wins: 1, losses: 1, seen: [] }, 'repeat_card', ko)).toBe('상대 전적 1승 1패');
+    expect(rivalLine({ met: 1, wins: 1, losses: 0, seen: [] }, 'beat_user_last', ko)).toBe('상대 전적 1승 0패 · 습관을 읽힌 걸 알아요: 습관 대신 내 대응을 이기는 카드로 바꿀 수 있어요');
   });
 });
 
@@ -56,7 +67,7 @@ describe('opponentScouting', () => {
     const again = opponentScouting(s, m.opponent);
     expect(opponentRead(m).scouting).toContain(again.habit);
     expect(again.habit).toBe(habitLine(m.recipe.config.players[1].name, m.persona.habit));
-    expect(again.rival).toBe(rivalLine(s.rivals[m.opponent]!));
+    expect(again.rival).toBe(rivalLine(s.rivals[m.opponent]!, m.persona.habit));
     expect(opponentRead(m).rival).toBe(again.rival);
   });
 });

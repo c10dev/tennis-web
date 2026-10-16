@@ -1,10 +1,12 @@
 // The quick-match card AI (ADR-016/017): outside its persona's habit it plays its style's mix, leans towards the card
 // that beats the user's recent habit, and never plays one card more than QUICK_AI.maxShare of the time. When its
-// habit applies it plays the habit card QUICK_PERSONA.habitShare of the time: that is what makes it readable.
+// habit applies it plays the habit card QUICK_PERSONA.habitShare of the time: that is what makes it readable. A rival
+// adapts that share to the head to head (ADR-025).
 import { createRng, type Card, type PlayStyle, type Rng } from '@tennis/engine';
 import { QUICK_AI, QUICK_PERSONA } from '../tuning.ts';
 import { BEATEN_BY, CARDS } from './cards.ts';
 import { habitCard } from './persona.ts';
+import { rivalStance, switchCard } from './rivals.ts';
 import { drawTell } from './tells.ts';
 import type { AiDecision, DecisionContext } from './types.ts';
 
@@ -62,14 +64,22 @@ export function cardEntropy(cards: readonly Card[]): number {
 }
 
 /** The AI's chances at a decision point (ADR-017): its habit card `habitShare` of the time when its habit applies,
- *  the rest in its style mix's proportions; otherwise the style mix, read against the user's decision cards. */
+ *  the rest in its style mix's proportions; otherwise the style mix, read against the user's decision cards. A rival
+ *  changes only the habit's share (ADR-025): wary, it plays the switch card instead; confident, the habit more. */
 export function decisionOdds(ctx: Omit<DecisionContext, 'rng'>): [number, number, number] {
   const mix = cardOdds({ style: ctx.style, role: ctx.role, history: ctx.decisions.map((d) => d.user), fatigue: ctx.fatigue });
   const habit = habitCard(ctx);
   if (!habit) return mix;
   const h = CARDS.indexOf(habit);
+  const stance = rivalStance(ctx.rival);
+  if (stance === 'wary') {
+    const { habitShare, switchShare } = QUICK_PERSONA.rival.wary;
+    const s = CARDS.indexOf(switchCard(habit));
+    return CARDS.map((_, i) => (i === h ? habitShare : i === s ? switchShare : 1 - habitShare - switchShare)) as [number, number, number];
+  }
+  const share = stance === 'confident' ? QUICK_PERSONA.rival.confident.habitShare : QUICK_PERSONA.habitShare;
   const rest = 1 - mix[h]!;
-  return mix.map((x, i) => (i === h ? QUICK_PERSONA.habitShare : ((1 - QUICK_PERSONA.habitShare) * x) / rest)) as [number, number, number];
+  return mix.map((x, i) => (i === h ? share : ((1 - share) * x) / rest)) as [number, number, number];
 }
 
 /** The AI's card at a decision point, then the tell the user sees, from a stream of its own seeded after the card. */

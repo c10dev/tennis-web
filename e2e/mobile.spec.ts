@@ -1,4 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import type { Card } from '@tennis/engine';
+import {
+  autoPlay, createPlayer, decide, defaultAllocation, finishQuick, ko, matchOver, newLadder, opponentScouting, startQuick, toQuickSave, type QuickState,
+} from '@tennis/game';
 
 // The toss build on a phone (ADR-022, M7 step 4): portrait, touch, safe area, and the top-right corner left to Toss's
 // close and more buttons. Runs in the `mobile` project (Pixel 7, touch) against the toss server.
@@ -37,6 +41,19 @@ async function startLadder(page: Page) {
   await expect(page.locator('#quick-play')).toBeVisible();
 }
 
+/** Seed 1's ladder after `played` matches with a card cycle (as in quick-scout.spec), and the Korean home lines. */
+function playedLadder(played: number): { save: string; home: ReturnType<typeof opponentScouting> } {
+  const cycle: Card[] = ['attack', 'defend', 'counter'];
+  let s: QuickState = newLadder(1, createPlayer({ name: 'Alex Kim', style: 'big_server', allocation: defaultAllocation('big_server') }, 1));
+  for (let k = 0; k < played; k++) {
+    const qm = startQuick(s);
+    let i = 0;
+    for (autoPlay(qm); !matchOver(qm); autoPlay(qm)) decide(qm, cycle[i++ % 3]!);
+    s = finishQuick(s, qm);
+  }
+  return { save: JSON.stringify(toQuickSave(s, '2026-10-16T00:00:00Z')), home: opponentScouting(s, startQuick(s).opponent, ko) };
+}
+
 test.describe('phone layout (toss build)', () => {
   test('ladder: fits the width, leaves the Toss corner free, big touch targets', async ({ page }) => {
     await startLadder(page);
@@ -48,6 +65,41 @@ test.describe('phone layout (toss build)', () => {
     }
     for (const el of await page.locator('header.top a, header.top nav').all()) expect(overlaps(await box(el), tossCorner(t))).toBe(false);
   });
+
+  // Two rematches (ADR-025): a wary rival with the long Korean line and a baseliner's tip, then the longest tip.
+  for (const played of [2, 4]) {
+    test(`ladder with a rival after ${played} matches: the rival line and the plan tip wrap inside the width`, async ({ page }) => {
+      const { save, home } = playedLadder(played);
+      expect(home.rival).not.toBeNull();
+      expect(home.plan).not.toBeNull();
+      // The ladder saved under `local` (quick-store.ts), which the store takes over for the Toss user: in the devtools
+      // mock's storage (its `__ait_storage:` prefix) and in plain localStorage, where a failed SDK call falls back.
+      await page.addInitScript((text) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        for (const key of ['__ait_storage:quick:local', 'quick:local']) localStorage.setItem(key, text);
+      }, save);
+      await page.goto('/');
+      await expect(page.locator('#home-rival')).toHaveText(home.rival!);
+      await expect(page.locator('#plan-tip')).toHaveText(home.plan!);
+      await expect(page.locator('.plan-btn.tipped')).toHaveCount(1);
+      await noSideScroll(page);
+      const t = await tokens(page);
+      const card = await box(page.locator('#next-opponent'));
+      for (const id of ['#home-rival', '#plan-tip', '#home-scouting', '.plan-btn.tipped']) {
+        const b = await box(page.locator(id));
+        expect(b.x).toBeGreaterThanOrEqual(card.x);
+        expect(b.x + b.width).toBeLessThanOrEqual(Math.min(card.x + card.width, t.width));
+      }
+      // Wrapped, not clipped: no line runs past its box.
+      for (const id of ['#home-rival', '#plan-tip']) {
+        expect(await page.locator(id).evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+      }
+      const buttons = await Promise.all(['aggressive', 'balanced', 'defensive'].map((p) => box(page.locator(`#plan-${p}`))));
+      expect(new Set(buttons.map((b) => Math.round(b.y))).size).toBe(1);
+      for (const b of buttons) expect(b.height).toBeGreaterThanOrEqual(44);
+    });
+  }
 
   test('decision point: the court on top, the cards in one row below, nothing over the score or the Toss corner', async ({ page }) => {
     test.setTimeout(120_000);

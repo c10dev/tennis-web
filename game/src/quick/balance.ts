@@ -13,14 +13,14 @@ import { finishQuick, newLadder, rankOf } from './ladder.ts';
 import { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, type QuickMatch } from './match.ts';
 import { broadcastSeconds } from './pace.ts';
 import { personaOf } from './persona.ts';
-import { planTactic } from './plan.ts';
-import type { DecisionRecord, GamePlan, Persona } from './types.ts';
+import { opponentTactic, planTactic } from './plan.ts';
+import type { DecisionRecord, GamePlan, Persona, RivalRecord } from './types.ts';
 
 export const STYLES: PlayStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
 const SURFACES: Surface[] = ['hard', 'clay', 'grass'];
 
 export const tiebreakConfig = (a: PlayerProfile, b: PlayerProfile, i: number, plan: GamePlan = 'balanced'): MatchConfig =>
-  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...TIEBREAK_RULES }, tactics: [planTactic(plan), planTactic('balanced')], firstServer: i % 2 ? 'B' : 'A' });
+  createConfig([a, b], { surface: SURFACES[i % 3]!, rules: { ...TIEBREAK_RULES }, tactics: [planTactic(plan), opponentTactic(b.style, plan)], firstServer: i % 2 ? 'B' : 'A' });
 
 /** What `bot` sees at the pending decision of `m`. */
 export function botView(m: QuickMatch, rngSeed: number): BotView {
@@ -38,8 +38,8 @@ export function playMatch(m: QuickMatch, bot: Bot, botSeed: number, opponent?: B
   }
 }
 
-export function botMatch(config: MatchConfig, seed: number, bot: Bot, opts: { persona?: Persona; opponent?: Bot } = {}): { result: MatchResult; decisions: DecisionRecord[] } {
-  const m = createQuickMatch({ config, seed, matchNo: 0, opponent: 'ai', plan: 'balanced', persona: opts.persona ?? personaOf(seed, 'ai'), rival: null });
+export function botMatch(config: MatchConfig, seed: number, bot: Bot, opts: { persona?: Persona; opponent?: Bot; rival?: RivalRecord | null } = {}): { result: MatchResult; decisions: DecisionRecord[] } {
+  const m = createQuickMatch({ config, seed, matchNo: 0, opponent: 'ai', plan: 'balanced', persona: opts.persona ?? personaOf(seed, 'ai'), rival: opts.rival ?? null });
   playMatch(m, bot, seed, opts.opponent);
   return { result: finish(m.live), decisions: m.decisions };
 }
@@ -114,6 +114,8 @@ export function ladderPace(bot: Bot, runs: number, matches: number, seed: number
   return climbed / runs;
 }
 
-export const median = (xs: readonly number[]): number => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+/** The value at quantile `q` (0–1) of `xs`, nearest rank from below. */
+export const percentile = (xs: readonly number[], q: number): number => [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(xs.length * q))]!;
+export const median = (xs: readonly number[]): number => percentile(xs, 0.5);
 export const share = (xs: readonly number[], ok: (x: number) => boolean): number => xs.filter(ok).length / xs.length;
 export { cardEntropy };

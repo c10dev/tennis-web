@@ -1,12 +1,14 @@
 // Opponent-read measures for the balance report (ADR-017): the same matches as `winRate`, with what the bot saw at
 // each decision, so the report can say how often habits applied, were played, and how often the bot won the matchup.
+// Rematches (ADR-025) give every match a one-meeting rival record, won by the user or by the rival.
 import { averagePlayer, type Card } from '@tennis/engine';
+import { CARDS } from './cards.ts';
 import { streamSeed } from '../rng.ts';
 import { BEATEN_BY } from './ai.ts';
 import { botMatch, STYLES, tiebreakConfig } from './balance.ts';
 import type { Bot } from './bots.ts';
 import { habitCard, HABITS } from './persona.ts';
-import type { Habit } from './types.ts';
+import type { Habit, RivalRecord } from './types.ts';
 
 export interface HabitCount {
   decisions: number;
@@ -26,8 +28,13 @@ export interface ReadStats {
   byHabit: Record<Habit, HabitCount>;
 }
 
-/** `bot` (an average player) against an average AI of every style and persona, as `winRate` plays it. */
-export function readStats(bot: Bot, n: number, seed: number): ReadStats {
+/** Match `i`'s rival record at a rematch after one meeting won by `lead`; its last big-point card cycles. */
+export const rematch = (lead: 'user' | 'rival') => (i: number): RivalRecord =>
+  ({ met: 1, wins: lead === 'user' ? 1 : 0, losses: lead === 'user' ? 0 : 1, seen: [CARDS[i % 3]!] });
+
+/** `bot` (an average player) against an average AI of every style and persona, as `winRate` plays it; `rival` gives
+ *  match `i` a rival record (a rematch), none by default. */
+export function readStats(bot: Bot, n: number, seed: number, rival: (i: number) => RivalRecord | null = () => null): ReadStats {
   const byHabit = Object.fromEntries(HABITS.map((h) => [h, { decisions: 0, applies: 0, played: 0 }])) as Record<Habit, HabitCount>;
   let [wins, decisions, beat, beaten] = [0, 0, 0, 0];
   for (let i = 0; i < n; i++) {
@@ -36,7 +43,7 @@ export function readStats(bot: Bot, n: number, seed: number): ReadStats {
       seen.push({ habit: view.ai.persona.habit, card: habitCard(view.ai) });
       return bot(view);
     };
-    const { result, decisions: ds } = botMatch(tiebreakConfig(averagePlayer('Bot'), { ...averagePlayer('AI'), style: STYLES[i % 4]! }, i), streamSeed(seed, 'm', i), watching);
+    const { result, decisions: ds } = botMatch(tiebreakConfig(averagePlayer('Bot'), { ...averagePlayer('AI'), style: STYLES[i % 4]! }, i), streamSeed(seed, 'm', i), watching, { rival: rival(i) });
     if (result.winner === 'A') wins++;
     ds.forEach((d, k) => {
       const c = byHabit[seen[k]!.habit];

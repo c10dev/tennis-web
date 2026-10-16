@@ -39,4 +39,8 @@ describe('quick-match opponent balance (ADR-017)', () => {
     expect(s.beat).toBeGreaterThan(QUICK_PERSONA.tellAccuracy - 0.03);
     expect(s.win).toBeGreaterThan(T.tellWin.min - 0.03);
   });
+
+  it('keeps the scouting line a better read than the tells (ADR-025)', () => {
+    within(readStats(scoutBot, N, 7).win - readStats(tellBot, N, 7).win, T.scoutOverTells, 0.01);
+  });
 });

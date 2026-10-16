@@ -14,19 +14,23 @@ export const personaOf = (seed: number, playerId: string): Persona => ({
   tellAccuracy: QUICK_PERSONA.tellAccuracy,
 });
 
+/** The card of a habit that always calls for the same one; history habits (which follow earlier cards) have none. */
+export const fixedHabitCard = (habit: Habit): Card | null =>
+  habit === 'big_point_attack' ? 'attack' : habit === 'counter_after_loss' ? 'counter' : habit === 'defend_unless_behind' ? 'defend' : null;
+
 /** What a habit looks at: the AI's side of the decision, nothing random. */
-export type HabitSituation = Pick<DecisionContext, 'persona' | 'score' | 'tags' | 'lastPointWinner' | 'decisions'>;
+export type HabitSituation = Pick<DecisionContext, 'persona' | 'score' | 'tags' | 'lastPointWinner' | 'decisions' | 'rival'>;
 
 /** The card the opponent's habit calls for at this decision, or null when the habit does not apply. */
-export function habitCard({ persona, score: [ai, user], tags, lastPointWinner, decisions }: HabitSituation): Card | null {
+export function habitCard({ persona, score: [ai, user], tags, lastPointWinner, decisions, rival }: HabitSituation): Card | null {
   const last = decisions.at(-1);
   switch (persona.habit) {
     /** Attacks whenever either player is a point from the match. */
     case 'big_point_attack': return tags.includes('match_point') ? 'attack' : null;
     /** Counters after losing the point just played. */
     case 'counter_after_loss': return lastPointWinner === 'user' ? 'counter' : null;
-    /** Plays its own card from the last decision point again. */
-    case 'repeat_card': return last ? last.own : null;
+    /** Plays its own card from the last decision point again; at a rematch's first, the last one of the last meeting. */
+    case 'repeat_card': return last ? last.own : (rival?.seen.at(-1) ?? null);
     /** Defends unless it is behind. */
     case 'defend_unless_behind': return ai >= user ? 'defend' : null;
     /** Plays the user's card from the last decision point. */

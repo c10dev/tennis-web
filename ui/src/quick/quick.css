@@ -26,6 +26,12 @@ ul.recent .lost { color: var(--loss); }
 .plan-btn { flex: 1; min-width: 96px; padding: 7px 10px; }
 .plan-btn.selected, .plan-btn.selected:hover { background: var(--court); color: var(--paper); }
 .plan-line { font-size: 13px; }
+/* The plan the opponent's style tips (ADR-025): a gold dot on its button, the tip on a gold-edged band below. */
+.plan-btn.tipped { position: relative; }
+.plan-btn.tipped::after { content: ''; position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--gold); border: var(--outline); }
+.plan-tip { margin: 2px 0 0; padding: 6px 12px; border-left: 4px solid var(--gold); border-radius: 6px; background: var(--paper-2);
+  font-size: 13px; font-weight: 700; word-break: keep-all; }
 /* The sound switch (ADR-022): on the ladder above the rank card, over the match at the top right (left of the
    corner Toss keeps for its buttons). */
 .home-tools { display: flex; justify-content: flex-end; margin-bottom: -6px; }

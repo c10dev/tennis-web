@@ -1,13 +1,15 @@
 // Quick-match balance report: npm run quick -- --n 2000 --seed 1
 // Bots against the AI in one-tiebreak matches, deciding at the decision points; the M6 targets with PASS/FAIL
-// (ADR-017). Each section belongs to one workstream: flow, read, result.
+// (ADR-017). Each section belongs to one workstream: flow, plans and rematches (ADR-025), read, result.
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
 import { table } from '../../engine/cli/report.ts';
 import { winRate } from '../src/quick/balance.ts';
 import { randomBot } from '../src/quick/bots.ts';
 import { flowRows } from './quick-flow.ts';
+import { planRows } from './quick-plan.ts';
 import { readRows } from './quick-read.ts';
+import { rivalRows } from './quick-rival.ts';
 import { resultRows } from './quick-result.ts';
 
 const { values } = parseArgs({ options: { n: { type: 'string', default: '2000' }, seed: { type: 'string', default: '1' }, ladders: { type: 'string', default: '30' } } });
@@ -21,7 +23,7 @@ if (!(n > 0) || !(ladders > 0)) {
 
 const started = performance.now();
 const random = winRate(randomBot, n, seed);
-const rows = [...flowRows(random, n, seed, ladders), ...readRows(random, n, seed), ...resultRows(seed, ladders)];
+const rows = [...flowRows(random, n, seed, ladders), ...planRows(2 * n, seed), ...readRows(random, n, seed), ...rivalRows(n, seed), ...resultRows(seed, ladders)];
 console.log(`TennisSim quick match — ${n} matches per bot, ${ladders} ladders, seed ${seed}`);
 console.log(table(rows));
 const failed = rows.some((r) => r.status === 'FAIL');

@@ -4,6 +4,8 @@ import type { Card, PlayStyle, ShotType, Surface, Wing } from '@tennis/engine';
 import type { GamePlan, Habit } from '../quick/types.ts';
 
 export type Lang = 'en' | 'ko';
+/** How a rival has adapted (ADR-025): wary names its switch card when its habit always calls for the same card. */
+export type RivalLine = { kind: 'wary'; card: Card | null } | { kind: 'confident' } | null;
 export type Role = 'serve' | 'return';
 export type Ending = 'ace' | 'double_fault' | 'winner' | 'forced_error' | 'error';
 
@@ -22,7 +24,10 @@ export interface Messages {
   /** The habit said about the player (full name given). */
   habit(name: string, habit: Habit): string;
   scouting(name: string, style: string, habit: Habit): string;
-  rival(record: { wins: number; losses: number }, most: { card: Card; n: number; of: number } | null): string;
+  /** The head to head, how the rival has adapted to it (ADR-025: wary names its switch card), its last big-point card. */
+  rival(record: { wins: number; losses: number }, stance: RivalLine, last: Card | null): string;
+  /** The plan that throws this style off balance, said before the match (ADR-025). */
+  planTip(plan: GamePlan, style: PlayStyle): string;
   /** Tells per card; the game draws an index, so every language needs the same count. */
   tells: Record<Card, readonly string[]>;
   /** The decisive point named: `matchup` > 0 when the user's card beat theirs; `won` when the user won the point. */

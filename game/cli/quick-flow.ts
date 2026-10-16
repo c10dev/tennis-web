@@ -1,9 +1,10 @@
 // Report section owned by the match-flow workstream (ADR-017): length, decisions, pace, matchup weight, skill, ladder.
 import type { Row } from '../../engine/cli/report.ts';
-import { ladderPace, matchupEdge, median, share, skillLadder, type WinRate } from '../src/quick/balance.ts';
+import { ladderPace, matchupEdge, median, percentile, share, skillLadder, type WinRate } from '../src/quick/balance.ts';
 import { readerBot } from '../src/quick/bots.ts';
 import { QUICK_TARGETS } from '../src/quick/targets.ts';
-import { check } from './quick-rows.ts';
+import { QUICK_MOMENTS } from '../src/tuning.ts';
+import { check, fmt, info } from './quick-rows.ts';
 
 const T = QUICK_TARGETS.flow;
 
@@ -14,6 +15,8 @@ export function flowRows(random: WinRate, n: number, seed: number, ladders: numb
     check('Decisions per match (median)', median(random.decisions), T.medianDecisions),
     check('Matches with 2+ decisions', share(random.decisions, (d) => d >= 2), T.twoOrMoreDecisions, '%'),
     check('Most decisions in a match', Math.max(...random.decisions), T.maxDecisions),
+    check('Decisions per match (90th percentile)', percentile(random.decisions, 0.9), T.p90Decisions),
+    info('Matches stopped by the cap', fmt(share(random.decisions, (d) => d === QUICK_MOMENTS.maxDecisions), '%')),
     check('Seconds on screen per match (median)', median(random.seconds), T.medianSeconds, 's'),
     check('Won matchup at a decision point (pp)', matchupEdge(Math.max(300, Math.floor(n / 2)), seed), T.matchupEdge, '%'),
     { label: 'Win % by rating 11..15 vs 13', value: skill.map((w) => `${(w * 100).toFixed(0)}`).join('/'), range: 'rising', status: skill.every((w, i) => i === 0 || w > skill[i - 1]!) ? 'PASS' : 'FAIL' },

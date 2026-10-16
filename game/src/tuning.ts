@@ -203,25 +203,44 @@ export const TIEBREAK_RULES = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', se
  *  Over 4,000 tiebreaks of average players: median 3 decisions, at least 2 in every match (5-all gave median 2). */
 export const QUICK_MOMENTS = {
   fromPoints: 5,
-  /** No more stops after this many decisions: a marathon tiebreak plays on (the playtest's fatigue, TD-030). */
-  maxDecisions: 6,
+  /** No more stops after this many decisions: a marathon tiebreak plays on (the playtest's fatigue, TD-030). Was 6,
+   *  which left one match in five at 6; 5 keeps every match in GDD §14's 2–5 (ADR-025). */
+  maxDecisions: 5,
 } as const;
 
-/** The user's game plan as the tactic for the points played without cards. */
+/** The user's game plan as the tactic for the points played without cards, and the opponent's answer (ADR-025). */
 export const QUICK_PLAN = {
-  aggressive: { aggression: 0.8 },
+  aggressive: { aggression: 0.7 },
   balanced: { aggression: 0.5 },
-  defensive: { aggression: 0.2 },
+  defensive: { aggression: 0.3 },
+  /** Risk pays for both players in the engine, so the opponent matches the plan's tempo: its aggression moves `tempo`
+   *  times the user's away from 0.5 (the user's +0.2 is worth about +2.2 pp, the opponent's about −1.9 pp). A
+   *  specialist is thrown off balance by the plan its tip names (`offBalance` less aggression) and lifted by the
+   *  other two (half as much more); an all-court player has no tip. Random cards, style-shaped opponents. */
+  opponent: {
+    tempo: 1.05,
+    offBalance: 0.3,
+    tips: { big_server: 'defensive', baseliner: 'aggressive', counter_puncher: 'balanced' },
+  },
 } as const;
 
 /** Opponent personas, tells and rival memory. */
 export const QUICK_PERSONA = {
-  /** Chance the tell points at the card the opponent really plays. */
-  tellAccuracy: 0.6,
+  /** Chance the tell points at the card the opponent really plays. 0.6 tied the scouting read once the cap fell to 5
+   *  decisions (ADR-025), so it is a little lower: the scouting line stays the better read. */
+  tellAccuracy: 0.58,
   /** Chance the opponent plays its habit card when its habit applies (the rest follows its style mix). */
   habitShare: 0.72,
   /** A rival record keeps the opponent's cards at this many latest decision points. */
   rivalSeen: 12,
+  /** A rival adapts to the head to head (ADR-025, TD-034), only where its habit applies. Wary (the user leads): the
+   *  habit card at `habitShare`, the card that beats the user's answer to it at `switchShare`, the third the rest, so
+   *  answering the habit still pays most (+0.40 a decision against +0.15 for the next best; about +0.58 at a first
+   *  meeting). Confident (the rival leads): the habit card more often, the rest in its style mix. */
+  rival: {
+    wary: { habitShare: 0.65, switchShare: 0.25 },
+    confident: { habitShare: 0.75 },
+  },
 } as const;
 
 /** The result screen's rewards: ratings shown on a 0–100 scale; a win lifts one rating to its next whole number. */
