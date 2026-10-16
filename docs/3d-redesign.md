@@ -27,17 +27,20 @@ final character.**
 
 ## 1. Diagnosis: why today's 3D feels off
 
-![Today on a phone: the decision hold and the rally camera](design/3d-redesign/current/phone.webp)
+![Today on a phone: a decision hold and the rally camera](design/3d-redesign/current/phone.webp)
+![Six decision holds (seeds 3 and 7, first three decisions each): five are the Reaction Cam on the last point's winner](design/3d-redesign/current/decision-holds.webp)
 ![Today's broadcast cameras in portrait: main, serve, reaction, side replay, side changeover](design/3d-redesign/current/broadcast.webp)
 
-Captured from `npm run dev:toss` on a Pixel 7 profile (quick match, seed 3) and the replay page at 412×503
+Captured from `npm run dev:toss` on a Pixel 7 profile (quick match, seeds 3 and 7) and the replay page at 412×503
 (seed 42, hard, key points). Each finding names the code that causes it.
 
 ### 1.1 Camera and cutting
-1. **The most-seen frame is a faceless back.** Decisions come on big points, and the director lays Serve Cam over
-   every big point and every game's first point (`broadcast/director.ts`). The quick match holds that frame while the
-   cards are up (`ui/src/quick/match.ts` `drawChoose`): a capsule torso from behind fills the stage, the opponent is a
-   speck or out of frame, and nothing on screen relates to the tell the panel describes.
+1. **Nothing picks the most-seen frame.** While the cards are up, the stage simply stays on the last frame of the
+   previous point's window (`ui/src/quick/match.ts` `drawChoose` sets no camera). Decisions follow big points, where
+   the director lays Reaction Cam over the landing (`broadcast/director.ts`), so in 5 of 6 captured holds the stage is
+   a close-up of the *previous point's winner*, often the opponent, frozen mid-celebration (the sixth was the main
+   camera). With no face the figure reads as seen from behind even when it faces the camera, the other player is out
+   of frame, and nothing on screen relates to the decision or to the tell the panel describes.
 2. **My player is small and not mine.** The portrait main camera (`camera/mainCam.ts`, `CAMERA.portrait`: 22 m up,
    23 m behind, 27° across) fits the whole doubles court across 412 px: the near player is about 50 px tall (10% of
    the stage), the far one about 35 px and drawn under the score bug, the ball 4.8 px even at 1.3×. The camera stays
@@ -117,7 +120,7 @@ both baselines and the doubles alleys at the far end stay in frame while my play
 ### 3.2 Shot list (game camera)
 | Shot | When | Framing | Frame |
 |---|---|---|---|
-| **S1 Chase** | Default during live play | K2. Always behind *my* player: at a change of ends the camera cuts to the other end during the changeover, so I am never the far player | K2 |
+| **S1 Chase** | Default during live play | K2. Always behind *my* player: at a change of ends the camera cuts to the other end during the changeover, so I am never the far player. "Me" is a new broadcast input (`me: PlayerId`); the quick match passes the user's player, the replay page and the season mode default to A | K2 |
 | **S2 Decision hold: the tell** | While the cards are up (a big point) | Low, mid-court, on the opponent in the pose their tell names (deep stance, early split step, racket back…), face visible | M2 |
 | S2b Decision hold: over the shoulder | Alternative to S2; also the lead-in to my serve | Behind my server, me in the lower right, the opponent centred | M1 |
 | **S3 Impact** | The decisive shot of a big point only (winner, ace, break/set/match point won), at most once per point | Close, low, side-on to the hitter; hit-stop then slow motion through contact | M3 |
@@ -125,6 +128,10 @@ both baselines and the doubles alleys at the far end stay in frame while my play
 | **S5 Replay** | Kept broadcast cameras: Side (raised clear of the chair, TD-040) and Hawk-Eye on close calls | Letterboxed, `REPLAY` chip, half speed | M4 |
 
 ![M1 over the shoulder, M2 tell, M3 impact, M4 replay, M5 reaction](design/3d-redesign/frames/moments.webp)
+
+Scope: the game camera and shots S1–S4 apply to the quick match (the shipping mode) and the dev replay page; the
+season mode's full/key/highlights viewing keeps today's broadcast director until the season mode is reworked, since
+the camera module is chosen per broadcast.
 
 ### 3.3 Transition rules
 - **Cut only on dead ball or on the hit-stop.** Never mid-rally except into S3 at the decisive contact. A shot lasts
@@ -168,7 +175,7 @@ IK cannot meet the ball. So the big head comes from the head, not from a shorter
 | Proportions | 3–3.5 heads at about 1.7 m (head ≈ 0.5 m), short arms, big hands and shoes, oversized racket head (0.34 m) | 5.5 heads at 1.85 m, Tennis Clash-like | C1 pre-rendered to sprite cells (8 directions × poses) on billboards |
 | Face | Large eyes readable at S4 and S2 distance; expressions by swapping a face-texture cell | Small; lost beyond close-ups | Painted per cell |
 | Silhouette and identity | Cap vs headband vs hair shape, kit colour block, wristbands, a ground ring under *my* player | Kit and hair only | As C1, flat |
-| Serve reach | Proxy reaches 2.57 m with a 0.32 m hop: needs a 0.35 m hop plus **reach assist** (the IK may stretch the arm chain up to 12% at contact, a squash-and-stretch the style allows) | 2.81 m with a 0.12 m hop | Cannot bend to a contact point at all |
+| Serve reach | Proxy: 2.25 m standing, 2.57 m with a 0.32 m hop. A 0.35 m hop plus 12% stretch of the 1.36 m arm-and-racket chain (0.16 m) gives 2.76 m, the median serve, not the 2.95 m top. Levers: hop scaled by contact height (0.3–0.5 m), stretch up to 20% at contact (squash and stretch suits the style), or arms 0.05 m longer per segment | Proxy: 2.69 m standing, 2.81 m with a 0.12 m hop; the 2.95 m top needs a 0.26 m hop | Cannot bend to a contact point at all |
 | Fit with brief | Mario-like exaggeration, Rally Pop toy box | Closer to Tennis Clash, less personality | Crisp in K2, but turns, camera moves and IK impact alignment break; textures cost megabytes |
 | Risk | Auto-riggers fail on non-standard proportions (Meshy's docs warn of it) | Generic | High asset volume, no closed-form alignment |
 
