@@ -13,10 +13,12 @@ import { generateWorld } from '../world/generate.ts';
 import type { QuickMatch } from './match.ts';
 import { matchReward } from './rewards.ts';
 import { overtakesBetween } from './overtakes.ts';
+import { compactHistory } from './history.ts';
 import { recordRival } from './rivals.ts';
 import type { DecisionRecord, Overtake, RivalRecord } from './types.ts';
 
-export interface QuickRecord {
+/** An older match, summarised (ADR-026): who, the result and what it did to the ladder. */
+export interface PastRecord {
   matchNo: number;
   opponent: string;
   opponentRank: number;
@@ -26,6 +28,12 @@ export interface QuickRecord {
   rankBefore: number;
   rankAfter: number;
   fingerprint: string;
+  /** The user conceded (M7, ADR-022): a loss at `score`, no fingerprint, and a recipe that does not end the match. */
+  conceded?: true;
+}
+
+/** One of the last few matches, whole: the result screen replays it from the recipe. */
+export interface QuickRecord extends PastRecord {
   recipe: MatchRecipe;
   /** Ratings that moved: value + progress before and after. */
   progress: { key: Rated; before: number; after: number }[];
@@ -33,8 +41,6 @@ export interface QuickRecord {
   decisions?: DecisionRecord[];
   /** Players the user passed this match, the first passed first; absent in M5 records. */
   overtakes?: Overtake[];
-  /** The user conceded (M7, ADR-022): a loss at `score`, no fingerprint, and a recipe that does not end the match. */
-  conceded?: true;
 }
 
 export interface QuickState {
@@ -42,7 +48,10 @@ export interface QuickState {
   matchNo: number;
   world: World;
   points: Record<string, number>;
+  /** The last `QUICK_SAVE.recipes` matches, whole, oldest first (ADR-026). */
   history: QuickRecord[];
+  /** Every match before those, summarised, oldest first (quick save v3). */
+  past: PastRecord[];
   /** What the user has seen of each opponent met so far (ADR-017, quick save v2). */
   rivals: Record<string, RivalRecord>;
 }
@@ -51,7 +60,7 @@ export function newLadder(seed: number, user: CareerPlayer): QuickState {
   const world = generateWorld(seed, user);
   const order = rankingOrder(world.players.map((p) => ({ id: p.id, points: 0, level: overall(p) })));
   const points = Object.fromEntries(order.map((id, i) => [id, Math.round(QUICK.startTop * Math.exp(-i / QUICK.startScale))]));
-  return { seed, matchNo: 0, world, points, history: [], rivals: {} };
+  return { seed, matchNo: 0, world, points, history: [], past: [], rivals: {} };
 }
 
 const levelOf = (s: QuickState) => new Map(s.world.players.map((p) => [p.id, overall(p)]));
@@ -68,7 +77,7 @@ export function nextOpponent(s: QuickState): string {
   const order = ladderOrder(s);
   const r = order.indexOf(USER_ID);
   const pool = r === 0 ? order.slice(1, 4) : order.slice(Math.max(0, r - 3), r);
-  const last = s.history.at(-1)?.opponent;
+  const last = (s.history.at(-1) ?? s.past.at(-1))?.opponent;
   const fresh = pool.filter((id) => id !== last);
   return pick(stream(s.seed, 'opponent', s.matchNo), fresh.length ? fresh : pool);
 }
@@ -124,7 +133,7 @@ function settle(s: QuickState, m: QuickMatch, end: { won: boolean; score: string
     ...(end.conceded ? { conceded: true as const } : {}),
   };
   const rivals = recordRival(s.rivals, { opponent: m.opponent, won, aiCards: m.decisions.map((d) => d.ai) });
-  return { ...next, matchNo: s.matchNo + 1, history: [...s.history, record], rivals };
+  return { ...next, matchNo: s.matchNo + 1, ...compactHistory(s.past, [...s.history, record]), rivals };
 }
 
 /** "7-5" for a one-tiebreak match (the user first), set scores for anything else. */
