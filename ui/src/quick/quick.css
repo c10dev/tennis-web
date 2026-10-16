@@ -32,8 +32,8 @@ ul.recent .lost { color: var(--loss); }
   background: var(--gold); border: var(--outline); }
 .plan-tip { margin: 2px 0 0; padding: 6px 12px; border-left: 4px solid var(--gold); border-radius: 6px; background: var(--paper-2);
   font-size: 13px; font-weight: 700; word-break: keep-all; }
-/* The sound switch (ADR-022): on the ladder above the rank card, over the match at the top right (left of the
-   corner Toss keeps for its buttons). */
-.home-tools { display: flex; justify-content: flex-end; margin-bottom: -6px; }
-.sound-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
-.quick-match .sound-switch { position: fixed; z-index: 6; top: calc(var(--safe-top) + 16px); right: calc(var(--safe-right) + var(--nav-reserve) + 16px); }
+/* The sound switch (ADR-029, ADR-022 step 6): a paper pill pinned top right on every quick screen, above the 3D replay,
+   inside the safe area and left of the corner Toss keeps for its buttons. */
+.sound-switch { position: fixed; top: calc(var(--safe-top) + 12px); right: calc(var(--safe-right) + var(--nav-reserve) + 16px); z-index: 40;
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 14px; border-radius: 999px; }
+.sound-switch .icon { flex: none; }

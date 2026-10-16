@@ -6,6 +6,7 @@ import {
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
   type Mixer, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
+import { clipStep } from './clip.ts';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
 
@@ -17,6 +18,8 @@ export interface Broadcast {
   dispatch(action: ClockAction): void;
   /** Plays match seconds [from, to] at `speed`, then stops; resolves when done (quick matches). */
   playWindow(from: number, to: number, speed: number): Promise<void>;
+  /** Resolves once the loaded match's shaders are compiled; await it before the first clip (TD-037). */
+  ready(): Promise<void>;
   dispose(): void;
 }
 
@@ -26,10 +29,10 @@ export interface BroadcastOptions {
   controls?: boolean;
   /** Programme without the introduction and replays (quick matches). */
   bare?: boolean;
+  /** A sound shared with the screen (the quick match's audio session, ADR-029, ADR-022); without it the broadcast makes its own panel. */
+  sound?: { readonly mixer: Mixer | null };
   /** After every drawn frame. */
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
-  /** A shared mixer (the quick match's audio session, ADR-022) instead of this player's own sound panel. */
-  audio?(): Mixer | null;
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
@@ -55,20 +58,23 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const canvas = Object.assign(document.createElement('canvas'), { id: 'view' });
   const [score, graphics, soundRoot, controlsRoot] = ['score', 'graphics', 'sound', 'controls'].map(div) as [HTMLDivElement, HTMLDivElement, HTMLDivElement, HTMLDivElement];
   root.append(canvas, score, graphics);
-  if (!options.audio) root.append(soundRoot);
+  if (!options.sound) root.append(soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
-  let clipWindow: { end: number; speed: number; done: () => void } | null = null;
+  let clipWindow: { end: number; speed: number; done: () => void; first: boolean } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
   const overlays = createOverlays();
   graphics.append(overlays.element);
-  const sound = options.audio ? null : createSound(soundRoot);
-  const mixer = () => (options.audio ? options.audio() : sound!.mixer);
+  const own = options.sound ? null : createSound(soundRoot);
+  const sound = options.sound ?? own!;
 
   let mode = options.mode;
   let programme: Programme | null = null;
   let viewer: Viewer | null = null;
+  let warming: Promise<void> = Promise.resolve();
+  /** False while a new viewer compiles its shaders: drawing then would compile them on the main thread anyway. */
+  let warmed = true;
   let surface: string | null = null;
   let clock = createClock();
   const dispatch = (action: ClockAction) => {
@@ -97,13 +103,13 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const loop = (now: number) => {
     const dt = (now - last) / 1000;
     last = now;
-    if (programme && viewer) {
+    if (programme && viewer && warmed) {
       resize();
       const before = clock.t;
       if (clipWindow) {
-        clock = { ...clock, t: Math.min(clipWindow.end, clock.t + Math.min(dt, 0.25) * clipWindow.speed) };
-        const m = mixer();
-        if (m) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) m.play(cue);
+        clock = { ...clock, t: clipStep(clock.t, clipWindow.end, dt, clipWindow.speed, clipWindow.first) };
+        clipWindow.first = false;
+        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) sound.mixer.play(cue);
         if (clock.t >= clipWindow.end) {
           const { done } = clipWindow;
           clipWindow = null;
@@ -111,7 +117,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         }
       } else {
         clock = clockReducer(programme, clock, { type: 'tick', dt });
-        const m = mixer();
+        const m = sound.mixer;
         if (m && clock.playing) for (const cue of cuesBetween(programme, before, clock.t, clock.speed)) m.play(cue);
       }
       const frame = broadcastFrameAt(programme, clock.t);
@@ -132,7 +138,13 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const timeline = buildTimeline(input);
       if (!viewer || surface !== timeline.surface || !opts.keepTime) {
         viewer?.dispose();
-        viewer = createViewer(canvas, timeline, startTier(), stepDown);
+        const created = createViewer(canvas, timeline, startTier(), stepDown);
+        viewer = created;
+        warmed = false;
+        // A failed parallel compile only means the first frame compiles them itself, as before.
+        warming = created.warm().catch(() => {}).then(() => {
+          if (viewer === created) warmed = true;
+        });
         surface = timeline.surface;
         size = '';
         resize();
@@ -155,15 +167,18 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       return new Promise<void>((done) => {
         clipWindow?.done();
         clock = { ...clock, playing: false, t: programmeTimeFor(p, from) };
-        clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done };
+        clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done, first: true };
+        // Read by the e2e tests: the first frame of the window must show this time.
+        document.body.dataset.clipFrom = clock.t.toFixed(2);
       });
     },
+    ready: () => warming,
     dispose() {
       clipWindow?.done();
       clipWindow = null;
       cancelAnimationFrame(raf);
       controls?.dispose();
-      sound?.dispose();
+      own?.dispose();
       viewer?.dispose();
       root.replaceChildren();
       document.body.classList.remove('broadcast-page');

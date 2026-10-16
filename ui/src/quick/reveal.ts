@@ -2,6 +2,7 @@
 // (one class on the parent, so neither side shows first), and the verdict pops a little later with a small clash: one
 // white frame and a 6 px kick on the winning card. Timing comes from QUICK_PACE.reveal, which the pace model sums.
 import type { Card } from '@tennis/engine';
+import type { UiCue } from '@tennis/renderer/audio';
 import { QUICK_PACE, type revealView } from '@tennis/game';
 import { T, U } from '../i18n/index.ts';
 import { h } from '../lib/h.ts';
@@ -34,13 +35,17 @@ export function revealElement(r: Reveal, opponent: string): HTMLElement {
   h('strong', { class: 'verdict', 'aria-live': 'polite' }, VERDICT[r.matchup]));
 }
 
-/** Hold face down, flip both, pop the verdict. Same waits with reduced motion: the flip and the pop are then cuts. */
-export async function playReveal(el: HTMLElement, alive: () => boolean): Promise<void> {
+/** Hold face down, flip both, pop the verdict. Same waits with reduced motion: the flip and the pop are then cuts.
+ *  `cue` hears the sounds (ADR-029): the hold (the crowd ducks), the flip, and the clash with the matchup. */
+export async function playReveal(el: HTMLElement, alive: () => boolean, cue: (c: UiCue) => void = () => {}): Promise<void> {
+  cue({ kind: 'hold' });
   await sleep(P.holdSec);
   if (!alive()) return;
   el.classList.replace('is-facedown', 'is-flipped');
+  cue({ kind: 'flip' });
   await sleep(P.flipSec + P.verdictSec);
   if (!alive()) return;
   el.querySelector('.verdict')?.classList.add('is-popped');
+  cue({ kind: 'clash', matchup: el.classList.contains('won') ? 'won' : el.classList.contains('lost') ? 'lost' : 'even' });
   if (!prefersReducedMotion()) el.classList.add('is-clash');
 }

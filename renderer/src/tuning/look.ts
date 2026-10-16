@@ -11,10 +11,12 @@ export const LOOK = {
     /** Width in pixels of a 720-pixel-tall view, whatever the distance or the camera's field of view. */
     px: 1.5,
     referenceHeight: 720,
-    /** Rig parts that get a hull (named meshes in MannequinRig); thin ones (handle, visor, feet, hand) do not. */
-    rigParts: ['body', 'head', 'racket-head', 'arm-right', 'forearm-right', 'arm-left', 'thigh-left', 'thigh-right', 'shin-left', 'shin-right'],
-    /** Ceiling on outline draws for the whole stage: two players, net posts and tape, ball. */
-    maxDraws: 24,
+    /** Rig parts that get a hull (named meshes in MannequinRig); thin ones (handle, visor) do not. Phase 3 (ADR-028)
+     *  added the hands, shoes and cap crown; motion track A (ADR-023) the forearm. */
+    rigParts: ['body', 'head', 'cap', 'racket-head', 'arm-right', 'forearm-right', 'arm-left', 'right-hand', 'left-hand', 'thigh-left',
+      'thigh-right', 'shin-left', 'shin-right', 'foot-left', 'foot-right'],
+    /** Ceiling on outline draws for the whole stage: two players (15 each), net posts and tape, ball. */
+    maxDraws: 34,
   },
 } as const;
 

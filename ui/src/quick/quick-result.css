@@ -1,7 +1,7 @@
 /* The quick result screen (ADR-017), Rally Pop look (ADR-020): paper tiles on court blue, gold for the ladder points.
-   Steps fade in as the reveal reaches them. */
+   Steps are hidden until the reveal reaches them; how they move is in motion.css (ADR-021). */
 .quick-result { max-width: 680px; margin: 0 auto; text-align: center; display: grid; gap: 14px; }
-.quick-result .step, .quick-result .pbp { opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.quick-result .step, .quick-result .pbp { opacity: 0; }
 .quick-result .shown { opacity: 1; transform: none; }
 .quick-result.done .skip-hint { visibility: hidden; }
 .quick-result .kicker { display: block; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
@@ -31,11 +31,12 @@
 .rating-gain.rose .value { color: var(--ink); font-weight: 800; font-size: 17px; }
 /* The rise: ▲ in court-2 on paper (optic would be 1.2:1 on white). */
 .rating-gain .up { color: var(--court-2); }
-.quick-result .shown .rating-gain.rose .value { animation: rating-pop 0.5s ease 0.2s both; }
 .rating-gain .bar { height: 10px; background: var(--paper-2); border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; }
-.rating-gain .fill { display: block; height: 100%; background: var(--court-2); width: var(--from); transition: width 0.8s ease 0.3s; }
+.rating-gain .fill { display: block; height: 100%; background: var(--court-2); width: var(--from); }
 .quick-result .shown .rating-gain .fill { width: var(--to); }
 .rating-gain.rose .fill { background: var(--gold); }
+/* Room inside the gold ring the goal gets when it locks in. */
+#next-goal { padding: 10px 16px; border-radius: 12px; }
 #next-goal strong { font: 400 26px/1.2 var(--font-display); }
 .quick-result .actions { justify-content: center; }
 .decisive-replay { position: fixed; inset: 0; z-index: 30; background: #000; }
@@ -43,6 +44,4 @@
   background: rgba(18, 58, 140, 0.95); border: var(--outline); border-left: 10px solid var(--gold); border-radius: 14px; box-shadow: var(--lift);
   padding: 12px 16px; text-align: left; display: grid; gap: 4px; }
 .replay-caption strong { font: 400 22px/1.2 var(--font-display); }
-@keyframes rating-pop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
 @media (max-width: 640px) { .gains, #rating-gains { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .quick-result .step, .quick-result .pbp { transition: none; } }

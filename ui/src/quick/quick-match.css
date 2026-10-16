@@ -49,15 +49,11 @@
 .pip { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); background: transparent; }
 .pip.you { background: var(--win); border-color: var(--ink); } .pip.them { border-color: var(--loss); }
 .pip.decision { box-shadow: 0 0 0 2px var(--court), 0 0 0 4px var(--gold); }
-.pips .pip:last-child { animation: pip-in 0.25s ease-out; }
-@keyframes pip-in { from { transform: scale(0.2); opacity: 0; } }
 /* A decision point: the match stops. */
 .quick-panel.stop { box-shadow: 0 0 0 4px var(--gold), 0 8px 0 4px var(--ink); }
 .moment-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.moment-banner .moment { font-size: 22px; padding: 4px 14px; animation: stop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.moment-banner .moment { font-size: 22px; padding: 4px 14px; }
 .moment-banner .stop-score { font: 400 34px/1 var(--font-display); font-variant-numeric: tabular-nums; }
-@keyframes stop-in { from { transform: scale(1.6); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .moment-banner .moment, .pips .pip:last-child { animation: none; } }
 /* Card chips (their cards, the reveal): paper pills with the card's icon and text colour. */
 .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; background: var(--paper); border: 2px solid var(--ink); border-radius: 999px;
   font-weight: 800; }

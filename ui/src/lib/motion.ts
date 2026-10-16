@@ -63,30 +63,41 @@ export function createSequence(): Sequence {
 }
 
 /** Counts `el`'s text from `from` to `to` over `sec` with an ease-out, once per frame; the final text on skip, on
- *  reduced motion, or when the frames stop coming (a hidden tab), so the flow always ends on the right number. */
-export function countUp(el: HTMLElement, to: number, sec: number, seq: Sequence, fmt: (x: number) => string = signed, from = 0): Promise<void> {
+ *  reduced motion, or when the frames stop coming (a hidden tab), so the flow always ends on the right number.
+ *  `onStep` hears each new value as it shows (a tick sound), the last one too when the count ends on time. */
+export function countUp(el: HTMLElement, to: number, sec: number, seq: Sequence, fmt: (x: number) => string = signed, from = 0,
+  onStep?: (value: number) => void): Promise<void> {
   let ended = false;
   let frame = 0;
-  const end = () => {
+  let shown = from;
+  const step = (value: number) => {
+    if (value === shown) return;
+    shown = value;
+    onStep?.(value);
+  };
+  const end = (onTime = false) => {
     if (ended) return;
     ended = true;
     cancelAnimationFrame(frame);
     el.textContent = fmt(to);
+    if (onTime) step(to);
   };
   if (seq.skipped || prefersReducedMotion() || sec <= 0) {
     end();
     return Promise.resolve();
   }
-  seq.onSkip(end);
+  seq.onSkip(() => end());
   const t0 = performance.now();
   const tick = (now: number) => {
     if (ended) return;
-    el.textContent = fmt(from + countValue(to - from, (now - t0) / (sec * 1000)));
+    const value = from + countValue(to - from, (now - t0) / (sec * 1000));
+    el.textContent = fmt(value);
+    step(value);
     frame = requestAnimationFrame(tick);
   };
   el.textContent = fmt(from);
   frame = requestAnimationFrame(tick);
-  return seq.wait(sec).then(end);
+  return seq.wait(sec).then(() => end(!seq.skipped));
 }
 
 /** Sets `--i` on each element so CSS can delay it by `--i × --stagger`. */

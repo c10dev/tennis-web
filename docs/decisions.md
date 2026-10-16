@@ -1031,3 +1031,71 @@ Format: one entry per decision, newest at the bottom.
   level off near 5 KB; the world (31.5 KB) is now the largest part. `quick-save-compact.test.ts` keeps a 200-match
   save at 100 KB or less. Old matches can no longer be replayed and their rating changes are gone; `past` still
   grows without a cap (TD-068), and the whole save still crosses the bridge every match (TD-069).
+
+## ADR-028: Rally Pop phase 3: the capsule rig, polished
+- **Date:** 2026-10-14
+- **Status:** Accepted
+- **Context:** ADR-018 left phase 3 to choose between the capsule mannequin scaled in tuning (ADR-019) and a CC0 chunky
+  GLTF body (KayKit, Quaternius; TD-012, TD-039). GPU timings the same day (TD-024, TD-038) showed headroom: 0.6–0.7 ms
+  CPU per frame and 60 fps at 110 draws. A quick match shows 3D in clips of one to eight seconds, often at 2–3×. The
+  figure was faceted (6-sided arms, 8-sided limbs), had no racket hand, a box for each shoe, and a visor on a bare
+  head that read as a stripe across the forehead.
+- **Decision:** keep the capsule rig and polish it; no GLTF, no new assets or dependencies, strokes stay procedural.
+  - **Parts** (`scene/rigParts.ts`, split out of `rig.ts`): arms are capsules; mitten hands (`right-hand` at the end of
+    the racket arm, gripping the handle; `left-hand` for the toss); shoes are flattened capsules 0.30 × 0.13 × 0.09 m,
+    soles on the ground, toes forward (were 0.24 × 0.10 × 0.06 boxes); a cap crown in the kit colour, slightly
+    flattened so the figure stays under 2 m, with the visor at its brim.
+  - **Tuning** (TD-039): `RIG.hand`, `RIG.shoe`, `RIG.handleRadius` and `RIG.segments` (radial 12, cap 4, head sphere
+    16 × 12) replace the literals in `rig.ts`.
+  - **Outlines:** hands, shoes and cap join `LOOK.outline.rigParts` (14 per player); `maxDraws` 24 → 32, exactly the
+    stage's count (2 × 14 + net 3 + ball 1).
+- **Consequences:** draws at the main camera 110 → 123–124. On the desktop GPU (headed Chromium through WSLg/D3D12,
+  1920×1080 at DPR 1.75, seeds 3–5) the frame callback stays at 0.5–0.6 ms median (p95 0.9–1.0) at 60 fps; the phone
+  proxy (390×844 at DPR 3, CPU 6× slower) 3.1 ms median, 59 fps. Before/after screenshots (hard/clay/grass × main,
+  serve, side, reaction) were checked by eye and not committed. TD-012's GLTF route is closed for Rally Pop; fingers,
+  shoe detail and per-player appearance stay open (TD-073).
+- **Renumbered and integrated (2026-10-16):** written as ADR-022 on another machine on 2026-10-14 and pushed to
+  GitHub's main while the M7 line (ADR-022 to ADR-026 here) grew apart; renumbered ADR-028 (its debt TD-049 is TD-073)
+  when the two lines merged. The M7 line had replaced the rigid racket arm with motion track A's two-bone arm
+  (ADR-023), so the phase-3 parts were fitted to it: `rigParts.ts` keeps the head and cap, rounded limbs, shoes and the
+  mitten hand, the arm segments became capsules with `RIG.segments`, the right hand sits at the wrist where the handle
+  starts, and the outline list gained the forearm (15 parts a player, `maxDraws` 34).
+
+## ADR-029: UI sounds for the quick screens
+- **Date:** 2026-10-14
+- **Status:** Accepted
+- **Context:** ADR-021 built the motion of the decision point and the result but left out its sound layer (TD-047):
+  docs/design-references.md §4 Motion asks for a crowd duck while the cards lie face down, a hit on the clash and a
+  rising pitch per count-up tick. Quick matches were silent: the broadcast's sound started off behind its own toggle,
+  made per screen. The user chose synthesised sounds, on by default, with a remembered mute.
+- **Decision:**
+  - **Sounds as data** (`renderer/src/audio/uiCues.ts`): `uiSound(cue)` returns tone and noise voices (and a crowd duck
+    for the hold) from `AUDIO.ui`; the mixer only plays them on a new `ui` bus. Cues: `deal` (three triangle blips,
+    3 semitones apart), `pick` (a short upward chirp), `hold` (a low hum; the crowd drops to 25% for 0.5 s), `flip`
+    (a band-passed swish), `clash` (a thump, then a chord that climbs on a win, sits on a draw, falls on a loss),
+    `tick` (square blips climbing up to an octave over the count, walking down a fifth on a loss; ticks closer than
+    45 ms are dropped), `rise` (two notes up per rating that rose) and `stamp` (a falling thump for the goal). Every
+    voice is ≤ 0.6 s and ≤ 0.5 peak (unit-tested). No samples, no new dependencies.
+  - **One sound for the page** (`ui/src/lib/sound.ts`): the mixer is made on the first pointer or key press (autoplay
+    policy), sound is on by default and the mute is kept in localStorage (`tennis-sound`). A `Sound on / off` pill
+    (`#sound-toggle`, Lucide volume-2 / volume-x, `aria-pressed`) sits top right on the ladder, match and result.
+    Quick matches hand this sound to the broadcast (`BroadcastOptions.sound`), so ball, crowd and umpire play in the
+    clips too; the replay page keeps its own toggle and sliders. The crowd murmur runs under a match only
+    (`Mixer.setBed`).
+  - **Three-free entry:** `@tennis/renderer/audio` (package `exports`) carries the mixer and the UI cues without Three.js;
+    the lint rule for ui/ allows it by name. The career screens still load no Three.js or broadcast code (e2e).
+  - **Where cues fire:** deals on the CSS deal stagger (120 ms, then 60 ms apart; a pick cuts them), pick on the
+    choice, hold/flip/clash from `playReveal`, ticks from `countUp`'s new `onStep` (each new number, the last one too
+    when it ends on time), rise as each rating ticks, stamp as the goal locks. A skip or reduced motion plays the stamp
+    alone. In dev builds `window.__sfx` logs every cue played (e2e).
+- **Consequences:** e2e checks the decision point's cues in order, the result's climbing ticks, rises and stamp, the
+  skip's lone stamp, and a remembered mute that plays nothing. The main `app` chunk grows 2.2 kB; the audio code shares
+  a 25 kB chunk with engine code the dev page already split out. Sounds are synthesised, untested by ear in CI, and have
+  no volume slider on the quick screens (TD-074).
+- **Renumbered and integrated (2026-10-16):** written as ADR-023 on 2026-10-14 (its debt TD-050 is TD-074). The M7
+  line had its own audio session and switch (ADR-022 step 6) using the same `tennis-sound` key and `#sound-toggle` id.
+  They are one now: `createAppSound` (ui/src/lib/sound.ts) is the core (UI cues, crowd bed, remembered mute, its tests
+  unchanged), and `ui/src/audio/session.ts` wraps it with the Toss storage, the background suspend and resume, the
+  iOS resume retry and `body.dataset.audio`; the audio opens on the first tap or key press anywhere. The switch is
+  `ui/src/audio/toggle.ts`, pinned on every quick screen inside the safe area and left of the Toss corner (icon only
+  on a phone); the broadcast takes `{ sound }` with a `mixer` getter.

@@ -121,6 +121,46 @@ test.describe('quick result', () => {
     expect(errors).toEqual([]);
   });
 
+  test('ticks the points up on climbing notes, chimes each rating that rose and stamps the goal (ADR-029)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await playToResult(page, 3, true);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase), { timeout: 15_000 }).toBe('done');
+    const v = nodeResult(3);
+    const cues = await page.evaluate(() => (window as unknown as { __sfx: { kind: string; i?: number; n?: number; down?: boolean }[] }).__sfx);
+    const after = cues.slice(cues.findLastIndex((c) => c.kind === 'clash') + 1);
+    const ticks = after.filter((c) => c.kind === 'tick');
+    expect(ticks.length).toBeGreaterThan(2);
+    for (const t of ticks) expect(t).toMatchObject({ n: Math.abs(v.delta), down: v.delta < 0 });
+    for (let k = 1; k < ticks.length; k++) expect(ticks[k]!.i!).toBeGreaterThan(ticks[k - 1]!.i!);
+    expect(after.filter((c) => c.kind === 'rise')).toHaveLength(v.ratings.filter((r) => r.rose).length);
+    expect(after.at(-1)!.kind).toBe('stamp');
+    expect(errors).toEqual([]);
+  });
+
+  test('skipping the reveal plays the stamp alone', async ({ page }) => {
+    await playToResult(page, 3, true);
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('replay');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('done');
+    const cues = await page.evaluate(() => (window as unknown as { __sfx: { kind: string }[] }).__sfx.map((c) => c.kind));
+    expect(cues.slice(cues.lastIndexOf('clash') + 1)).toEqual(['stamp']);
+  });
+
+  test('keeps the next goal\'s label and line inside its gold lock ring', async ({ page }) => {
+    await playToResult(page, 3, true);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#next-goal')).toHaveClass(/is-locked/);
+    const gap = await page.locator('#next-goal').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const label = el.querySelector('.kicker')!.getBoundingClientRect();
+      const line = el.querySelector('strong')!.getBoundingClientRect();
+      return { top: label.top - box.top, bottom: box.bottom - line.bottom };
+    });
+    // The ring is a 2 px inset shadow; text needs clear space inside it, not just the ring's width.
+    expect(gap.top).toBeGreaterThanOrEqual(8);
+    expect(gap.bottom).toBeGreaterThanOrEqual(8);
+  });
+
   test('with reduced motion, shows the final result at once and plays the match reveal as cuts', async ({ page }) => {
     const errors = watchErrors(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -177,6 +217,26 @@ test.describe('quick result', () => {
     await expect(page.locator('#decisive-replay')).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => document.body.dataset.resultPhase)).toBe('done');
     await expect(page.locator('#play-again')).toBeFocused();
+    expect(errors).toEqual([]);
+  });
+
+  test('starts the 3D replay on its first frame instead of skipping what a slow first frame took (TD-037)', async ({ page }) => {
+    const errors = watchErrors(page);
+    // Every drawn frame writes data-t; record it with the result phase and the window the clip starts from.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __frames: { t: string; from: string | undefined; phase: string | undefined }[] };
+      w.__frames = [];
+      new MutationObserver(() => {
+        const d = document.body?.dataset;
+        if (d?.t && w.__frames.at(-1)?.t !== d.t) w.__frames.push({ t: d.t, from: d.clipFrom, phase: d.resultPhase });
+      }).observe(document, { attributes: true, subtree: true, attributeFilter: ['data-t'] });
+    });
+    await playToResult(page, 3, false);
+    await expect(page.locator('#decisive-replay #view')).toBeVisible({ timeout: 15_000 });
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __frames: { phase?: string }[] }).__frames.filter((f) => f.phase === 'replay-3d').length)).toBeGreaterThan(3);
+    const first = await page.evaluate(() => (window as unknown as { __frames: { t: string; from: string | undefined; phase: string | undefined }[] }).__frames.find((f) => f.phase === 'replay-3d'));
+    expect(first!.from).toMatch(/^\d+\.\d\d$/);
+    expect(first!.t).toBe(first!.from);
     expect(errors).toEqual([]);
   });
 

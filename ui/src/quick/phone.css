@@ -58,10 +58,10 @@
   .quick-match .ov-lower { left: 8px; bottom: calc(100dvh - var(--stage-h) + 8px); max-width: 55vw; }
   .quick-match .ov-hawkeye { top: auto; bottom: calc(100dvh - var(--stage-h) + 56px); }
   .quick-match .ov-hawkeye .call { font-size: 22px; }
-  /* The switch shrinks to its icon over the match (the label stays for screen readers). */
-  .sound-switch { min-height: 44px; }
-  .quick-match .sound-switch { top: calc(var(--safe-top) + 8px); right: calc(var(--safe-right) + var(--nav-reserve) + 8px); padding: 4px 12px; }
-  .quick-match .sound-switch .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* The switch shrinks to its icon on a phone (the label stays for screen readers). */
+  .sound-switch { min-height: 44px; min-width: 44px; justify-content: center; top: calc(var(--safe-top) + 8px);
+    right: calc(var(--safe-right) + var(--nav-reserve) + 8px); padding: 4px 12px; }
+  .sound-switch .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
   /* The result: one column, the three tiles still side by side. */
   .quick-result h1 { font-size: 40px; }

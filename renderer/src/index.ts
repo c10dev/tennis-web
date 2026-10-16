@@ -4,6 +4,7 @@ export { SUPPORTED_SCHEMA_VERSION, SUPPORTED_SCHEMA_VERSIONS } from './version.t
 export { scoreCall, type CallContext } from './audio/calls.ts';
 export { allCues, crowdIntensity, cuesBetween, type Cue } from './audio/cues.ts';
 export { createMixer, type Bus, type Mixer } from './audio/mixer.ts';
+export { tickFreq, uiSound, type UiCue } from './audio/uiCues.ts';
 export { broadcastFrameAt, type BroadcastFrame } from './broadcast/frame.ts';
 export { lineCall, type LineCall } from './broadcast/hawkeye.ts';
 export { selectPoints } from './broadcast/modes.ts';

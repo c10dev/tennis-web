@@ -1,9 +1,6 @@
 // Player rigs: anything that can draw a PlayerPose. MannequinRig is M3's low-poly figure built from primitives;
 // a skinned GLTF rig can replace it behind the same interface without touching playback (ADR-007, ADR-009).
-import {
-  BoxGeometry, CapsuleGeometry, CircleGeometry, CylinderGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, SphereGeometry,
-  type Object3D, type Vector3,
-} from 'three';
+import { CapsuleGeometry, CircleGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, type Object3D, type Vector3 } from 'three';
 import { lerp } from '../math.ts';
 import type { PlayerPose } from '../playback/pose.ts';
 import { COLOURS, LOOK, RIG } from '../tuning/index.ts';
@@ -11,18 +8,11 @@ import { aimedTarget, atReach, contactWeight, leftArmParts, RacketArm, contactSh
 import { groundToThree, toThree, yawFor } from './coords.ts';
 import { lit } from './materials.ts';
 import { addOutline } from './outline.ts';
+import { headParts, limb, shoe } from './rigParts.ts';
 
 export interface PlayerRig {
   readonly object3d: Object3D;
   apply(pose: PlayerPose): void;
-}
-
-/** A capsule `length` long hanging down from its group's origin. */
-function limb(name: string, radius: number, length: number, colour: number): Mesh {
-  const mesh = new Mesh(new CapsuleGeometry(radius, length - 2 * radius, 3, 8), lit(colour));
-  mesh.position.y = -length / 2;
-  mesh.name = name;
-  return mesh;
 }
 
 /**
@@ -41,21 +31,16 @@ export class MannequinRig implements PlayerRig {
   constructor(shirt: number) {
     this.hips.name = 'hips';
     this.torso.name = 'torso';
-    const body = new Mesh(new CapsuleGeometry(RIG.torsoRadius, RIG.torsoLength, 4, 10), lit(shirt));
+    const body = new Mesh(new CapsuleGeometry(RIG.torsoRadius, RIG.torsoLength, RIG.segments.cap, RIG.segments.radial), lit(shirt));
     body.position.y = RIG.torsoRadius + RIG.torsoLength / 2;
     body.name = 'body';
     const headY = RIG.torsoLength + 2 * RIG.torsoRadius + RIG.headRadius * 0.6;
-    const head = new Mesh(new SphereGeometry(RIG.headRadius, 12, 8), lit(COLOURS.skin));
-    head.position.y = headY;
-    head.name = 'head';
-    const brim = RIG.headRadius * 0.75;
-    const visor = new Mesh(new CylinderGeometry(brim, brim, 0.025, 10, 1, false, -Math.PI / 2, Math.PI), lit(COLOURS.visor));
-    visor.position.set(0, headY + RIG.headRadius * 0.3, RIG.headRadius * 0.8);
-    visor.name = 'visor';
     this.arm.shoulder.position.set(-RIG.shoulderOffset, RIG.shoulderHeight, 0);
+    this.leftArm.name = 'arm-pivot-left';
     this.leftArm.position.set(RIG.shoulderOffset, RIG.shoulderHeight, 0);
     this.leftArm.add(...leftArmParts());
-    this.torso.add(body, head, visor, this.arm.shoulder, this.leftArm);
+    // Head, cap crown in the kit colour and visor: Rally Pop phase 3 (ADR-028).
+    this.torso.add(body, ...headParts(headY, shirt), this.arm.shoulder, this.leftArm);
     for (const side of ['left', 'right'] as const) this.hips.add(this.leg(side));
     this.hips.add(this.torso);
     const shadow = this.shadow;
@@ -87,10 +72,7 @@ export class MannequinRig implements PlayerRig {
     const shin = new Group();
     shin.position.y = -RIG.legSegment;
     shin.add(limb(`shin-${side}`, RIG.legRadius, RIG.legSegment, COLOURS.skin));
-    const foot = new Mesh(new BoxGeometry(0.1, 0.06, 0.24), lit(COLOURS.shoes));
-    foot.position.set(0, -RIG.legSegment + 0.03, 0.05);
-    foot.name = `foot-${side}`;
-    shin.add(foot);
+    shin.add(shoe(`foot-${side}`));
     thigh.add(shin);
     this.legs.push({ thigh, shin });
     return thigh;

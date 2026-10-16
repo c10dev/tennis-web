@@ -1,5 +1,6 @@
 // Icons from Lucide v0.468.0 (ISC, see LICENSE-lucide.txt): zap, shield, rotate-ccw for the cards; eye (the tell),
-// trophy (the ladder) and chevrons-up (a rise). Copied path data, no package; eye's circle is written as a path.
+// trophy (the ladder), chevrons-up (a rise) and volume-2 / volume-x (the sound toggle). Copied path data, no package;
+// eye's circle is written as a path.
 import type { Card } from '@tennis/engine';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -11,6 +12,10 @@ const PATHS = {
   trophy: ['M6 9H4.5a2.5 2.5 0 0 1 0-5H6', 'M18 9h1.5a2.5 2.5 0 0 0 0-5H18', 'M4 22h16', 'M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22',
     'M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22', 'M18 2H6v7a6 6 0 0 0 12 0V2Z'],
   'chevrons-up': ['m17 11-5-5-5 5', 'm17 18-5-5-5 5'],
+  'volume-2': ['M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z',
+    'M16 9a5 5 0 0 1 0 6', 'M19.364 18.364a9 9 0 0 0 0-12.728'],
+  'volume-x': ['M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z',
+    'm22 9-6 6', 'm16 9 6 6'],
 } satisfies Record<Card | string, string[]>;
 export type IconName = keyof typeof PATHS;
 

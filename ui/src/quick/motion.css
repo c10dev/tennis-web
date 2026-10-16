@@ -15,7 +15,6 @@
 
 /* ---- Decision point: the banner wipes in, the cards deal up with an overshoot, a card lifts on hover or focus. */
 .quick-panel .moment-banner { animation: banner-wipe 240ms var(--ease-emphasized) backwards; }
-.quick-panel .moment-banner .moment { animation: none; }
 @keyframes banner-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .card-btn { transition: transform var(--dur-short) ease-out, opacity var(--dur-short) ease-out; }
 .card-btn.is-dealt { animation: card-deal 360ms var(--ease-back) calc(120ms + var(--i, 0) * var(--stagger-deal)) backwards; }
@@ -47,7 +46,6 @@
 @keyframes kick-left { 40% { transform: translateX(-6px); } }
 
 /* ---- Ticker: the newest pip pops; only the ticker's (the decision screen redraws the row without a pop). */
-.pips .pip:last-child { animation: none; }
 .pips .pip.is-new { animation: pip-pop 260ms var(--ease-back); }
 @keyframes pip-pop { from { transform: scale(0.2); opacity: 0; } }
 
@@ -63,8 +61,9 @@
 .quick-result .overtake { transform: translateX(56px); }
 .quick-result .rating-gain { transform: translateY(10px); }
 .quick-result .shown .gain, .quick-result .shown .overtake, .quick-result .shown .rating-gain { opacity: 1; transform: none; }
-/* A rating that rose: the new number rolls up and the tick mark pops (replaces the theme's rating-pop). */
-.quick-result .shown .rating-gain.rose .value { animation: none; }
+/* The rating bars grow from the old share to the new one. */
+.rating-gain .fill { transition: width 0.8s ease 0.3s; }
+/* A rating that rose: the new number rolls up and the tick mark pops. */
 .rating-gain.rose .to, .rating-gain.rose .tick { display: inline-block; }
 .rating-gain.rose .tick { transform: scale(0); opacity: 0; transition: transform var(--dur-medium) var(--ease-back), opacity var(--dur-short) linear; }
 .rating-gain.rose.is-ticked .tick { transform: none; opacity: 1; }
@@ -72,7 +71,7 @@
 @keyframes tick-up { from { transform: translateY(0.6em); opacity: 0.2; } }
 /* The next goal locks in: a short stamp. */
 .quick-result .goal.is-locked strong { display: inline-block; animation: goal-lock 420ms var(--ease-back); }
-.quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); border-radius: 8px; transition: box-shadow var(--dur-short) ease-out; }
+.quick-result .goal.is-locked { box-shadow: inset 0 0 0 2px var(--gold, #f2c94c); transition: box-shadow var(--dur-short) ease-out; }
 @keyframes goal-lock { from { transform: scale(1.35); opacity: 0; } }
 /* Skipped: every transition and animation ends at once. */
 .quick-result.is-skipped, .quick-result.is-skipped *, .quick-result.is-skipped *::before, .quick-result.is-skipped *::after {

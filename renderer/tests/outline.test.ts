@@ -65,6 +65,12 @@ describe('outlines on the stage', () => {
     expect(outlinesUnder(stage.scene.getObjectByName('venue')!)).toEqual([]);
   });
 
+  it('outlines the hands, shoes and cap (ADR-028)', () => {
+    for (const part of ['right-hand', 'left-hand', 'foot-left', 'foot-right', 'cap']) expect(all.filter((o) => o.name === `${part}-outline`), part).toHaveLength(2);
+    // 15 parts a player since motion track A's forearm (ADR-023): 30, plus the net's tape and posts and the ball.
+    expect(LOOK.outline.maxDraws).toBe(34);
+  });
+
   it('stays within the draw budget: one extra draw per outlined part', () => {
     const perPlayer = LOOK.outline.rigParts.length;
     expect(all.length).toBe(2 * perPlayer + 3 + 1);

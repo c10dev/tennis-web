@@ -8,8 +8,7 @@ import {
   tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
-import { getAudio } from '../audio/session.ts';
-import { soundToggle } from '../audio/toggle.ts';
+import { appSound } from '../audio/session.ts';
 import { T, U } from '../i18n/index.ts';
 import { dialogOpen } from '../lib/confirm.ts';
 import { buzz } from '../lib/haptics.ts';
@@ -34,11 +33,15 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   }
   const stage = h('div');
   const panel = h('div', { class: 'quick-panel', id: 'quick-panel' });
-  // Sound only plays with the 3D clips, so the switch only shows with them.
-  const sound = ctx.fastMode ? null : soundToggle();
-  const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel, sound?.element);
-  const audio = getAudio();
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: audio.mixer });
+  const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel);
+  const sound = appSound();
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
+  /** The deal sounds, one per card on the CSS deal stagger (motion.css: 120 ms, then 60 ms apart); cut short by a pick. */
+  let deals: ReturnType<typeof setTimeout>[] = [];
+  const stopDeals = () => {
+    deals.forEach(clearTimeout);
+    deals = [];
+  };
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
   let disposed = false;
@@ -47,7 +50,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   /** Plays on to the next decision point, ticking each point by; then the choose screen, or the result. */
   async function run() {
     const points = autoPlay(qm!);
-    if (broadcast && points.length) load();
+    if (broadcast && points.length) {
+      load();
+      await broadcast.ready();
+    }
     for (const p of points) {
       if (disposed) return;
       if (broadcast) await playClip(p, QUICK_PACE.autoSpeed);
@@ -84,6 +90,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('span', { class: 'rule' }, U.beats(T.card[c.beats])),
         h('span', { class: 'strength', title: U.strengthHint, role: 'img', 'aria-label': U.strengthHint }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
+    deals = [0, 1, 2].map((i) => setTimeout(() => sound.ui({ kind: 'deal', i }), 120 + 60 * i));
     phase('choose');
   }
 
@@ -93,6 +100,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     buzz('pick');
     const { cards, point } = decide(qm!, card);
     const r = revealView(cards, point, T);
+    stopDeals();
+    sound.ui({ kind: 'pick' });
     phase('reveal');
     // The picked card rises above the others for a beat, then both cards go face down (ADR-021).
     panel.querySelector('.cards')?.classList.add('is-picked');
@@ -102,10 +111,12 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     panel.classList.remove('stop');
     const reveal = revealElement(r, opponent);
     panel.replaceChildren(reveal);
-    await playReveal(reveal, () => !disposed);
+    await playReveal(reveal, () => !disposed, (cue) => sound.ui(cue));
     if (!disposed) buzz(r.matchup === 'won' ? 'read' : r.matchup === 'lost' ? 'misread' : 'same');
     if (broadcast && !disposed) {
       load();
+      await broadcast.ready();
+      if (disposed) return;
       phase('clip');
       await playClip(point, QUICK_PACE.speed);
     }
@@ -149,8 +160,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     },
     dispose: () => {
       disposed = true;
+      stopDeals();
       window.removeEventListener('keydown', onKey);
-      sound?.dispose();
       broadcast?.dispose();
     },
   };

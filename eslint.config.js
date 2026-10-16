@@ -71,7 +71,8 @@ export default tseslint.config(
         'error',
         {
           patterns: [
-            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*', '!@tennis/renderer/audio'], message: 'Import workspace packages by name (or @tennis/renderer/audio, the mixer without Three.js).' },
+            // '@tennis/renderer/audio' is the renderer's Three-free entry (ADR-029, ADR-022 step 6), for screens without the 3D chunk.
+            { group: ['**/engine/**', '@tennis/engine/*', '**/renderer/**', '@tennis/renderer/*', '!@tennis/renderer/audio'], message: 'Import workspace packages by name (or @tennis/renderer/audio, the sound without Three.js).' },
           ],
         },
       ],
