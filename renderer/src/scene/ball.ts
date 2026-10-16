@@ -15,6 +15,8 @@ export interface BallLook {
   trail: readonly TrailPoint[];
   /** How far back the trail reaches, for its taper. */
   trailSec: number;
+  /** The trail's colour (the game look's colour by shot); white without. */
+  trailColour?: number;
   /** The impact moment's squash (ADR-024 S3): 0–1, flattened along `dir` (court coordinates); replaces the pop. */
   squash?: { amount: number; dir: Vec3 };
 }
@@ -61,7 +63,7 @@ export function createBall(): BallView {
       ball.position.copy(toThree(position)).setY(Math.max(0, position.z) + BALL_LOOK.radius * look.scale);
       shadow.scale.setScalar(look.scale);
       shadow.position.copy(groundToThree(position, 0.005));
-      trail.apply(look.trail, look.scale, look.trailSec);
+      trail.apply(look.trail, look.scale, look.trailSec, look.trailColour);
     },
   };
 }

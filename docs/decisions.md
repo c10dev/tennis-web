@@ -1093,4 +1093,13 @@ Format: one entry per decision, newest at the bottom.
   steps out with it lifted halfway (`PLAYER_RIG.step`), the other stays planted, and the solver's iteration only adds
   crouch. A leg still out of reach lifts as it is drawn in rather than dragging. Planted-foot slip: median 0, p95
   0.5 mm, p99 1.2 cm; contact accuracy unchanged. Out-of-reach balls are rare (3 of the six sample matches' strokes).
+- **After the slice: the impact moment's last touches (TD-063, 2026-10-16).** The racket smear (`scene/smear.ts`):
+  in the slow motion and hit-stop, a ribbon (the ball trail's shader) along the deciding hitter's racket-head path
+  over the 0.12 s before, found by re-posing the rig at 8 earlier times and putting it back (poses are a function
+  of time; only while the moment is on screen), hidden 0.2 s after the contact. The trail takes its shot's colour with
+  the game look (`BALL_LOOK.trail.byShot`: serve and overhead hot, slice and drop cool, lob lilac, white otherwise;
+  the engine's `ShotType` is enough, so TD-001 is not needed for this); `createStage` gained `look`, which follows
+  the model unless given, so the broadcast look keeps its white trail. The impact camera shakes over the hit-stop
+  (4 cm, 28 Hz, decaying to still by its end), position and aim together. A test takes court points through the
+  planner's `toLocal` and back through the rig's `yawFor`. `/rig.html?clip=hitstop` draws frames as the moment's.
 

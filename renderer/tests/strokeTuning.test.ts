@@ -2,10 +2,12 @@
 // handle that reads at chase distance.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Mesh, Vector3, type CylinderGeometry } from 'three';
+import { Group, Mesh, Vector3, type CylinderGeometry } from 'three';
 import { readGlb } from '../src/asset/glb.ts';
 import { matchFrameAt } from '../src/playback/frame.ts';
+import { toLocal } from '../src/playback/stroke.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
+import { groundToThree, toThree, yawFor } from '../src/scene/coords.ts';
 import { GltfRig } from '../src/scene/gltfRig.ts';
 import { buildPlayerModel } from '../src/scene/playerModel.ts';
 import { PLAYER_RIG, STROKE_KEYS } from '../src/tuning/index.ts';
@@ -130,5 +132,22 @@ describe('the lunge on the skinned rig (TD-058)', () => {
       }
     }
     expect(lunges).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('the player frame (TD-063)', () => {
+  it('agrees between the planner’s toLocal and the rig’s yawFor: a court point taken local and back lands on itself', () => {
+    const frame = new Group();
+    for (let i = 0; i < 40; i++) {
+      const a = (i / 40) * 2 * Math.PI;
+      const pos = { x: Math.sin(i * 1.3) * 4, y: Math.cos(i * 0.7) * 12 };
+      const facing = { x: Math.cos(a), y: Math.sin(a) };
+      const p = { x: pos.x + Math.sin(i) * 2, y: pos.y + Math.cos(i * 2.1) * 2, z: 0.3 + (i % 5) * 0.4 };
+      frame.position.copy(groundToThree(pos));
+      frame.rotation.set(0, yawFor(facing), 0);
+      frame.updateMatrixWorld(true);
+      const local = toLocal(p, pos, facing);
+      expect(frame.localToWorld(new Vector3(local.x, local.y, local.z)).distanceTo(toThree(p))).toBeLessThan(1e-9);
+    }
   });
 });

@@ -1,4 +1,5 @@
 // Art direction B "Rally Pop" (ADR-019): toon shading, ink outlines, the optic ball and its trail, daylight.
+import type { ShotType } from '@tennis/engine';
 
 export const LOOK = {
   /** Cel shading on court, venue and players; false brings back the M3 Lambert look for comparison. */
@@ -32,7 +33,12 @@ export const BALL_LOOK = {
   /** White ribbon behind the ball: how far back it reaches, how many samples, its head width (share of the ball's
    * diameter) and opacity; both taper to nothing at the tail. Half-speed replays reach back half as far in match
    * time, so the trail covers the same time on screen. */
-  trail: { sec: 0.2, replayShare: 0.5, samples: 12, widthShare: 0.8, opacity: 0.8, colour: 0xffffff },
+  trail: {
+    sec: 0.2, replayShare: 0.5, samples: 12, widthShare: 0.8, opacity: 0.8, colour: 0xffffff,
+    /** With the game look (ADR-024, TD-063) the trail takes its shot's colour: hot for the big hits, cool for the
+     *  touch shots, lilac for a lob; white otherwise. */
+    byShot: { serve: 0xffb13d, overhead: 0xffb13d, slice: 0x8fd8ff, drop: 0x8fd8ff, lob: 0xd8c4ff } as Partial<Record<ShotType, number>>,
+  },
 } as const;
 
 /** A sunny afternoon (ADR-019): sky dome and fog separate the stands from the court; no tone mapping. */
@@ -47,4 +53,11 @@ export const DAYLIGHT = {
 
 /** The impact moment (ADR-024 S3): star and speed-line sizes in metres (against the 0.45× ball of the impact
  * camera), the number of lines, and the ball's squash over the hold and the first `squashSec` after it. */
-export const IMPACT_LOOK = { starSize: 0.42, linesSize: 1.8, lines: 14, squash: { wide: 0.3, flat: 0.25, sec: 0.08 } } as const;
+export const IMPACT_LOOK = {
+  starSize: 0.42, linesSize: 1.8, lines: 14, squash: { wide: 0.3, flat: 0.25, sec: 0.08 },
+  /** The hit-stop's camera shake (TD-063): metres, Hz; it decays to nothing over the hold. */
+  shake: { amp: 0.04, hz: 28 },
+  /** The racket smear (TD-063): `samples` racket-head positions over the last `sec` of match time, `width` m at the
+   *  head, shown in the impact moment until `fadeSec` after the contact. */
+  smear: { samples: 8, sec: 0.12, width: 0.22, fadeSec: 0.2, colour: 0xffffff },
+} as const;

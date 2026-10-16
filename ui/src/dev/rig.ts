@@ -1,9 +1,11 @@
 // Rig viewer (dev only, ADR-024 slice): one player of a simulated match up close, for tuning stroke keys.
 //   /rig.html?seed=42&surface=hard&point=15&shot=2&dt=-0.3,-0.1,0,0.2&view=front
 // Draws one frame per `dt` (seconds from that shot's contact) side by side, from `view`: front, side, back or chase.
+// `clip=hitstop|slowmo` draws the frames as the impact moment's (racket smear, trail colour, ADR-024 TD-063).
 // `hold=none,defend:1,counter:2` draws the decision hold's stances instead (TD-061): B waiting for the point after
 // `point`, with that tell (card:index, or none), `ht` seconds into the hold.
 import { exhibitionConfig, simulateMatch, type Card, type Surface } from '@tennis/engine';
+import type { ClipKind } from '@tennis/renderer';
 import { buildTimeline, createStage, heldPlayers, loadPlayerModel, matchFrameAt } from '@tennis/renderer';
 import { PerspectiveCamera, WebGLRenderer } from 'three';
 
@@ -34,7 +36,8 @@ dts.forEach((dt, i) => {
   const frame = matchFrameAt(timeline, seg.zero + shot.t + dt);
   if (holds) frame.players = heldPlayers(before, holds[i]!, Number(q.get('ht') ?? 0.4));
   if (holds) frame.ball = null;
-  stage.applyFrame(frame);
+  const clip = q.get('clip') as ClipKind | null;
+  stage.applyFrame(clip ? { ...frame, clip, matchT: frame.t, clipT: 0, camera: 'impact' } : frame);
   const p = frame.players[holds ? 'B' : shot.hitter];
   // Three coordinates: court (x, y) → (x, ·, −y); the player faces `facing`.
   const fx = p.facing.x;

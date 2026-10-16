@@ -104,7 +104,7 @@ export function createViewer(
       // The frame follows the view's shape (M7): an upright phone gets the portrait main camera, every camera a
       // minimum width; the projection is rebuilt when the field of view or the shape changes.
       const pose = frame.camera === 'chase' ? chasePose(timeline, me, frame.matchT, camera.aspect)
-        : frame.camera === 'impact' ? impactPose(timeline, frame.pointIndex) : cameraPose(frame, pan, camera.aspect);
+        : frame.camera === 'impact' ? impactPose(timeline, frame.pointIndex, frame) : cameraPose(frame, pan, camera.aspect);
       camera.fov = frame.camera === 'chase' ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
       if (camera.fov !== projected.fov || camera.aspect !== projected.aspect) {
         camera.updateProjectionMatrix();

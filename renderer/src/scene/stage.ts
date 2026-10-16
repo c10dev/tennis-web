@@ -11,7 +11,7 @@ import type { Timeline } from '../playback/timeline.ts';
 import { BALL, BALL_LOOK, COLOURS, IMPACT_LOOK } from '../tuning/index.ts';
 import { createBall, type BallLook } from './ball.ts';
 import { createImpact } from './impact.ts';
-import { ballPop, lastContact, trailPoints } from './ballMotion.ts';
+import { ballPop, lastContact, trailColour, trailPoints } from './ballMotion.ts';
 import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
 import { addDaylight } from './daylight.ts';
@@ -19,6 +19,7 @@ import { GltfRig } from './gltfRig.ts';
 import { kitFor } from './kit.ts';
 import type { PlayerModel } from './playerModel.ts';
 import { MannequinRig, type PlayerRig } from './rig.ts';
+import { createSmear } from './smear.ts';
 import { buildVenue } from './venue.ts';
 
 /** A frame, plus what a broadcast frame adds: the Hawk-Eye call, camera, clip kind and match second (its t is programme time). */
@@ -35,8 +36,9 @@ export interface Stage {
   setTimeline(timeline: Timeline): void;
 }
 
-/** `model`: draw skinned players from it (ADR-024) instead of the mannequin. */
-export function createStage(first: Timeline, { model = null }: { model?: PlayerModel | null } = {}): Stage {
+/** `model`: draw skinned players from it (ADR-024) instead of the mannequin. `look`: the game look colours the trail
+ *  by shot (TD-063); it goes with the model unless given. */
+export function createStage(first: Timeline, { model = null, look = model ? 'game' : 'broadcast' }: { model?: PlayerModel | null; look?: 'game' | 'broadcast' } = {}): Stage {
   let timeline = first;
   const scene = new Scene();
   addDaylight(scene);
@@ -56,6 +58,9 @@ export function createStage(first: Timeline, { model = null }: { model?: PlayerM
   mark.visible = false;
   const impact = createImpact(() => timeline);
   scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d, mark, impact.object3d);
+  // The racket smear needs the skinned rig's racket path: game look only (TD-063).
+  const smear = model && look === 'game' ? createSmear() : null;
+  if (smear) scene.add(smear.object3d);
   return {
     scene,
     setAspect(aspect) {
@@ -74,8 +79,9 @@ export function createStage(first: Timeline, { model = null }: { model?: PlayerM
     applyFrame(frame) {
       rigs.A.apply(frame.players.A);
       rigs.B.apply(frame.players.B);
-      ball.apply(frame.ball, ballLook(timeline, frame, ballScale));
+      ball.apply(frame.ball, ballLook(timeline, frame, ballScale, look === 'game'));
       impact.apply(frame);
+      smear?.apply(timeline, frame.pointIndex, frame.matchT ?? frame.t, frame.clip === 'slowmo' || frame.clip === 'hitstop', rigs);
       mark.visible = !!frame.hawkeye;
       if (frame.hawkeye) mark.position.copy(groundToThree(frame.hawkeye.mark, 0.006));
     },
@@ -83,7 +89,7 @@ export function createStage(first: Timeline, { model = null }: { model?: PlayerM
 }
 
 /** Camera scale, contact pop and trail for the ball in this frame. */
-function ballLook(timeline: Timeline, frame: StageFrame, aspectScale: number): BallLook {
+function ballLook(timeline: Timeline, frame: StageFrame, aspectScale: number, byShot: boolean): BallLook {
   const scale = BALL_LOOK.cameraScale[frame.camera ?? 'main'] * aspectScale;
   const trailSec = BALL_LOOK.trail.sec * (frame.clip === 'replay' ? BALL_LOOK.trail.replayShare : 1);
   const seg = timeline.segments[frame.pointIndex];
@@ -91,6 +97,7 @@ function ballLook(timeline: Timeline, frame: StageFrame, aspectScale: number): B
   const tau = (frame.matchT ?? frame.t) - seg.zero;
   const contact = lastContact(seg.point, tau);
   const look: BallLook = { scale, pop: ballPop(contact === null ? null : tau - contact), trail: trailPoints(seg.point, tau, timeline.surface, trailSec), trailSec };
+  if (byShot) look.trailColour = trailColour(seg.point, tau);
   const squash = impactSquash(seg.point, frame, tau);
   return squash ? { ...look, squash } : look;
 }

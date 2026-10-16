@@ -44,6 +44,13 @@ export function trailPoints(point: PointEvent, tau: number, surface: Surface, se
 }
 
 /** Width (metres) and opacity of a trail `sec` long, `age` seconds behind the ball: both taper linearly to nothing at its tail. */
+/** The trail's colour with the game look: the shot type of the point's last contact so far (white before one). */
+export function trailColour(point: PointEvent, tau: number): number {
+  const contact = lastContact(point, tau);
+  const shot = contact === null ? null : point.shots.findLast((s) => s.t <= tau)!.shot;
+  return (shot && BALL_LOOK.trail.byShot[shot]) ?? BALL_LOOK.trail.colour;
+}
+
 export function trailStyle(age: number, sec: number = BALL_LOOK.trail.sec): { width: number; alpha: number } {
   const { widthShare, opacity } = BALL_LOOK.trail;
   const u = Math.max(0, 1 - age / sec);
