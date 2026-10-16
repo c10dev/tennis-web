@@ -1,5 +1,6 @@
 // Renders every style frame (or a comma-separated list) to PNGs: run from the repo root while the proto folder is
 // served on :5290 (see docs/3d-redesign.md). three is routed to node_modules, so no network is needed.
+/* global process, console, document */
 import { chromium } from '@playwright/test';
 import { resolve } from 'node:path';
 const out = process.argv[2];
