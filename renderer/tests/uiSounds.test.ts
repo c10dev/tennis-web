@@ -13,12 +13,12 @@ describe('reveal sounds (TD-047, ADR-021 reveal)', () => {
     expect(revealSounds('facedown', 'won')).toEqual([{ kind: 'duck', on: true }]);
   });
 
-  it('lifts the duck and strikes the clash at the instant both cards flip', () => {
-    expect(revealSounds('flip', 'lost')).toEqual([{ kind: 'duck', on: false }, { kind: 'clash' }]);
+  it('lifts the duck as both cards flip', () => {
+    expect(revealSounds('flip', 'lost')).toEqual([{ kind: 'duck', on: false }]);
   });
 
-  it('pops the verdict with the matchup, and lifts the duck if the reveal is cut short', () => {
-    for (const m of ['won', 'lost', 'even'] as const) expect(revealSounds('verdict', m)).toEqual([{ kind: 'pop', matchup: m }]);
+  it('strikes the clash with the verdict pop (the white frame and kick land then), and lifts the duck if cut short', () => {
+    for (const m of ['won', 'lost', 'even'] as const) expect(revealSounds('verdict', m)).toEqual([{ kind: 'clash' }, { kind: 'pop', matchup: m }]);
     expect(revealSounds('abort', 'won')).toEqual([{ kind: 'duck', on: false }]);
   });
 

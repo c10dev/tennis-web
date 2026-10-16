@@ -14,15 +14,16 @@ export type UiSound =
 /** `abort` is a reveal cut short (the screen went away while the crowd was ducked). */
 export type RevealStage = 'facedown' | 'flip' | 'verdict' | 'abort';
 
-/** The crowd hushes while the cards lie face down; the flip lifts it with a clash; the verdict pops. */
+/** The crowd hushes while the cards lie face down and comes back as they flip; the verdict pops with the clash
+ *  (ADR-021: the white frame and the winning card's kick land with the verdict, not the flip). */
 export function revealSounds(stage: RevealStage, matchup: Matchup): UiSound[] {
   switch (stage) {
     case 'facedown':
       return [{ kind: 'duck', on: true }];
     case 'flip':
-      return [{ kind: 'duck', on: false }, { kind: 'clash' }];
+      return [{ kind: 'duck', on: false }];
     case 'verdict':
-      return [{ kind: 'pop', matchup }];
+      return [{ kind: 'clash' }, { kind: 'pop', matchup }];
     case 'abort':
       return [{ kind: 'duck', on: false }];
   }

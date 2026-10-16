@@ -2,9 +2,11 @@
 // then the result, the points counting up, the players passed, the ratings that rose, the next goal and [Play again].
 // Motion (ADR-021): the tiles rise 120 ms apart, the points count up with an ease-out, the names passed slide in, each
 // rating that rose ticks up, the goal locks in. Click, space or Enter skips to the end; reduced motion starts there.
+// Sound (TD-047, ADR-027): the stinger as the result shows (or on a skip), a rising tick as each count-up climbs.
 // Every final text is in the page from the start; the reveal only shows it.
 import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
+import { createTicker, resultSounds } from '@tennis/renderer/audio';
 import type { Ctx, Screen } from '../career/context.ts';
 import { getAudio } from '../audio/session.ts';
 import { T, U } from '../i18n/index.ts';
@@ -64,6 +66,20 @@ export function quickResult(ctx: Ctx): Screen {
   const rose = [...ratings.querySelectorAll<HTMLElement>('.rating-gain.rose')];
 
   const seq = createSequence();
+  let stung = false;
+  const sting = () => {
+    if (!stung) getAudio().ui(resultSounds(v.won));
+    stung = true;
+  };
+  /** A count-up formatter that also ticks, rising as the number climbs; quiet once the reveal is skipped. */
+  const ticking = (fmt: (x: number) => string, from: number, to: number) => {
+    const tick = createTicker(from, to);
+    return (x: number) => {
+      const sound = tick(x);
+      if (sound && !seq.skipped) getAudio().ui([sound]);
+      return fmt(x);
+    };
+  };
   const show = (el: HTMLElement | null) => el?.classList.add('shown');
   const showAll = () => {
     for (const el of element.querySelectorAll<HTMLElement>('.step, .pbp')) show(el);
@@ -76,8 +92,11 @@ export function quickResult(ctx: Ctx): Screen {
   /** The reveal, step by step; a skip ends it (skip() shows everything at once). */
   async function run() {
     const steps: [string, HTMLElement | null, () => Promise<void>][] = [
-      ['result', headline, () => seq.wait(R.stepSec)],
-      ['points', gains, () => countUp(count, v.delta, R.countSec, seq)],
+      ['result', headline, () => {
+        sting();
+        return seq.wait(R.stepSec);
+      }],
+      ['points', gains, () => countUp(count, v.delta, R.countSec, seq, ticking(signed, 0, v.delta))],
       ['overtakes', overtakes, () => seq.wait(R.stepSec + R.staggerSec * v.overtakes.length)],
       ['ratings', ratings, tickRatings],
       ['goal', goal, lockGoal],
@@ -112,7 +131,7 @@ export function quickResult(ctx: Ctx): Screen {
       if (seq.skipped) return;
       const r = v.ratings.filter((x) => x.rose)[i]!;
       el.classList.add('is-ticked');
-      await countUp(el.querySelector<HTMLElement>('.to')!, r.after, R.tickSec, seq, String, r.before);
+      await countUp(el.querySelector<HTMLElement>('.to')!, r.after, R.tickSec, seq, ticking(String, r.before, r.after), r.before);
     }
     await seq.wait(R.stepSec);
   }
@@ -154,6 +173,7 @@ export function quickResult(ctx: Ctx): Screen {
   }
 
   function finish() {
+    sting();
     showAll();
     phase('done');
     requestAnimationFrame(() => element.querySelector<HTMLButtonElement>('#play-again')?.focus());
