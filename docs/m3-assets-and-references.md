@@ -66,7 +66,7 @@ on Hugging Face: no token needed). Terms read from the repo's `LICENSE.md` and `
 - **Stability AI Community License** (updated 2024-07-05). Outputs: "You own any outputs generated from the Models
   … to the extent permitted by applicable law" (§IV.c.iii), and outputs are excluded from "Derivative Works".
 - **Commercial use** (§III) is free below US$1M annual revenue but requires registering at
-  https://stability.ai/community-license; the user does this, as the Toss release may count as commercial.
+  https://stability.ai/community-license, as the Toss release may count as commercial; the user registered on 2026-10-16.
 - **Attribution** (§IV.a): a NOTICE file with "This Stability AI Model is licensed under the Stability AI Community
   License, Copyright © Stability AI Ltd. All Rights Reserved" and a prominent "Powered by Stability AI" apply to
   distributing the model or derivatives "or a product or service that uses any portion of them". Shipping only
