@@ -18,6 +18,7 @@ export function readRows(random: WinRate, n: number, seed: number): Row[] {
     info('Knows the habit only', `${pct(habit.win)} · ${matchups(habit)}`),
     info('Knows the AI\'s odds (ceiling)', `${pct(ceiling.win)} · ${matchups(ceiling)}`),
     check('Follows the tells', tell.win, T.tellWin, '%'),
+    check('Scouting minus tells (pp)', scout.win - tell.win, T.scoutOverTells, '%'),
     info('  decision matchups', matchups(tell)),
     check('Random cards', random.win, T.randomWin, '%'),
     ...(['attack', 'defend', 'counter'] as const).map((c) => check(`Always ${c}`, readStats(fixedBot(c), n, seed).win, T.fixedCardWin, '%')),

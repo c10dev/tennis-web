@@ -114,6 +114,8 @@ export function ladderPace(bot: Bot, runs: number, matches: number, seed: number
   return climbed / runs;
 }
 
-export const median = (xs: readonly number[]): number => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+/** The value at quantile `q` (0–1) of `xs`, nearest rank from below. */
+export const percentile = (xs: readonly number[], q: number): number => [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(xs.length * q))]!;
+export const median = (xs: readonly number[]): number => percentile(xs, 0.5);
 export const share = (xs: readonly number[], ok: (x: number) => boolean): number => xs.filter(ok).length / xs.length;
 export { cardEntropy };

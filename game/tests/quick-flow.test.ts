@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { averagePlayer, bigServer, createConfig, fingerprint, finish, replayMatch, type Card, type PointEvent, type ScoreState } from '@tennis/engine';
-import { matchupEdge } from '../src/quick/balance.ts';
+import { matchupEdge, percentile, share } from '../src/quick/balance.ts';
 import { isDecisionPoint } from '../src/quick/moments.ts';
 import { autoPlay, createQuickMatch, decide, matchOver, type QuickMatch } from '../src/quick/match.ts';
 import { personaOf } from '../src/quick/persona.ts';
@@ -63,6 +63,18 @@ describe('the decision cap (ADR-017 follow-up)', () => {
       }
     }
     expect(marathons).toBeGreaterThan(0);
+  });
+
+  it('keeps every match within GDD §14\'s two to five card stops (TD-030)', () => {
+    expect(QUICK_MOMENTS.maxDecisions).toBe(5);
+  });
+});
+
+describe('decision spread (TD-030)', () => {
+  it('reads the 90th percentile and the share of matches stopped by the cap', () => {
+    expect(percentile([2, 2, 3, 3, 3, 4, 4, 5, 5, 6], 0.9)).toBe(6);
+    expect(percentile([5, 2, 3], 0.5)).toBe(3);
+    expect(share([2, 5, 5, 3], (d) => d === 5)).toBe(0.5);
   });
 });
 

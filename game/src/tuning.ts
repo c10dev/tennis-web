@@ -198,8 +198,9 @@ export const TIEBREAK_RULES = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', se
  *  Over 4,000 tiebreaks of average players: median 3 decisions, at least 2 in every match (5-all gave median 2). */
 export const QUICK_MOMENTS = {
   fromPoints: 5,
-  /** No more stops after this many decisions: a marathon tiebreak plays on (the playtest's fatigue, TD-030). */
-  maxDecisions: 6,
+  /** No more stops after this many decisions: a marathon tiebreak plays on (the playtest's fatigue, TD-030). Was 6,
+   *  which left one match in five at 6; 5 keeps every match in GDD §14's 2–5 (ADR-025). */
+  maxDecisions: 5,
 } as const;
 
 /** The user's game plan as the tactic for the points played without cards. */
@@ -211,8 +212,9 @@ export const QUICK_PLAN = {
 
 /** Opponent personas, tells and rival memory. */
 export const QUICK_PERSONA = {
-  /** Chance the tell points at the card the opponent really plays. */
-  tellAccuracy: 0.6,
+  /** Chance the tell points at the card the opponent really plays. 0.6 tied the scouting read once the cap fell to 5
+   *  decisions (ADR-025), so it is a little lower: the scouting line stays the better read. */
+  tellAccuracy: 0.58,
   /** Chance the opponent plays its habit card when its habit applies (the rest follows its style mix). */
   habitShare: 0.72,
   /** A rival record keeps the opponent's cards at this many latest decision points. */
