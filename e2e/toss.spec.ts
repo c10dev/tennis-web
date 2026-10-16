@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { createPlayer, defaultAllocation, newLadder, toQuickSave } from '@tennis/game';
 
 // The toss build (`vite --mode toss`, ADR-022): the quick match only, no season mode, no dev replay page.
 test.describe('toss target', () => {
@@ -52,5 +53,48 @@ test.describe('toss target in Korean', () => {
       return [...document.fonts].filter((x) => x.family.replace(/"/g, '') === 'Pretendard' && x.status === 'loaded').map((x) => x.weight).sort();
     });
     expect(loaded).toEqual(['600', '800']);
+  });
+});
+
+// Saves (ADR-022, M7 step 7): the toss build keeps the ladder in the Toss user's storage and takes over the
+// browser-era IndexedDB ladder once.
+test.describe('toss target saves', () => {
+  test('keeps the ladder after a reload', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#quick-name').fill('Min Park');
+    await page.locator('#quick-seed').fill('3');
+    await page.locator('#quick-start').click();
+    await expect(page.locator('#quick-play')).toBeVisible();
+    await page.reload();
+    await expect(page.locator('#quick-play')).toBeVisible();
+    await expect(page.locator('#ladder')).toContainText('Min Park');
+  });
+
+  test('takes over a ladder saved in IndexedDB by the browser build', async ({ page }) => {
+    const file = toQuickSave(newLadder(5, createPlayer({ name: 'Old Save', style: 'baseliner', allocation: defaultAllocation('baseliner') }, 5)), 'then');
+    await page.goto('/');
+    await expect(page.locator('#quick-start')).toBeVisible();
+    await page.evaluate((json) => new Promise<void>((done, fail) => {
+      const r = indexedDB.open('tennis-sim', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('saves');
+      r.onerror = () => fail(r.error);
+      r.onsuccess = () => {
+        const tx = r.result.transaction('saves', 'readwrite');
+        tx.objectStore('saves').put(json, 'quick');
+        tx.oncomplete = () => done();
+      };
+    }), JSON.stringify(file));
+    await page.reload();
+    await expect(page.locator('#ladder')).toContainText('Old Save');
+    const left = await page.evaluate(() => new Promise((done) => {
+      const r = indexedDB.open('tennis-sim', 1);
+      r.onsuccess = () => {
+        const get = r.result.transaction('saves', 'readonly').objectStore('saves').get('quick');
+        get.onsuccess = () => done(get.result ?? null);
+      };
+    }));
+    expect(left).toBeNull();
+    await page.reload();
+    await expect(page.locator('#ladder')).toContainText('Old Save');
   });
 });

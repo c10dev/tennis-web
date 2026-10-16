@@ -52,8 +52,12 @@ export function createTossPlatform(sdk: TossSdk, web: Platform): Platform {
   return {
     kind: 'toss',
     userKey() {
+      // A key is asked for once; a failed ask is forgotten, so a later retry (quick-store.ts) asks again.
       key ??= attempt(() => sdk.getAnonymousKey.isSupported(), () => false)
-        ? guarded(async () => (await sdk.getAnonymousKey()).hash, none)
+        ? guarded(async () => (await sdk.getAnonymousKey()).hash, none).then((hash) => {
+          if (hash === null) key = null;
+          return hash;
+        })
         : none();
       return key;
     },

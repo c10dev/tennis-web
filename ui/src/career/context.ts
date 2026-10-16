@@ -1,6 +1,7 @@
 // What every career screen gets: the season, the save store, navigation and the actions that change the season.
 import type { QuickMatch, QuickState, SeasonState, Slot } from '@tennis/game';
 import type { IndexedDbStore } from '../storage/indexedDb.ts';
+import type { QuickStore } from '../storage/quick-store.ts';
 import type { Tactic } from '@tennis/engine';
 
 export interface Screen {
@@ -13,6 +14,8 @@ export interface Screen {
 export interface Ctx {
   readonly state: SeasonState | null;
   readonly store: IndexedDbStore;
+  /** Where the quick ladder is saved: IndexedDB on the web, the Toss user's storage in the toss build (ADR-022). */
+  readonly quickStore: QuickStore;
   /** The quick-match ladder (ADR-016), and the match being played, if any. */
   readonly quick: QuickState | null;
   quickMatch: QuickMatch | null;

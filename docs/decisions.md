@@ -822,6 +822,16 @@ Format: one entry per decision, newest at the bottom.
     the same card, confetti on a win, basicMedium on a loss; the web platform ignores them. The session imports the
     mixer through a new `@tennis/renderer/audio` entry (package `exports`, allowed in lint), so the first chunk
     still has no Three.js (TD-014); the career e2e check now looks for Three.js and the broadcast modules by path.
+  - **User key and saves (step 7).** The web keeps the ladder in IndexedDB. The toss build keeps it in the platform
+    settings (the SDK's on-device `Storage`) under `quick:<user key>` (`ui/src/storage/quick-store.ts`, chosen per
+    target as `ctx.quickStore`), so each Toss account on a phone has its own ladder. The key is
+    `User.getAnonymousKey`, asked for up to `KEY_RETRY` times (3, 400 ms apart) once per session; without one the
+    game plays on under `quick:local`. Loading looks for the user's own save, then a `local` one, then the
+    browser-era IndexedDB `quick`; a save found in an older place is copied under the user's key and the old copy
+    removed, so it moves once. The toss platform forgets a failed key ask, so a retry can still succeed. The save
+    format stays QuickSave v2. A save grows about 2.2 KB a match (31 KB new, 254 KB after 100 matches, 472 KB after
+    200), all of it rewritten after every match (TD-055). Saves stay on the device: a new phone or a reinstalled
+    Toss app starts a new ladder.
 - **Consequences:** Engine and game are untouched by the targets. The toss build is about 61 KB larger (18 KB
   gzip) for the SDK chunk; with Pretendard the `.ait` is 0.87 MB. The first chunk carries the mixer (22 KB,
   9 KB gzip). Untested on a device until the console

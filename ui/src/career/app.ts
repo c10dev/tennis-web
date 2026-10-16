@@ -4,6 +4,7 @@ import { closeWeek, fromQuickSave, fromSave, homeView, playerById, playOut, toQu
 import { h } from '../lib/h.ts';
 import { currentRoute, go } from '../lib/router.ts';
 import { IndexedDbStore } from '../storage/indexedDb.ts';
+import { tossQuickStore } from '../storage/quick-store.ts';
 import { landingFor, routesFor, TARGET } from '../target.ts';
 import { getPlatform } from '../platform/index.ts';
 import { LANG, U } from '../i18n/index.ts';
@@ -47,11 +48,14 @@ let current: Screen | null = null;
 /** Renders are async (screens may load code); only the latest one may show. */
 let renders = 0;
 
+const store = new IndexedDbStore();
+
 const ctx: Ctx = {
   get state() {
     return state;
   },
-  store: new IndexedDbStore(),
+  store,
+  quickStore: TARGET === 'toss' ? tossQuickStore(store) : store,
   get note() {
     return note;
   },
@@ -71,7 +75,7 @@ const ctx: Ctx = {
   },
   async setQuick(next, path) {
     quick = next;
-    await ctx.store.saveQuick(toQuickSave(next, stamp()));
+    await ctx.quickStore.saveQuick(toQuickSave(next, stamp()));
     if (path) go(path);
     else void render();
   },
@@ -158,6 +162,6 @@ if (LANG === 'ko') {
     document.head.append(Object.assign(document.createElement('link'), { rel: 'preload', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous', href: `fonts/pretendard-${w}.subset.woff2` }));
   }
 }
-void ctx.store.loadQuick().then((file) => {
+void ctx.quickStore.loadQuick().then((file) => {
   if (file) quick = fromQuickSave(file);
 }).catch(() => undefined).finally(() => void render());

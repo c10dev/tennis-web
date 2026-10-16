@@ -105,6 +105,15 @@ describe('toss platform on the SDK (ADR-022)', () => {
     expect(await value).toBeNull();
   });
 
+  it('asks again after a failed user key, so a later retry can still get one', async () => {
+    const getAnonymousKey = supported(vi.fn().mockRejectedValueOnce(new Error('UNKNOWN_ERROR')).mockResolvedValue({ hash: 'h', type: 'HASH' as const }));
+    const p = createTossPlatform(fakeSdk({ getAnonymousKey }), fallback());
+    expect(await p.userKey()).toBeNull();
+    expect(await p.userKey()).toBe('h');
+    expect(await p.userKey()).toBe('h');
+    expect(getAnonymousKey).toHaveBeenCalledTimes(2);
+  });
+
   it('asks the Toss app for the user key once', async () => {
     const getAnonymousKey = supported(vi.fn(() => Promise.resolve({ hash: 'h', type: 'HASH' as const })));
     const p = createTossPlatform(fakeSdk({ getAnonymousKey }), fallback());

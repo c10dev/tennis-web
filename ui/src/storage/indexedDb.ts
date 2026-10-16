@@ -58,6 +58,11 @@ export class IndexedDbStore implements SaveStore {
     await request((await this.store('readwrite')).put(JSON.stringify(file), 'quick'));
   }
 
+  /** After the toss build took the ladder over (ADR-022). */
+  async removeQuick(): Promise<void> {
+    await request((await this.store('readwrite')).delete('quick'));
+  }
+
   async remove(slot: Slot): Promise<void> {
     checkSlot(slot);
     await request((await this.store('readwrite')).delete(slot));
