@@ -22,8 +22,17 @@ export const PLAYER_RIG = {
   height: 1.75,
   /** Uniform scale on the head bone (a leaf: nothing below it can shear): about three heads tall. */
   headScale: 0.57,
-  /** Grip to racket-head centre, handle, head radius and its width share, metres. */
-  racket: { length: 0.62, handle: 0.3, headRadius: 0.16, headAspect: 0.8 },
+  /** Grip to racket-head centre, head radius and its width share, metres. */
+  racket: { length: 0.68, headRadius: 0.16, headAspect: 0.8 },
+  /** The arm may lengthen by this share near contact (child bones slide out along it: no shear), squash-and-stretch. */
+  stretchMax: 0.15,
+  /** Racket-head centre at full stretch straight up, standing: shoulders 1.09 m + arm 0.576 m × 1.15 + racket 0.68 m.
+   * A serve struck higher is reached by a hop (STROKE.serve). */
+  standingReach: 2.43,
+  /** Contact the body cannot reach by leaning is met by shifting the whole body up to this far (feet slide: TD-058). */
+  lungeMax: 0.9,
+  /** Extra crouch for a low ball, metres. */
+  dropMax: 0.15,
   /** Ring on the ground under *my* player (Mini Tennis's device), in the accent colour. */
   ring: { radius: 0.55, width: 0.07, colour: 0xd6f53a },
 } as const;

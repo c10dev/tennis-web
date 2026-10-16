@@ -968,4 +968,27 @@ Format: one entry per decision, newest at the bottom.
   on `handslot.r`, a blob shadow, six draws with outlines; Idle, Running_A, Cheer and Hit_A are weighted by speed and
   reaction and sampled with `AnimationMixer.setTime(pose.t)` (`PlayerPose.t` is new), so a pose stays a function of
   time. Opt-in with `?rig=gltf` on the replay page and the quick match; the mannequin stays the default until step 6.
+- **Step 2, effector-key strokes (2026-10-16).** `playback/stroke.ts` plans, per player and replay time, the stroke in
+  progress from the shot events: keys from `STROKE_KEYS` (forehand, backhand, serve; hand, racket direction, free
+  hand, pelvis, chest turn and lean, crouch, in the player's own frame and metres) eased by smoothstep, the
+  groundstroke lead-in starting at `max(contact − 0.5 s, incoming contact + 0.15 s)` and the backswing-to-contact
+  swing (0.18 s) never compressed, blending in over 0.12 s and out between 0.45 and 0.75 s after contact; the contact
+  point in the player's frame with a weight peaking at contact (±0.16 s, a serve ±0.26 s); and the serve hop by rule:
+  what the standing reach lacks, within 0.55 m. The standing reach (2.43 m: shoulders 1.09 m, arm × 1.15 stretch,
+  racket 0.68 m) is measured on the rig by a test, which also checks that the hop covers a 2.95 m toss.
+  `PlayerPose.stroke` carries it. `scene/strokeSolver.ts` puts it on the bones over the clip pose: hips yaw, spine and
+  chest turn and lean, crouch and hop on the hips, the legs back onto the clip's feet by two-bone IK, A1's
+  `solveTwoBone` for both arms to the hand bone (the wrist held straight), and the hand turned so the racket (along
+  the hand slot's +y, strings facing forward) points along its direction; near contact the direction bends towards
+  the contact point and the hand target becomes the contact minus the racket's offset in the hand, the arm may
+  stretch 15 % (the elbow slides out along the upper arm and the wrist and hand along the forearm: positions, not
+  scales; the elbow's mesh is weighted to both bones, so it stretches there), and up to three passes shift the
+  whole body (groundstrokes only, ≤ 0.9 m, the feet sliding: TD-058) and crouch up to 0.15 m for what is still
+  missed. Over the six sample matches the racket-head centre is within 0.005 m of the contact point on every
+  groundstroke and 0.049 m on every serve (median hop 0.35 m, max 0.52 m); the body shift is 0 at the median and
+  0.84 m at worst. **AnimationMixer is gone:** it writes a property only when the clip value changed since its last
+  update, so a solved bone kept the solver's value on the next frame (0.5 rad on the hips for the same pose drawn
+  twice). `scene/clipSampler.ts` samples the clips' interpolants at `pose.t` and blends them (nlerp, the rest pose for
+  missing weight) on every apply, which makes every pose a pure function of time again. `ui/rig.html` (dev server
+  only, not built) draws one player up close at chosen times around a shot, for tuning keys.
 

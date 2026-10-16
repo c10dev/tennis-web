@@ -3,6 +3,7 @@ import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
 import { smoothstep } from '../math.ts';
 import { PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
 import { facingAt } from './facing.ts';
+import { strokeAt, type StrokePose } from './stroke.ts';
 import { positionAt } from './movement.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
@@ -30,6 +31,8 @@ export interface PlayerPose {
   toss: number;
   /** Replay time in seconds: looping clips are sampled at it (ADR-024), so a pose stays a function of time. */
   t: number;
+  /** The stroke in progress for the skinned rig (ADR-024, effector keys), or null. */
+  stroke: StrokePose | null;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -42,13 +45,15 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
   const seg = timeline.segments[index]!;
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
+  const facing = turnToShot(facingAt(timeline, id, index, t, pos), own, tau);
   return {
-    pos, facing: turnToShot(facingAt(timeline, id, index, t, pos), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
+    pos, facing, speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
     splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
     toss: toss(seg.point.shots.filter((s) => s.hitter === id && s.shot === 'serve'), tau),
     t,
+    stroke: strokeAt(timeline, id, t, pos, facing),
   };
 }
 
