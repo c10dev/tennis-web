@@ -954,4 +954,18 @@ Format: one entry per decision, newest at the bottom.
     glb; meshopt and gltf-transform only if that falls short (each a separate approval).
 - **Consequences:** ADR-023's A2–A5 are superseded; TD-012, TD-039 and TD-058 move to this track. The quick match's
   pacing (TD-060) and its decision-hold frame (TD-061) need game-layer and UI changes outside the renderer slice.
+- **Step 1, body (2026-10-16).** `renderer/cli/prune-player.ts` cuts KayKit's Rogue (CC0, repo commit `672074b`) to
+  `ui/public/models/player.glb` with `asset/glb.ts`, a dependency-free GLB reader, writer and pruner: six body meshes
+  (4,263 triangles), all 41 joints, the 16 KB palette texture and eight in-place clips (Idle, Running_A,
+  Running_Strafe_Left/Right, Walking_A, Walking_Backwards, Cheer, Hit_A) with rotation tracks on the 20 deform bones and
+  the hips' translation only: 350 KB, credited in `ui/public/models/CREDITS.md`. `scene/playerModel.ts` builds the
+  model from those bytes without GLTFLoader (one merged `SkinnedMesh`, the skeleton, the clips; bone names sanitised
+  as three's loaders do, `upperarm.r` → `upperarmr`), so tests build exactly what the page draws; only the texture
+  decode (`createImageBitmap`) is browser-only. The source is 2.15 heads at 2.19 units; the body keeps its size and
+  the head bone (a leaf, so a uniform scale cannot shear) is scaled 0.57, giving 1.78 m and about three heads,
+  shoulders at 1.09 m. `GltfRig` implements `PlayerRig`: toon material on the palette, a skinned ink hull
+  (`addSkinnedOutline`: the hull keeps skin indices and weights and skins position and normal in its shader), a racket
+  on `handslot.r`, a blob shadow, six draws with outlines; Idle, Running_A, Cheer and Hit_A are weighted by speed and
+  reaction and sampled with `AnimationMixer.setTime(pose.t)` (`PlayerPose.t` is new), so a pose stays a function of
+  time. Opt-in with `?rig=gltf` on the replay page and the quick match; the mannequin stays the default until step 6.
 

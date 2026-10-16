@@ -38,7 +38,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const sound = ctx.fastMode ? null : soundToggle();
   const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel, sound?.element);
   const audio = getAudio();
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: audio.mixer });
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, audio: audio.mixer, model: await (await import('../replay/model.ts')).playerModelFromQuery() });
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
   let disposed = false;

@@ -4,7 +4,7 @@
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, initialTier, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type Mixer, type QualityTier, type ViewMode,
+  type Mixer, type PlayerModel, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
@@ -30,6 +30,8 @@ export interface BroadcastOptions {
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
   /** A shared mixer (the quick match's audio session, ADR-022) instead of this player's own sound panel. */
   audio?(): Mixer | null;
+  /** Skinned players (ADR-024 slice); the mannequin without it. */
+  model?: PlayerModel | null;
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
@@ -132,7 +134,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const timeline = buildTimeline(input);
       if (!viewer || surface !== timeline.surface || !opts.keepTime) {
         viewer?.dispose();
-        viewer = createViewer(canvas, timeline, startTier(), stepDown);
+        viewer = createViewer(canvas, timeline, startTier(), stepDown, options.model ?? null);
         surface = timeline.surface;
         size = '';
         resize();

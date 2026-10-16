@@ -13,6 +13,8 @@ import { ballPop, lastContact, trailPoints } from './ballMotion.ts';
 import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
 import { addDaylight } from './daylight.ts';
+import { GltfRig } from './gltfRig.ts';
+import type { PlayerModel } from './playerModel.ts';
 import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
 
@@ -28,12 +30,15 @@ export interface Stage {
   setQuality(tier: QualityTier): void;
 }
 
-export function createStage(timeline: Timeline): Stage {
+/** `model`: draw skinned players from it (ADR-024) instead of the mannequin. */
+export function createStage(timeline: Timeline, { model = null }: { model?: PlayerModel | null } = {}): Stage {
   const scene = new Scene();
   addDaylight(scene);
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
   const kit = COLOURS.kits[timeline.surface];
-  const rigs: Record<'A' | 'B', PlayerRig> = { A: new MannequinRig(kit.A), B: new MannequinRig(kit.B) };
+  const rigs: Record<'A' | 'B', PlayerRig> = model
+    ? { A: new GltfRig(model), B: new GltfRig(model) }
+    : { A: new MannequinRig(kit.A), B: new MannequinRig(kit.B) };
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';
   const ball = createBall();

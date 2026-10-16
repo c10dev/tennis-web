@@ -8,6 +8,7 @@ import { fitFov } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
 import type { Timeline } from './playback/timeline.ts';
 import { createFrameMeter, tierSettings, type QualityTier } from './quality.ts';
+import type { PlayerModel } from './scene/playerModel.ts';
 import { createStage } from './scene/stage.ts';
 import { CAMERA } from './tuning/index.ts';
 
@@ -22,9 +23,11 @@ export interface Viewer {
  * `tier` is the quality to start on (M7, ADR-022); antialiasing is fixed by it, the rest can change. The viewer
  * measures its frames and steps down to low once if they stay slow, telling `onTier`.
  */
-export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void): Viewer {
+export function createViewer(
+  canvas: HTMLCanvasElement, timeline: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void, model: PlayerModel | null = null,
+): Viewer {
   const renderer = new WebGLRenderer({ canvas, antialias: tierSettings(tier).antialias });
-  const stage = createStage(timeline);
+  const stage = createStage(timeline, { model });
   const meter = createFrameMeter(tier);
   let size = { w: 0, h: 0 };
   const apply = (t: QualityTier) => {

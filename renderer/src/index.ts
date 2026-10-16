@@ -21,6 +21,8 @@ export { matchFrameAt, type Frame } from './playback/frame.ts';
 export { playerPose, type PlayerPose, type Reaction, type SwingKind } from './playback/pose.ts';
 export { buildTimeline, scoreAt, segmentAt, type GapKind, type PointSegment, type ReplayInput, type Timeline } from './playback/timeline.ts';
 export { MannequinRig, type PlayerRig } from './scene/rig.ts';
+export { GltfRig } from './scene/gltfRig.ts';
+export { buildPlayerModel, loadPlayerModel, type PlayerModel } from './scene/playerModel.ts';
 export { createStage, type Stage, type StageFrame } from './scene/stage.ts';
 export { buildVenue, standHeightAt } from './scene/venue.ts';
 export { AUDIO, BROADCAST, PLAYBACK } from './tuning/index.ts';

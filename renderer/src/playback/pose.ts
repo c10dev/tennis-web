@@ -28,6 +28,8 @@ export interface PlayerPose {
   splitStep: number;
   /** Tossing arm raised for a serve, 0–1. */
   toss: number;
+  /** Replay time in seconds: looping clips are sampled at it (ADR-024), so a pose stays a function of time. */
+  t: number;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -46,6 +48,7 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
     splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
     toss: toss(seg.point.shots.filter((s) => s.hitter === id && s.shot === 'serve'), tau),
+    t,
   };
 }
 
