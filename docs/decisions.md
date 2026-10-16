@@ -921,3 +921,37 @@ Format: one entry per decision, newest at the bottom.
   net line. `playerPose` no longer takes the frame's ball. Over eight further matches (1.9 M frames) the fastest
   turn is 0.25 rad per 60 fps frame (was up to π); a test keeps it under 0.35, and the racket continuity test is
   back in world space.
+
+## ADR-026: Quick save v3: recipes for the last five matches only
+- **Date:** 2026-10-16
+- **Status:** Accepted
+- **Context:** Every `QuickRecord` in `QuickState.history` kept its `recipe` (both players' profiles, the seed and the
+  cards), its rating `progress`, its `decisions` and its `overtakes`: about 2.3 KB a match (TD-055). The toss build
+  writes the whole JSON over the SDK bridge after every match. Measured (seed 3): a new save 32 KB, 100 matches
+  262 KB, 200 matches 488 KB (history 451 KB of it: recipes 264 KB, progress 91 KB, decisions 54 KB), 1000 matches
+  2.19 MB. Only the last record's recipe, progress, decisions and overtakes are read (the result screen, its 3D
+  replay and the result balance report); home lists the last five matches by opponent, result, score and points.
+- **Decision:**
+  - `QuickState.history` keeps the last `QUICK_SAVE.recipes` (5) matches whole; a new `QuickState.past` keeps every
+    older match as a `PastRecord`, oldest first: `matchNo`, `opponent`, `opponentRank`, `won`, `score`,
+    `pointsDelta`, `rankBefore`, `rankAfter`, `fingerprint` and `conceded`. Recipe, progress, decisions and
+    overtakes are dropped (the opponents' cards live on in `rivals`). `QuickRecord extends PastRecord`.
+  - A separate field rather than a union in `history`: `history.at(-1)` stays a full `QuickRecord` for every reader
+    (result screen, result balance, e2e), so none of them changed.
+  - `compactHistory` (`quick/history.ts`, pure) runs at the end of every `settle`, so the state in memory is the
+    state saved, and a save loads back equal to it. `allMatches(s)` is `[...past, ...history]`; home's last five
+    and `nextOpponent`'s "not the last opponent" read across both.
+  - `QUICK_VERSION` 3. `fromQuickSave` now steps a save up one version at a time (v1 gains `rivals`, v2 is
+    compacted), so a v1 save is compacted too; a v2 ladder loads equal to the same ladder played under v3.
+  - A record that cannot be shown on the result screen (no recipe with a config and seed, or no progress) goes to
+    `past` together with every record before it, keeping match order. If that is the last record, `history` is
+    empty and the result route already sends the player to the ladder. A conceded match keeps its (unfinished)
+    recipe while it is recent and its `conceded` flag once summarised.
+  - The user chose 5 recent matches (home shows five), dropping old decisions, no cap on `past`, and keeping the
+    fingerprint (25 B a match).
+- **Consequences:** Measured with the same code path (seed 3; seed 7 within 2 %): new 32 KB (+10 B for `past`),
+  50 matches 52 KB (was 146), 100 matches 62 KB (was 262), 200 matches **77 KB** (was 488), 500 matches 120 KB (was
+  1132), 1000 matches 194 KB (was 2195). A summary costs about 146 B; the five whole records about 11 KB; rivals
+  level off near 5 KB; the world (31.5 KB) is now the largest part. `quick-save-compact.test.ts` keeps a 200-match
+  save at 100 KB or less. Old matches can no longer be replayed and their rating changes are gone; `past` still
+  grows without a cap (TD-068), and the whole save still crosses the bridge every match (TD-069).
