@@ -1,0 +1,349 @@
+{
+  "version": 1,
+  "date": "2026-10-16",
+  "host": "MacBook Pro, Apple M1 Max, 32 GB, macOS 27.2",
+  "agentAudio": {
+    "repo": "https://github.com/AIEGOBOT/agent-audio",
+    "commit": "9b679edb3032d6b9df25f0cf4fab12b552ae4b61",
+    "call": "uv run --frozen agent-audio generate \"<prompt>\" --seconds <generateSec> --out <wav>"
+  },
+  "backend": "mlx 0.32.4 on Device(gpu, 0)",
+  "runtime": {
+    "repo": "https://github.com/Stability-AI/stable-audio-3",
+    "commit": "779434a908193105335fd8d833418603625b2859"
+  },
+  "model": {
+    "name": "Stable Audio 3 Medium",
+    "repo": "stabilityai/stable-audio-3-optimized",
+    "revision": "da6edc54ddba10bfd79a077102ded687f80e882b",
+    "cfg": 1.0
+  },
+  "seed": "Not controllable: agent-audio does not pass --seed, so the runtime picks a random one per take and the log holding it is deleted on success. Takes cannot be reproduced exactly.",
+  "selection": "Takes were picked by objective checks (single transient, no second hit inside the kept window, steadiness, loop seam, limiter reduction, natural end), then hit-flat by the user's listening. Not a full listening review.",
+  "encoder": "ffmpeg 9.0.2 (libopus, native aac)",
+  "totalBytes": 204132,
+  "sounds": [
+    {
+      "id": "hit-flat",
+      "prompt": "Single tennis ball struck hard by a tightly strung racket, crisp hollow 'pock' with a sharp transient and a short felt-and-strings body, close and dry outdoor court, isolated one-shot, no voice, no music, no crowd, no reverb tail",
+      "generateSec": 2,
+      "candidates": 4,
+      "keptTake": 4,
+      "seed": null,
+      "generationSecondsPerTake": [
+        4.46,
+        3.22,
+        3.07,
+        3.0
+      ],
+      "durationSec": 0.35,
+      "peakDbfs": -1.0,
+      "loudnessLufs": null,
+      "truePeakDbtp": -1.0,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 2047,
+        "m4a": 3231
+      },
+      "budgetBytes": 5000
+    },
+    {
+      "id": "hit-heavy",
+      "prompt": "Powerful tennis serve impact, racket strings snapping through a tennis ball, loud explosive 'thwack' with a deep body and a bright string crack, close and dry, isolated one-shot, no grunt, no voice, no music, no crowd",
+      "generateSec": 2,
+      "candidates": 4,
+      "keptTake": 3,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.82,
+        3.27,
+        3.12,
+        3.08
+      ],
+      "durationSec": 0.4,
+      "peakDbfs": -1.0,
+      "loudnessLufs": null,
+      "truePeakDbtp": -1.0,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 2285,
+        "m4a": 3555
+      },
+      "budgetBytes": 5000
+    },
+    {
+      "id": "hit-slice",
+      "prompt": "Soft brushed tennis slice shot, racket strings grazing under a tennis ball, muted papery 'thup' with less snap and a quick decay, close and dry, isolated one-shot, no voice, no music, no crowd",
+      "generateSec": 2,
+      "candidates": 4,
+      "keptTake": 4,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.14,
+        3.0,
+        3.03,
+        3.13
+      ],
+      "durationSec": 0.35,
+      "peakDbfs": -1.0,
+      "loudnessLufs": null,
+      "truePeakDbtp": -1.0,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 1688,
+        "m4a": 3334
+      },
+      "budgetBytes": 5000
+    },
+    {
+      "id": "bounce-hard",
+      "prompt": "Tennis ball bouncing once on a hard acrylic court, short bright rubbery 'tok' on concrete, close and dry outdoor, isolated one-shot, no voice, no music, no crowd, no second bounce",
+      "generateSec": 2,
+      "candidates": 4,
+      "keptTake": 2,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.04,
+        2.89,
+        2.99,
+        3.05
+      ],
+      "durationSec": 0.3,
+      "peakDbfs": -1.0,
+      "loudnessLufs": null,
+      "truePeakDbtp": -1.0,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 1763,
+        "m4a": 2991
+      },
+      "budgetBytes": 4000
+    },
+    {
+      "id": "bounce-clay",
+      "prompt": "Tennis ball bouncing once on a red clay court, dull soft thud with a faint gritty crunch of loose clay, close and dry outdoor, isolated one-shot, no voice, no music, no crowd, no second bounce",
+      "generateSec": 2,
+      "candidates": 4,
+      "keptTake": 2,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.14,
+        3.18,
+        3.07,
+        3.02
+      ],
+      "durationSec": 0.35,
+      "peakDbfs": -1.0,
+      "loudnessLufs": null,
+      "truePeakDbtp": -1.0,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 1967,
+        "m4a": 3213
+      },
+      "budgetBytes": 4000
+    },
+    {
+      "id": "net",
+      "prompt": "Tennis ball hitting the woven net of a tennis court, soft muffled thump into taut mesh with a brief rattle of the net cord and a tiny rustle, close and dry outdoor, isolated one-shot, no voice, no music, no crowd",
+      "generateSec": 2,
+      "candidates": 3,
+      "keptTake": 2,
+      "seed": null,
+      "generationSecondsPerTake": [
+        2.98,
+        3.03,
+        3.0
+      ],
+      "durationSec": 0.6,
+      "peakDbfs": -1.0,
+      "loudnessLufs": null,
+      "truePeakDbtp": -1.0,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 2781,
+        "m4a": 4820
+      },
+      "budgetBytes": 5000
+    },
+    {
+      "id": "applause-small",
+      "prompt": "Polite applause from a medium tennis stadium crowd after a point, steady clapping that rises quickly and dies away, outdoor stadium, no cheering, no whistles, no intelligible speech, no announcer, no music",
+      "generateSec": 4,
+      "candidates": 3,
+      "keptTake": 2,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.14,
+        3.06,
+        3.15
+      ],
+      "durationSec": 2.5,
+      "peakDbfs": -1.51,
+      "loudnessLufs": -18.2,
+      "truePeakDbtp": -1.4,
+      "kbps": {
+        "ogg": 32,
+        "m4a": 32
+      },
+      "bytes": {
+        "ogg": 10970,
+        "m4a": 11539
+      },
+      "budgetBytes": 13000,
+      "note": "peak limiter used, up to about 6.8 dB of reduction"
+    },
+    {
+      "id": "applause-big",
+      "prompt": "Loud enthusiastic applause from a large tennis stadium crowd after a great rally, dense fast clapping with an excited swell, outdoor stadium, no chanting, no whistles, no intelligible speech, no announcer, no music",
+      "generateSec": 5,
+      "candidates": 3,
+      "keptTake": 2,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.15,
+        3.16,
+        3.17
+      ],
+      "durationSec": 3.5,
+      "peakDbfs": -1.51,
+      "loudnessLufs": -18.1,
+      "truePeakDbtp": -1.5,
+      "kbps": {
+        "ogg": 32,
+        "m4a": 32
+      },
+      "bytes": {
+        "ogg": 15269,
+        "m4a": 15895
+      },
+      "budgetBytes": 17000,
+      "note": "peak limiter used, up to about 0.9 dB of reduction"
+    },
+    {
+      "id": "cheer",
+      "prompt": "Large tennis stadium crowd erupting into a joyful roar and cheer at match point, bright excited voices without words, outdoor stadium, no intelligible speech, no chanting, no announcer, no music",
+      "generateSec": 4,
+      "candidates": 3,
+      "keptTake": 1,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.19,
+        3.05,
+        3.1
+      ],
+      "durationSec": 2.5,
+      "peakDbfs": -2.29,
+      "loudnessLufs": -18.0,
+      "truePeakDbtp": -2.3,
+      "kbps": {
+        "ogg": 32,
+        "m4a": 32
+      },
+      "bytes": {
+        "ogg": 10418,
+        "m4a": 11656
+      },
+      "budgetBytes": 13000
+    },
+    {
+      "id": "crowd-bed",
+      "prompt": "Ambience of a tennis stadium between points, low steady murmur of a large seated outdoor crowd, soft distant rustle and shuffling, calm and even with no sudden reactions, no applause, no intelligible speech, no announcer, no music, stable continuous bed suitable for looping",
+      "generateSec": 10,
+      "candidates": 3,
+      "keptTake": 1,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.61,
+        3.55,
+        3.51
+      ],
+      "durationSec": 7.1,
+      "peakDbfs": -1.51,
+      "loudnessLufs": -24.1,
+      "truePeakDbtp": -1.4,
+      "kbps": {
+        "ogg": 32,
+        "m4a": 28
+      },
+      "bytes": {
+        "ogg": 25985,
+        "m4a": 27202
+      },
+      "budgetBytes": 30000,
+      "note": "peak limiter used, up to about 10.3 dB of reduction"
+    },
+    {
+      "id": "sting-win",
+      "prompt": "Short bright victory jingle for a casual sports mobile game, upbeat rising three-note brass and marimba flourish ending on a major chord, punchy and cheerful, 1.5 seconds, no vocals",
+      "generateSec": 3,
+      "candidates": 4,
+      "keptTake": 4,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.49,
+        3.42,
+        3.42,
+        3.44
+      ],
+      "durationSec": 1.5,
+      "peakDbfs": -3.19,
+      "loudnessLufs": -16.0,
+      "truePeakDbtp": -3.2,
+      "kbps": {
+        "ogg": 44,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 10957,
+        "m4a": 10518
+      },
+      "budgetBytes": 11000
+    },
+    {
+      "id": "sting-lose",
+      "prompt": "Short gentle defeat jingle for a casual sports mobile game, soft descending two-note marimba and muted horn phrase ending on a mellow minor chord, light and not sad, 1.5 seconds, no vocals",
+      "generateSec": 3,
+      "candidates": 4,
+      "keptTake": 4,
+      "seed": null,
+      "generationSecondsPerTake": [
+        3.35,
+        3.31,
+        3.37,
+        3.41
+      ],
+      "durationSec": 1.5,
+      "peakDbfs": -3.81,
+      "loudnessLufs": -16.0,
+      "truePeakDbtp": -3.8,
+      "kbps": {
+        "ogg": 48,
+        "m4a": 48
+      },
+      "bytes": {
+        "ogg": 9709,
+        "m4a": 10339
+      },
+      "budgetBytes": 11000
+    }
+  ]
+}
