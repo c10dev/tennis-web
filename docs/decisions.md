@@ -1049,4 +1049,12 @@ Format: one entry per decision, newest at the bottom.
   are TD-059's. The slice becomes the default (`?rig=gltf` off → on) once TD-059 is measured, TD-060's pacing and
   TD-062's kits are in, and the user accepts the look; docs/3d-redesign.md §9 lists what is left. The user set the
   B200 host aside for asset generation (TRELLIS, FLUX.1-schnell; docs/3d-redesign.md §8).
+- **Step 6, desktop GPU (2026-10-16).** On the i5-14600KF + RTX 5060 desktop (WSL2), headless Chromium reaches the
+  GPU through ANGLE's GL ES backend on Mesa's d3d12 driver (`--use-angle=gl-egl`, `GALLIUM_DRIVER=d3d12`; without
+  them it is llvmpipe or SwiftShader). `e2e/perf/frames.ts` plays the replay page with and without `?rig=gltf` at
+  each tier and reports frame times, draws and triangles per camera. Every case holds 60 fps with vsync, also at
+  Pixel 7 size with the main thread slowed 6×; uncapped, the median frame is 1.1 ms with the slice against 0.9 ms
+  today at high tier (1.0 against 0.7 at low), with at most 74 draws / 19.3k triangles at the chase camera against
+  116 / 6.1k at today's main camera. The desktop half of TD-059 is done; the phone half decides whether high stays
+  the phone default (docs/3d-redesign.md §9).
 

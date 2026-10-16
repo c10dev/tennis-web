@@ -373,11 +373,34 @@ gltf-transform) are not needed yet. On the software rasteriser the slice is abou
 skinned hull doubling the skinned vertices, which is why the low tier drops hulls; a phone measurement decides
 whether high stays the default there.
 
+**Measured on the desktop GPU (2026-10-16; i5-14600KF, RTX 5060, WSL2, headless Chromium through ANGLE's GL ES
+backend on Mesa's d3d12 driver, renderer string `ANGLE (Microsoft Corporation, D3D12 (NVIDIA GeForce RTX 5060),
+OpenGL ES 3.1)`; replay page, seed 42, hard, key points, playing at 1× for 40 s, two runs each, `e2e/perf/frames.ts`):**
+
+| 412×503 at DPR 2 | Today high | Today low | Slice high | Slice low |
+|---|---|---|---|---|
+| Vsync on: fps, p99 frame | 60, 16.8 ms | 60, 16.8 ms | 60, 16.8 ms | 60, 16.8 ms |
+| Vsync off: median frame (mean fps) | 0.9 ms (437–441) | 0.7 ms (470–472) | 1.1 ms (391–397) | 1.0 ms (413–414) |
+| Vsync off: median at the live camera | main 1.0 ms | main 0.8 ms | chase 1.1 ms | chase 1.0 ms |
+| Most draws / triangles in a frame, live camera | main 116 / 6.1k | main 91 / 3.3k | chase 74 / 19.3k | chase 65 / 9.7k |
+| Same, other cameras | serve 109 / 6.0k, side 103 / 5.3k, reaction 62 / 3.0k, Hawk-Eye 44 / 1.6k | serve 86 / 3.2k, side 79 / 2.8k | side 61 / 19.0k, Hawk-Eye 48 / 18.7k | side 53 / 9.4k, Hawk-Eye 43 / 9.3k |
+
+At Pixel 7 size (412×915, DPR 2.625; the buffer is capped at DPR 2 on high, 1.5 on low) with the page's main
+thread slowed 6× (CDP throttling; the GPU process runs at full speed) every case still holds 60 fps, p99 16.8 ms, at
+most one 33–50 ms frame per 40 s. Draws and triangles match the 412×503 run. On this GPU the slice costs a median
+0.2 ms more per frame than today at high tier and 0.3 ms at low (the skinned bodies and hulls); both are far under
+the 16.7 ms budget, and no run stepped down a tier. The vsync-off p95 (10–12 ms) and p99 (24–29 ms) are spikes
+shared by every case, today's included (headless compositor and GC, not the scene). Seed 42's key points show no
+close-up or impact camera in the first 40 s; the VM's numbers for those stand. A desktop GPU says little about a
+phone's: the phone run in the QR test is still TD-059's. If headless Chromium on WSL2 falls back to llvmpipe, the
+same page in Windows Chrome against the WSL dev server (`npx vite --host`) shows the same counters in
+`document.body.dataset`.
+
 **Tests:** 617 unit tests (contact accuracy, racket continuity, determinism, strides, feet, chase framing and motion,
 director, impact programme and look), `npm run test:e2e` 45 passed (the production path, slice off).
 
 **Left before the slice can be the default:**
-- TD-059: frame times on the user's phone and on the desktop GPU, high and low tier.
+- TD-059: frame times on the user's phone, high and low tier (the desktop GPU is measured above).
 - TD-060: the quick match's pacing (decision points at 1×, card-less points as their last shot) in the game layer.
 - TD-061: the decision hold shows the opponent mid-reaction; seek the hold to their ready stance with the tell.
 - TD-062: both players wear KayKit's Rogue outfit; kit palette swap per player, then the final look (modified
