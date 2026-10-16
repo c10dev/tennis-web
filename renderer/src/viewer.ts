@@ -22,6 +22,10 @@ export interface Viewer {
   render(frame: BroadcastFrame, dt: number): void;
   /** Lay a shot over every frame until cleared (the decision hold, ADR-024 S2), or null to clear it. */
   hold(shot: CameraShot | null): void;
+  /** The match grew under the same view (same surface): the chase and impact cameras and the stage read this one. */
+  setTimeline(timeline: Timeline): void;
+  /** Draw calls and triangles of the last frame drawn (budget checks, ADR-024). */
+  stats(): { calls: number; triangles: number };
   dispose(): void;
 }
 
@@ -37,9 +41,10 @@ export interface ViewerOptions {
 }
 
 export function createViewer(
-  canvas: HTMLCanvasElement, timeline: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void, { model = null, me = 'A' }: ViewerOptions = {},
+  canvas: HTMLCanvasElement, first: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void, { model = null, me = 'A' }: ViewerOptions = {},
 ): Viewer {
   const renderer = new WebGLRenderer({ canvas, antialias: tierSettings(tier).antialias });
+  let timeline = first;
   const stage = createStage(timeline, { model });
   const meter = createFrameMeter(tier);
   let size = { w: 0, h: 0 };
@@ -64,6 +69,14 @@ export function createViewer(
     hold(shot) {
       held = shot;
     },
+    setTimeline(next) {
+      timeline = next;
+      stage.setTimeline(next);
+    },
+    stats() {
+      const { calls, triangles } = renderer.info.render;
+      return { calls, triangles };
+    },
     render(given, dt) {
       if (meter.push(dt)) {
         apply(meter.tier);
@@ -71,6 +84,7 @@ export function createViewer(
       }
       const shot = heldShot(given, held);
       const frame: BroadcastFrame = { ...given, ...shot };
+      // A held shot without a focus must not keep the frame's (a tell on B over a close-up on A).
       if (!shot.focus) delete frame.focus;
       stage.applyFrame(frame);
       // A cut starts the pan where it wants to be; within a shot it eases there. Only the TV main camera pans: the
@@ -79,10 +93,9 @@ export function createViewer(
       shown = frame.camera;
       // The frame follows the view's shape (M7): an upright phone gets the portrait main camera, every camera a
       // minimum width; the projection is rebuilt when the field of view or the shape changes.
-      const own = frame.camera === 'chase' || frame.camera === 'impact';
       const pose = frame.camera === 'chase' ? chasePose(timeline, me, frame.matchT, camera.aspect)
         : frame.camera === 'impact' ? impactPose(timeline, frame.pointIndex) : cameraPose(frame, pan, camera.aspect);
-      camera.fov = own && frame.camera === 'chase' ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
+      camera.fov = frame.camera === 'chase' ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
       if (camera.fov !== projected.fov || camera.aspect !== projected.aspect) {
         camera.updateProjectionMatrix();
         projected = { fov: camera.fov, aspect: camera.aspect };

@@ -30,10 +30,13 @@ export interface Stage {
   setAspect(aspect: number): void;
   /** Shows or hides what the tier leaves out: the ink outlines and the sky dome. */
   setQuality(tier: QualityTier): void;
+  /** The match grew (the quick match reloads it point by point): frames now index this timeline. Same surface. */
+  setTimeline(timeline: Timeline): void;
 }
 
 /** `model`: draw skinned players from it (ADR-024) instead of the mannequin. */
-export function createStage(timeline: Timeline, { model = null }: { model?: PlayerModel | null } = {}): Stage {
+export function createStage(first: Timeline, { model = null }: { model?: PlayerModel | null } = {}): Stage {
+  let timeline = first;
   const scene = new Scene();
   addDaylight(scene);
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
@@ -50,12 +53,15 @@ export function createStage(timeline: Timeline, { model = null }: { model?: Play
   mark.scale.set(1.6, 1, 1);
   mark.name = 'ball-mark';
   mark.visible = false;
-  const impact = createImpact(timeline);
+  const impact = createImpact(() => timeline);
   scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d, mark, impact.object3d);
   return {
     scene,
     setAspect(aspect) {
       ballScale = portraitBallScale(aspect);
+    },
+    setTimeline(next) {
+      timeline = next;
     },
     setQuality(tier) {
       const { outlines, sky } = tierSettings(tier);

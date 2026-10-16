@@ -51,7 +51,8 @@ export interface ImpactView {
   apply(frame: StageFrame): void;
 }
 
-export function createImpact(timeline: Timeline): ImpactView {
+/** `timeline` is read on every frame: the stage's timeline can grow under it (Stage.setTimeline). */
+export function createImpact(timeline: () => Timeline): ImpactView {
   const object3d = new Group();
   object3d.name = 'impact';
   const make = (name: string, map: DataTexture) => {
@@ -67,7 +68,7 @@ export function createImpact(timeline: Timeline): ImpactView {
     object3d,
     apply(frame) {
       const on = frame.clip === 'hitstop' || frame.clip === 'slowmo';
-      const seg = timeline.segments[frame.pointIndex];
+      const seg = timeline().segments[frame.pointIndex];
       const shot = seg?.point.shots.at(-1);
       const since = seg && shot ? (frame.matchT ?? frame.t) - seg.zero - shot.t : -1;
       starSprite.visible = lineSprite.visible = on && !!shot && since >= -1e-9;

@@ -124,7 +124,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const frame = broadcastFrameAt(programme, clock.t);
       viewer.render(frame, dt);
       // Read by the e2e tests and handy when debugging the director.
-      Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
+      const { calls, triangles } = viewer.stats();
+      Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2), calls: String(calls), triangles: String(triangles) });
       scoreBug.update(frame.scoreBug);
       overlays.update(overlayAt(programme, frame), programme.timeline.names);
       controls?.update(clock, frame);
@@ -144,7 +145,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         surface = timeline.surface;
         size = '';
         resize();
-      }
+      } else viewer.setTimeline(timeline);
       programme = build(timeline);
       clock = opts.keepTime ? clockReducer(programme, clock, { type: 'seek', t: clock.t }) : createClock();
       controls?.setProgramme(programme);

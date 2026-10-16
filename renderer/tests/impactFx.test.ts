@@ -71,3 +71,15 @@ describe('impact effects', () => {
     expect(new Vector3().copy(toThree(shot.from)).y).toBeGreaterThan(0);
   });
 });
+
+describe('a match that grows (the quick match reloads the timeline into the same stage)', () => {
+  it('draws the impact of a point the stage’s first timeline did not have', () => {
+    const r = SAMPLE[1]!;
+    const first = r.events.findIndex((e, i) => e.type === 'point' && r.events.slice(0, i + 1).filter((x) => x.type === 'point').length === 3);
+    const early = buildTimeline({ ...r, events: r.events.slice(0, first + 1) });
+    const grown = createStage(early);
+    grown.setTimeline(tl);
+    expect(() => grown.applyFrame(at(hold, 0.03))).not.toThrow();
+    expect((grown.scene.getObjectByName('impact-star') as Sprite).visible).toBe(true);
+  });
+});
