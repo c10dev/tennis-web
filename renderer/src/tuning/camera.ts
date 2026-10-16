@@ -41,6 +41,9 @@ export const CAMERAS = {
    * (M5), front three-quarter at head height. Metres from the player towards the net and to one side. */
   tell: { fov: 34, toNet: 6.3, aside: 1.8, height: 1.5, aimHeight: 0.95 },
   closeup: { fov: 34, toNet: 3.9, aside: 1.5, height: 1.4, aimHeight: 1.3 },
+  /** The impact (M3): fixed for the whole moment, `ahead` m along the shot from the contact and `aside` m to the
+   * racket side, a little above it, aimed at the contact point. */
+  impact: { fov: 40, ahead: 3.2, aside: 1.8, rise: 0.15, minHeight: 0.9 },
 } as const;
 
 /**

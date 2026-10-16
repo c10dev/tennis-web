@@ -12,6 +12,8 @@ export interface OverlayModel {
   lowerThird: { title: string; detail?: string } | null;
   intro: { name: string; style: string }[] | null;
   replay: boolean;
+  /** The impact moment's slow motion (ADR-024 S3). */
+  slowmo: boolean;
   hawkeye: { call: 'IN' | 'OUT'; cm: number } | null;
   stats: { title: string; stats: MatchStats } | null;
 }
@@ -27,6 +29,7 @@ export function overlayAt(programme: Programme, frame: BroadcastFrame): OverlayM
     lowerThird: isLive ? caption(tl, seg, frame.matchT) : null,
     intro: frame.clip === 'intro' ? programme.timeline.styles.map((style, i) => ({ name: tl.names[i]!, style: OVERLAY.styleLabels[style] })) : null,
     replay: frame.clip === 'replay' || frame.clip === 'hawkeye',
+    slowmo: frame.clip === 'slowmo' || frame.clip === 'hitstop',
     hawkeye: frame.hawkeye ? { call: frame.hawkeye.call, cm: Math.round(Math.abs(frame.hawkeye.marginM) * 1000) / 10 } : null,
     stats: isLive ? statsPanel(tl, frame.pointIndex, frame.matchT) : null,
   };

@@ -1,5 +1,6 @@
 // The whole Three.js scene for one match; applyFrame() moves everything to a Frame. No WebGL here (ADR-007).
 import { CircleGeometry, Mesh, MeshBasicMaterial, Scene } from 'three';
+import type { PointEvent } from '@tennis/engine';
 import type { LineCall } from '../broadcast/hawkeye.ts';
 import type { CameraId, ClipKind } from '../broadcast/types.ts';
 import { portraitBallScale } from '../camera/framing.ts';
@@ -7,8 +8,9 @@ import { tierSettings, type QualityTier } from '../quality.ts';
 import { isOutline } from './outline.ts';
 import type { Frame } from '../playback/frame.ts';
 import type { Timeline } from '../playback/timeline.ts';
-import { BALL, BALL_LOOK, COLOURS } from '../tuning/index.ts';
+import { BALL, BALL_LOOK, COLOURS, IMPACT_LOOK } from '../tuning/index.ts';
 import { createBall, type BallLook } from './ball.ts';
+import { createImpact } from './impact.ts';
 import { ballPop, lastContact, trailPoints } from './ballMotion.ts';
 import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
@@ -19,7 +21,7 @@ import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
 
 /** A frame, plus what a broadcast frame adds: the Hawk-Eye call, camera, clip kind and match second (its t is programme time). */
-export type StageFrame = Frame & { hawkeye?: LineCall | null; camera?: CameraId; clip?: ClipKind; matchT?: number };
+export type StageFrame = Frame & { hawkeye?: LineCall | null; camera?: CameraId; clip?: ClipKind; matchT?: number; clipT?: number };
 
 export interface Stage {
   readonly scene: Scene;
@@ -48,7 +50,8 @@ export function createStage(timeline: Timeline, { model = null }: { model?: Play
   mark.scale.set(1.6, 1, 1);
   mark.name = 'ball-mark';
   mark.visible = false;
-  scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d, mark);
+  const impact = createImpact(timeline);
+  scene.add(rigs.A.object3d, rigs.B.object3d, ball.object3d, mark, impact.object3d);
   return {
     scene,
     setAspect(aspect) {
@@ -65,6 +68,7 @@ export function createStage(timeline: Timeline, { model = null }: { model?: Play
       rigs.A.apply(frame.players.A);
       rigs.B.apply(frame.players.B);
       ball.apply(frame.ball, ballLook(timeline, frame, ballScale));
+      impact.apply(frame);
       mark.visible = !!frame.hawkeye;
       if (frame.hawkeye) mark.position.copy(groundToThree(frame.hawkeye.mark, 0.006));
     },
@@ -79,5 +83,18 @@ function ballLook(timeline: Timeline, frame: StageFrame, aspectScale: number): B
   if (!seg || !frame.ball) return { scale, pop: 1, trail: [], trailSec };
   const tau = (frame.matchT ?? frame.t) - seg.zero;
   const contact = lastContact(seg.point, tau);
-  return { scale, pop: ballPop(contact === null ? null : tau - contact), trail: trailPoints(seg.point, tau, timeline.surface, trailSec), trailSec };
+  const look: BallLook = { scale, pop: ballPop(contact === null ? null : tau - contact), trail: trailPoints(seg.point, tau, timeline.surface, trailSec), trailSec };
+  const squash = impactSquash(seg.point, frame, tau);
+  return squash ? { ...look, squash } : look;
+}
+
+/** In the impact moment, the ball squashed along the deciding shot: fully over the hold, easing out just after. */
+function impactSquash(point: PointEvent, frame: StageFrame, tau: number): BallLook['squash'] | undefined {
+  if (frame.clip !== 'hitstop' && frame.clip !== 'slowmo') return undefined;
+  const shot = point.shots.at(-1)!;
+  const since = tau - shot.t;
+  const amount = frame.clip === 'hitstop' ? 1 : since >= 0 ? 1 - since / IMPACT_LOOK.squash.sec : 0;
+  if (amount <= 0) return undefined;
+  const to = shot.bounce ? { x: shot.bounce.x - shot.from.x, y: shot.bounce.y - shot.from.y, z: -shot.from.z } : { x: 0, y: -Math.sign(shot.from.y), z: 0 };
+  return { amount: Math.min(1, amount), dir: to };
 }

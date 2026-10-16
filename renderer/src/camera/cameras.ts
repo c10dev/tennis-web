@@ -41,7 +41,9 @@ export function cameraPose(frame: CameraFrame, pan: number, aspect?: number): Ca
       const aside = p.x > 0 ? -c.aside : c.aside;
       return { position: three(p.x + aside, p.y + toNet * c.toNet, c.height), target: three(p.x, p.y, c.aimHeight), fov: c.fov };
     }
-    // The chase needs the timeline (camera/chase.ts); the viewer computes it. The main camera stands in elsewhere.
+    // The chase and the impact need the timeline (camera/chase.ts, impact.ts); the viewer computes them. The main
+    // camera stands in elsewhere.
+    case 'impact':
     case 'chase':
       return mainCamPose(pan, aspect);
     case 'hawkeye': {

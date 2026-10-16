@@ -18,4 +18,7 @@ export const BROADCAST = {
   /** Hawk-Eye: bounces this close to a line (metres) get a still close-up of the mark. */
   hawkeyeMarginM: 0.05,
   hawkeyeSec: 2.5,
+  /** The game style's impact moment (ADR-024 S3): slow motion this long into and out of the deciding contact, at
+   * `rate`, with a hit-stop (a still, `hitstopSec` of screen time) at the contact itself. */
+  impact: { leadSec: 0.15, tailSec: 0.35, rate: 0.25, hitstopSec: 0.07 },
 } as const;

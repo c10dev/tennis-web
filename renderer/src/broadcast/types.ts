@@ -3,8 +3,9 @@ import type { PlayerId } from '@tennis/engine';
 import type { Timeline } from '../playback/timeline.ts';
 
 /** Broadcast cameras, and the game cameras of ADR-024: the chase (K2), the tell on the opponent and the close-up. */
-export type CameraId = 'main' | 'serve' | 'reaction' | 'side' | 'hawkeye' | 'chase' | 'tell' | 'closeup';
-export type ClipKind = 'live' | 'replay' | 'hawkeye' | 'intro' | 'result';
+export type CameraId = 'main' | 'serve' | 'reaction' | 'side' | 'hawkeye' | 'chase' | 'tell' | 'closeup' | 'impact';
+/** `slowmo` and `hitstop` are live play shown slowed and held, the game style's impact moment (ADR-024 S3). */
+export type ClipKind = 'live' | 'replay' | 'hawkeye' | 'intro' | 'result' | 'slowmo' | 'hitstop';
 export type ViewMode = 'full' | 'key' | 'highlights' | 'result';
 
 export interface CameraShot {

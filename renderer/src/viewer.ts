@@ -7,6 +7,7 @@ import type { BroadcastFrame } from './broadcast/frame.ts';
 import type { CameraId, CameraShot } from './broadcast/types.ts';
 import { cameraPose } from './camera/cameras.ts';
 import { chasePose } from './camera/chase.ts';
+import { impactPose } from './camera/impact.ts';
 import { fitFov } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
 import type { Timeline } from './playback/timeline.ts';
@@ -78,9 +79,10 @@ export function createViewer(
       shown = frame.camera;
       // The frame follows the view's shape (M7): an upright phone gets the portrait main camera, every camera a
       // minimum width; the projection is rebuilt when the field of view or the shape changes.
-      const chase = frame.camera === 'chase';
-      const pose = chase ? chasePose(timeline, me, frame.matchT, camera.aspect) : cameraPose(frame, pan, camera.aspect);
-      camera.fov = chase ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
+      const own = frame.camera === 'chase' || frame.camera === 'impact';
+      const pose = frame.camera === 'chase' ? chasePose(timeline, me, frame.matchT, camera.aspect)
+        : frame.camera === 'impact' ? impactPose(timeline, frame.pointIndex) : cameraPose(frame, pan, camera.aspect);
+      camera.fov = own && frame.camera === 'chase' ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
       if (camera.fov !== projected.fov || camera.aspect !== projected.aspect) {
         camera.updateProjectionMatrix();
         projected = { fov: camera.fov, aspect: camera.aspect };

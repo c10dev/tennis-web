@@ -1024,4 +1024,18 @@ Format: one entry per decision, newest at the bottom.
   (only the TV main camera still pans with per-frame state) and takes a held shot (`Viewer.hold`, `Broadcast.hold`,
   `heldShot`): with `?rig=gltf` the quick match holds the tell on the opponent while the cards are up and plays its
   decision clips at 1× for the preview (production pacing is TD-060). `CameraShot` is exported for the ui.
+- **Step 5, impact (2026-10-16).** In the game style `buildProgramme` splices the impact moment into live play on
+  the deciding ace or winner of a decisive point, never on two shown points in a row: slow motion at 0.25 from 0.15 s
+  before the contact, a hit-stop (a 0.07 s still, `rate` 0) at it, slow motion to 0.35 s after it, then live again
+  (`BROADCAST.impact`; clip kinds `slowmo` and `hitstop`, camera `impact`). The quick match's bare programme gets
+  it too. Cues treat `slowmo` and `hitstop` as live: a rate-0 clip plays the cues that fall exactly on its moment,
+  and each live cue plays once per pass, so the deciding hit sounds as the hold begins. `programmeTimeFor` still
+  finds live clips only, so a seek or window start inside the moment lands after it (the quick match's windows all
+  start earlier). `camera/impact.ts` holds the camera still for the whole moment, 3.2 m along the shot from the
+  contact and 1.8 m to the racket side, aimed at the contact (aiming at the ball lost the player as soon as it left).
+  `scene/impact.ts` adds a star and speed lines as two sprites on textures computed in code, at the contact,
+  blooming over the hold by clip time (`BroadcastFrame.clipT`, new: match time stands still there) and fading through
+  the slow motion; the ball is squashed along the shot over the hold and 0.08 s after it, replacing the contact pop.
+  The replay tag's corner reads `SLOW-MO` meanwhile. Racket smear, trail colours by shot and a hit-stop shake are
+  left (TD-063).
 

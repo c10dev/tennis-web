@@ -1,8 +1,8 @@
 // The optic ball, its blob shadow and its trail (ADR-019). Unlit, oversized and kept out of fog and tone mapping so
 // it reads at the far baseline; the shadow is how a viewer reads its height without real shadows.
-import { CircleGeometry, Group, Mesh, MeshBasicMaterial, SphereGeometry } from 'three';
+import { CircleGeometry, Group, Mesh, MeshBasicMaterial, SphereGeometry, Vector3 } from 'three';
 import type { Vec3 } from '@tennis/engine';
-import { BALL_LOOK, COLOURS } from '../tuning/index.ts';
+import { BALL_LOOK, COLOURS, IMPACT_LOOK } from '../tuning/index.ts';
 import type { TrailPoint } from './ballMotion.ts';
 import { groundToThree, toThree } from './coords.ts';
 import { addOutline } from './outline.ts';
@@ -15,12 +15,16 @@ export interface BallLook {
   trail: readonly TrailPoint[];
   /** How far back the trail reaches, for its taper. */
   trailSec: number;
+  /** The impact moment's squash (ADR-024 S3): 0–1, flattened along `dir` (court coordinates); replaces the pop. */
+  squash?: { amount: number; dir: Vec3 };
 }
 
 export interface BallView {
   readonly object3d: Group;
   apply(ball: Vec3 | null, look?: BallLook): void;
 }
+
+const UP = new Vector3(0, 1, 0);
 
 export function createBall(): BallView {
   const material = new MeshBasicMaterial({ color: COLOURS.ball, toneMapped: false, fog: false });
@@ -45,7 +49,15 @@ export function createBall(): BallView {
         return;
       }
       // Raised by its radius, so a ball at height 0 rests on the court instead of sinking into it.
-      ball.scale.setScalar(look.scale * look.pop);
+      const s = look.squash?.amount ?? 0;
+      if (s > 0) {
+        const { wide, flat } = IMPACT_LOOK.squash;
+        ball.quaternion.setFromUnitVectors(UP, toThree(look.squash!.dir).normalize());
+        ball.scale.set(look.scale * (1 + wide * s), look.scale * (1 - flat * s), look.scale * (1 + wide * s));
+      } else {
+        ball.quaternion.identity();
+        ball.scale.setScalar(look.scale * look.pop);
+      }
       ball.position.copy(toThree(position)).setY(Math.max(0, position.z) + BALL_LOOK.radius * look.scale);
       shadow.scale.setScalar(look.scale);
       shadow.position.copy(groundToThree(position, 0.005));
