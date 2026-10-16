@@ -921,3 +921,49 @@ Format: one entry per decision, newest at the bottom.
   net line. `playerPose` no longer takes the frame's ball. Over eight further matches (1.9 M frames) the fastest
   turn is 0.25 rad per 60 fps frame (was up to π); a test keeps it under 0.35, and the racket continuity test is
   back in world space.
+
+## ADR-027: Quick-match sound: screen sounds and generated samples
+- **Date:** 2026-10-16
+- **Status:** Accepted (samples pending generation, TD-070)
+- **Context:** ADR-021 left the motion's sound layer out (TD-047), and the ball and crowd are still synthesised
+  noise (TD-016). The user chose [agent-audio](https://github.com/AIEGOBOT/agent-audio) (local MCP server and
+  skill, MIT) to generate samples with Stable Audio 3 Medium, which makes effects and music but not speech. ADR-022
+  step 6 (one audio session, the sound switch, background pause, the iOS resume retry) must stay as it is, the Toss
+  bundle was 0.87 MB, and the first screen must stay under 3 s.
+- **Decision:**
+  - **Screen sounds (TD-047).** `renderer/src/audio/ui.ts` decides them as pure functions, re-exported by the
+    `@tennis/renderer/audio` entry; the mixer only plays them. The reveal (`playReveal`): the crowd bus ducks
+    −9 dB in 0.08 s while the cards lie face down and comes back over 0.3 s as they flip (also when the reveal is cut
+    short); the verdict plays a clash (bright crack over a 150 Hz thump) and a pop pitched by the matchup (won 880 Hz,
+    even 550 Hz, lost 330 Hz), with ADR-021's white frame and kick, not at the flip. The result: the stinger as the
+    headline shows (or at a skip, once), and every count-up (points, ratings that rose) ticks through its
+    formatter: every number for a short count, at most 12 ticks spread evenly for a long one, each a semitone
+    higher (up to +12), one tick when a frame jumps past several, none once skipped. Clash, pop and ticks are always
+    synthesised (exact pitch, no bytes); the duck reaches the mixer even while sound is off, so it never sticks.
+    Constants are `AUDIO.ui`.
+  - **Samples (TD-016).** `samples.ts` lists the 12 sounds of `docs/sound/manifest.json` (three hits, hard and clay
+    bounces, net, small and big applause, cheer, a 7 s crowd bed, win and lose stingers) and maps each cue to them:
+    serves and overheads take the heavy hit, slices, drops and lobs the slice, the rest the flat hit, rate
+    ±6 % with ball speed plus ±3 % from a hash of the cue's time (repeatable), grass the hard bounce at 0.85 rate and
+    0.75 gain, the crowd small applause below intensity 0.5, big from 0.5, a cheer on top from 0.8 (`AUDIO.samples`).
+    The umpire stays on `speechSynthesis` `en-GB`.
+  - **Loading.** `bank.ts` fetches every sample once, on the tap that first makes the mixer (Play or the switch), never
+    before, so the first screen does not wait; Opus in Ogg where `canPlayType` says so, else AAC in `.m4a`. A file
+    that is missing or will not decode is skipped and its cue stays synthesised, so the state is `ready`, `partial`
+    or `failed` (`body[data-audio-samples]`), never an error. The crowd bed hands over from noise to the sample over
+    1.5 s and loops 50 ms inside each end of the file, clear of codec padding. The replay page's sound panel loads
+    them too.
+  - **Assets.** Mono, 48 kHz; budgets per file in the manifest, 250 KB for the whole folder in both formats (123 KB
+    each); a Vitest test holds `ui/public/audio/` to the manifest's ids and budgets and checks the notice. The
+    samples are generated on the user's MacBook M1 Max (MLX backend) by a separate session from the manifest, which
+    also records the kept takes in `docs/sound/generated.json`.
+  - **License.** Stable Audio 3 is under the Stability AI Community License; the outputs are the user's (§IV.c.iii)
+    and are not derivative works; commercial use is free below US$1M revenue after registering with Stability.
+    The attribution clause is ambiguous for outputs only, so the game complies: `ui/public/audio/NOTICE.txt` carries
+    the required notice and "Powered by Stability AI" (details in docs/m3-assets-and-references.md).
+- **Consequences:** The mixer is split into `synth.ts` (noise, tones, screen sounds), `bank.ts` (loading) and
+  `mixer.ts` (wiring, the duck between the crowd bus and the master), and gains `ui()`, `loadSamples()` and
+  `samples`; the audio session gains `ui()`. Until the samples land every ball and crowd sound is the old synthesis
+  (TD-070); nothing has been listened to yet (TD-071); the attribution has no in-app place (TD-072). TD-047 is closed
+  and TD-016 partial. `e2e/sound.spec.ts` checks that no sample is requested before Play and twelve Opus files after
+  it, and expects `ready` once the files are on disk (checked with temporary test tones).
