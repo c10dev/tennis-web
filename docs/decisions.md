@@ -1076,4 +1076,11 @@ Format: one entry per decision, newest at the bottom.
   stroke with no contact. The idle and any sway run on the hold's own seconds, so match time stays still. Timeline
   segments gained `changesEnds` (a changeover after the point, also at a set's end). The ball is out of play during
   the hold. `/rig.html?point=15&hold=none,defend:1,counter:2` draws the stances for tuning.
+- **After the slice: kits (TD-062, 2026-10-16).** Both skinned players wore the Rogue's green. KayKit's palette is an
+  8×4 grid of gradient swatches; the tunic uses cell (0, 1) and the hood and scarf cell (1, 1). `scene/kit.ts`
+  recolours those cells per player on a canvas copy of the palette (browser only; `recolourCells` is the pure pixel
+  step, tested on synthetic pixels), keeping each cell's shading but never under 60 % of the kit colour so the light
+  kit stays light. `kitFor` follows ADR-019's per-surface rule: A in the surface's colour, B in the light kit, the
+  trim the shirt halfway to the shorts colour (pure shorts navy read as a black bib). One extra 1024² texture per
+  player, cached per kit. The final character look is still open.
 

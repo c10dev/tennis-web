@@ -405,7 +405,7 @@ director, impact programme and look), `npm run test:e2e` 45 passed (the producti
   shots, card-less points from their last, all at 1×; median 43 s a match.
 - ~~TD-061: the decision hold shows the opponent mid-reaction~~ done behind `?rig=gltf`: both players wait at the next
   point's start, the opponent in the tell's stance (ADR-024 notes).
-- TD-062: both players wear KayKit's Rogue outfit; kit palette swap per player, then the final look (modified
+- TD-062: ~~both players wear KayKit's Rogue outfit~~ kits recoloured per player (ADR-024 notes); then the final look (modified
   KayKit, a TRELLIS draft on the B200 re-skinned to this skeleton, Tripo, or a commission).
 - TD-063: stroke tuning (free arm, trophy elbow, racket handle), racket smear, trail colours, hit-stop shake.
 - TD-058: the reach step drags a foot to the hip with no swing phase.

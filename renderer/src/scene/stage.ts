@@ -16,6 +16,7 @@ import { groundToThree } from './coords.ts';
 import { buildCourt } from './court.ts';
 import { addDaylight } from './daylight.ts';
 import { GltfRig } from './gltfRig.ts';
+import { kitFor } from './kit.ts';
 import type { PlayerModel } from './playerModel.ts';
 import { MannequinRig, type PlayerRig } from './rig.ts';
 import { buildVenue } from './venue.ts';
@@ -42,7 +43,7 @@ export function createStage(first: Timeline, { model = null }: { model?: PlayerM
   scene.add(buildCourt(timeline.surface), buildVenue(timeline.surface));
   const kit = COLOURS.kits[timeline.surface];
   const rigs: Record<'A' | 'B', PlayerRig> = model
-    ? { A: new GltfRig(model), B: new GltfRig(model) }
+    ? { A: new GltfRig(model, kitFor(timeline.surface, 'A')), B: new GltfRig(model, kitFor(timeline.surface, 'B')) }
     : { A: new MannequinRig(kit.A), B: new MannequinRig(kit.B) };
   rigs.A.object3d.name = 'player-A';
   rigs.B.object3d.name = 'player-B';

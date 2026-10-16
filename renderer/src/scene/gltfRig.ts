@@ -13,6 +13,7 @@ import { groundToThree, yawFor } from './coords.ts';
 import { lit, toonGradient } from './materials.ts';
 import { bindClips, loopTime, restPose, sampleClips, type Layer, type SampledClip } from './clipSampler.ts';
 import { addOutline, addSkinnedOutline } from './outline.ts';
+import { kitTexture, type Kit } from './kit.ts';
 import type { PlayerModel } from './playerModel.ts';
 import type { PlayerRig } from './rig.ts';
 import { solveStroke, type Bones } from './strokeSolver.ts';
@@ -56,11 +57,13 @@ export class GltfRig implements PlayerRig {
   /** Bind-pose offsets of the bones the solver slides (arm stretch); the clips never move them. */
   private readonly rest = new Map<Bone, Vector3>();
 
-  constructor(model: PlayerModel) {
+  /** `kit` recolours the garments (TD-062); without it the player wears the model's own palette. */
+  constructor(model: PlayerModel, kit: Kit | null = null) {
     const body = clone(model.root) as Group;
     body.name = 'model';
     const skin = body.getObjectByName('body') as SkinnedMesh;
-    skin.material = new MeshToonMaterial({ map: model.texture, gradientMap: toonGradient() });
+    const map = model.texture && kit ? kitTexture(model.texture, kit) : model.texture;
+    skin.material = new MeshToonMaterial({ map, gradientMap: toonGradient() });
     skin.frustumCulled = false;
     addSkinnedOutline(skin);
     (body.getObjectByName('head') as Bone).scale.setScalar(PLAYER_RIG.headScale);

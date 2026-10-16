@@ -47,3 +47,15 @@ export const PLAYER_RIG = {
   /** Ring on the ground under *my* player (Mini Tennis's device), in the accent colour. */
   ring: { radius: 0.55, width: 0.07, colour: 0xd6f53a },
 } as const;
+
+/** Kits on the skinned players (TD-062): the KayKit palette is an 8×4 grid of gradient swatches; the Rogue's tunic
+ *  and its hood and scarf use these cells (column, row from the top), recoloured per player keeping their shading,
+ *  never darker than `shadeFloor` of the kit colour. `skinCells` are never recoloured. */
+export const PLAYER_KIT = {
+  grid: { cols: 8, rows: 4 },
+  cells: { shirt: [[0, 1]] as const, trim: [[1, 1]] as const },
+  skinCells: [[0, 0]] as const,
+  shadeFloor: 0.6,
+  /** The trim is the shirt colour this far towards the shorts colour. */
+  trimToShorts: 0.5,
+} as const;
