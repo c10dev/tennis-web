@@ -40,16 +40,14 @@ describe('racket at contact', () => {
 });
 
 describe('racket motion', () => {
-  // Measured on the body, so this guards the arm alone; the whole body still turns in one frame when the ball goes
-  // dead (facing snaps from the ball to the net), which is TD-057.
-  it('never jumps more than 0.7 m on the body between 60 fps frames, entering and leaving swings included', () => {
+  it('never jumps more than 0.7 m between 60 fps frames, entering and leaving swings and the ball going dead included', () => {
     const tl = buildTimeline(match(2, 'clay'));
     for (const id of ['A', 'B'] as const) {
       const rig = rigs[id];
       let prev: Vector3 | null = null;
       for (let t = 0; t < Math.min(tl.totalSec, 400); t += 1 / 60) {
         rig.apply(matchFrameAt(tl, t).players[id]);
-        const head = rig.object3d.worldToLocal(racketHead(rig));
+        const head = racketHead(rig);
         if (prev) expect(head.distanceTo(prev), `${id} at ${t.toFixed(3)} s`).toBeLessThan(0.7);
         prev = head;
       }
