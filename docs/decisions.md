@@ -1038,4 +1038,15 @@ Format: one entry per decision, newest at the bottom.
   the slow motion; the ball is squashed along the shot over the hold and 0.08 s after it, replacing the contact pop.
   The replay tag's corner reads `SLOW-MO` meanwhile. Racket smear, trail colours by shot and a hit-stop shake are
   left (TD-063).
+- **Step 6, the slice end to end (2026-10-16).** The quick match reloads its timeline into the same viewer as the
+  match grows; the chase and impact cameras (and the stage's trail, pop and impact) read the first timeline and the
+  impact camera threw on a new point, so `Viewer.setTimeline` and `Stage.setTimeline` now follow it (a test grows a
+  stage). The page reports draws and triangles in `body.dataset` (`Viewer.stats`). Measured on the dev VM's software
+  WebGL at 412×503 (DPR 2), indicative only: at the live camera 70 draws and 18.5k triangles with the slice against
+  112 and 5.4k today (low tier 62 / 9.3k against 88 / 2.9k); 39–41 fps against 50–52 at high tier, 60 (capped) on
+  low either way; the model is 151 KB gzipped (meshopt not needed yet) and adds about 60 ms from the Play tap to the
+  first frame on the toss dev server. `npm run test:e2e`: 45 passed (slice off). Phone and desktop-GPU frame times
+  are TD-059's. The slice becomes the default (`?rig=gltf` off → on) once TD-059 is measured, TD-060's pacing and
+  TD-062's kits are in, and the user accepts the look; docs/3d-redesign.md §9 lists what is left. The user set the
+  B200 host aside for asset generation (TRELLIS, FLUX.1-schnell; docs/3d-redesign.md §8).
 

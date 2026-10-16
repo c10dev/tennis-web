@@ -1,12 +1,11 @@
 # 3D redesign: camera, character, motion and arena (design phase)
 
 > **요약 (한국어)**
-> - **진단:** 지금 3D는 TV 중계 문법을 세로 휴대폰에 억지로 맞춘 결과다. 결정 순간에 가장 오래 보이는 화면이 얼굴 없는 캡슐 등짝이고(서브 캠 정지), 랠리 화면에서 내 선수는 스테이지 높이의 약 10%(50px)이며, 코트를 바꾸면 내 선수가 먼 쪽 스코어 버그 아래로 간다. 포인트는 2배·3배속으로만 보여서 스윙이 0.1~0.2초에 지나간다. 마네킹은 손·얼굴이 없고 라켓이 주걱처럼 보이며, 런지 때 두 발이 미끄러진다.
-> - **추천 조합:** 카메라 **K2 체이스**(내 선수 뒤 6.2m 높이, 항상 내 선수가 화면 아래, 시간에 대한 닫힌식으로 부드럽게 추적), 결정 홀드는 **M2 상대 텔 샷**, 승부처만 **M3 임팩트 슬로모**, 중계 카메라는 **M4 리플레이**에만. 캐릭터 **C1 Pop**(3–3.5등신, 얼굴과 모자로 식별, 서브 도달은 홉+팔 늘이기로 해결). 동작은 **D2 이펙터 키포즈**(손·발·골반·가슴 목표를 데이터로 저장하고 A1의 IK로 풀어 엔진의 타점에 정확히 맞춤)에 **CC0 KayKit 이동·리액션 클립**을 섞는다. 경기장 **A1 선샤인 클럽**(결승전용으로 A2 스타디움은 나중에).
-> - **에셋 출처:** 무료 테니스 스트로크 클립은 없다(Mixamo 포함). 유료 모캡(Motion Cast $35)은 재배포 금지라 **공개 저장소**(c10dev/tennis-web는 public)에 넣을 수 없다. 그래서 스트로크는 직접 저작한 키포즈 데이터로, 몸은 수직 슬라이스에서 KayKit(CC0)으로 파이프라인을 검증한 뒤 최종 외형(의뢰 vs Tripo)을 정한다.
-> - **예산:** 선수당 삼각형 5k 이하, 변형 본 32개 이하, 512² 팔레트 아틀라스 1장, 선수당 드로 4개(지금 약 30개). 3D 다운로드 합계 1MB(gzip) 이하로 첫 화면 이후 지연 로드.
-> - **시안:** `docs/design/3d-redesign/frames/*.webp` (세로 412×503 스테이지, 지금 UI가 가리는 영역 표시). 프로토타입은 `docs/design/3d-redesign/proto/`.
-> - **다음 단계:** 안 선택 → ADR 기록 → 포인트 하나짜리 수직 슬라이스(§8).
+> - **진단:** 지금 3D는 TV 중계 문법을 세로 휴대폰에 억지로 맞춘 결과다. 결정 순간의 화면은 아무도 고르지 않아서 직전 포인트 승자의 리액션 캠 클로즈업(얼굴 없는 캡슐)으로 멈춰 있고, 랠리 화면에서 내 선수는 스테이지 높이의 약 10%(50px)이며, 코트를 바꾸면 내 선수가 먼 쪽 스코어 버그 아래로 간다. 포인트는 2배·3배속으로만 보여서 스윙이 0.2~0.3초에 지나간다. 마네킹은 손·얼굴이 없고 라켓이 주걱처럼 보이며, 런지 때 두 발이 미끄러진다.
+> - **선택된 조합(2026-10-16, ADR-024):** 카메라 **K2 체이스**, 결정 홀드 **M2 텔 샷**, 승부처 **M3 임팩트 슬로모**, 중계 카메라는 리플레이에만. 캐릭터 **C1 Pop**(3등신 안팎, 얼굴로 식별). 동작 **D2 이펙터 키포즈 + A1 IK**, 이동·리액션은 **CC0 KayKit 클립**. 경기장 **A1 선샤인 클럽**.
+> - **수직 슬라이스 완료(§9, `?rig=gltf`로 켬):** KayKit 몸체(CC0, 4,263 삼각형, 326KB/gzip 151KB), 이펙터 키포즈 스트로크(그라운드 스트로크 타점 오차 최대 5mm, 서브 4.9cm), 이동 거리 기반 보폭과 타구 시 발 고정, 체이스 카메라(내 선수는 화면 아래 3분의 1, 먼 베이스라인은 스코어 버그 아래), 결정적 포인트의 슬로모·히트스톱·별 섬광·클로즈업, 결정 홀드의 상대 텔 샷. 체이스 화면 드로 70개(지금 112개), 삼각형 1.85만 개. 테스트 616개, e2e 45개 통과.
+> - **남은 일:** 실제 폰 측정(TD-059), 퀵 매치 템포를 1×로(TD-060), 홀드 화면의 텔 자세(TD-061), 선수 구분 키트와 최종 외형(TD-062, 의뢰·Tripo·B200 생성 비교), 동작 다듬기(TD-063), 발 내딛기의 스윙 단계(TD-058). 기본값을 슬라이스로 바꾸는 시점은 사용자 결정.
+> - **에셋 출처:** 무료 테니스 스트로크 클립은 없고(Mixamo 포함), 유료 모캡은 재배포 금지라 공개 저장소에 넣을 수 없다. B200(nhn-b200)은 생성 전용: TRELLIS(MIT)로 몸체 초안, FLUX.1-schnell(Apache 2.0)로 콘셉트·키트 텍스처. 텍스트→모션 모델은 대부분 AMASS(비상업) 학습이라 저작 참고용으로만 쓴다(§5.1).
 
 Design phase only (2026-10-16): no renderer, ui, engine or game code changes. Builds on ADR-007/009 (event-driven
 replay), ADR-018/019 (Rally Pop), ADR-022 (portrait, quality tiers), ADR-023 (motion track A1) and
@@ -234,6 +233,7 @@ files" cannot be committed, raw or baked.
 | Cascadeur | Tool | Free tier non-commercial; Indie $96/yr with glTF export ([plans](https://cascadeur.com/plans)) | Hand-keying, if keys outgrow code |
 | DeepMotion / Move.ai / Plask (video to mocap) | From our own video | Paid tiers for commercial output | Realistic and noisy: wrong timing for a chibi |
 | Tencent HY-Motion, Hunyuan3D | — | Licenses **exclude South Korea** | Do not use |
+| Text-to-motion on the B200 (MDM, MoMask, T2M-GPT and kin) | Can draft strokes from a prompt | Most train on HumanML3D or KIT-ML, both built on AMASS (**non-commercial**); check each model card | Drafts only as visual reference for authoring D2 keys, never shipped or committed |
 | Bandai Namco Motiondataset, AMASS | No | Non-commercial | Do not use |
 
 No free source has tennis strokes; the one cheap mocap pack is realistic and unshippable from this repo. The
@@ -326,9 +326,62 @@ quick match's pacing change (§3.3, game layer), A2 stadium, per-player appearan
 in Node first (as the m3 doc decided) with gltf-transform only if that falls short; no runtime dependency (meshopt's
 decoder is in three). No Blender, no paid tools.
 
+### GPU generation on the B200 (added 2026-10-16)
+The user set aside the SSH host `nhn-b200` (NVIDIA B200, one CPU core, Hugging Face login, the repo cloned) for asset
+generation only: no builds, tests or browser checks there. What it can do for this track, with licences checked:
+- **Character mesh drafts:** [TRELLIS](https://github.com/microsoft/TRELLIS) image-to-3D; "TRELLIS models and the
+  majority of the code are licensed under the MIT License" (two rasteriser submodules have their own licences; the
+  training set mixes Objaverse(XL), ABO, 3D-FUTURE, HSSD and Toys4k). Feed it a C1 concept, then retopologise to the
+  §4.4 budget and **skin to the slice's KayKit skeleton** (bone names the rig and clips already use) rather than
+  auto-rigging a chibi body.
+- **Concept art, kit palettes, face sheets:** [FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell),
+  Apache 2.0 ("can be used for personal, scientific, and commercial purposes").
+- **Motion:** see §5.1: text-to-motion drafts are reference for hand-authored keys only.
+- **Avoid there too:** Hunyuan3D and HY-Motion (licences exclude South Korea).
+
 ### Character production options (decided after the slice)
-| | Modified KayKit | Tripo / Meshy mesh, re-skinned | Commission |
+| | Modified KayKit | Tripo / Meshy, or TRELLIS on the B200, re-skinned | Commission |
 |---|---|---|---|
-| Cost | Free; Blender time | Tripo Pro $19.90/mo for commercial output (unverified first-hand: terms page 403); 0.5–2 days cleanup | Freelance $100–500 per rigged low-poly character, 1–3 weeks (price sheets, [Pixune](https://pixune.com/blog/how-much-does-3d-art-outsourcing-cost/) for agency $1–6k) |
+| Cost | Free; Blender time | Tripo Pro $19.90/mo for commercial output (unverified first-hand: terms page 403); TRELLIS free on the B200 (MIT); 0.5–2 days cleanup either way | Freelance $100–500 per rigged low-poly character, 1–3 weeks (price sheets, [Pixune](https://pixune.com/blog/how-much-does-3d-art-outsourcing-cost/) for agency $1–6k) |
 | Look | KayKit's chunky adventurer, stretched | Varies per run; auto-rig fails on chibi proportions | Exactly C1, to our skeleton and budget spec |
 | License | CC0 | Paid-plan ownership | Work for hire (contract must grant CC0-compatible or full rights to commit to a public repo) |
+
+## 9. Vertical slice (as built, 2026-10-16)
+
+The user took the recommended set (K2 · C1 · D2 · A1). The slice is ADR-024 steps 0–6, behind `?rig=gltf` on the
+replay page and the quick match (web and toss builds); without it the game is unchanged. Steps and what each built
+are in ADR-024's notes; the arena (A1) is still today's venue.
+
+![The slice on a phone (toss build, Pixel 7, `?rig=gltf`): chase, impact, close-up, decision hold](design/3d-redesign/slice/phone.webp)
+
+**Measured (dev VM, headless Chromium, software WebGL: indicative only; device numbers pending, TD-059):**
+
+| | Today (mannequin, TV director) | Slice |
+|---|---|---|
+| Draws / triangles at the live camera, high tier | 112 / 5.4k (main) | 70 / 18.5k (chase) |
+| Same, low tier (no hulls, no sky) | 88 / 2.9k | 62 / 9.3k |
+| Close-up / impact / side, high tier | reaction 50 / 1.5k, side 58 / 1.9k | close-up 38 / 8.9k, impact 34 / 9.3k, side 46 / 9.4k |
+| Software-GL frame rate, 412×503 at DPR 2, playing (two runs) | 50–52 fps (high), 60 (low, capped) | 39–41 fps (high), 60 (low, capped) |
+| Player model | — | 4,263 triangles, 41 joints (20 animated), one 16 KB palette texture, 326 KB raw / 151 KB gzip, no meshopt |
+| Play tap → first 3D frame (toss dev server, Pixel 7 profile, three runs) | 276–292 ms | 341–359 ms |
+| Toss build (`vite build --mode toss`) | — | 1.9 MB in all, `models/player.glb` included; `rig.html` (dev only) not built |
+
+Against the §4.4 budget: player triangles, bones, texture and the whole-stage draw and triangle caps all hold; per
+player the body is 1 draw + 1 skinned hull + racket handle + head + its hull + shadow (6, against a target of 4: the
+racket could be one mesh). The 151 KB gzip is within the 250 KB per-model line without meshopt, so meshopt (and
+gltf-transform) are not needed yet. On the software rasteriser the slice is about 20 % slower at high tier, the
+skinned hull doubling the skinned vertices, which is why the low tier drops hulls; a phone measurement decides
+whether high stays the default there.
+
+**Tests:** 617 unit tests (contact accuracy, racket continuity, determinism, strides, feet, chase framing and motion,
+director, impact programme and look), `npm run test:e2e` 45 passed (the production path, slice off).
+
+**Left before the slice can be the default:**
+- TD-059: frame times on the user's phone and on the desktop GPU, high and low tier.
+- TD-060: the quick match's pacing (decision points at 1×, card-less points as their last shot) in the game layer.
+- TD-061: the decision hold shows the opponent mid-reaction; seek the hold to their ready stance with the tell.
+- TD-062: both players wear KayKit's Rogue outfit; kit palette swap per player, then the final look (modified
+  KayKit, a TRELLIS draft on the B200 re-skinned to this skeleton, Tripo, or a commission).
+- TD-063: stroke tuning (free arm, trophy elbow, racket handle), racket smear, trail colours, hit-stop shake.
+- TD-058: the reach step drags a foot to the hip with no swing phase.
+- A1 sunny-club arena (§6) is not built; the slice runs in today's venue.
