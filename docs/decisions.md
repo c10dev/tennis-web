@@ -899,4 +899,14 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** Measured on 12 further matches, groundstrokes now meet the ball exactly and serves within 0.094 m
   at p95 (0.132 m at worst). Each player draws three more meshes (forearm, elbow joint, the forearm's outline): the
   outline budget is now full at 24 (TD-038). The lunge slides both feet and the racket face is uncontrolled (TD-058);
-  the body still snaps round when the ball goes dead (TD-057).
+  the body still snapped round when the ball went dead (TD-057), which a follow-up closed: see Facing below.
+- **Facing (2026-10-16, TD-057).** `playback/facing.ts` writes the facing as the net direction plus a turn towards
+  the ball, so it no longer switches from the ball to the net in one frame. `ballSpans` lists when `ballAt` shows a
+  ball; the turn eases in over `RIG_MOTION.facing.settleSec` (0.4 s) when a stretch of play starts and out over the
+  same when it ends, a second serve's toss easing in from what is left of the fault. A ball nearer than 0.8 m is not
+  followed and one beyond 3 m fully, and a ball behind the player is followed less the further behind it is, so a
+  passing winner gets a look over the shoulder instead of a spin. Changing ends, players face their walk (velocity
+  over ± 0.3 s, eased over the first and last 15 %), which also hides the net direction flipping as they cross the
+  net line. `playerPose` no longer takes the frame's ball. Over eight further matches (1.9 M frames) the fastest
+  turn is 0.25 rad per 60 fps frame (was up to π); a test keeps it under 0.35, and the racket continuity test is
+  back in world space.
