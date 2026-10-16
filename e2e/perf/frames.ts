@@ -1,4 +1,4 @@
-// Frame times, draws and triangles on the replay page, today's rig against the slice's (ADR-024, TD-059). Not a
+// Frame times, draws and triangles on the replay page, the M7 look against the ADR-024 default (TD-059). Not a
 // test: run it against a dev server that is already up (`npx vite --port 5190`), one server at a time.
 //   npx tsx e2e/perf/frames.ts [--port 5190] [--secs 40] [--viewport 412x503x2] [--throttle 1] [--uncapped] [--runs 2]
 // --uncapped turns off vsync and Chromium's frame cap so the frame time shows the headroom under 16.7 ms;
@@ -20,11 +20,12 @@ const uncapped = process.argv.includes('--uncapped');
 const args = ['--use-gl=angle', '--use-angle=gl-egl', '--ignore-gpu-blocklist', '--enable-gpu'];
 if (uncapped) args.push('--disable-gpu-vsync', '--disable-frame-rate-limit');
 const env = { ...process.env, LD_LIBRARY_PATH: '/usr/lib/wsl/lib', GALLIUM_DRIVER: 'd3d12', MESA_D3D12_DEFAULT_ADAPTER_NAME: 'NVIDIA' };
+// The default is the ADR-024 look since 2026-10-16; `rig=mannequin` is the M7 look it replaced.
 const configs: [string, string][] = [
-  ['today high', ''],
-  ['today low', '&quality=low'],
-  ['slice high', '&rig=gltf'],
-  ['slice low', '&rig=gltf&quality=low'],
+  ['M7 high', '&rig=mannequin'],
+  ['M7 low', '&rig=mannequin&quality=low'],
+  ['default high', ''],
+  ['default low', '&quality=low'],
 ];
 
 interface Sample { renderer: string; dts: number[]; cams: Record<string, { calls: number[]; tris: number[]; dts: number[] }>; quality: string }

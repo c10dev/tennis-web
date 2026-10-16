@@ -61,9 +61,9 @@ test.describe('replay page', () => {
     expect(errors).toEqual([]);
   });
 
-  test('cuts between all five cameras where the director says', async ({ page }) => {
+  test('cuts between all five TV cameras where the director says (the M7 look, ?rig=mannequin)', async ({ page }) => {
     const errors = watchErrors(page);
-    await open(page, '/?seed=42&surface=clay');
+    await open(page, '/?seed=42&surface=clay&rig=mannequin');
     const programme = buildProgramme(buildTimeline(simulateMatch(exhibitionConfig('clay'), 42)), 'full');
     const seen = new Set<CameraId>();
     for (const camera of ['main', 'serve', 'reaction', 'side', 'hawkeye'] as CameraId[]) {
@@ -73,6 +73,21 @@ test.describe('replay page', () => {
       seen.add(camera);
     }
     expect(seen.size).toBe(5);
+    expect(errors).toEqual([]);
+  });
+
+  test('cuts between the game cameras where the game director says (the default, ADR-024)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/?seed=42&surface=clay');
+    const programme = buildProgramme(buildTimeline(simulateMatch(exhibitionConfig('clay'), 42)), 'full', undefined, { style: 'game' });
+    const cameras = [...new Set(programme.clips.filter((c) => c.duration > 0.5).map((c) => c.camera))];
+    expect(cameras).toContain('chase');
+    expect(cameras).not.toContain('main');
+    for (const camera of cameras) {
+      const clip = programme.clips.find((c) => c.camera === camera && c.duration > 0.5)!;
+      await seek(page, clip.start + clip.duration / 2);
+      expect((await dataset(page)).camera).toBe(camera);
+    }
     expect(errors).toEqual([]);
   });
 

@@ -1,11 +1,11 @@
-// The 3D redesign's vertical slice (ADR-024), opted into with `?rig=gltf` until it replaces today's look: skinned
-// players and the game camera. The model is fetched relative to the page, so the toss build's `base: './'` finds it.
-// `&cams=tv` keeps the skinned players under today's TV direction, to compare the two looks.
+// The 3D redesign (ADR-024): skinned players, the game camera and the game pace, the default since 2026-10-16;
+// `?rig=mannequin` brings back the M7 look (the mannequin, the TV director and pace). The model is fetched relative to
+// the page, so the toss build's `base: './'` finds it. `?cams=tv` keeps the skinned players under the TV direction.
 import { loadPlayerModel, type PlayerModel } from '@tennis/renderer';
 
 export interface Slice { model: PlayerModel; style: 'game' | 'broadcast' }
 
-export const sliceRequested = (): boolean => new URLSearchParams(location.search).get('rig') === 'gltf';
+export const sliceRequested = (): boolean => new URLSearchParams(location.search).get('rig') !== 'mannequin';
 
 export async function sliceFromQuery(): Promise<Slice | null> {
   if (!sliceRequested()) return null;

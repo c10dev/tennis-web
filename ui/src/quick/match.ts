@@ -38,7 +38,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const sound = ctx.fastMode ? null : soundToggle();
   const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel, sound?.element);
   const audio = getAudio();
-  // The 3D redesign's slice (ADR-024, `?rig=gltf`): skinned players, the game camera and its decision hold.
+  // The 3D redesign (ADR-024; `?rig=mannequin` for the M7 look): skinned players, the game camera and its decision hold.
   const slice = ctx.fastMode ? null : await (await import('../replay/model.ts')).sliceFromQuery();
   // The slice plays the game pace (ADR-024, TD-060): every point at 1×, less of each.
   const pace = slice?.style === 'game' ? 'game' : 'tv';

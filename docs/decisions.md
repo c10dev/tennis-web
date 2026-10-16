@@ -1109,4 +1109,14 @@ Format: one entry per decision, newest at the bottom.
   serve camera, framed for the taller mannequin, crops the shorter, wider body with its head filling the frame's
   edge (its framing would need retuning if the TV cameras stay for replays); the trail keeps its shot colour there
   too, since the look follows the model.
+- **The default (2026-10-16).** With TD-058, TD-060, TD-061, TD-062's kits and TD-063 done and the user accepting the
+  look, the slice is the default: `sliceRequested` is true unless `?rig=mannequin`, for the quick match, its result
+  screen's replay of the decisive point (now with the model too) and the replay page; `?cams=tv` stays for comparison.
+  The career match keeps the mannequin and the TV director for now (TD-064). The game director never uses the TV
+  serve, main or reaction cameras (a full clay match: chase 1,866 s, side 541 s, close-up 26 s, impact 19 s,
+  Hawk-Eye 10 s), so their framing for the mannequin does not matter there. e2e: the five-TV-camera test runs under
+  `?rig=mannequin`, a new test checks the game cameras; the mobile decision test waits for the cards' deal animation
+  (under load it measured them mid-deal, three rows instead of one). Desktop GPU on the default: medians 1.2 / 1.1 ms
+  uncapped (high / low) against 1.1 / 0.8 ms for the M7 look, 60 fps at Pixel 7 size with the main thread slowed 6×.
+  The phone run is still TD-059's.
 

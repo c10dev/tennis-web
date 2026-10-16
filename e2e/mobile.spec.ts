@@ -54,6 +54,8 @@ test.describe('phone layout (toss build)', () => {
     await startLadder(page);
     await page.locator('#quick-play').tap();
     await expect(page.locator('#card-attack')).toBeVisible({ timeout: 90_000 });
+    // The cards are dealt in one after another: measure once the deal has settled (under load it can still be running).
+    await page.locator('.cards').evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)));
     const t = await tokens(page);
     const view = await box(page.locator('#view'));
     const panel = await box(page.locator('#quick-panel'));

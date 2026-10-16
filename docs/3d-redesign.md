@@ -399,14 +399,13 @@ same page in Windows Chrome against the WSL dev server (`npx vite --host`) shows
 **Tests:** 617 unit tests (contact accuracy, racket continuity, determinism, strides, feet, chase framing and motion,
 director, impact programme and look), `npm run test:e2e` 45 passed (the production path, slice off).
 
-**Left before the slice can be the default:**
-- TD-059: frame times on the user's phone, high and low tier (the desktop GPU is measured above).
-- ~~TD-060: the quick match's pacing~~ done behind `?rig=gltf` (ADR-024 notes): decision points from their last three
-  shots, card-less points from their last, all at 1×; median 43 s a match.
-- ~~TD-061: the decision hold shows the opponent mid-reaction~~ done behind `?rig=gltf`: both players wait at the next
-  point's start, the opponent in the tell's stance (ADR-024 notes).
-- TD-062: ~~both players wear KayKit's Rogue outfit~~ kits recoloured per player (ADR-024 notes); then the final look (modified
-  KayKit, a TRELLIS draft on the B200 re-skinned to this skeleton, Tripo, or a commission).
-- TD-063: stroke tuning (free arm, trophy elbow, racket handle), racket smear, trail colours, hit-stop shake.
-- TD-058: the reach step drags a foot to the hip with no swing phase.
-- A1 sunny-club arena (§6) is not built; the slice runs in today's venue.
+**The default since 2026-10-16** (ADR-024 notes): the quick match, its result replay and the replay page draw the
+slice; `?rig=mannequin` brings back the M7 look. Done on the way: TD-060 (game pace, median 43 s a match), TD-061
+(the tell stance on the decision hold), TD-062's kits, TD-063 (strokes, smear, trail colours, hit-stop shake),
+TD-058's reach step. Still open:
+- TD-059: frame times on the user's phone, high and low tier (the desktop GPU is measured above, also on the
+  default: 60 fps at Pixel 7 size with the main thread slowed 6×).
+- TD-062: the final character look (modified KayKit, a TRELLIS draft on the B200 re-skinned to this skeleton,
+  Tripo, or a commission).
+- TD-064: the career match still draws the mannequin under the TV director, so both pipelines stay.
+- A1 sunny-club arena (§6) is not built; the game runs in today's venue.
