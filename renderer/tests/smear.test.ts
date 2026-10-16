@@ -59,6 +59,16 @@ describe('racket smear', () => {
     expect(plain.scene.getObjectByName('racket-smear')).toBeUndefined();
   });
 
+  it('is left out on the low tier (eight extra rig solves a frame: about 0.9 ms on the desktop CPU)', () => {
+    const game = createStage(tl, { model });
+    game.setQuality('low');
+    game.applyFrame(frameAt(contact, 'hitstop'));
+    expect((game.scene.getObjectByName('racket-smear') as Mesh).visible).toBe(false);
+    game.setQuality('high');
+    game.applyFrame(frameAt(contact, 'hitstop'));
+    expect((game.scene.getObjectByName('racket-smear') as Mesh).visible).toBe(true);
+  });
+
   it('fades out after the contact', () => {
     const game = createStage(tl, { model });
     game.applyFrame(frameAt(contact + IMPACT_LOOK.smear.fadeSec + 0.01, 'slowmo'));

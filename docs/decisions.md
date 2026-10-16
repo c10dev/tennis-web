@@ -1102,4 +1102,5 @@ Format: one entry per decision, newest at the bottom.
   the model unless given, so the broadcast look keeps its white trail. The impact camera shakes over the hit-stop
   (4 cm, 28 Hz, decaying to still by its end), position and aim together. A test takes court points through the
   planner's `toLocal` and back through the rig's `yawFor`. `/rig.html?clip=hitstop` draws frames as the moment's.
+  The smear costs about 0.9 ms a frame on the desktop CPU while it shows, so the low tier leaves it out.
 

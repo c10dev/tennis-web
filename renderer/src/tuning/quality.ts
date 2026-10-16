@@ -2,8 +2,8 @@
 // GPU and keeps the game readable.
 export const QUALITY = {
   tiers: {
-    high: { dprCap: 2, antialias: true, outlines: true, sky: true },
-    low: { dprCap: 1.5, antialias: false, outlines: false, sky: false },
+    high: { dprCap: 2, antialias: true, outlines: true, sky: true, smear: true },
+    low: { dprCap: 1.5, antialias: false, outlines: false, sky: false, smear: false },
   },
   /** Devices with this many logical cores or fewer start on the low tier (antialiasing is fixed at creation). */
   lowCores: 4,

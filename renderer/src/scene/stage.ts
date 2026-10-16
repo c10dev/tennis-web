@@ -61,6 +61,7 @@ export function createStage(first: Timeline, { model = null, look = model ? 'gam
   // The racket smear needs the skinned rig's racket path: game look only (TD-063).
   const smear = model && look === 'game' ? createSmear() : null;
   if (smear) scene.add(smear.object3d);
+  let smearOn = true;
   return {
     scene,
     setAspect(aspect) {
@@ -71,6 +72,7 @@ export function createStage(first: Timeline, { model = null, look = model ? 'gam
     },
     setQuality(tier) {
       const { outlines, sky } = tierSettings(tier);
+      smearOn = tierSettings(tier).smear;
       scene.traverse((o) => {
         if (isOutline(o)) o.visible = outlines;
       });
@@ -81,7 +83,7 @@ export function createStage(first: Timeline, { model = null, look = model ? 'gam
       rigs.B.apply(frame.players.B);
       ball.apply(frame.ball, ballLook(timeline, frame, ballScale, look === 'game'));
       impact.apply(frame);
-      smear?.apply(timeline, frame.pointIndex, frame.matchT ?? frame.t, frame.clip === 'slowmo' || frame.clip === 'hitstop', rigs);
+      smear?.apply(timeline, frame.pointIndex, frame.matchT ?? frame.t, smearOn && (frame.clip === 'slowmo' || frame.clip === 'hitstop'), rigs);
       mark.visible = !!frame.hawkeye;
       if (frame.hawkeye) mark.position.copy(groundToThree(frame.hawkeye.mark, 0.006));
     },
