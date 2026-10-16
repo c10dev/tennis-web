@@ -2,8 +2,10 @@
 // setting kept in the platform's settings, quiet in the background. The mixer is made inside a tap (Play or the
 // switch), as iOS only lets audio start from a gesture; a resume the browser refuses is retried on the next tap.
 // `document.body.dataset.audio` shows the state ('running', 'suspended' or 'off') for the e2e tests.
+// The generated samples (ADR-027) are fetched on that first tap, not before, so they never slow the first screen;
+// `dataset.audioSamples` shows their state ('none', 'loading', 'ready', 'partial' or 'failed').
 // The mixer alone (the renderer's `audio` entry): the main entry would pull Three.js into the first chunk (TD-014).
-import { createMixer, type Mixer } from '@tennis/renderer/audio';
+import { createMixer, type Mixer, type UiSound } from '@tennis/renderer/audio';
 import { getPlatform } from '../platform/index.ts';
 import { audioAction, parseSound, SOUND_KEY } from './policy.ts';
 
@@ -14,9 +16,14 @@ export interface AudioSession {
   unlock(): void;
   /** The mixer while sound is on, for the broadcast's cues. */
   mixer(): Mixer | null;
+  /** Plays screen sounds (reveal, count-up, result) if sound is on; a duck always applies. */
+  ui(sounds: readonly UiSound[]): void;
   /** Calls `fn` whenever the setting changes; returns an unsubscribe. */
   subscribe(fn: (on: boolean) => void): () => void;
 }
+
+/** Where the samples are: next to the page (the toss build's base is './'). */
+const SAMPLES = `${import.meta.env.BASE_URL}audio/`;
 
 function createSession(): AudioSession {
   let on = true;
@@ -24,6 +31,7 @@ function createSession(): AudioSession {
   const listeners = new Set<(on: boolean) => void>();
   const mark = () => {
     document.body.dataset.audio = on && mixer ? mixer.state : 'off';
+    document.body.dataset.audioSamples = mixer?.samples ?? 'none';
   };
   const notify = () => {
     for (const fn of listeners) fn(on);
@@ -64,12 +72,19 @@ function createSession(): AudioSession {
     },
     unlock() {
       if (!on) return;
-      mixer ??= createMixer();
+      if (!mixer) {
+        mixer = createMixer();
+        void mixer.loadSamples(SAMPLES).then(mark);
+      }
       mixer.setMuted(false);
       resume();
       mark();
     },
     mixer: () => (on ? mixer : null),
+    ui(sounds) {
+      // The duck reaches the mixer even while off, so a reveal cut short by the switch never leaves the crowd low.
+      for (const s of sounds) if (on || s.kind === 'duck') mixer?.ui(s);
+    },
     subscribe(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);

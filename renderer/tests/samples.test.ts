@@ -1,15 +1,18 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Cue } from '../src/audio/cues.ts';
 import { loopEdges, sampleFormat, samplesFor, sampleUrl, SAMPLE_IDS } from '../src/audio/samples.ts';
 import { AUDIO } from '../src/tuning/index.ts';
 
 const hit = (shot: Extract<Cue, { kind: 'hit' }>['shot'], speedKmh = 120, at = 1, replay = false): Cue => ({ kind: 'hit', shot, speedKmh, replay, at });
+// The renderer's tests have no Node types (the package is browser code); fs comes in untyped.
+const FS = 'node:fs';
+const fs = (await import(FS)) as { readFileSync(path: URL, enc: 'utf8'): string };
+
 const ids = (cue: Cue) => samplesFor(cue).map((s) => s.id);
 
 describe('sample set (TD-016)', () => {
   it('is the set docs/sound/manifest.json orders, minus nothing and plus nothing', () => {
-    const manifest = JSON.parse(readFileSync(new URL('../../docs/sound/manifest.json', import.meta.url), 'utf8')) as { sounds: { id: string }[] };
+    const manifest = JSON.parse(fs.readFileSync(new URL('../../docs/sound/manifest.json', import.meta.url), 'utf8')) as { sounds: { id: string }[] };
     expect([...SAMPLE_IDS].sort()).toEqual(manifest.sounds.map((s) => s.id).sort());
   });
 
