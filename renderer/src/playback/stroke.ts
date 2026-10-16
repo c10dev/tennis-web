@@ -33,6 +33,9 @@ export interface StrokePose {
   keyTimes: number[];
   /** Where the feet plant (court x, y), and how firmly, 0–1. */
   plant: { l: Vec2; r: Vec2; weight: number };
+  /** The whole-body shift a ball out of reach needs at contact, in the player's frame, flat (TD-058): the rig shifts
+   *  by it times `contactWeight`, and the foot on that side steps out with it. */
+  lunge: V3;
 }
 
 /** A court point in the frame of a player standing at `pos` facing `facing`. */
@@ -75,6 +78,21 @@ function leadStart(shots: ShotEvent[], i: number): number {
   return Math.max(s.t - STROKE.leadSec, before ? before.t + STROKE.reactionSec : -Infinity);
 }
 
+const NO_LUNGE: V3 = { x: 0, y: 0, z: 0 };
+
+/** How far the body must shift, flat, for the racket to reach a contact point in the player's frame: what the
+ *  shoulder's reach falls short by (within lungeMax), towards the ball. */
+export function lungeFor(contact: V3): V3 {
+  const [sx, sy, sz] = PLAYER_RIG.shoulderR;
+  const short = Math.hypot(contact.x - sx, contact.y - sy, contact.z - sz) - PLAYER_RIG.contactReach;
+  const fx = contact.x - sx;
+  const fz = contact.z - sz;
+  const flat = Math.hypot(fx, fz);
+  if (short <= 0 || flat < 1e-9) return NO_LUNGE;
+  const k = Math.min(PLAYER_RIG.lungeMax, short) / flat;
+  return { x: fx * k, y: 0, z: fz * k };
+}
+
 /** Serve hop at contact: what the standing reach lacks for this contact height, within hopMax. */
 export function serveHop(contactHeight: number, standingReach: number): number {
   return Math.min(STROKE.serve.hopMax, Math.max(0, contactHeight - standingReach));
@@ -99,8 +117,9 @@ export function strokeAt(timeline: Timeline, id: PlayerId, t: number, pos: Vec2,
     const hopPeak = kind === 'serve' ? serveHop(s.from.z, PLAYER_RIG.standingReach) : 0;
     const { riseSec, fallSec } = STROKE.serve;
     const hop = hopPeak * (tau < s.t ? smoothstep(1 - (s.t - tau) / riseSec) : smoothstep(1 - (tau - s.t) / fallSec));
+    const contact = toLocal(s.from, pos, facing);
     return {
-      kind, weight, keys: sample(keys, times, tau), contact: toLocal(s.from, pos, facing), plant: plantAt(s, kind, tau),
+      kind, weight, keys: sample(keys, times, tau), contact, plant: plantAt(s, kind, tau), lunge: kind === 'serve' ? NO_LUNGE : lungeFor(contact),
       contactWeight: smoothstep(1 - Math.abs(tau - s.t) / (kind === 'serve' ? STROKE.serve.contactBlendSec : STROKE.contactBlendSec)), hop, keyTimes: times,
     };
   }

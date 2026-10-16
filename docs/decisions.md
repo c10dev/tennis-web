@@ -1083,4 +1083,14 @@ Format: one entry per decision, newest at the bottom.
   kit stays light. `kitFor` follows ADR-019's per-surface rule: A in the surface's colour, B in the light kit, the
   trim the shirt halfway to the shorts colour (pure shorts navy read as a black bib). One extra 1024² texture per
   player, cached per kit. The final character look is still open.
+- **After the slice: stroke tuning and the reach step (TD-063, TD-058, 2026-10-16).** The forehand's free arm reaches
+  out (x 0.5–0.55, z 0.3–0.5 at backswing and contact) and the racket handle is 0.032 m. Planted feet slipped (p95
+  7–8 cm a frame) because the solver's whole-body shift was solved per frame from the racket's miss, so it grew and
+  jittered through the partial bend onto the ball before and after contact, while at contact itself it was almost
+  always zero. The lunge is now planned: `lungeFor` in the stroke planner is the flat shortfall past the racket
+  shoulder's reach (1.33 m: the arm at full stretch plus the racket, from the shoulder measured on the rig), towards
+  the ball, within `lungeMax`; the body shifts by it times the contact weight (smooth in time), the foot on that side
+  steps out with it lifted halfway (`PLAYER_RIG.step`), the other stays planted, and the solver's iteration only adds
+  crouch. A leg still out of reach lifts as it is drawn in rather than dragging. Planted-foot slip: median 0, p95
+  0.5 mm, p99 1.2 cm; contact accuracy unchanged. Out-of-reach balls are rare (3 of the six sample matches' strokes).
 

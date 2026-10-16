@@ -64,7 +64,7 @@ function stancePose(spot: Spot, cue: StanceCue, t: number): PlayerPose {
   const foot = ([x, z]: readonly [number, number]): Vec2 => ({ x: pos.x - f.y * x + f.x * z, y: pos.y + f.x * x + f.y * z });
   const still = !cue.sway && !cue.step && !cue.bounce;
   const stroke: StrokePose = {
-    kind: 'forehand', weight: 1, keys, contact: { x: 0, y: 0, z: 0 }, contactWeight: 0, hop: 0, keyTimes: [],
+    kind: 'forehand', weight: 1, keys, contact: { x: 0, y: 0, z: 0 }, contactWeight: 0, hop: 0, keyTimes: [], lunge: { x: 0, y: 0, z: 0 },
     plant: { l: foot(R.feet[0]), r: foot(R.feet[1]), weight: still ? 1 : 0 },
   };
   return {

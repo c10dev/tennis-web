@@ -53,9 +53,11 @@ describe('feet', () => {
     expect(quantile(s.walk, 0.5)).toBeLessThan(0.008);
     expect(quantile(s.walk, 0.95)).toBeLessThan(0.045);
   });
-  it('planted for a stroke: the feet hold (median under 1 mm; the rest are steps where a leg cannot reach)', () => {
+  it('planted for a stroke: a foot on the ground holds (median under 1 mm, p95 under 2 cm); a lunge steps, it never drags (TD-058)', () => {
     expect(s.planted.length).toBeGreaterThan(1000);
     expect(quantile(s.planted, 0.5)).toBeLessThan(0.001);
-    expect(quantile(s.planted, 0.95)).toBeLessThan(0.1);
+    expect(quantile(s.planted, 0.95)).toBeLessThan(0.02);
+    expect(s.planted.filter((d) => d > 0.05).length).toBeLessThan(s.planted.length * 0.005);
   });
+
 });

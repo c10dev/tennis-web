@@ -3,7 +3,7 @@
 // the racket points along its target. Near contact the racket head is bent onto the engine's contact point; what the
 // arm cannot reach is taken by arm stretch, then extra crouch, then a shift of the whole body (A1's lunge, TD-058).
 import { Matrix4, Quaternion, Vector3, type Bone, type Object3D } from 'three';
-import { clamp } from '../math.ts';
+import { clamp, smoothstep } from '../math.ts';
 import type { StrokePose } from '../playback/stroke.ts';
 import { PLAYER_RIG } from '../tuning/index.ts';
 import { solveTwoBone } from './ik.ts';
@@ -85,16 +85,28 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
   }
   frame.updateMatrixWorld(true);
   const shiftWorld = shift.clone().applyQuaternion(worldQuat(frame));
+  // A lunge (TD-058): the foot on the side the body shifts to steps out with it, lifted through the move (the shift
+  // grows and shrinks with the contact weight, so the step peaks halfway); the other foot stays planted.
+  const root = worldPos(frame);
+  const reachOut = (side: 'l' | 'r') => (s.plant[side].x - root.x) * shiftWorld.x + (-s.plant[side].y - root.z) * shiftWorld.z;
+  const lead = shiftWorld.lengthSq() > 1e-8 ? (reachOut('l') >= reachOut('r') ? 'l' : 'r') : null;
+  const P = PLAYER_RIG.step;
   (['l', 'r'] as const).forEach((side, i) => {
-    // The clip's foot (moved with the body), drawn onto the planted spot; a leg that cannot reach steps in.
+    // The clip's foot (moved with the body), drawn onto the planted spot.
     const target = feet[i]!.p.clone().add(shiftWorld);
     const plant = s.plant[side];
-    target.x += (plant.x - target.x) * s.plant.weight;
-    target.z += (-plant.y - target.z) * s.plant.weight;
+    const stepOut = side === lead ? shiftWorld : new Vector3();
+    target.x += (plant.x + stepOut.x - target.x) * s.plant.weight;
+    target.z += (-plant.y + stepOut.z - target.z) * s.plant.weight;
     target.y += s.hop * w;
+    const lungeLength = Math.hypot(s.lunge.x, s.lunge.z);
+    if (side === lead) target.y += Math.min(P.liftMax, P.liftPerMetre * lungeLength) * Math.sin(Math.PI * s.contactWeight) * s.plant.weight;
     const hip = worldPos(b[`upperleg${side}`]!);
     const legLength = b[`lowerleg${side}`]!.position.length() + b[`foot${side}`]!.position.length() - 0.01;
     const flat = new Vector3(target.x - hip.x, 0, target.z - hip.z);
+    // A leg that still cannot reach is drawn in, lifted as it goes (a step, not a drag).
+    const excess = flat.length() - Math.sqrt(Math.max(0, legLength ** 2 - (target.y - hip.y) ** 2));
+    if (excess > 0) target.y += P.dragLift * smoothstep(excess / P.dragLiftOver);
     const room = Math.sqrt(Math.max(0, legLength ** 2 - (target.y - hip.y) ** 2));
     if (flat.length() > room) target.set(hip.x, target.y, hip.z).add(flat.setLength(room));
     const pole = LEG_POLE.clone().applyQuaternion(worldQuat(frame));
@@ -135,15 +147,14 @@ export function solveStroke(frame: Object3D, model: Object3D, bones: Bones, slot
   const rest: Rest = { quats, positions: restPositions, hips: bones.hips!.position.clone() };
   const feet = (['l', 'r'] as const).map((side) => ({ p: worldPos(bones[`foot${side}`]!), q: worldQuat(bones[`foot${side}`]!) }));
   const inverse = worldQuat(frame).invert();
-  let shift = new Vector3();
+  // The lunge is planned (a function of time, so the stepping foot moves smoothly); what is left low is crouched to.
+  const shift = new Vector3(stroke.lunge.x, 0, stroke.lunge.z).multiplyScalar(stroke.contactWeight);
   let drop = 0;
   for (let i = 0; i < 3; i++) {
     const miss = pass(frame, model, bones, slot, stroke, rest, feet, shift, drop);
-    // A serve reaches its toss by the hop rule alone: no lunge, no extra crouch.
+    // A serve reaches its toss by the hop rule alone: no extra crouch.
     if (stroke.kind === 'serve' || stroke.contactWeight === 0 || miss.length() < 0.005) return;
     const local = miss.applyQuaternion(inverse);
-    shift = shift.clone().add(new Vector3(local.x, 0, local.z).multiplyScalar(stroke.contactWeight));
-    shift.setLength(Math.min(shift.length(), PLAYER_RIG.lungeMax));
     drop = clamp(drop - local.y * stroke.contactWeight, 0, PLAYER_RIG.dropMax);
   }
 }

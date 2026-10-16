@@ -61,3 +61,74 @@ describe('the serve on the skinned rig', () => {
     for (const g of gaps) expect(g).toBeGreaterThan(-0.05);
   });
 });
+
+describe('the planned lunge (TD-058)', () => {
+  const poses = SAMPLE.slice(0, 3).flatMap((r) => {
+    const tl = buildTimeline(r);
+    return tl.segments.flatMap((seg) => seg.point.shots.map((s) => ({ s, p: matchFrameAt(tl, seg.zero + s.t).players[s.hitter] })));
+  });
+
+  it('is zero for a serve and for a ball the shoulder reaches; otherwise the shortfall, towards the ball, flat', () => {
+    const [sx, sy, sz] = PLAYER_RIG.shoulderR;
+    let reached = 0;
+    let lunged = 0;
+    for (const { s, p } of poses) {
+      const { contact: c, lunge } = p.stroke!;
+      expect(lunge.y).toBe(0);
+      const d = Math.hypot(c.x - sx, c.y - sy, c.z - sz);
+      if (s.shot === 'serve' || d <= PLAYER_RIG.contactReach) {
+        expect(Math.hypot(lunge.x, lunge.z)).toBe(0);
+        reached++;
+        continue;
+      }
+      lunged++;
+      const flat = Math.hypot(c.x - sx, c.z - sz);
+      expect(Math.hypot(lunge.x, lunge.z)).toBeCloseTo(Math.min(PLAYER_RIG.lungeMax, d - PLAYER_RIG.contactReach), 6);
+      expect((lunge.x * (c.x - sx) + lunge.z * (c.z - sz)) / (Math.hypot(lunge.x, lunge.z) * flat)).toBeCloseTo(1, 6);
+    }
+    expect(reached).toBeGreaterThan(100);
+    expect(lunged).toBeGreaterThan(5);
+  });
+
+  it('matches the rig: the shoulder rests where the plan assumes', () => {
+    const rig = new GltfRig(model);
+    rig.apply({ ...poses[0]!.p, pos: { x: 0, y: 0 }, facing: { x: 0, y: 1 }, stroke: null, speed: 0, reactionWeight: 0, t: 0, distance: 0 });
+    rig.object3d.updateMatrixWorld(true);
+    const sh = rig.object3d.worldToLocal(new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName('upperarmr')!.matrixWorld));
+    const [sx, sy, sz] = PLAYER_RIG.shoulderR;
+    expect(Math.hypot(sh.x - sx, sh.y - sy, sh.z - sz)).toBeLessThan(0.03);
+  });
+});
+
+describe('the lunge on the skinned rig (TD-058)', () => {
+  it('steps the foot on the lunge side out with the body, lifted through the move, and lands it at contact', () => {
+    const rig = new GltfRig(model);
+    const toes = () => {
+      rig.object3d.updateMatrixWorld(true);
+      return ['toesl', 'toesr'].map((n) => new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName(n)!.matrixWorld).y);
+    };
+    let lunges = 0;
+    for (const r of SAMPLE) {
+      const tl = buildTimeline(r);
+      for (const seg of tl.segments) {
+        for (const s of seg.point.shots) {
+          const at = (dt: number) => matchFrameAt(tl, seg.zero + s.t + dt).players[s.hitter];
+          const lunge = at(0).stroke!.lunge;
+          const length = Math.hypot(lunge.x, lunge.z);
+          if (length < 0.1) continue;
+          lunges++;
+          // Halfway in, the stepping foot is in the air; at contact it is down.
+          let highest = 0;
+          for (let dt = -0.12; dt <= -0.04; dt += 0.01) {
+            rig.apply(at(dt));
+            highest = Math.max(highest, ...toes());
+          }
+          expect(highest).toBeGreaterThan(Math.min(PLAYER_RIG.step.liftMax, PLAYER_RIG.step.liftPerMetre * length) * 0.5);
+          rig.apply(at(0));
+          expect(Math.min(...toes())).toBeLessThan(0.05);
+        }
+      }
+    }
+    expect(lunges).toBeGreaterThanOrEqual(3);
+  });
+});

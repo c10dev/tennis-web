@@ -31,8 +31,16 @@ export const PLAYER_RIG = {
   /** Racket-head centre at full stretch straight up, standing: shoulders 1.09 m + arm 0.576 m × 1.15 + racket 0.68 m.
    * A serve struck higher is reached by a hop (STROKE.serve). */
   standingReach: 2.43,
-  /** Contact the body cannot reach by leaning is met by shifting the whole body up to this far (feet slide: TD-058). */
+  /** Contact the body cannot reach by leaning is met by shifting the whole body up to this far. */
   lungeMax: 0.9,
+  /** The racket shoulder at rest in the player's frame (x left, y up, z forward; a test measures it on the rig), and
+   *  how far from it the racket head reaches a ball: the arm at full stretch (0.576 m × 1.15) plus the racket. A ball
+   *  further away is a lunge of the difference (TD-058). */
+  shoulderR: [-0.211, 1.093, 0.018] as const,
+  contactReach: 1.33,
+  /** The lunge's step (TD-058): the lead foot lifts `liftPerMetre` × the shift (at most `liftMax`) halfway through; a
+   *  leg still out of reach lifts up to `dragLift`, fully once `dragLiftOver` short, instead of dragging. */
+  step: { liftMax: 0.14, liftPerMetre: 0.5, dragLift: 0.08, dragLiftOver: 0.03 },
   /** Metres travelled per cycle of each locomotion clip (measured from the clips by a test): the clip's phase is
    * distance / stride, so feet in stance stay put (ADR-024). */
   strides: { Running_A: 1.91, Walking_A: 0.58, Walking_Backwards: 0.54 },
