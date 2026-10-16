@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "status": "Approved by the user on 2026-10-16 (questions 4-9 of the sound stream at their defaults).",
+  "generator": {
+    "tool": "agent-audio (https://github.com/AIEGOBOT/agent-audio)",
+    "model": "Stable Audio 3 Medium (stabilityai/stable-audio-3-optimized)",
+    "host": "MacBook M1 Max, MLX backend",
+    "call": "generate_audio(prompt, seconds) through MCP, or `uv run agent-audio generate \"<prompt>\" --seconds <generateSec> --out <wav>`; negative prompts are rejected, so exclusions are in the prompt",
+    "candidates": "Generate `candidates` takes per sound, listen, keep the best one; the tool has no seed option, so takes differ on their own"
+  },
+  "output": {
+    "dir": "ui/public/audio",
+    "naming": "<id>.ogg and <id>.m4a, lower-case kebab ids as below; no other files except NOTICE.txt",
+    "masters": "WAV masters and rejected takes stay off git (keep them on the Mac)",
+    "channels": 1,
+    "sampleRate": 48000,
+    "formats": [
+      { "ext": "ogg", "codec": "Opus in Ogg", "role": "primary", "ffmpeg": "ffmpeg -i in.wav -ac 1 -ar 48000 -c:a libopus -b:a <kbps>k -vbr on -application audio -map_metadata -1 <id>.ogg" },
+      { "ext": "m4a", "codec": "AAC-LC in MP4", "role": "fallback where canPlayType rejects Opus (older iOS WebKit)", "ffmpeg": "ffmpeg -i in.wav -ac 1 -ar 48000 -c:a aac -b:a <kbps>k -movflags +faststart -map_metadata -1 <id>.m4a", "macAlternative": "afconvert -f m4af -d aac -c 1 -b <kbps*1000> in.wav <id>.m4a" }
+    ]
+  },
+  "budget": {
+    "totalBytes": 250000,
+    "perFormatBytes": 125000,
+    "note": "Each sound's budgetBytes is the cap for one file of each format; a test sums ui/public/audio. The Toss .ait bundle was 0.87 MB before audio."
+  },
+  "loudness": {
+    "oneShot": "Peak-normalise to -1 dBFS (the transient is what matters)",
+    "crowd": "Integrated loudness -24 LUFS for the bed, -18 LUFS for applause and cheer, true peak <= -1 dBTP",
+    "sting": "Integrated -16 LUFS, true peak <= -1 dBTP",
+    "ffmpegHint": "loudnorm=I=<lufs>:TP=-1:LRA=11 (two-pass for accuracy) or volume=<gain>dB for one-shots after measuring with volumedetect"
+  },
+  "trim": {
+    "oneShot": "Remove leading silence (silenceremove=start_periods=1:start_threshold=-45dB) so the transient starts within the first 5 ms; cut to keepSec; 15 ms fade-out; no fade-in",
+    "crowd": "50 ms fade-in; keep the swell's natural rise; fade out over the last 0.6 s",
+    "loop": "Seamless loop with 50 ms margins: the mixer loops from 0.05 s to (duration - 0.05 s), clear of codec padding. Take keepSec + 0.5 s from a steady stretch, equal-power crossfade its last 0.5 s over its first 0.5 s and drop the first 0.5 s, giving a loop L of keepSec seconds whose end runs into its start; then write the file as [last 50 ms of L] + L + [first 50 ms of L] (keepSec + 0.1 s long). Check by looping L in an audio player for a click or level jump",
+    "sting": "Remove leading silence; 200 ms fade-out; must end by keepSec"
+  },
+  "sounds": [
+    {
+      "id": "hit-flat",
+      "use": "Groundstroke and volley contact (cue 'hit', most shots); the mixer varies gain and rate with ball speed",
+      "prompt": "Single tennis ball struck hard by a tightly strung racket, crisp hollow 'pock' with a sharp transient and a short felt-and-strings body, close and dry outdoor court, isolated one-shot, no voice, no music, no crowd, no reverb tail",
+      "generateSec": 2,
+      "keepSec": 0.35,
+      "candidates": 4,
+      "kind": "oneShot",
+      "kbps": 48,
+      "budgetBytes": 5000
+    },
+    {
+      "id": "hit-heavy",
+      "use": "Serve and smash contact (pitched down slightly by the mixer for first serves)",
+      "prompt": "Powerful tennis serve impact, racket strings snapping through a tennis ball, loud explosive 'thwack' with a deep body and a bright string crack, close and dry, isolated one-shot, no grunt, no voice, no music, no crowd",
+      "generateSec": 2,
+      "keepSec": 0.4,
+      "candidates": 4,
+      "kind": "oneShot",
+      "kbps": 48,
+      "budgetBytes": 5000
+    },
+    {
+      "id": "hit-slice",
+      "use": "Slice, drop shot and lob contact",
+      "prompt": "Soft brushed tennis slice shot, racket strings grazing under a tennis ball, muted papery 'thup' with less snap and a quick decay, close and dry, isolated one-shot, no voice, no music, no crowd",
+      "generateSec": 2,
+      "keepSec": 0.35,
+      "candidates": 4,
+      "kind": "oneShot",
+      "kbps": 48,
+      "budgetBytes": 5000
+    },
+    {
+      "id": "bounce-hard",
+      "use": "Ball bounce on hard court (grass reuses it, lower and softer)",
+      "prompt": "Tennis ball bouncing once on a hard acrylic court, short bright rubbery 'tok' on concrete, close and dry outdoor, isolated one-shot, no voice, no music, no crowd, no second bounce",
+      "generateSec": 2,
+      "keepSec": 0.3,
+      "candidates": 4,
+      "kind": "oneShot",
+      "kbps": 48,
+      "budgetBytes": 4000
+    },
+    {
+      "id": "bounce-clay",
+      "use": "Ball bounce on clay",
+      "prompt": "Tennis ball bouncing once on a red clay court, dull soft thud with a faint gritty crunch of loose clay, close and dry outdoor, isolated one-shot, no voice, no music, no crowd, no second bounce",
+      "generateSec": 2,
+      "keepSec": 0.35,
+      "candidates": 4,
+      "kind": "oneShot",
+      "kbps": 48,
+      "budgetBytes": 4000
+    },
+    {
+      "id": "net",
+      "use": "Ball into the net (cue 'net')",
+      "prompt": "Tennis ball hitting the woven net of a tennis court, soft muffled thump into taut mesh with a brief rattle of the net cord and a tiny rustle, close and dry outdoor, isolated one-shot, no voice, no music, no crowd",
+      "generateSec": 2,
+      "keepSec": 0.6,
+      "candidates": 3,
+      "kind": "oneShot",
+      "kbps": 48,
+      "budgetBytes": 5000
+    },
+    {
+      "id": "applause-small",
+      "use": "Polite applause after an ordinary point (crowd intensity below about 0.5)",
+      "prompt": "Polite applause from a medium tennis stadium crowd after a point, steady clapping that rises quickly and dies away, outdoor stadium, no cheering, no whistles, no intelligible speech, no announcer, no music",
+      "generateSec": 4,
+      "keepSec": 2.5,
+      "candidates": 3,
+      "kind": "crowd",
+      "kbps": 32,
+      "budgetBytes": 13000
+    },
+    {
+      "id": "applause-big",
+      "use": "Loud applause after a winner, a long rally or a big point",
+      "prompt": "Loud enthusiastic applause from a large tennis stadium crowd after a great rally, dense fast clapping with an excited swell, outdoor stadium, no chanting, no whistles, no intelligible speech, no announcer, no music",
+      "generateSec": 5,
+      "keepSec": 3.5,
+      "candidates": 3,
+      "kind": "crowd",
+      "kbps": 32,
+      "budgetBytes": 17000
+    },
+    {
+      "id": "cheer",
+      "use": "Crowd roar on top of applause for set and match points won",
+      "prompt": "Large tennis stadium crowd erupting into a joyful roar and cheer at match point, bright excited voices without words, outdoor stadium, no intelligible speech, no chanting, no announcer, no music",
+      "generateSec": 4,
+      "keepSec": 2.5,
+      "candidates": 3,
+      "kind": "crowd",
+      "kbps": 32,
+      "budgetBytes": 13000
+    },
+    {
+      "id": "crowd-bed",
+      "use": "Continuous low murmur of the stands under the whole match (ducked while the cards lie face down)",
+      "prompt": "Ambience of a tennis stadium between points, low steady murmur of a large seated outdoor crowd, soft distant rustle and shuffling, calm and even with no sudden reactions, no applause, no intelligible speech, no announcer, no music, stable continuous bed suitable for looping",
+      "generateSec": 10,
+      "keepSec": 7,
+      "candidates": 3,
+      "kind": "loop",
+      "kbps": 32,
+      "budgetBytes": 30000
+    },
+    {
+      "id": "sting-win",
+      "use": "Short stinger when the result screen shows a won match",
+      "prompt": "Short bright victory jingle for a casual sports mobile game, upbeat rising three-note brass and marimba flourish ending on a major chord, punchy and cheerful, 1.5 seconds, no vocals",
+      "generateSec": 3,
+      "keepSec": 1.5,
+      "candidates": 4,
+      "kind": "sting",
+      "kbps": 48,
+      "budgetBytes": 11000
+    },
+    {
+      "id": "sting-lose",
+      "use": "Short stinger when the result screen shows a lost match",
+      "prompt": "Short gentle defeat jingle for a casual sports mobile game, soft descending two-note marimba and muted horn phrase ending on a mellow minor chord, light and not sad, 1.5 seconds, no vocals",
+      "generateSec": 3,
+      "keepSec": 1.5,
+      "candidates": 4,
+      "kind": "sting",
+      "kbps": 48,
+      "budgetBytes": 11000
+    }
+  ],
+  "synthesisedNotGenerated": [
+    "card clash hit, verdict pop and count-up ticks (pitch must be exact and they cost no bytes)",
+    "umpire calls stay on speechSynthesis en-GB"
+  ],
+  "report": "After generation write docs/sound/generated.json: per sound the kept take's prompt, generateSec, the take number, final duration, bytes per format; plus agent-audio commit, backend, model revision, host and date."
+}

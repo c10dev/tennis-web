@@ -1,6 +1,8 @@
 // Quick-screen UI sounds as data (ADR-029, TD-047): each cue is a few tone and noise voices, plus a crowd duck for the
-// face-down hold. The mixer only plays what this returns, so the sounds can be tested without Web Audio.
+// face-down hold. The result's stinger names a generated sample (ADR-027); its voices stand in until that has loaded.
+// The mixer only plays what this returns, so the sounds can be tested without Web Audio.
 import { AUDIO } from '../tuning/audio.ts';
+import type { SampleId } from './samples.ts';
 
 export type UiCue =
   | { kind: 'deal'; i: number }
@@ -10,7 +12,8 @@ export type UiCue =
   | { kind: 'clash'; matchup: 'won' | 'lost' | 'even' }
   | { kind: 'tick'; i: number; n: number; down: boolean }
   | { kind: 'rise' }
-  | { kind: 'stamp' };
+  | { kind: 'stamp' }
+  | { kind: 'sting'; won: boolean };
 
 interface Envelope { delay: number; attack: number; decay: number; peak: number }
 export type Voice =
@@ -20,6 +23,8 @@ export type Voice =
 export interface UiSound {
   voices: Voice[];
   duck?: { bus: 'crowd'; level: number; sec: number };
+  /** A generated sample to play instead of the voices once it has loaded. */
+  sample?: SampleId;
 }
 
 const U = AUDIO.ui;
@@ -61,5 +66,13 @@ export function uiSound(cue: UiCue): UiSound {
     case 'stamp':
       return { voices: [tone(U.stamp.freq, U.stamp.peak, U.stamp.decay, { wave: 'sine', endFreq: U.stamp.freq * 0.5 }),
         noise('bandpass', U.stamp.noise.freq, U.stamp.noise.q, U.stamp.noise.peak, U.stamp.noise.decay)] };
+    case 'sting': {
+      const s = U.sting;
+      const notes = cue.won ? s.won : s.lost;
+      return {
+        sample: cue.won ? 'sting-win' : 'sting-lose',
+        voices: notes.map((f, k) => tone(f, s.peak, k === notes.length - 1 ? s.lastDecay : s.decay, { delay: k * s.stepSec })),
+      };
+    }
   }
 }

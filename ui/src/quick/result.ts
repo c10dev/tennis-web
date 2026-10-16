@@ -2,6 +2,7 @@
 // then the result, the points counting up, the players passed, the ratings that rose, the next goal and [Play again].
 // Motion (ADR-021): the tiles rise 120 ms apart, the points count up with an ease-out, the names passed slide in, each
 // rating that rose ticks up, the goal locks in. Click, space or Enter skips to the end; reduced motion starts there.
+// Sound (TD-047, ADR-027): the stinger as the result shows (or on a skip), a rising tick as each count-up climbs.
 // Every final text is in the page from the start; the reveal only shows it.
 import { SCHEMA_VERSION, replayMatch, type PointEvent } from '@tennis/engine';
 import { QUICK_PACE, QUICK_REWARD, quickResultView, startQuick } from '@tennis/game';
@@ -77,7 +78,11 @@ export function quickResult(ctx: Ctx): Screen {
   /** The reveal, step by step; a skip ends it (skip() shows everything at once). */
   async function run() {
     const steps: [string, HTMLElement | null, () => Promise<void>][] = [
-      ['result', headline, () => seq.wait(R.stepSec)],
+      // The stinger as the headline shows (ADR-027): the generated sample once loaded, else its stand-in notes.
+      ['result', headline, () => {
+        sound.ui({ kind: 'sting', won: v.won });
+        return seq.wait(R.stepSec);
+      }],
       // Each new number ticks, climbing over the count (falling for a loss) (ADR-029).
       ['points', gains, () => countUp(count, v.delta, R.countSec, seq, signed, 0,
         (x) => sound.ui({ kind: 'tick', i: Math.abs(x) - 1, n: Math.abs(v.delta), down: v.delta < 0 }))],

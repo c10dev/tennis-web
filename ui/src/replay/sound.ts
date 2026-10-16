@@ -1,4 +1,5 @@
-// Sound toggle and mixer sliders. Audio starts on the first click (browser autoplay policy) and stays off until then.
+// Sound toggle and mixer sliders. Audio starts on the first click (browser autoplay policy) and stays off until then;
+// that click also starts loading the generated samples (ADR-027).
 import { createMixer, type Bus, type Mixer } from '@tennis/renderer';
 
 export interface Sound {
@@ -22,6 +23,7 @@ export function createSound(root: HTMLElement): Sound {
   toggle.addEventListener('click', () => {
     if (!mixer) {
       mixer = createMixer();
+      void mixer.loadSamples(`${import.meta.env.BASE_URL}audio/`);
       for (const [bus, label] of BUSES) sliders.append(slider(mixer, bus, label));
     } else mixer.setMuted(!mixer.muted);
     const on = !mixer.muted;

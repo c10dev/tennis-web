@@ -2,7 +2,8 @@
 // crowd bed, remembered mute) plus what the Toss build needs. The mute is kept in the platform settings too (Toss
 // storage); a hidden page suspends the audio at once and a return resumes it if sound is on; a resume the browser
 // refuses (iOS WKWebView) is retried on the next tap. `document.body.dataset.audio` shows 'running', 'suspended' or
-// 'off' for the e2e tests.
+// 'off' for the e2e tests. The generated samples (ADR-027) are fetched when the audio first opens (a tap), never before, so
+// they never slow the first screen; `dataset.audioSamples` shows 'none', 'loading', 'ready', 'partial' or 'failed'.
 import { createMixer, type UiCue } from '@tennis/renderer/audio';
 import { createAppSound, type AppSound, type AppSoundDeps } from '../lib/sound.ts';
 import { getPlatform } from '../platform/index.ts';
@@ -12,6 +13,9 @@ export interface AudioSession extends AppSound {
   /** Calls `fn` with the new mute whenever it changes; returns an unsubscribe. */
   subscribe(fn: (muted: boolean) => void): () => void;
 }
+
+/** Where the samples are: next to the page (the toss build's base is './'). */
+const SAMPLES = `${import.meta.env.BASE_URL}audio/`;
 
 function createSession(): AudioSession {
   let storage: AppSoundDeps['storage'];
@@ -26,6 +30,7 @@ function createSession(): AudioSession {
   const listeners = new Set<(muted: boolean) => void>();
   const mark = () => {
     document.body.dataset.audio = !core.muted && core.made ? core.made.state : 'off';
+    document.body.dataset.audioSamples = core.made?.samples ?? 'none';
   };
   const notify = () => {
     for (const fn of listeners) fn(core.muted);
@@ -67,7 +72,10 @@ function createSession(): AudioSession {
       notify();
     },
     unlock() {
+      const before = core.made;
       core.unlock();
+      const made = core.made;
+      if (!before && made) void made.loadSamples(SAMPLES).then(mark);
       resume();
       mark();
     },

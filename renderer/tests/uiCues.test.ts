@@ -7,6 +7,7 @@ const ALL: UiCue[] = [
   { kind: 'deal', i: 0 }, { kind: 'deal', i: 2 }, { kind: 'pick' }, { kind: 'hold' }, { kind: 'flip' },
   { kind: 'clash', matchup: 'won' }, { kind: 'clash', matchup: 'lost' }, { kind: 'clash', matchup: 'even' },
   { kind: 'tick', i: 0, n: 24, down: false }, { kind: 'rise' }, { kind: 'stamp' },
+  { kind: 'sting', won: true }, { kind: 'sting', won: false },
 ];
 const top = (cue: UiCue) => Math.max(...uiSound(cue).voices.filter((v) => v.type === 'tone').map((v) => v.freq));
 
@@ -60,5 +61,23 @@ describe('tickFreq', () => {
     const f = Array.from({ length: 10 }, (_, i) => tickFreq(i, 10, true));
     for (let i = 1; i < f.length; i++) expect(f[i]!).toBeLessThanOrEqual(f[i - 1]!);
     expect(f[9]!).toBeLessThan(f[0]!);
+  });
+});
+
+describe('the result stinger (ADR-027)', () => {
+  it('names the generated sample for a win or a loss, with stand-in notes that rise for a win and fall for a loss', () => {
+    const won = uiSound({ kind: 'sting', won: true });
+    const lost = uiSound({ kind: 'sting', won: false });
+    expect(won.sample).toBe('sting-win');
+    expect(lost.sample).toBe('sting-lose');
+    const pitches = (s: typeof won) => s.voices.map((v) => (v.type === 'tone' ? v.freq : 0));
+    const w = pitches(won);
+    const l = pitches(lost);
+    for (let i = 1; i < w.length; i++) expect(w[i]!).toBeGreaterThan(w[i - 1]!);
+    for (let i = 1; i < l.length; i++) expect(l[i]!).toBeLessThan(l[i - 1]!);
+  });
+
+  it('is the only cue that names a sample', () => {
+    for (const cue of ALL) if (cue.kind !== 'sting') expect(uiSound(cue).sample, cue.kind).toBeUndefined();
   });
 });

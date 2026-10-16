@@ -1,6 +1,7 @@
 // The simultaneous reveal (ADR-021, after Marvel Snap): both cards lie face down for a beat, flip at the same instant
 // (one class on the parent, so neither side shows first), and the verdict pops a little later with a small clash: one
 // white frame and a 6 px kick on the winning card. Timing comes from QUICK_PACE.reveal, which the pace model sums.
+// Sound (TD-047, ADR-027): the crowd hushes while the cards lie face down, and the verdict pops with a clash.
 import type { Card } from '@tennis/engine';
 import type { UiCue } from '@tennis/renderer/audio';
 import { QUICK_PACE, type revealView } from '@tennis/game';

@@ -36,5 +36,22 @@ export const AUDIO = {
     tick: { base: 659.25, maxSemitones: 12, downSemitones: 7, minGapSec: 0.045, peak: 0.1, decay: 0.04 },
     rise: { notes: [783.99, 1174.66], stepSec: 0.07, peak: 0.14, decay: 0.12 },
     stamp: { freq: 140, peak: 0.4, decay: 0.16, noise: { freq: 900, q: 0.7, peak: 0.25, decay: 0.1 } },
+    /** The result's stinger (ADR-027) as the headline shows: the generated sample once loaded, else three notes, rising
+     *  for a win and falling for a loss. */
+    sting: { won: [523.25, 659.25, 783.99], lost: [392, 329.63, 261.63], stepSec: 0.14, peak: 0.25, decay: 0.14, lastDecay: 0.3 },
+  },
+  /** Generated samples (TD-016, docs/sound/manifest.json) and how cues map onto them. */
+  samples: {
+    /** Crowd intensity at which the applause turns loud, and at which a cheer goes on top. */
+    bigApplauseAt: 0.5, cheerAt: 0.8,
+    /** Grass reuses the hard-court bounce, lower and softer. */
+    grassRate: 0.85, grassGain: 0.75,
+    /** Ball speed (km/h) for full power; rate spans ±rateSpread/2 with power, plus ±jitter from shot to shot. */
+    fullPowerKmh: 200, rateSpread: 0.12, jitter: 0.03,
+    replayGain: 0.6,
+    /** The crowd bed loops this far inside each end of its file, clear of codec padding. */
+    loopInsetSec: 0.05,
+    /** Seconds over which the synthesised bed hands over to the sample bed once it has loaded. */
+    bedFadeSec: 1.5,
   },
 } as const;

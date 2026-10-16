@@ -58,6 +58,25 @@ Vocabulary (ITF Duties & Procedures for Officials, 2018, section G; call the ser
 Advantage X, Game X, Tie-break, Game and first set X, Game set and match X; Time, Quiet please. Names are fictional
 and generated, so split clips into phrase parts ("Advantage" + name) or synthesize every name at build time.
 
+### Generated samples: agent-audio and Stable Audio 3 (2026-10-16, supersedes the Freesound default for TD-016)
+The user chose [agent-audio](https://github.com/AIEGOBOT/agent-audio) (MIT; commit `9b679ed` read on 2026-10-16)
+to generate the ball and crowd samples and the result stingers; the work order is `docs/sound/manifest.json`.
+It runs Stable Audio 3 Medium from `stabilityai/stable-audio-3-optimized` (pinned revision `da6edc5`, not gated
+on Hugging Face: no token needed). Terms read from the repo's `LICENSE.md` and `LICENSE_GEMMA.md`:
+- **Stability AI Community License** (updated 2024-07-05). Outputs: "You own any outputs generated from the Models
+  … to the extent permitted by applicable law" (§IV.c.iii), and outputs are excluded from "Derivative Works".
+- **Commercial use** (§III) is free below US$1M annual revenue but requires registering at
+  https://stability.ai/community-license, as the Toss release may count as commercial; the user registered on 2026-10-16.
+- **Attribution** (§IV.a): a NOTICE file with "This Stability AI Model is licensed under the Stability AI Community
+  License, Copyright © Stability AI Ltd. All Rights Reserved" and a prominent "Powered by Stability AI" apply to
+  distributing the model or derivatives "or a product or service that uses any portion of them". Shipping only
+  outputs is arguably outside this, but the wording is ambiguous, so the default is to comply: `ui/public/audio/
+  NOTICE.txt` and the line in the docs; an in-app credit is open.
+- **Restrictions** (§IV.b): follow the law and Stability's AUP; outputs must not be used to train another
+  foundation generative model.
+- **T5Gemma** text encoder under the Gemma Terms of Use: "Google claims no rights in Outputs you generate using
+  Gemma"; the Gemma Prohibited Use Policy applies.
+
 ### Procedural option
 A hit can be synthesized instead of sampled: a 6–10 ms noise burst band-passed around 1.5–3 kHz plus a 30–60 ms
 resonant body; gain by `speedKmh`, a duller filter on clay and softer on grass. No tennis-specific paper found;
