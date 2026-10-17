@@ -1367,3 +1367,33 @@ Format: one entry per decision, newest at the bottom.
   iOS resume retry and `body.dataset.audio`; the audio opens on the first tap or key press anywhere. The switch is
   `ui/src/audio/toggle.ts`, pinned on every quick screen inside the safe area and left of the Toss corner (icon only
   on a phone); the broadcast takes `{ sound }` with a `mixer` getter.
+
+## ADR-030: The hybrid edit: the quick match plays as one continuous picture from the crunch
+- **Date:** 2026-10-17
+- **Context:** On the 2026-10-17 device test the quick match "teleported": it played one window per point (the last
+  contact of a point without cards, the last three of a decision point) and jumped the clock between them, so under the
+  fixed TV view (ADR-024 note) every skip was a jump cut. docs/presentation-spec.md E0–E8 diagnosed it and offered three
+  edits; the user chose C, the hybrid: "첫 결정 직전 포인트부터는 이어서 재생하고, 그 전 포인트들은 와이프로 넘겨".
+- **Decision:**
+  - **What plays** (`game/src/quick/spans.ts`, tuning `QUICK_PACE.hybrid`). Before the first decision each point is a
+    unit: from its serve at 2× until 0.7 s before its last contact, then 1×; a 0.5 s wipe carrying the score joins
+    the units. The last point before the first decision plays live (1×), and from there on nothing is cut: each walk
+    back at 5× with a ▶▶ chip, points without cards as the units, the point before a stop and the decision point at 1×
+    (a decision point longer than keyMaxSec runs its start at 2×). The batch before a stop ends with the walk to the
+    next point's start, into the decision hold. Every speed change ramps over 0.25 s of screen time.
+  - **The walk into the hold** (renderer `movement.ts`): after the last point of a match in progress the players walk
+    to the next point's ready spots (`readySpot`, moved from hold.ts) instead of freezing and being placed there. After
+    the hold they ease over `HOLD_RELEASE_SEC` (0.5 s) to where the engine starts the point (`releasedPlayers`), up to
+    a metre away. The hold now applies to the mannequin too.
+  - **Playback** (`Broadcast.playSpans`, `ui/src/replay/clip.ts spanStep`): contiguous spans play as one stretch; only
+    its first frame is held (TD-037). `playWindow` is a one-span stretch; `clipStep` is gone. `programmeTimeFor` maps a
+    time past the last live moment to its end (the trailing walk). `body[data-ff]` marks a walk span,
+    `body[data-wipe]` a wipe (`ui/src/quick/wipe.ts`, `points.ts`). Fast mode is unchanged.
+  - **Budget:** a new target `medianHybridSeconds` 60–100 s (spec E7) beside the old 0–60 s ones, which still guard the
+    TV and game paces of the mannequin report rows. Measured over 2,000 matches: median **78 s** (TV pace 23 s, game
+    pace 43 s), thinking time aside.
+- **Consequences:** e2e `quick-continuity.spec.ts` samples every frame's match second and fails on any jump not under a
+  wipe; on the old flow it caught eight jumps of 2.5–14 s in two decisions. A match is about 35 s longer on screen than
+  the game pace. The seconds model leaves out the 8 s changeovers (≈ 1 s at 5×) and the ramps (≈ 0.1 s each). The
+  outcome line no longer freezes the picture for 0.6 s: it stays up while the walk back plays. E5's captions are not
+  built yet (TD-075); the walk into the hold ends facing the way the player walked, then the stance turns to the net.

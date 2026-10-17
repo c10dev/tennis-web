@@ -12,6 +12,7 @@ import { fixedBot, randomBot, type Bot, type BotView } from './bots.ts';
 import { finishQuick, newLadder, rankOf } from './ladder.ts';
 import { autoPlay, createQuickMatch, decide, decisionContext, matchOver, startQuick, type QuickMatch } from './match.ts';
 import { broadcastSeconds } from './pace.ts';
+import { hybridSeconds } from './spans.ts';
 import { personaOf } from './persona.ts';
 import { opponentTactic, planTactic } from './plan.ts';
 import type { DecisionRecord, GamePlan, Persona, RivalRecord } from './types.ts';
@@ -54,11 +55,13 @@ export interface WinRate {
   seconds: number[];
   /** The same at the game pace (ADR-024, TD-060). */
   gameSeconds: number[];
+  /** The same in the hybrid edit (ADR-030), the 3D quick match since 2026-10-17. */
+  hybridSeconds: number[];
 }
 
 /** Win rate of `bot` (an average player) against an average AI of every style and persona. */
 export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): WinRate {
-  const out: WinRate = { win: 0, aiCards: [], points: [], decisions: [], seconds: [], gameSeconds: [] };
+  const out: WinRate = { win: 0, aiCards: [], points: [], decisions: [], seconds: [], gameSeconds: [], hybridSeconds: [] };
   for (let i = 0; i < n; i++) {
     const { result, decisions } = botMatch(tiebreakConfig(averagePlayer('Bot'), styled(STYLES[i % 4]!), i), streamSeed(seed, 'm', i), bot, opponent ? { opponent } : {});
     if (result.winner === 'A') out.win++;
@@ -68,6 +71,7 @@ export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): WinR
     out.decisions.push(decisions.length);
     out.seconds.push(broadcastSeconds(pts));
     out.gameSeconds.push(broadcastSeconds(pts, 'game'));
+    out.hybridSeconds.push(hybridSeconds(pts));
   }
   out.win /= n;
   return out;

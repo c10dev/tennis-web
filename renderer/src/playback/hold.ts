@@ -1,9 +1,10 @@
 // The decision hold (ADR-024 S2, TD-061): while the cards are up the next point has not been played, so the players
 // are not on the timeline. Both wait where it will start, in a ready stance, and the opponent's body shows the tell.
 // A function of the hold's own seconds, so the idle and any sway keep moving while match time stands still.
-import { COURT, type Card, type PlayerId, type Vec2 } from '@tennis/engine';
-import { READY_SPOTS, READY_STANCE, HOLD_STANCES, RIG_MOTION, type StanceCue } from '../tuning/index.ts';
-import { positionAt } from './movement.ts';
+import type { Card, PlayerId, Vec2 } from '@tennis/engine';
+import { READY_STANCE, HOLD_STANCES, RIG_MOTION, type StanceCue } from '../tuning/index.ts';
+import { lerp, smoothstep } from '../math.ts';
+import { readySpot } from './movement.ts';
 import type { PlayerPose } from './pose.ts';
 import type { Effectors, StrokePose } from './stroke.ts';
 import type { Timeline } from './timeline.ts';
@@ -20,19 +21,12 @@ interface Spot { pos: Vec2; facing: Vec2 }
 const NEUTRAL: StanceCue = { depth: 0, lean: 0, drop: 0, sway: 0, swayHz: 0, step: 0, stepHz: 0, bounce: 0, bounceHz: 0 };
 const v3 = (a: readonly [number, number, number]) => ({ x: a[0], y: a[1], z: a[2] });
 
-/** Where each player starts the next point: the server at the centre mark, the receiver wide and deep, each on the
- *  end they will play it from, in the deuce or advantage court; facing the net. */
+/** Where each player starts the next point (movement `readySpot`, where the walk after the last point ends), facing
+ *  the net. */
 export function readyPositions(timeline: Timeline): Record<PlayerId, Spot> {
-  const seg = timeline.segments.at(-1)!;
-  const after = seg.point.scoreAfter;
-  const deuce = (after.points[0] + after.points[1]) % 2 === 0;
   const spot = (id: PlayerId): Spot => {
-    const was = Math.sign(positionAt(timeline, id, seg.end).y) || (id === 'A' ? -1 : 1);
-    const side = seg.changesEnds ? -was : was;
-    const s = id === after.server ? READY_SPOTS.server : READY_SPOTS.receiver;
-    // The deuce court is the right of a player facing the net: −x on the near end (side −1), +x on the far end.
-    const right = side === -1 ? 1 : -1;
-    return { pos: { x: (deuce ? right : -right) * s.x, y: side * (COURT.halfLength + s.back) }, facing: { x: 0, y: -side } };
+    const pos = readySpot(timeline, id);
+    return { pos, facing: { x: 0, y: -Math.sign(pos.y) } };
   };
   return { A: spot('A'), B: spot('B') };
 }
@@ -83,4 +77,19 @@ export function heldPlayers(timeline: Timeline, tell: TellStance | null, since: 
   const spots = readyPositions(timeline);
   const cue = (id: PlayerId) => (tell && tell.player === id ? HOLD_STANCES[tell.card][tell.index] ?? NEUTRAL : NEUTRAL);
   return { A: stancePose(spots.A, cue('A'), since), B: stancePose(spots.B, cue('B'), since) };
+}
+
+/** `u` (0–1) of the way from the held poses to the timeline's, after the hold (ADR-030): the position and facing ease
+ *  over, the body is the timeline's at once (it is a ready stance either way). */
+export function releasedPlayers(from: Record<PlayerId, PlayerPose>, to: Record<PlayerId, PlayerPose>, u: number): Record<PlayerId, PlayerPose> {
+  if (u >= 1) return to;
+  const k = smoothstep(Math.max(0, u));
+  const one = (id: PlayerId): PlayerPose => {
+    const a = from[id];
+    const b = to[id];
+    const f = { x: lerp(a.facing.x, b.facing.x, k), y: lerp(a.facing.y, b.facing.y, k) };
+    const n = Math.hypot(f.x, f.y);
+    return { ...b, pos: { x: lerp(a.pos.x, b.pos.x, k), y: lerp(a.pos.y, b.pos.y, k) }, facing: n > 1e-6 ? { x: f.x / n, y: f.y / n } : b.facing };
+  };
+  return { A: one('A'), B: one('B') };
 }

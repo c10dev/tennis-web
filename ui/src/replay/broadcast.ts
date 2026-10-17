@@ -6,7 +6,7 @@ import {
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
   type DirectorStyle, type HoldShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
-import { clipStep } from './clip.ts';
+import { spanStep, type PlaySpan, type SpanState } from './clip.ts';
 import { createControls } from './controls.ts';
 import { createSound } from './sound.ts';
 
@@ -18,6 +18,9 @@ export interface Broadcast {
   dispatch(action: ClockAction): void;
   /** Plays match seconds [from, to] at `speed`, then stops; resolves when done (quick matches). */
   playWindow(from: number, to: number, speed: number): Promise<void>;
+  /** Plays these contiguous match-second spans as one stretch, each speed change ramped over `rampSec` (the hybrid
+   *  edit, ADR-030); resolves at the last one's end. */
+  playSpans(spans: readonly PlaySpan[], rampSec?: number): Promise<void>;
   /** Resolves once the loaded match's shaders are compiled; await it before the first clip (TD-037). */
   ready(): Promise<void>;
   /** Hold a shot over the picture until cleared (the quick match's decision hold, ADR-024 S2). */
@@ -68,7 +71,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   const style = options.style ?? 'broadcast';
   let held: HoldShot | null = null;
   const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false, style }) : buildProgramme(timeline, mode, undefined, { style }));
-  let clipWindow: { end: number; speed: number; done: () => void; first: boolean } | null = null;
+  /** The stretch playing (programme seconds). Its first frame draws its start, so a slow first frame (shader compile,
+   *  scene build) cannot skip the opening (TD-037). */
+  let stretch: { spans: PlaySpan[]; at: SpanState; rampSec: number; done: () => void; first: boolean } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
   const overlays = createOverlays();
@@ -113,13 +118,17 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     if (programme && viewer && warmed) {
       resize();
       const before = clock.t;
-      if (clipWindow) {
-        clock = { ...clock, t: clipStep(clock.t, clipWindow.end, dt, clipWindow.speed, clipWindow.first) };
-        clipWindow.first = false;
-        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, clipWindow.speed)) sound.mixer.play(cue);
-        if (clock.t >= clipWindow.end) {
-          const { done } = clipWindow;
-          clipWindow = null;
+      if (stretch) {
+        if (!stretch.first) stretch.at = spanStep(stretch.spans, stretch.at, dt, stretch.rampSec);
+        stretch.first = false;
+        clock = { ...clock, t: stretch.at.t };
+        const span = stretch.spans[Math.min(stretch.at.i, stretch.spans.length - 1)]!;
+        // Read by the quick match's ▶▶ chip (presentation spec E3) and the e2e tests.
+        document.body.dataset.ff = span.gap && stretch.at.i < stretch.spans.length ? '1' : '';
+        if (sound.mixer) for (const cue of cuesBetween(programme, before, clock.t, span.speed)) sound.mixer.play(cue);
+        if (stretch.at.i >= stretch.spans.length) {
+          const { done } = stretch;
+          stretch = null;
           done();
         }
       } else {
@@ -171,13 +180,17 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     },
     dispatch,
     playWindow(from, to, speed) {
-      if (!programme) return Promise.resolve();
+      return this.playSpans([{ from, to, speed }]);
+    },
+    playSpans(given, rampSec = 0) {
+      if (!programme || !given.length) return Promise.resolve();
       const p = programme;
+      const spans = given.map((s) => ({ ...s, from: programmeTimeFor(p, s.from), to: Math.max(programmeTimeFor(p, s.from), programmeTimeFor(p, s.to)) }));
       return new Promise<void>((done) => {
-        clipWindow?.done();
-        clock = { ...clock, playing: false, t: programmeTimeFor(p, from) };
-        clipWindow = { end: Math.max(clock.t, programmeTimeFor(p, to)), speed, done, first: true };
-        // Read by the e2e tests: the first frame of the window must show this time.
+        stretch?.done();
+        clock = { ...clock, playing: false, t: spans[0]!.from };
+        stretch = { spans, at: { i: 0, t: spans[0]!.from, since: 0 }, rampSec, done, first: true };
+        // Read by the e2e tests: the first frame of the stretch must show this time.
         document.body.dataset.clipFrom = clock.t.toFixed(2);
       });
     },
@@ -187,8 +200,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       viewer?.hold(shot);
     },
     dispose() {
-      clipWindow?.done();
-      clipWindow = null;
+      stretch?.done();
+      stretch = null;
       cancelAnimationFrame(raf);
       controls?.dispose();
       own?.dispose();

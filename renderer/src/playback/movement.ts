@@ -1,7 +1,7 @@
 // Where each player stands at replay time t: moved between the positions the shot events record.
-import type { PlayerId, PointEvent, Vec2 } from '@tennis/engine';
+import { COURT, type PlayerId, type PointEvent, type Vec2 } from '@tennis/engine';
 import { lerp, trapezoid } from '../math.ts';
-import { COURT_DRAW, PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
+import { COURT_DRAW, PLAYBACK, READY_SPOTS, RIG_MOTION } from '../tuning/index.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
 interface Key { tau: number; pos: Vec2 }
@@ -51,15 +51,37 @@ function changeEnds(id: PlayerId, from: Vec2, to: Vec2): Vec2[] {
   return [from, { x, y: Math.sign(from.y) }, { x, y: Math.sign(to.y) }, to];
 }
 
+/** Where a player will start the point after the last one of a match in progress, not played yet (the decision
+ *  hold, TD-061): the server at the centre mark, the receiver wide and deep, on the end they will play it from, in the
+ *  deuce or advantage court. */
+export function readySpot(timeline: Timeline, id: PlayerId): Vec2 {
+  const seg = timeline.segments.at(-1)!;
+  const after = seg.point.scoreAfter;
+  const deuce = (after.points[0] + after.points[1]) % 2 === 0;
+  const was = Math.sign(within(seg.point, id, seg.end - seg.zero).y) || (id === 'A' ? -1 : 1);
+  const side = seg.changesEnds ? -was : was;
+  const s = id === after.server ? READY_SPOTS.server : READY_SPOTS.receiver;
+  // The deuce court is the right of a player facing the net: −x on the near end (side −1), +x on the far end.
+  const right = side === -1 ? 1 : -1;
+  return { x: (deuce ? right : -right) * s.x, y: side * (COURT.halfLength + s.back) };
+}
+
+/** Where the walk after point `i` goes: the next point's start, or for the last point of a match in progress where
+ *  the next will start (ADR-030: the quick match plays that walk into its decision hold); none after the match. */
+function gapTarget(timeline: Timeline, id: PlayerId, i: number): Vec2 | null {
+  const next = timeline.segments[i + 1];
+  if (next) return keys(next.point, id)[0]!.pos;
+  return timeline.complete ? null : readySpot(timeline, id);
+}
+
 /** During a point, positions move between keyframes; in the pause after it, players walk to the next point's start. */
 export function positionAt(timeline: Timeline, id: PlayerId, t: number): Vec2 {
   const i = segmentAt(timeline, t);
   const seg = timeline.segments[i]!;
   if (t < seg.end) return within(seg.point, id, t - seg.zero);
   const last = within(seg.point, id, seg.end - seg.zero);
-  const next = timeline.segments[i + 1];
-  if (!next) return last;
-  const start = keys(next.point, id)[0]!.pos;
+  const start = gapTarget(timeline, id, i);
+  if (!start) return last;
   const u = (t - seg.end) / (seg.next - seg.end);
   if (Math.sign(start.y) !== Math.sign(last.y)) return along(changeEnds(id, last, start), u);
   return ease(last, start, u);
@@ -84,10 +106,9 @@ function travelledWithin(point: PointEvent, id: PlayerId, tau: number): number {
 /** Length of the walk after point `i` (to the next point's start, round the net post at a change of ends). */
 function gapLength(timeline: Timeline, id: PlayerId, i: number): number {
   const seg = timeline.segments[i]!;
-  const next = timeline.segments[i + 1];
-  if (!next) return 0;
+  const start = gapTarget(timeline, id, i);
+  if (!start) return 0;
   const last = within(seg.point, id, seg.end - seg.zero);
-  const start = keys(next.point, id)[0]!.pos;
   return Math.sign(start.y) !== Math.sign(last.y) ? pathLength(changeEnds(id, last, start)) : dist(last, start);
 }
 
@@ -122,7 +143,6 @@ export function distanceAt(timeline: Timeline, id: PlayerId, t: number): number 
   const base = segmentOffsets(timeline)[id][i]!;
   if (t < seg.end) return base + travelledWithin(seg.point, id, t - seg.zero);
   const inPoint = travelledWithin(seg.point, id, seg.end - seg.zero);
-  if (!timeline.segments[i + 1]) return base + inPoint;
   const u = Math.min(1, Math.max(0, (t - seg.end) / (seg.next - seg.end)));
   return base + inPoint + gapLength(timeline, id, i) * trapezoid(u, RIG_MOTION.easeRamp);
 }

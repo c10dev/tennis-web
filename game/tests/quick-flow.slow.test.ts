@@ -18,6 +18,7 @@ describe('quick-match flow balance (ADR-017)', () => {
     within(median(random.points), T.medianPoints, 0);
     within(median(random.seconds), T.medianSeconds, 3);
     within(median(random.gameSeconds), T.medianSeconds, 3);
+    within(median(random.hybridSeconds), T.medianHybridSeconds, 3);
   });
 
   it('stops for cards two to five times a match (median three), at least twice in nine matches of ten', () => {

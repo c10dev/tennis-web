@@ -84,12 +84,14 @@ export function clipAt(programme: Programme, t: number): Clip {
   return c[lo]!;
 }
 
-/** Programme second showing match second T live, or the next live moment after it; 0 if none. */
+/** Programme second showing match second T live, or the next live moment after it; past the last live moment, its
+ *  end (a quick match plays the walk after its last point to there, ADR-030); 0 if nothing is live. */
 export function programmeTimeFor(programme: Programme, T: number): number {
   const live = programme.clips.filter((c) => c.kind === 'live');
   const inside = live.find((c) => T >= c.matchFrom && T < c.matchFrom + c.duration);
   if (inside) return inside.start + (T - inside.matchFrom);
-  return live.find((c) => c.matchFrom >= T)?.start ?? 0;
+  const last = live.at(-1);
+  return live.find((c) => c.matchFrom >= T)?.start ?? (last ? last.start + last.duration : 0);
 }
 
 /** The deciding contact of a decisive point won by an ace or a winner (ADR-024 S3), and its hitter. */

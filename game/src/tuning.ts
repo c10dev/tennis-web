@@ -197,6 +197,11 @@ export const QUICK_PACE = {
    *  screen time the renderer's impact moment adds: (0.15 + 0.35) s at 0.25× plus a 0.07 s hit-stop, less the
    *  0.5 s it stands in for (renderer BROADCAST.impact). */
   game: { keyShots: 3, leadSec: 0.7, impactSec: 1.57 },
+  /** The hybrid edit (ADR-030, presentation spec E8 C), how every 3D quick match plays since 2026-10-17. Points
+   *  without cards run at `fastSpeed` until `leadSec` before their last contact, then 1×; the walk back between points
+   *  (`gapSec`, renderer PLAYBACK.pointGapSec; the model leaves out the 8 s changeovers) at `gapSpeed`; the opening
+   *  units are joined by a `wipeSec` wipe. The UI ramps every speed change over `rampSec` of screen time (E3). */
+  hybrid: { fastSpeed: 2, gapSpeed: 5, gapSec: 2.5, leadSec: 0.7, rampSec: 0.25, wipeSec: 0.5 },
 } as const;
 
 // ---- M6 (ADR-017). Each block belongs to one workstream: flow (TIEBREAK_RULES, QUICK_MOMENTS, QUICK_PLAN),

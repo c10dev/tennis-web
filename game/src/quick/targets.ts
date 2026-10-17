@@ -13,6 +13,8 @@ export const QUICK_TARGETS = {
     p90Decisions: { min: 2, max: 5 },
     /** Seconds on screen per match, decisions aside. */
     medianSeconds: { min: 0, max: 60 },
+    /** The same in the hybrid edit (ADR-030), how the 3D quick match plays: presentation spec E7's 60–100 s. */
+    medianHybridSeconds: { min: 60, max: 100 },
     /** Point-win shift for a won matchup at a decision point, average players. */
     matchupEdge: { min: 0.2, max: 0.3 },
     ladderClimb30: { min: 10, max: 25 },

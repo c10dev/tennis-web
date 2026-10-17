@@ -10,12 +10,13 @@ import { chasePose } from './camera/chase.ts';
 import { impactPose } from './camera/impact.ts';
 import { fitFov } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
-import { heldPlayers } from './playback/hold.ts';
+import { heldPlayers, releasedPlayers } from './playback/hold.ts';
+import type { PlayerPose } from './playback/pose.ts';
 import type { Timeline } from './playback/timeline.ts';
 import { createFrameMeter, tierSettings, type QualityTier } from './quality.ts';
 import type { PlayerModel } from './scene/playerModel.ts';
 import { createStage } from './scene/stage.ts';
-import { CAMERA } from './tuning/index.ts';
+import { CAMERA, HOLD_RELEASE_SEC } from './tuning/index.ts';
 
 export interface Viewer {
   resize(width: number, height: number): void;
@@ -65,6 +66,9 @@ export function createViewer(
   let held: HoldShot | null = null;
   /** Seconds the current hold has been on screen: the ready stance's idle and sway run on it. */
   let heldFor = 0;
+  /** The players last drawn, and after a ready hold its poses and the seconds since it ended (the release, ADR-030). */
+  let drawn: Record<PlayerId, PlayerPose> | null = null;
+  let release: { from: Record<PlayerId, PlayerPose>; for: number } | null = null;
   return {
     resize(width, height) {
       size = { w: width, h: height };
@@ -74,6 +78,7 @@ export function createViewer(
     },
     hold(shot) {
       if (shot !== held) heldFor = 0;
+      if (held?.ready && !shot?.ready && drawn) release = { from: drawn, for: 0 };
       held = shot;
     },
     setTimeline(next) {
@@ -96,7 +101,13 @@ export function createViewer(
         heldFor += dt;
         frame.players = heldPlayers(timeline, held.ready.tell, heldFor);
         frame.ball = null;
+      } else if (release) {
+        // The point starts where the engine put it, up to a metre from the ready spot: ease over, never jump.
+        release.for += dt;
+        frame.players = releasedPlayers(release.from, frame.players, release.for / HOLD_RELEASE_SEC);
+        if (release.for >= HOLD_RELEASE_SEC) release = null;
       }
+      drawn = frame.players;
       // A held shot without a focus must not keep the frame's (a tell on B over a close-up on A).
       if (!shot.focus) delete frame.focus;
       stage.applyFrame(frame);

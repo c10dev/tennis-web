@@ -78,6 +78,11 @@
   animation-duration: 0s !important; animation-delay: 0s !important; transition-duration: 0s !important; transition-delay: 0s !important; }
 
 /* Reduced motion: every flip, pop, slide and count-up is a cut (the TS shows final numbers directly). */
+/* The wipe's sweeps (half of QUICK_PACE.hybrid.wipeSec each, set by wipe.ts) and the ▶▶ chip's fade (ADR-030). */
+.wipe.is-on { transition: transform var(--wipe-half) ease-in; }
+.wipe.is-off { transition: transform var(--wipe-half) ease-out; }
+.ff-chip { transition: opacity 120ms; }
+
 @media (prefers-reduced-motion: reduce) {
   .quick-match *, .quick-match *::before, .quick-match *::after,
   .quick-result, .quick-result *, .quick-result *::before, .quick-result *::after {

@@ -77,3 +77,7 @@ export const HOLD_STANCES: Record<Card, readonly StanceCue[]> = {
     cue({ step: 0.45, stepHz: 0.5 }),
   ],
 };
+
+/** Seconds after the decision hold over which each player eases from the ready spot to where the point really starts
+ *  (READY_SPOTS is the middle of the engine's range, up to about a metre off; ADR-030). */
+export const HOLD_RELEASE_SEC = 0.5;

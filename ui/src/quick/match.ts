@@ -1,10 +1,11 @@
 // A quick match (ADR-017): points without cards tick by on the score; at a decision point the match stops, the
 // opponent read shows, the user picks a card (keys 1/2/3), both cards are revealed and the point plays in 3D (or as
-// text in fast mode). The 3D code loads only when it is used.
+// text in fast mode). The 3D code loads only when it is used. In 3D the match plays the hybrid edit (ADR-030): the
+// opening points as units behind wipes, then from the point before the first decision on one continuous picture.
 import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
-  autoPlay, cardChoices, clipFor, clipSpeed, concedeQuick, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
+  autoPlay, batchPlan, cardChoices, concedeQuick, decide, DECISION_SHOWN, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
   tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
@@ -17,6 +18,8 @@ import { cardIcon } from '../lib/icons.ts';
 import { stagger } from '../lib/motion.ts';
 import { playReveal, revealElement } from './reveal.ts';
 import { renderRead } from './scout.ts';
+import { pointPlayer } from './points.ts';
+import { createWipe } from './wipe.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -39,9 +42,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const sound = appSound();
   // The 3D redesign (ADR-024; `?rig=mannequin` for the M7 look): skinned players, the game camera and its decision hold.
   const slice = ctx.fastMode ? null : await (await import('../replay/model.ts')).sliceFromQuery();
-  // The slice plays the game pace (ADR-024, TD-060): every point at 1×, less of each, whatever the camera.
-  const pace = slice ? 'game' : 'tv';
   const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound, ...(slice ?? {}) });
+  const wipe = broadcast ? createWipe() : null;
+  if (wipe) stage.append(wipe.element);
+  const play = broadcast ? pointPlayer(broadcast, () => timeline!) : null;
   /** The deal sounds, one per card on the CSS deal stagger (motion.css: 120 ms, then 60 ms apart); cut short by a pick. */
   let deals: ReturnType<typeof setTimeout>[] = [];
   const stopDeals = () => {
@@ -55,14 +59,21 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
 
   /** Plays on to the next decision point, ticking each point by; then the choose screen, or the result. */
   async function run() {
+    const decided = qm!.decisions.length > 0;
     const points = autoPlay(qm!);
-    if (broadcast && points.length) {
+    if (broadcast) {
       load();
       await broadcast.ready();
     }
-    for (const p of points) {
+    const plan = batchPlan(points.length, decided, !matchOver(qm!));
+    for (const [k, p] of points.entries()) {
       if (disposed) return;
-      if (broadcast) await playClip(p);
+      phase('auto');
+      if (broadcast) {
+        const shown = plan[k]!;
+        if (shown.wipe) await wipe!.play(tickerView(qm!, points[k - 1]!, T).score, () => play!.seekTo(p));
+        if (!disposed) await play!.play(p, shown);
+      }
       if (disposed) return;
       const v = tickerView(qm!, p, T);
       panel.replaceChildren(h('div', { class: 'ticker', id: 'ticker' },
@@ -70,16 +81,22 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('div', { class: 'tick-line' }, h('strong', { id: 'score-line', class: 'tick-score' }, v.score),
           h('span', { class: `tick-point ${v.winner}` }, `${U.pointFor(v.winner === 'you')} · ${v.how}`)),
         pipRow(qm!, p, true)));
-      phase('auto');
-      await sleep(QUICK_PACE.autoSec * 1000);
+      // Fast mode ticks each point by; in 3D the next point's walk back is the beat.
+      if (!broadcast) await sleep(QUICK_PACE.autoSec * 1000);
     }
     if (disposed) return;
     if (matchOver(qm!)) {
+      await sleep(QUICK_PACE.autoSec * 1000);
+      if (disposed) return;
       const next = finishQuick(ctx.quick!, qm!);
       ctx.quickMatch = null;
       await ctx.setQuick(next, '#/quick/result');
       return;
     }
+    // The walk to the next point's start plays into the hold (the decision point when two stops come in a row).
+    const last = lastPoint(qm!);
+    if (play && last) await play.walkOn(last);
+    if (disposed) return;
     drawChoose();
   }
 
@@ -103,7 +120,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     // The game camera cuts to a tell shot; the fixed TV view stays on the main camera, both at the next point's start.
     const ready = { tell: tell ? { player: 'B' as const, card: tell.card, index: tell.index } : null };
     if (slice?.style === 'game') broadcast?.hold({ camera: 'tell', focus: 'B', ready });
-    else if (slice) broadcast?.hold({ camera: 'main', ready });
+    else broadcast?.hold({ camera: 'main', ready });
     phase('choose');
   }
 
@@ -132,12 +149,13 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       await broadcast.ready();
       if (disposed) return;
       phase('clip');
-      await playClip(point);
+      await play!.play(point, DECISION_SHOWN);
     }
     if (disposed) return;
     panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, `${r.how} · ${U.pointFor(r.winner === 'you').toLocaleLowerCase()} · ${scoreLine(qm!)}`));
     phase('outcome');
-    await sleep(QUICK_PACE.scoreSec * 1000);
+    // In 3D the outcome stays up while the walk back plays on; fast mode holds it for a beat.
+    if (!broadcast) await sleep(QUICK_PACE.scoreSec * 1000);
     busy = false;
     if (!disposed) await run();
   }
@@ -148,12 +166,6 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     timeline = broadcast!.load({ schemaVersion: SCHEMA_VERSION, config: qm!.live.config, events: [...qm!.live.events] }, { keepTime: true });
   };
 
-  /** Plays the window `clipFor` gives this point at its pace (pace.ts models the same seconds). */
-  async function playClip(point: PointEvent) {
-    const seg = timeline!.segments.find((x) => x.point.index === point.index)!;
-    const clip = clipFor(point, pace);
-    await broadcast!.playWindow(seg.zero + clip.fromTau, seg.zero + clip.toTau, clipSpeed(point, pace));
-  }
 
   const onKey = (e: KeyboardEvent) => {
     if (dialogOpen()) return;

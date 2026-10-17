@@ -41,7 +41,8 @@ Values in `renderer/src/tuning/camera.ts` (`CAMERA`), pose in `camera/mainCam.ts
 ### C3. Decision stop
 While the cards are up, the camera stays on the Main view. The frame shows the next point's start: both players at
 their serve and return spots, the ball out of play, and the opponent in the stance their tell names (`hold` with
-`camera: 'main'`, `ready.tell`).
+`camera: 'main'`, `ready.tell`). The players walk there on the timeline before the hold (E8 C) and ease to the
+engine's real start after it.
 
 ### C4. Shots not in use (need a spec change to return)
 These shots stay in the code and can be reached in dev only (`?cams=game` for ADR-024's chase camera, close-ups and
@@ -61,8 +62,9 @@ impact moment.
 
 ### F1. The flow (as built)
 1. **Ladder home**: pick a game plan, then Play.
-2. **Points without cards** play on the plan. Each shows a clip, then a ticker line: the score, who won and how, a pip
-   per point.
+2. **Points without cards** play on the plan, in the hybrid edit (E8 C, ADR-030): before the first decision as
+   units behind wipes, from the point before it on as one continuous picture. Each point ends with a ticker line: the
+   score, who won and how, a pip per point.
 3. **A decision stop** comes once either player has 5 points, and at set or match points. There are at most 5 a match.
    The stop shows:
    - a banner naming the moment ("매치 포인트", "5-5 동점", "승부처");
@@ -71,14 +73,15 @@ impact moment.
    - three cards, dealt 60 ms apart.
 4. **The pick**: the card lifts for 0.15 s. Both cards then lie face down for 0.5 s, flip together in 0.28 s, and the
    verdict pops 0.15 s later. This is `QUICK_PACE.reveal`, 1.08 s in all.
-5. **The decision point's clip** plays, then an outcome line with the score for 0.6 s, and the match goes on.
+5. **The decision point** plays live from its serve, then an outcome line with the score stays up while the walk back
+   to the next point plays.
 6. **The result**: the decisive point replayed (3D, or a play-by-play in fast mode), then the headline, the points
    counting up, the players passed, the ratings that rose and the next goal. A tap skips to the end.
 7. **Leaving**: the leave button (L5), or Android back, asks "기권할까요?"; conceding is a loss at the score so far.
 
 Fast mode has no 3D. The same flow runs as the ticker and panels only.
 
-### E0. What is wrong today (the "teleporting")
+### E0. What was wrong (the "teleporting", fixed by E8 C on 2026-10-17)
 The match's timeline is continuous: after each point the players walk 2.5 s to the next point's start
 (`PLAYBACK.pointGapSec`, `playback/movement.ts`). The quick match does not play the timeline, though. It plays one
 **window** per point (`clipFor` in `game/src/quick/pace.ts`) and jumps the clock to the next window
@@ -100,16 +103,17 @@ screen times below leave out thinking time.
 | TV pace (3× clips, mannequin) | 26.5 s |
 | Game pace (1× windows, today) | 50.1 s |
 
-### E1–E7. The grammar (Proposed)
+### E1–E7. The grammar (built 2026-10-17, ADR-030, except E5)
 - **E1. Time is never skipped silently.** Within a shot, match time only moves forward, continuously. Time may be
   compressed (E3) or skipped behind a marked transition (E6), never by a plain jump with the same framing.
 - **E2. A point starts at its start.** A shown point opens on the serve: the toss, or at least the ball in the server's
-  hand. It never opens mid-rally.
+  hand. It never opens mid-rally. This holds for the units behind wipes too (E8's table said "others last shot" for
+  B; C opens them on the serve instead).
 - **E3. Dead time is sped through, not cut.** The walk back between points plays at about 5× with a small "▶▶" chip.
   Speed changes ramp over 0.25 s, never in steps.
 - **E4. Live play at 1× when it matters.** Decision points and the point before them play at 1×. Earlier points
   without cards may run at up to 2×, ramping down before the last contact so the ending lands at 1×.
-- **E5. Context before content.** Every stop and every point that matters gets one line of why:
+- **E5. Context before content.** **Proposed, not built (TD-075).** Every stop and every point that matters gets one line of why:
   - a lower-third before the point ("브레이크 포인트", "3연속 실점", "매치 포인트");
   - a one-line result after it ("상대 포핸드 위너").
   - Captions come from the events. They never cover the court's near half or the score bug.
@@ -120,7 +124,7 @@ screen times below leave out thinking time.
 - **E7. Rhythm budget.** A match is 60–100 s on screen, under 2 minutes with thinking time (ADR-014's 1–2 minutes).
 
 ### E8. Fixing the teleporting: options
-| | A. Continuous with speed ramps | B. One unit per point, wiped | C. Hybrid (recommended) |
+| | A. Continuous with speed ramps | B. One unit per point, wiped | C. Hybrid (**chosen, built**) |
 |---|---|---|---|
 | What plays | The whole timeline from the first serve: every walk back at 5×, points without cards at 2×, decision points at 1× | Each point from its serve to its end (decisions ≤ 8 s, others last shot), a 0.5 s wipe between points carrying the score | Continuous (A) from the point before the first decision onwards; the opening points before it as B units, wiped |
 | Teleporting | None | None (every jump is a marked transition) | None |
@@ -130,17 +134,30 @@ screen times below leave out thinking time.
 
 The screen times are estimates from the 40-match sample.
 
-**Recommendation: C.**
+**Chosen: C** (the user, 2026-10-17; built as ADR-030). Measured over 2,000 matches: **78 s** median on screen.
+
+As built:
+| Stretch | What plays | Speed |
+|---|---|---|
+| Opening units (before the first decision, but the last) | Serve to end, a 0.5 s wipe carrying the score before each but the first | 2× until 0.7 s before the last contact, then 1× |
+| The point before the first decision | Serve to end, after a wipe | 1× |
+| Every walk back after it | The players walk to the next start, ▶▶ chip | 5× |
+| Points without cards after it | Serve to end | As the units |
+| The point before a stop, the decision point | Serve to end | 1× (a decision point past 8 s runs its start at 2×) |
+| Into a stop | The walk to the next point's ready spots, then the hold (C3) | 5× |
+| Out of a stop | The players ease 0.5 s from the ready spots to the engine's start | 1× |
+
+Speed changes ramp over 0.25 s (E3). Code: `game/src/quick/spans.ts`, `ui/src/quick/{points,wipe}.ts`,
+`Broadcast.playSpans`; e2e `quick-continuity.spec.ts` fails on any jump of match time not under a wipe.
+
+Why C:
 - The crunch reads as one continuous piece of tennis: the walk to the line, the serve, the rally at 1×.
 - The early points stay short, behind a clear "time passed" transition.
 - It meets E1–E7 and keeps the match under 2 minutes.
 
-**Build notes:**
-- A and C need the quick match to play the timeline in stretches (a speed curve over match time) instead of jumping
-  between windows. `clipFor` and `pointSeconds` become a pace curve in `game/src/quick/pace.ts`, and the broadcast gets
-  `playSpan(from, to, speedAt)`.
-- The decision stop (C3) still pauses the clock at the next point's start. A continuous stretch therefore ends at every
-  stop and starts again after the reveal.
+**Build notes:** the decision stop (C3) still pauses the clock at the next point's start, so a continuous stretch ends
+at every stop and starts again after the reveal. `clipFor` and `pointSeconds` (pace.ts) stay for the report's TV and
+game pace rows only.
 
 ---
 
@@ -270,8 +287,9 @@ There is one audio session, `ui/src/audio/session.ts` over `lib/sound.ts`.
 ## 5. Open items
 | Item | Rule | Where it stands |
 |---|---|---|
-| Teleporting between points | E8 | Proposed: option C, awaiting the user's choice |
+| Teleporting between points | E8 | Built (C, ADR-030); to check on a device: the walk into the hold and the release (TD-076) |
+| Context captions | E5 | Proposed (TD-075) |
 | iOS header overlap | L2 | Waiting for the `[safe-area]` log values from a device |
 | Phone frame times, quality tiers | — | TD-059, on a device |
 | Ogg Opus on iOS | S4 | TD-070, on a device |
-| Shots to bring back (replay angle, impact) | C4 | After E8 is built |
+| Shots to bring back (replay angle, impact) | C4 | E8 is built; open for a decision |
