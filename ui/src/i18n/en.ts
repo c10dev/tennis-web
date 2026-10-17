@@ -53,4 +53,5 @@ export const enUi: UiText = {
   soundOff: 'Sound off',
   concede: { title: 'Concede this match?', body: 'It counts as a loss.', ok: 'Concede', cancel: 'Keep playing' },
   leave: { title: 'Leave the game?', ok: 'Leave', cancel: 'Stay' },
+  leaveMatch: 'Leave',
 };

@@ -104,3 +104,16 @@ describe('broadcastFrameAt', () => {
     expect(result.scoreBug.final).toBe(true);
   });
 });
+
+describe('programme in the fixed TV view', () => {
+  it('has no impact moments and only main-camera live clips', async () => {
+    const { buildProgramme } = await import('../src/broadcast/programme.ts');
+    const { buildTimeline } = await import('../src/playback/timeline.ts');
+    const { match } = await import('./fixtures.ts');
+    const p = buildProgramme(buildTimeline(match(2)), 'full', () => null, { intro: false, style: 'tv' });
+    const live = p.clips.filter((c) => c.kind === 'live');
+    expect(live.length).toBeGreaterThan(0);
+    expect(new Set(live.map((c) => c.camera))).toEqual(new Set(['main']));
+    expect(p.clips.some((c) => c.kind === 'slowmo' || c.kind === 'hitstop')).toBe(false);
+  });
+});

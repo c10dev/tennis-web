@@ -1125,6 +1125,13 @@ Format: one entry per decision, newest at the bottom.
   as well as `hold`, `setTimeline` and `stats`; the quick match waits for the warm-up after clearing the hold, and its
   deal sounds and the tell hold both start when the cards are dealt. The default look is this ADR's; `?rig=mannequin`
   shows the M7 look, now with ADR-028's polished capsule rig.
+- **Fixed TV view (2026-10-17, after the first device test):** the user found the game camera's cutting mechanical,
+  without context or transitions, and asked to fix the camera on the TV view first. A new director style `tv` holds
+  the main camera all match (no serve, reaction, side, close-up or impact shots); it is the default for the quick
+  match, its result replay and the replay page. `?cams=game` brings back this ADR's chase camera and `?cams=broadcast`
+  the M3 TV director. The skinned players and the 1× game pace stay; the decision hold stays on the main camera with
+  the opponent in the tell stance at the next point's start. The editing between points (the jumps between clips)
+  is open: it moves to a presentation spec to be written before more code.
 
 ## ADR-025: Quick-match balance: five card stops, situational plans, rivals that adapt
 - **Date:** 2026-10-16

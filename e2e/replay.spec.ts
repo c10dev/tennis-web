@@ -76,9 +76,21 @@ test.describe('replay page', () => {
     expect(errors).toEqual([]);
   });
 
-  test('cuts between the game cameras where the game director says (the default, ADR-024)', async ({ page }) => {
+  test('holds the fixed TV view by default: the main camera all through (2026-10-17)', async ({ page }) => {
     const errors = watchErrors(page);
     await open(page, '/?seed=42&surface=clay');
+    const programme = buildProgramme(buildTimeline(simulateMatch(exhibitionConfig('clay'), 42)), 'full', undefined, { style: 'tv' });
+    const live = programme.clips.filter((c) => c.kind === 'live' && c.duration > 0.5);
+    for (const clip of live.slice(0, 4)) {
+      await seek(page, clip.start + clip.duration / 2);
+      expect((await dataset(page)).camera).toBe('main');
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test('cuts between the game cameras where the game director says (?cams=game, ADR-024)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/?seed=42&surface=clay&cams=game');
     const programme = buildProgramme(buildTimeline(simulateMatch(exhibitionConfig('clay'), 42)), 'full', undefined, { style: 'game' });
     const cameras = [...new Set(programme.clips.filter((c) => c.duration > 0.5).map((c) => c.camera))];
     expect(cameras).toContain('chase');

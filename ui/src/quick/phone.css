@@ -61,6 +61,8 @@
   /* The switch shrinks to its icon on a phone (the label stays for screen readers). */
   .sound-switch { min-height: 44px; min-width: 44px; justify-content: center; top: calc(var(--safe-top) + 8px);
     right: calc(var(--safe-right) + var(--nav-reserve) + 8px); padding: 4px 12px; }
+  .leave-match { min-height: 44px; top: calc(var(--safe-top) + 64px); left: calc(var(--safe-left) + 8px); }
+  .quick-match.fast .leave-match { top: calc(var(--safe-top) + 8px); }
   .sound-switch .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
   /* The result: one column, the three tiles still side by side. */

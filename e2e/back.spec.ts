@@ -37,3 +37,20 @@ test.describe('back and concede', () => {
     await expect(page.locator('#recent li').first()).toHaveText(/^L · /);
   });
 });
+
+// iPhones have no back button (2026-10-17 device test): the match shows its own leave button.
+test.describe('leave button', () => {
+  test('is on the match screen and asks before conceding', async ({ page }) => {
+    await toMatch(page);
+    const leave = page.locator('#leave-match');
+    await expect(leave).toBeVisible();
+    await leave.click();
+    await expect(page.getByRole('dialog')).toContainText('Concede this match?');
+    await page.locator('#confirm-cancel').click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await leave.click();
+    await page.locator('#confirm-ok').click();
+    await expect(page).toHaveURL(/#\/quick\/result$/);
+    await expect(page.locator('#quick-result h1')).toHaveText(/^You conceded \d+-\d+$/);
+  });
+});

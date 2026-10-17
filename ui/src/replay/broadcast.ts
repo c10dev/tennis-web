@@ -4,7 +4,7 @@
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, initialTier, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type HoldShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
+  type DirectorStyle, type HoldShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
 import { clipStep } from './clip.ts';
 import { createControls } from './controls.ts';
@@ -37,7 +37,7 @@ export interface BroadcastOptions {
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
   /** Skinned players and the game camera (ADR-024 slice); the mannequin and the TV director without them. */
   model?: PlayerModel | null;
-  style?: 'broadcast' | 'game';
+  style?: DirectorStyle;
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });

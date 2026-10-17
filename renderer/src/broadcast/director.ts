@@ -13,7 +13,9 @@ export interface TrackShot extends CameraShot {
 }
 
 
-export type DirectorStyle = 'broadcast' | 'game';
+/** `tv` holds the main camera all match (the quick match's fixed TV view, 2026-10-17); `broadcast` is the M3 TV
+ *  director with its cuts; `game` the ADR-024 chase camera. */
+export type DirectorStyle = 'broadcast' | 'game' | 'tv';
 
 /**
  * A point that decided something worth a close-up in the game style (ADR-024): an ace or winner on a break, set or
@@ -39,6 +41,7 @@ function gameTrack(timeline: Timeline, lay: (shot: TrackShot) => void): void {
 
 export function cameraTrack(timeline: Timeline, { style = 'broadcast' }: { style?: DirectorStyle } = {}): TrackShot[] {
   let track: TrackShot[] = [{ from: 0, to: timeline.totalSec, camera: style === 'game' ? 'chase' : 'main' }];
+  if (style === 'tv') return track;
   const lay = (shot: TrackShot) => {
     const from = Math.max(0, shot.from);
     const to = Math.min(timeline.totalSec, shot.to);

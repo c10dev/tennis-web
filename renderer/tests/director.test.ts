@@ -67,3 +67,13 @@ describe('cameraTrack', () => {
     expect(at(plain.zero + plain.point.shots[3]!.t).camera).toBe('main');
   });
 });
+
+describe('the fixed TV view (style tv)', () => {
+  it('stays on the main camera for the whole match: no cuts to serve, reaction, side or close-ups', () => {
+    for (const m of SAMPLE) {
+      const tl = buildTimeline(m);
+      const track = cameraTrack(tl, { style: 'tv' });
+      expect(track).toEqual([{ from: 0, to: tl.totalSec, camera: 'main' }]);
+    }
+  });
+});

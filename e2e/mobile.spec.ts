@@ -126,6 +126,11 @@ test.describe('phone layout (toss build)', () => {
     expect(overlaps(bug, tossCorner(t))).toBe(false);
     const sound = await box(page.locator('#sound-toggle'));
     expect(sound.height).toBeGreaterThanOrEqual(44);
+    // iPhones have no back button: the leave button, clear of the score, the panel and Toss's corner.
+    const leave = await box(page.locator('#leave-match'));
+    expect(leave.height).toBeGreaterThanOrEqual(44);
+    expect(leave.y).toBeGreaterThanOrEqual(t.safeTop);
+    for (const other of [panel, bug, sound, tossCorner(t)]) expect(overlaps(leave, other)).toBe(false);
     for (const other of [panel, bug, tossCorner(t)]) expect(overlaps(sound, other)).toBe(false);
     await noSideScroll(page);
     // A tap picks the card; no hover lift sticks on a touch screen.

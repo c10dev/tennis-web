@@ -59,3 +59,7 @@
   font-weight: 800; }
 .chip.attack { color: var(--atk-text); } .chip.defend { color: var(--def-text); } .chip.counter { color: var(--ctr-text); }
 .chip .icon { flex: none; }
+/* The way out of a match (iPhones have no back button): a small paper pill under the score bug, top left. */
+.leave-match { position: fixed; z-index: 6; top: calc(var(--safe-top) + 84px); left: calc(var(--safe-left) + 16px);
+  padding: 5px 12px; font-size: 14px; border-radius: 999px; }
+.quick-match.fast .leave-match { top: calc(var(--safe-top) + 12px); }

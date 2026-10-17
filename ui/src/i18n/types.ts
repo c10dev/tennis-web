@@ -51,4 +51,5 @@ export interface UiText {
   soundOff: string;
   concede: { title: string; body: string; ok: string; cancel: string };
   leave: { title: string; ok: string; cancel: string };
+  leaveMatch: string;
 }

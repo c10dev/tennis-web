@@ -10,6 +10,7 @@ export { lineCall, type LineCall } from './broadcast/hawkeye.ts';
 export { selectPoints } from './broadcast/modes.ts';
 export { isCloseCall, replayInserts, wantsReplay } from './broadcast/replay.ts';
 export { buildProgramme, clipAt, programmeTimeFor } from './broadcast/programme.ts';
+export type { DirectorStyle } from './broadcast/director.ts';
 export type { CameraId, CameraShot, Clip, ClipKind, HoldShot, Programme, ViewMode } from './broadcast/types.ts';
 export { heldPlayers, type TellStance } from './playback/hold.ts';
 export { cameraPose } from './camera/cameras.ts';

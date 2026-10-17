@@ -10,7 +10,7 @@ import {
 import type { Ctx, Screen } from '../career/context.ts';
 import { appSound } from '../audio/session.ts';
 import { T, U } from '../i18n/index.ts';
-import { dialogOpen } from '../lib/confirm.ts';
+import { confirmDialog, dialogOpen } from '../lib/confirm.ts';
 import { buzz } from '../lib/haptics.ts';
 import { h } from '../lib/h.ts';
 import { cardIcon } from '../lib/icons.ts';
@@ -33,12 +33,14 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   }
   const stage = h('div');
   const panel = h('div', { class: 'quick-panel', id: 'quick-panel' });
-  const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel);
+  // iPhones have no back button (2026-10-17 device test): the match carries its own way out, behind the same question.
+  const leave = h('button', { type: 'button', class: 'leave-match', id: 'leave-match', onclick: () => void askToLeave() }, U.leaveMatch);
+  const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel, leave);
   const sound = appSound();
   // The 3D redesign (ADR-024; `?rig=mannequin` for the M7 look): skinned players, the game camera and its decision hold.
   const slice = ctx.fastMode ? null : await (await import('../replay/model.ts')).sliceFromQuery();
-  // The slice plays the game pace (ADR-024, TD-060): every point at 1×, less of each.
-  const pace = slice?.style === 'game' ? 'game' : 'tv';
+  // The slice plays the game pace (ADR-024, TD-060): every point at 1×, less of each, whatever the camera.
+  const pace = slice ? 'game' : 'tv';
   const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound, ...(slice ?? {}) });
   /** The deal sounds, one per card on the CSS deal stagger (motion.css: 120 ms, then 60 ms apart); cut short by a pick. */
   let deals: ReturnType<typeof setTimeout>[] = [];
@@ -98,7 +100,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     // While the cards are up, the slice holds a shot of the opponent waiting for the point, whose body shows the tell
     // (TD-061).
     const tell = qm!.pending?.tell;
-    if (slice?.style === 'game') broadcast?.hold({ camera: 'tell', focus: 'B', ready: { tell: tell ? { player: 'B', card: tell.card, index: tell.index } : null } });
+    // The game camera cuts to a tell shot; the fixed TV view stays on the main camera, both at the next point's start.
+    const ready = { tell: tell ? { player: 'B' as const, card: tell.card, index: tell.index } : null };
+    if (slice?.style === 'game') broadcast?.hold({ camera: 'tell', focus: 'B', ready });
+    else if (slice) broadcast?.hold({ camera: 'main', ready });
     phase('choose');
   }
 
@@ -156,17 +161,21 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     if (card) void choose(card);
   };
   window.addEventListener('keydown', onKey);
+  /** Stop the flow where it is (every await checks `disposed`), then settle the match as a conceded loss. */
+  function concede() {
+    if (disposed || matchOver(qm!)) return;
+    disposed = true;
+    const next = concedeQuick(ctx.quick!, qm!);
+    ctx.quickMatch = null;
+    void ctx.setQuick(next, '#/quick/result');
+  }
+  async function askToLeave() {
+    if (await confirmDialog(U.concede)) concede();
+  }
   void run();
   return {
     element, bare: true,
-    concede() {
-      // Stop the flow where it is (every await checks `disposed`), then settle the match as a conceded loss.
-      if (disposed || matchOver(qm)) return;
-      disposed = true;
-      const next = concedeQuick(ctx.quick!, qm);
-      ctx.quickMatch = null;
-      void ctx.setQuick(next, '#/quick/result');
-    },
+    concede,
     dispose: () => {
       disposed = true;
       stopDeals();
