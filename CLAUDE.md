@@ -38,7 +38,7 @@ game/      src/{world,player,calendar,tournament,season,save,quick,views,tuning.
 renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts} tests/
 ui/        index.html src/{career,quick,replay,lib,storage,platform}   (Vite root)
 e2e/       Playwright specs (playwright.config.ts at the root)
-docs/      decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), m6-workstreams.md
+docs/      presentation-spec.md (current presentation rules), decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), 3d-redesign.md, m6-workstreams.md
 GDD.md     game design doc
 ```
 
@@ -65,5 +65,6 @@ GDD.md     game design doc
 
 ## Docs
 - `GDD.md` — vision, sim model, scoring, event schema, broadcast spec, milestones
+- `docs/presentation-spec.md` — **current rules** for camera, match flow and editing, layout and sound cues; change it first, then code (the source of truth for what the quick match shows)
 - `docs/decisions.md` — architecture decision log
 - `docs/tech-debt.md` — debt tracker
