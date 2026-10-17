@@ -49,7 +49,9 @@ export function createOverlays(): OverlayView {
   return {
     element,
     update(m, names) {
-      slot('replay', m.replay, (r) => r.append('REPLAY'));
+      // The replay tag's corner also says when play is slowed for the impact moment (ADR-024 S3).
+      const tag = m.replay ? 'REPLAY' : m.slowmo ? 'SLOW-MO' : false;
+      slot('replay', tag, (r) => r.append(tag || ''));
       slot('serve', m.serveSpeed, (r) => r.append(el('span', 'value', `${m.serveSpeed!.kmh} km/h`), el('span', 'label', m.serveSpeed!.label)));
       slot('rally', m.rally, (r) => r.append(el('span', 'label', 'Rally'), el('span', 'value', String(m.rally))));
       slot('lower', m.lowerThird, (r) => r.append(el('span', 'title', m.lowerThird!.title), el('span', 'detail', m.lowerThird!.detail ?? '')));

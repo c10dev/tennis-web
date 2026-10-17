@@ -4,7 +4,7 @@
 import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
-  autoPlay, cardChoices, concedeQuick, clipFor, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
+  autoPlay, cardChoices, clipFor, clipSpeed, concedeQuick, decide, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
   tickerView, type QuickMatch,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
@@ -35,7 +35,11 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const panel = h('div', { class: 'quick-panel', id: 'quick-panel' });
   const element = h('div', { class: `quick-match${ctx.fastMode ? ' fast' : ''}` }, stage, panel);
   const sound = appSound();
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
+  // The 3D redesign (ADR-024; `?rig=mannequin` for the M7 look): skinned players, the game camera and its decision hold.
+  const slice = ctx.fastMode ? null : await (await import('../replay/model.ts')).sliceFromQuery();
+  // The slice plays the game pace (ADR-024, TD-060): every point at 1×, less of each.
+  const pace = slice?.style === 'game' ? 'game' : 'tv';
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound, ...(slice ?? {}) });
   /** The deal sounds, one per card on the CSS deal stagger (motion.css: 120 ms, then 60 ms apart); cut short by a pick. */
   let deals: ReturnType<typeof setTimeout>[] = [];
   const stopDeals = () => {
@@ -56,7 +60,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     }
     for (const p of points) {
       if (disposed) return;
-      if (broadcast) await playClip(p, QUICK_PACE.autoSpeed);
+      if (broadcast) await playClip(p);
       if (disposed) return;
       const v = tickerView(qm!, p, T);
       panel.replaceChildren(h('div', { class: 'ticker', id: 'ticker' },
@@ -91,6 +95,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         h('span', { class: 'strength', title: U.strengthHint, role: 'img', 'aria-label': U.strengthHint }, h('span', { class: 'fill', style: `width:${Math.min(100, Math.round(c.strength * 60))}%` }))))));
     stagger(panel.querySelectorAll<HTMLElement>('.card-btn'));
     deals = [0, 1, 2].map((i) => setTimeout(() => sound.ui({ kind: 'deal', i }), 120 + 60 * i));
+    // While the cards are up, the slice holds a shot of the opponent waiting for the point, whose body shows the tell
+    // (TD-061).
+    const tell = qm!.pending?.tell;
+    if (slice?.style === 'game') broadcast?.hold({ camera: 'tell', focus: 'B', ready: { tell: tell ? { player: 'B', card: tell.card, index: tell.index } : null } });
     phase('choose');
   }
 
@@ -115,10 +123,11 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     if (!disposed) buzz(r.matchup === 'won' ? 'read' : r.matchup === 'lost' ? 'misread' : 'same');
     if (broadcast && !disposed) {
       load();
+      broadcast.hold(null);
       await broadcast.ready();
       if (disposed) return;
       phase('clip');
-      await playClip(point, QUICK_PACE.speed);
+      await playClip(point);
     }
     if (disposed) return;
     panel.querySelector('#reveal')?.append(h('p', { class: `outcome ${r.winner}`, id: 'outcome' }, `${r.how} · ${U.pointFor(r.winner === 'you').toLocaleLowerCase()} · ${scoreLine(qm!)}`));
@@ -134,11 +143,11 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
     timeline = broadcast!.load({ schemaVersion: SCHEMA_VERSION, config: qm!.live.config, events: [...qm!.live.events] }, { keepTime: true });
   };
 
-  /** Plays the window `clipFor` gives this point (pace.ts models the same seconds). */
-  async function playClip(point: PointEvent, speed: number) {
+  /** Plays the window `clipFor` gives this point at its pace (pace.ts models the same seconds). */
+  async function playClip(point: PointEvent) {
     const seg = timeline!.segments.find((x) => x.point.index === point.index)!;
-    const clip = clipFor(point);
-    await broadcast!.playWindow(seg.zero + clip.fromTau, seg.zero + clip.toTau, speed);
+    const clip = clipFor(point, pace);
+    await broadcast!.playWindow(seg.zero + clip.fromTau, seg.zero + clip.toTau, clipSpeed(point, pace));
   }
 
   const onKey = (e: KeyboardEvent) => {

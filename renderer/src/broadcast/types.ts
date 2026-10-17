@@ -1,15 +1,24 @@
 // The broadcast programme: what plays when, from which camera (ADR-009).
 import type { PlayerId } from '@tennis/engine';
+import type { TellStance } from '../playback/hold.ts';
 import type { Timeline } from '../playback/timeline.ts';
 
-export type CameraId = 'main' | 'serve' | 'reaction' | 'side' | 'hawkeye';
-export type ClipKind = 'live' | 'replay' | 'hawkeye' | 'intro' | 'result';
+/** Broadcast cameras, and the game cameras of ADR-024: the chase (K2), the tell on the opponent and the close-up. */
+export type CameraId = 'main' | 'serve' | 'reaction' | 'side' | 'hawkeye' | 'chase' | 'tell' | 'closeup' | 'impact';
+/** `slowmo` and `hitstop` are live play shown slowed and held, the game style's impact moment (ADR-024 S3). */
+export type ClipKind = 'live' | 'replay' | 'hawkeye' | 'intro' | 'result' | 'slowmo' | 'hitstop';
 export type ViewMode = 'full' | 'key' | 'highlights' | 'result';
 
 export interface CameraShot {
   camera: CameraId;
   /** The player the camera is on: the server for Serve Cam, the point winner for Reaction Cam. */
   focus?: PlayerId;
+}
+
+/** A shot held over the picture (the quick match's decision hold, ADR-024 S2). With `ready`, both players wait where
+ *  the next point starts, and the tell, when there is one, shows on its player's body (TD-061). */
+export interface HoldShot extends CameraShot {
+  ready?: { tell: TellStance | null };
 }
 
 export interface Clip extends CameraShot {

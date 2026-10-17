@@ -32,7 +32,7 @@ void main() {
 export interface TrailView {
   readonly object3d: Mesh;
   /** Lay the ribbon along the samples, newest first, tapering over `sec`; `scale` follows the ball's camera scale. */
-  apply(points: readonly TrailPoint[], scale: number, sec: number): void;
+  apply(points: readonly TrailPoint[], scale: number, sec: number, colour?: number): void;
 }
 
 export function createTrail(): TrailView {
@@ -68,10 +68,11 @@ export function createTrail(): TrailView {
   mesh.visible = false;
   return {
     object3d: mesh,
-    apply(points, scale, sec) {
+    apply(points, scale, sec, colour = BALL_LOOK.trail.colour) {
       const m = Math.min(points.length, n);
       mesh.visible = m >= 2;
       if (!mesh.visible) return;
+      material.uniforms.colour!.value.setHex(colour);
       const centres = points.slice(0, m).map((p) => toThree(p.pos));
       for (let i = 0; i < m; i++) {
         const a = centres[Math.max(0, i - 1)]!;

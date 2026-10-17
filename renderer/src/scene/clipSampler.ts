@@ -1,0 +1,80 @@
+// Clip sampling as a pure function of time (ADR-024): each bone's rotation (and the hips' position) is the weighted
+// blend of the clips at t, looped. Replaces AnimationMixer, which skips writing a value that has not changed since its
+// last update and so leaves whatever the stroke solver put on a bone in place.
+import { LinearInterpolant, Quaternion, QuaternionLinearInterpolant, Vector3, type AnimationClip, type Bone, type Interpolant } from 'three';
+
+interface Channel { bone: Bone; position: boolean; interpolant: Interpolant }
+export interface SampledClip { readonly name: string; readonly duration: number; readonly channels: Channel[] }
+
+/** Bind `clips` to the bones under `bones` (by name); tracks for missing bones are dropped. */
+export function bindClips(clips: AnimationClip[], bones: Record<string, Bone>): SampledClip[] {
+  return clips.map((clip) => ({
+    name: clip.name,
+    duration: clip.duration,
+    channels: clip.tracks.flatMap((track) => {
+      const [name, property] = track.name.split('.') as [string, string];
+      const bone = bones[name];
+      if (!bone) return [];
+      const position = property === 'position';
+      const size = track.getValueSize();
+      const interpolant = position ? new LinearInterpolant(track.times, track.values, size) : new QuaternionLinearInterpolant(track.times, track.values, size);
+      return [{ bone, position, interpolant }];
+    }),
+  }));
+}
+
+interface Rest { quaternion: Quaternion; position: Vector3 }
+
+/** Rest pose of every bone, captured once: what a bone holds where the clip weights add up to less than 1. */
+export const restPose = (bones: Record<string, Bone>): Map<Bone, Rest> =>
+  new Map(Object.values(bones).map((b) => [b, { quaternion: b.quaternion.clone(), position: b.position.clone() }]));
+
+/** One clip in the blend: its weight and the time (seconds into the clip, already looped or held by the caller). */
+export interface Layer { name: string; weight: number; time: number }
+
+/** Clip time for a looping clip at `phase` cycles (any real number). */
+export const loopTime = (clip: SampledClip | undefined, phase: number): number => (clip ? (phase - Math.floor(phase)) * clip.duration : 0);
+
+/**
+ * Pose the bones from the layers. Rotations blend by nlerp, each clip's quaternion taken on the rest pose's
+ * hemisphere so the result does not depend on clip order; weight short of 1 is filled with the rest pose.
+ */
+export function sampleClips(clips: SampledClip[], layers: Layer[], rest: Map<Bone, Rest>): void {
+  const quats = new Map<Bone, { q: Quaternion; w: number }>();
+  const positions = new Map<Bone, { p: Vector3; w: number }>();
+  const q = new Quaternion();
+  for (const layer of layers) {
+    const clip = clips.find((c) => c.name === layer.name);
+    const w = layer.weight;
+    if (!clip || w <= 0) continue;
+    const time = Math.min(Math.max(layer.time, 0), clip.duration);
+    for (const c of clip.channels) {
+      const v = c.interpolant.evaluate(time);
+      if (c.position) {
+        const acc = positions.get(c.bone) ?? { p: new Vector3(), w: 0 };
+        acc.p.x += v[0]! * w;
+        acc.p.y += v[1]! * w;
+        acc.p.z += v[2]! * w;
+        acc.w += w;
+        positions.set(c.bone, acc);
+      } else {
+        q.set(v[0]!, v[1]!, v[2]!, v[3]!);
+        const acc = quats.get(c.bone) ?? { q: new Quaternion(0, 0, 0, 0), w: 0 };
+        const s = q.dot(rest.get(c.bone)!.quaternion) < 0 ? -w : w;
+        acc.q.set(acc.q.x + q.x * s, acc.q.y + q.y * s, acc.q.z + q.z * s, acc.q.w + q.w * s);
+        acc.w += w;
+        quats.set(c.bone, acc);
+      }
+    }
+  }
+  for (const [bone, r] of rest) {
+    const qa = quats.get(bone);
+    if (qa) {
+      const left = Math.max(0, 1 - qa.w);
+      bone.quaternion.set(qa.q.x + r.quaternion.x * left, qa.q.y + r.quaternion.y * left, qa.q.z + r.quaternion.z * left, qa.q.w + r.quaternion.w * left).normalize();
+    } else bone.quaternion.copy(r.quaternion);
+    const pa = positions.get(bone);
+    if (pa) bone.position.copy(pa.p).addScaledVector(r.position, Math.max(0, 1 - pa.w));
+    else bone.position.copy(r.position);
+  }
+}

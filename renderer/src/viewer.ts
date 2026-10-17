@@ -1,13 +1,19 @@
 // WebGL shell around a Stage: renderer, broadcast cameras and resizing. The only renderer file that needs a browser,
 // so it is kept free of logic and not unit-tested; everything it calls is.
 import { PerspectiveCamera, WebGLRenderer } from 'three';
+import type { PlayerId } from '@tennis/engine';
+import { heldShot } from './broadcast/director.ts';
 import type { BroadcastFrame } from './broadcast/frame.ts';
-import type { CameraId } from './broadcast/types.ts';
+import type { CameraId, HoldShot } from './broadcast/types.ts';
 import { cameraPose } from './camera/cameras.ts';
+import { chasePose } from './camera/chase.ts';
+import { impactPose } from './camera/impact.ts';
 import { fitFov } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
+import { heldPlayers } from './playback/hold.ts';
 import type { Timeline } from './playback/timeline.ts';
 import { createFrameMeter, tierSettings, type QualityTier } from './quality.ts';
+import type { PlayerModel } from './scene/playerModel.ts';
 import { createStage } from './scene/stage.ts';
 import { CAMERA } from './tuning/index.ts';
 
@@ -18,6 +24,12 @@ export interface Viewer {
   /** Compiles every material's shaders off the main thread where the browser can (KHR_parallel_shader_compile), so
    *  the first frame does not stall on them (TD-037). */
   warm(): Promise<void>;
+  /** Lay a shot over every frame until cleared (the decision hold, ADR-024 S2), or null to clear it. */
+  hold(shot: HoldShot | null): void;
+  /** The match grew under the same view (same surface): the chase and impact cameras and the stage read this one. */
+  setTimeline(timeline: Timeline): void;
+  /** Draw calls and triangles of the last frame drawn (budget checks, ADR-024). */
+  stats(): { calls: number; triangles: number };
   dispose(): void;
 }
 
@@ -25,9 +37,19 @@ export interface Viewer {
  * `tier` is the quality to start on (M7, ADR-022); antialiasing is fixed by it, the rest can change. The viewer
  * measures its frames and steps down to low once if they stay slow, telling `onTier`.
  */
-export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void): Viewer {
+export interface ViewerOptions {
+  /** Skinned players (ADR-024 slice); the mannequin without them. */
+  model?: PlayerModel | null;
+  /** The player the chase camera follows (ADR-024); A by default. */
+  me?: PlayerId;
+}
+
+export function createViewer(
+  canvas: HTMLCanvasElement, first: Timeline, tier: QualityTier = 'high', onTier?: (tier: QualityTier) => void, { model = null, me = 'A' }: ViewerOptions = {},
+): Viewer {
   const renderer = new WebGLRenderer({ canvas, antialias: tierSettings(tier).antialias });
-  const stage = createStage(timeline);
+  let timeline = first;
+  const stage = createStage(timeline, { model });
   const meter = createFrameMeter(tier);
   let size = { w: 0, h: 0 };
   const apply = (t: QualityTier) => {
@@ -40,6 +62,9 @@ export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline, tier
   let pan = 0;
   let shown: CameraId | null = null;
   let projected = { fov: 0, aspect: 0 };
+  let held: HoldShot | null = null;
+  /** Seconds the current hold has been on screen: the ready stance's idle and sway run on it. */
+  let heldFor = 0;
   return {
     resize(width, height) {
       size = { w: width, h: height };
@@ -47,19 +72,43 @@ export function createViewer(canvas: HTMLCanvasElement, timeline: Timeline, tier
       camera.aspect = width / height;
       stage.setAspect(camera.aspect);
     },
-    render(frame, dt) {
+    hold(shot) {
+      if (shot !== held) heldFor = 0;
+      held = shot;
+    },
+    setTimeline(next) {
+      timeline = next;
+      stage.setTimeline(next);
+    },
+    stats() {
+      const { calls, triangles } = renderer.info.render;
+      return { calls, triangles };
+    },
+    render(given, dt) {
       if (meter.push(dt)) {
         apply(meter.tier);
         onTier?.(meter.tier);
       }
+      const shot = heldShot(given, held);
+      const frame: BroadcastFrame = { ...given, ...shot };
+      if (held?.ready) {
+        // The next point is not played yet: both players wait at its start, the ball out of play (TD-061).
+        heldFor += dt;
+        frame.players = heldPlayers(timeline, held.ready.tell, heldFor);
+        frame.ball = null;
+      }
+      // A held shot without a focus must not keep the frame's (a tell on B over a close-up on A).
+      if (!shot.focus) delete frame.focus;
       stage.applyFrame(frame);
-      // A cut starts the pan where it wants to be; within a shot it eases there.
+      // A cut starts the pan where it wants to be; within a shot it eases there. Only the TV main camera pans: the
+      // chase is a pure function of match time (ADR-024).
       pan = frame.camera === shown ? dampPan(pan, panTarget(frame.ball), dt) : panTarget(frame.ball);
       shown = frame.camera;
       // The frame follows the view's shape (M7): an upright phone gets the portrait main camera, every camera a
       // minimum width; the projection is rebuilt when the field of view or the shape changes.
-      const pose = cameraPose(frame, pan, camera.aspect);
-      camera.fov = fitFov(pose, frame.camera, camera.aspect);
+      const pose = frame.camera === 'chase' ? chasePose(timeline, me, frame.matchT, camera.aspect)
+        : frame.camera === 'impact' ? impactPose(timeline, frame.pointIndex, frame) : cameraPose(frame, pan, camera.aspect);
+      camera.fov = frame.camera === 'chase' ? pose.fov : fitFov(pose, frame.camera, camera.aspect);
       if (camera.fov !== projected.fov || camera.aspect !== projected.aspect) {
         camera.updateProjectionMatrix();
         projected = { fov: camera.fov, aspect: camera.aspect };

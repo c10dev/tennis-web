@@ -18,6 +18,8 @@ export interface PointSegment {
   /** Replay second the next segment starts (end + the pause). */
   next: number;
   gap: GapKind;
+  /** The players change ends after this point (a changeover, also at a set's end). */
+  changesEnds: boolean;
   /** The point finished a game, and that game was a break of serve. */
   endsGame: boolean;
   isBreak: boolean;
@@ -68,12 +70,12 @@ export function buildTimeline(result: ReplayInput): Timeline {
   result.events.forEach((e, i) => {
     if (e.type === 'match_end') ({ score: finalScore, winner } = e);
     if (e.type !== 'point') return;
-    const { gap, endsGame, isBreak } = after(result, i);
+    const { gap, changesEnds, endsGame, isBreak } = after(result, i);
     const zero = t + PLAYBACK.tossLeadSec;
     const end = zero + e.durationSec;
     const next = end + GAP_SEC[gap];
     const last = e.shots.at(-1)!;
-    segments.push({ point: e, start: t, zero, landed: zero + last.t + last.flightSec, end, next, gap, endsGame, isBreak });
+    segments.push({ point: e, start: t, zero, landed: zero + last.t + last.flightSec, end, next, gap, changesEnds, endsGame, isBreak });
     t = next;
   });
   if (segments.length === 0) throw new Error('Replay has no points.');
@@ -99,7 +101,7 @@ function setCounts(segments: PointSegment[]): [number, number][] {
 }
 
 /** What the point at `index` finished (a game, a changeover, a set, the match), which sets the pause after it. */
-function after(result: ReplayInput, index: number): { gap: GapKind; endsGame: boolean; isBreak: boolean } {
+function after(result: ReplayInput, index: number): { gap: GapKind; changesEnds: boolean; endsGame: boolean; isBreak: boolean } {
   const kinds = new Set<string>();
   let isBreak = false;
   for (let j = index + 1; j < result.events.length && result.events[j]!.type !== 'point'; j++) {
@@ -108,7 +110,7 @@ function after(result: ReplayInput, index: number): { gap: GapKind; endsGame: bo
     if (e.type === 'game_end') isBreak = e.isBreak;
   }
   const gap: GapKind = kinds.has('match_end') ? 'match_end' : kinds.has('set_end') ? 'set_end' : kinds.has('changeover') ? 'changeover' : 'point';
-  return { gap, endsGame: kinds.has('game_end'), isBreak };
+  return { gap, changesEnds: kinds.has('changeover'), endsGame: kinds.has('game_end'), isBreak };
 }
 
 /** Index of the segment playing at replay time t (clamped to the match). */

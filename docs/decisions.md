@@ -893,7 +893,8 @@ Format: one entry per decision, newest at the bottom.
   - **Tests.** `renderer/tests/contact.test.ts`: per stroke, the racket-head centre is within 0.15 m of the ball at
     p95 and 0.3 m at worst over the six sample matches; the racket never moves more than 0.7 m on the body between
     60 fps frames. `ik.test.ts` covers the solver.
-- **Roadmap (each step approved separately):**
+- **Roadmap (each step approved separately; A2–A5 superseded by ADR-024 on 2026-10-16, their goals moved into its
+  stroke planner):**
   - **A2 body and stroke shape:** pelvis and chest split (unit turn, hip–shoulder separation), wrist and racket face,
     head tracking the ball, key poses per stroke (ready, unit turn, backswing, contact, finish), swing start timed
     from the incoming ball's flight instead of a fixed 0.3 s, two-handed backhand.
@@ -921,6 +922,209 @@ Format: one entry per decision, newest at the bottom.
   net line. `playerPose` no longer takes the frame's ball. Over eight further matches (1.9 M frames) the fastest
   turn is 0.25 rad per 60 fps frame (was up to π); a test keeps it under 0.35, and the racket continuity test is
   back in world space.
+
+## ADR-024: 3D redesign: game camera, Pop character, effector-key motion, sunny club
+- **Date:** 2026-10-16
+- **Status:** Accepted (grows with each vertical-slice step)
+- **Context:** The user asked for the 3D to be redone from design up (camera, character, motion, look), priority
+  motion → camera → character → arena, in a mobile casual tone (Tennis Clash's composition, Mario Tennis Aces'
+  exaggeration and impact) with the Rally Pop palette. `docs/3d-redesign.md` diagnosed today's build (the decision
+  hold is whatever frame the last clip left, usually Reaction Cam on the last point's winner; the near player is 10%
+  of the portrait stage and the far one at changeovers; points play at 2–3×; a faceless capsule mannequin whose lunge
+  slides both feet), compared 2–3 options per area with style frames (`docs/design/3d-redesign/`) and recommended a
+  set; the user took it.
+- **Decision:**
+  - **Camera:** a game camera, K2 chase, behind *my* player (6.2 m up, 7.7 m behind the baseline, 48° vertical),
+    sampled from the timeline over a window so it stays closed-form in time (ADR-007). Shots: S1 chase, S2 decision
+    hold on the opponent's tell, S3 impact close-up with hit-stop and slow motion on decisive shots only, S4 reaction
+    close-up, S5 replays with the kept broadcast cameras (Side, Hawk-Eye). Applies to the quick match and the replay
+    page; the season mode keeps the broadcast director for now.
+  - **Character:** C1 Pop, 3–3.5 heads at full adult height, a readable face, cap or headband; serve reach from a hop
+    scaled by contact height plus arm stretch at contact.
+  - **Motion:** D2 effector key poses (racket hand, racket direction, free hand, feet, pelvis, chest, crouch, head)
+    timed from shot events and solved with A1's two-bone IK onto `shot.from`, planting the front foot instead of
+    sliding the hips; CC0 KayKit clips for locomotion and reactions, sampled with `AnimationMixer.setTime`.
+  - **Arena:** A1 sunny club; A2 stadium kept for later.
+  - **Vertical slice first:** one point (serve, a short rally, a winner, the reaction, a replay) on the replay page
+    and the toss build, in steps: body pipeline (KayKit Adventurers, CC0, pruned and committed), effector-key strokes,
+    gait and reactions, chase camera and director, impact, the point end to end with phone measurements. The final
+    character look (commission, Tripo, or a modified KayKit) is decided from the slice.
+  - **Assets and tools:** only CC0 assets in the repo (it is public); a Node script with no new dependency prunes the
+    glb; meshopt and gltf-transform only if that falls short (each a separate approval).
+- **Consequences:** ADR-023's A2–A5 are superseded; TD-012, TD-039 and TD-058 move to this track. The quick match's
+  pacing (TD-060) and its decision-hold frame (TD-061) need game-layer and UI changes outside the renderer slice.
+- **Step 1, body (2026-10-16).** `renderer/cli/prune-player.ts` cuts KayKit's Rogue (CC0, repo commit `672074b`) to
+  `ui/public/models/player.glb` with `asset/glb.ts`, a dependency-free GLB reader, writer and pruner: six body meshes
+  (4,263 triangles), all 41 joints, the 16 KB palette texture and eight in-place clips (Idle, Running_A,
+  Running_Strafe_Left/Right, Walking_A, Walking_Backwards, Cheer, Hit_A) with rotation tracks on the 20 deform bones and
+  the hips' translation only: 350 KB, credited in `ui/public/models/CREDITS.md`. `scene/playerModel.ts` builds the
+  model from those bytes without GLTFLoader (one merged `SkinnedMesh`, the skeleton, the clips; bone names sanitised
+  as three's loaders do, `upperarm.r` → `upperarmr`), so tests build exactly what the page draws; only the texture
+  decode (`createImageBitmap`) is browser-only. The source is 2.15 heads at 2.19 units; the body keeps its size and
+  the head bone (a leaf, so a uniform scale cannot shear) is scaled 0.57, giving 1.78 m and about three heads,
+  shoulders at 1.09 m. `GltfRig` implements `PlayerRig`: toon material on the palette, a skinned ink hull
+  (`addSkinnedOutline`: the hull keeps skin indices and weights and skins position and normal in its shader), a racket
+  on `handslot.r`, a blob shadow, six draws with outlines; Idle, Running_A, Cheer and Hit_A are weighted by speed and
+  reaction and sampled with `AnimationMixer.setTime(pose.t)` (`PlayerPose.t` is new), so a pose stays a function of
+  time. Opt-in with `?rig=gltf` on the replay page and the quick match; the mannequin stays the default until step 6.
+- **Step 2, effector-key strokes (2026-10-16).** `playback/stroke.ts` plans, per player and replay time, the stroke in
+  progress from the shot events: keys from `STROKE_KEYS` (forehand, backhand, serve; hand, racket direction, free
+  hand, pelvis, chest turn and lean, crouch, in the player's own frame and metres) eased by smoothstep, the
+  groundstroke lead-in starting at `max(contact − 0.5 s, incoming contact + 0.15 s)` and the backswing-to-contact
+  swing (0.18 s) never compressed, blending in over 0.12 s and out between 0.45 and 0.75 s after contact; the contact
+  point in the player's frame with a weight peaking at contact (±0.16 s, a serve ±0.26 s); and the serve hop by rule:
+  what the standing reach lacks, within 0.55 m. The standing reach (2.43 m: shoulders 1.09 m, arm × 1.15 stretch,
+  racket 0.68 m) is measured on the rig by a test, which also checks that the hop covers a 2.95 m toss.
+  `PlayerPose.stroke` carries it. `scene/strokeSolver.ts` puts it on the bones over the clip pose: hips yaw, spine and
+  chest turn and lean, crouch and hop on the hips, the legs back onto the clip's feet by two-bone IK, A1's
+  `solveTwoBone` for both arms to the hand bone (the wrist held straight), and the hand turned so the racket (along
+  the hand slot's +y, strings facing forward) points along its direction; near contact the direction bends towards
+  the contact point and the hand target becomes the contact minus the racket's offset in the hand, the arm may
+  stretch 15 % (the elbow slides out along the upper arm and the wrist and hand along the forearm: positions, not
+  scales; the elbow's mesh is weighted to both bones, so it stretches there), and up to three passes shift the
+  whole body (groundstrokes only, ≤ 0.9 m, the feet sliding: TD-058) and crouch up to 0.15 m for what is still
+  missed. Over the six sample matches the racket-head centre is within 0.005 m of the contact point on every
+  groundstroke and 0.049 m on every serve (median hop 0.35 m, max 0.52 m); the body shift is 0 at the median and
+  0.84 m at worst. **AnimationMixer is gone:** it writes a property only when the clip value changed since its last
+  update, so a solved bone kept the solver's value on the next frame (0.5 rad on the hips for the same pose drawn
+  twice). `scene/clipSampler.ts` samples the clips' interpolants at `pose.t` and blends them (nlerp, the rest pose for
+  missing weight) on every apply, which makes every pose a pure function of time again. `ui/rig.html` (dev server
+  only, not built) draws one player up close at chosen times around a shot, for tuning keys.
+- **Step 3, gait and plants (2026-10-16).** `distanceAt` (`playback/movement.ts`) gives the metres a player has
+  moved along the exact eased paths `positionAt` follows (each move's length times its trapezoid share, segment
+  offsets cached per timeline), so a locomotion clip's phase is `distance / stride`, closed-form. Strides are
+  measured from the clips by a test (the median slide of a foot in stance times the clip length): Running_A 1.91 m,
+  Walking_A 0.58 m, Walking_Backwards 0.54 m per cycle. KayKit's "strafe" clips run forward with a twist (their feet
+  move 5 mm sideways per cycle), so they were dropped from the model (326 KB, six clips); a sideways or diagonal run
+  turns the hips and legs towards the move (up to 1.75 rad) while the spine turns back so the chest keeps facing,
+  and further round than 2 rad below 2.5 m/s the player backpedals. Walk and run blend over 1.4–2 m/s only (two
+  cycles at their own phases slide the feet). Idle plays at replay time and the reactions from the landing
+  (`PlayerPose.reactionT`, held at the end). The split step lifts the whole body. Strokes plant the feet: the
+  planner places a stance per stroke (`STROKE.stance`) in the frame the player has at contact (`hitterPos`, facing
+  where the shot goes) and fades it in from 0.2 s before contact (a serve from its toss) to 0.15 s after, out by
+  0.32 s; the solver draws the clip's feet onto it, and a leg that cannot reach steps its foot in towards the hip.
+  `sampleClips` takes per-clip times and aligns quaternions against the rest pose (order-independent). Measured
+  per 60 fps frame on a foot in stance: running median 4.5 mm (the clip's own roll), walk median 5 mm, planted
+  median 0 with a p95 of 7–8 cm where a reach step drags a foot.
+- **Step 4, game camera and director (2026-10-16).** `camera/chase.ts` is K2 as a pure function of the timeline,
+  my player and match time: 6.2 m up and 7.4 m behind my player (it follows my depth, in to the net and back behind
+  the baseline), 0.75 of my x, aimed 15.8 m down the court from the camera, my x and depth averaged over ± 0.4 s with
+  a smoothstep kernel (samples across the net, at a change of ends, are left out; the camera's end switches halfway
+  through the changeover). The ball is not followed: a windowed average of a ball that appears and vanishes jumps
+  (0.29 m in one frame). Vertical field of view 48° from the phone stage's 0.82 aspect up to a square view, the same
+  width across on narrower screens (51.9° at 0.75), easing to 36° by 1.4. Over the first 25 points of three sample
+  matches, every 0.25 s of live play at aspects 0.75–0.95, my player fills the bottom third (head never above 66 %
+  of the stage height down, feet never below 91.4 %), the far baseline is never above 26.8 % down (clear of the
+  score bug), and the opponent stays inside the frame; the camera moves under
+  0.25 m and turns under 0.03 rad per 60 fps frame. `cameraTrack(timeline, { style: 'game' })` lays the chase
+  through live play, the side camera at changeovers and a close-up (`closeup`, M5) on the winner of a decisive point
+  (`isDecisive`: an ace or winner on a big point, a converted break, the last point of a set or match), with no TV
+  main or serve camera; `tell` (M2) frames a player from between them and the net. The viewer computes the chase
+  (only the TV main camera still pans with per-frame state) and takes a held shot (`Viewer.hold`, `Broadcast.hold`,
+  `heldShot`): with `?rig=gltf` the quick match holds the tell on the opponent while the cards are up and plays its
+  decision clips at 1× for the preview (production pacing is TD-060). `CameraShot` is exported for the ui.
+- **Step 5, impact (2026-10-16).** In the game style `buildProgramme` splices the impact moment into live play on
+  the deciding ace or winner of a decisive point, never on two shown points in a row: slow motion at 0.25 from 0.15 s
+  before the contact, a hit-stop (a 0.07 s still, `rate` 0) at it, slow motion to 0.35 s after it, then live again
+  (`BROADCAST.impact`; clip kinds `slowmo` and `hitstop`, camera `impact`). The quick match's bare programme gets
+  it too. Cues treat `slowmo` and `hitstop` as live: a rate-0 clip plays the cues that fall exactly on its moment,
+  and each live cue plays once per pass, so the deciding hit sounds as the hold begins. `programmeTimeFor` still
+  finds live clips only, so a seek or window start inside the moment lands after it (the quick match's windows all
+  start earlier). `camera/impact.ts` holds the camera still for the whole moment, 3.2 m along the shot from the
+  contact and 1.8 m to the racket side, aimed at the contact (aiming at the ball lost the player as soon as it left).
+  `scene/impact.ts` adds a star and speed lines as two sprites on textures computed in code, at the contact,
+  blooming over the hold by clip time (`BroadcastFrame.clipT`, new: match time stands still there) and fading through
+  the slow motion; the ball is squashed along the shot over the hold and 0.08 s after it, replacing the contact pop.
+  The replay tag's corner reads `SLOW-MO` meanwhile. Racket smear, trail colours by shot and a hit-stop shake are
+  left (TD-063).
+- **Step 6, the slice end to end (2026-10-16).** The quick match reloads its timeline into the same viewer as the
+  match grows; the chase and impact cameras (and the stage's trail, pop and impact) read the first timeline and the
+  impact camera threw on a new point, so `Viewer.setTimeline` and `Stage.setTimeline` now follow it (a test grows a
+  stage). The page reports draws and triangles in `body.dataset` (`Viewer.stats`). Measured on the dev VM's software
+  WebGL at 412×503 (DPR 2), indicative only: at the live camera 70 draws and 18.5k triangles with the slice against
+  112 and 5.4k today (low tier 62 / 9.3k against 88 / 2.9k); 39–41 fps against 50–52 at high tier, 60 (capped) on
+  low either way; the model is 151 KB gzipped (meshopt not needed yet) and adds about 60 ms from the Play tap to the
+  first frame on the toss dev server. `npm run test:e2e`: 45 passed (slice off). Phone and desktop-GPU frame times
+  are TD-059's. The slice becomes the default (`?rig=gltf` off → on) once TD-059 is measured, TD-060's pacing and
+  TD-062's kits are in, and the user accepts the look; docs/3d-redesign.md §9 lists what is left. The user set the
+  B200 host aside for asset generation (TRELLIS, FLUX.1-schnell; docs/3d-redesign.md §8).
+- **Step 6, desktop GPU (2026-10-16).** On the i5-14600KF + RTX 5060 desktop (WSL2), headless Chromium reaches the
+  GPU through ANGLE's GL ES backend on Mesa's d3d12 driver (`--use-angle=gl-egl`, `GALLIUM_DRIVER=d3d12`; without
+  them it is llvmpipe or SwiftShader). `e2e/perf/frames.ts` plays the replay page with and without `?rig=gltf` at
+  each tier and reports frame times, draws and triangles per camera. Every case holds 60 fps with vsync, also at
+  Pixel 7 size with the main thread slowed 6×; uncapped, the median frame is 1.1 ms with the slice against 0.9 ms
+  today at high tier (1.0 against 0.7 at low), with at most 74 draws / 19.3k triangles at the chase camera against
+  116 / 6.1k at today's main camera. The desktop half of TD-059 is done; the phone half decides whether high stays
+  the phone default (docs/3d-redesign.md §9).
+- **After the slice: the game pace (TD-060, 2026-10-16).** `game/src/quick/pace.ts` takes a `PaceStyle`: `'tv'`
+  (today's sped-up clips, the default) or `'game'`, which the quick match uses with `?rig=gltf`. The game pace plays
+  every point at 1× (`clipSpeed`) and shows less of it (`clipFor(p, 'game')`): a decision point from 0.7 s before
+  its third-last contact, a point without cards from 0.7 s before its last (the toss when that contact is the serve),
+  still capped at `keyMaxSec`. The pace model counts the impact moment's 1.57 s where the renderer splices it in
+  (`showsImpact`: an ace or winner on a big or decisive point, not right after another); a ui test checks that rule
+  and those seconds against the bare game-style programme over 40 tiebreaks, since the game layer cannot import the
+  renderer. Median screen time over 2,000 matches: 43 s at the game pace, 23 s at the TV pace (target ≤ 60 s;
+  `npm run quick` and `test:quick` report and guard both).
+- **After the slice: the tell stance (TD-061, 2026-10-16).** The decision hold no longer freezes the last frame of
+  the previous point (in captures, the opponent mid-cheer). `Viewer.hold` takes a `HoldShot`: with `ready`, both
+  players stand where the next point will start (`readyPositions`: the server by the centre mark, the receiver wide
+  and deep, on the ends they will play from, in the deuce or advantage court by the score's parity; checked against
+  where the engine really starts the next point in three tiebreaks and an exhibition match) in a ready stance, and
+  the opponent's body shows the tell: one `StanceCue` per tell text (`HOLD_STANCES`, renderer/src/tuning/stances.ts;
+  depth, lean, drop, arms, a side-to-side sway, an in-and-out step or a bounce), solved by the stroke solver as a
+  stroke with no contact. The idle and any sway run on the hold's own seconds, so match time stays still. Timeline
+  segments gained `changesEnds` (a changeover after the point, also at a set's end). The ball is out of play during
+  the hold. `/rig.html?point=15&hold=none,defend:1,counter:2` draws the stances for tuning.
+- **After the slice: kits (TD-062, 2026-10-16).** Both skinned players wore the Rogue's green. KayKit's palette is an
+  8×4 grid of gradient swatches; the tunic uses cell (0, 1) and the hood and scarf cell (1, 1). `scene/kit.ts`
+  recolours those cells per player on a canvas copy of the palette (browser only; `recolourCells` is the pure pixel
+  step, tested on synthetic pixels), keeping each cell's shading but never under 60 % of the kit colour so the light
+  kit stays light. `kitFor` follows ADR-019's per-surface rule: A in the surface's colour, B in the light kit, the
+  trim the shirt halfway to the shorts colour (pure shorts navy read as a black bib). One extra 1024² texture per
+  player, cached per kit. The final character look is still open.
+- **After the slice: stroke tuning and the reach step (TD-063, TD-058, 2026-10-16).** The forehand's free arm reaches
+  out (x 0.5–0.55, z 0.3–0.5 at backswing and contact) and the racket handle is 0.032 m. Planted feet slipped (p95
+  7–8 cm a frame) because the solver's whole-body shift was solved per frame from the racket's miss, so it grew and
+  jittered through the partial bend onto the ball before and after contact, while at contact itself it was almost
+  always zero. The lunge is now planned: `lungeFor` in the stroke planner is the flat shortfall past the racket
+  shoulder's reach (1.33 m: the arm at full stretch plus the racket, from the shoulder measured on the rig), towards
+  the ball, within `lungeMax`; the body shifts by it times the contact weight (smooth in time), the foot on that side
+  steps out with it lifted halfway (`PLAYER_RIG.step`), the other stays planted, and the solver's iteration only adds
+  crouch. A leg still out of reach lifts as it is drawn in rather than dragging. Planted-foot slip: median 0, p95
+  0.5 mm, p99 1.2 cm; contact accuracy unchanged. Out-of-reach balls are rare (3 of the six sample matches' strokes).
+- **After the slice: the impact moment's last touches (TD-063, 2026-10-16).** The racket smear (`scene/smear.ts`):
+  in the slow motion and hit-stop, a ribbon (the ball trail's shader) along the deciding hitter's racket-head path
+  over the 0.12 s before, found by re-posing the rig at 8 earlier times and putting it back (poses are a function
+  of time; only while the moment is on screen), hidden 0.2 s after the contact. The trail takes its shot's colour with
+  the game look (`BALL_LOOK.trail.byShot`: serve and overhead hot, slice and drop cool, lob lilac, white otherwise;
+  the engine's `ShotType` is enough, so TD-001 is not needed for this); `createStage` gained `look`, which follows
+  the model unless given, so the broadcast look keeps its white trail. The impact camera shakes over the hit-stop
+  (4 cm, 28 Hz, decaying to still by its end), position and aim together. A test takes court points through the
+  planner's `toLocal` and back through the rig's `yawFor`. `/rig.html?clip=hitstop` draws frames as the moment's.
+  The smear costs about 0.9 ms a frame on the desktop CPU while it shows, so the low tier leaves it out.
+- **After the slice: the character under the TV cameras (2026-10-16).** `?rig=gltf&cams=tv` keeps the skinned
+  players under today's TV director (and the TV pace in the quick match), to compare the looks. At 1280×720 and
+  412×915: the reaction close-up reads better than the mannequin; the main camera shows both players clearly; the
+  serve camera, framed for the taller mannequin, crops the shorter, wider body with its head filling the frame's
+  edge (its framing would need retuning if the TV cameras stay for replays); the trail keeps its shot colour there
+  too, since the look follows the model.
+- **The default (2026-10-16).** With TD-058, TD-060, TD-061, TD-062's kits and TD-063 done and the user accepting the
+  look, the slice is the default: `sliceRequested` is true unless `?rig=mannequin`, for the quick match, its result
+  screen's replay of the decisive point (now with the model too) and the replay page; `?cams=tv` stays for comparison.
+  The career match keeps the mannequin and the TV director for now (TD-064). The game director never uses the TV
+  serve, main or reaction cameras (a full clay match: chase 1,866 s, side 541 s, close-up 26 s, impact 19 s,
+  Hawk-Eye 10 s), so their framing for the mannequin does not matter there. e2e: the five-TV-camera test runs under
+  `?rig=mannequin`, a new test checks the game cameras; the mobile decision test waits for the cards' deal animation
+  (under load it measured them mid-deal, three rows instead of one). Desktop GPU on the default: medians 1.2 / 1.1 ms
+  uncapped (high / low) against 1.1 / 0.8 ms for the M7 look, 60 fps at Pixel 7 size with the main thread slowed 6×.
+  The phone run is still TD-059's.
+- **Merged into main (2026-10-17):** the slice was built from vocado-dev's main as of 2026-10-16 morning; main had since
+  taken GitHub's 2026-10-14 work (ADR-028 capsule-rig polish, ADR-029 screen sounds), quick balance (ADR-025), save
+  v3 (ADR-026) and the sound samples (ADR-027). On merging: the broadcast keeps ADR-029's shared `sound` option and
+  TD-037's shader warm-up (`ready()`) beside this slice's `model`, `style` and decision `hold`; the viewer has `warm()`
+  as well as `hold`, `setTimeline` and `stats`; the quick match waits for the warm-up after clearing the hold, and its
+  deal sounds and the tell hold both start when the cards are dealt. The default look is this ADR's; `?rig=mannequin`
+  shows the M7 look, now with ADR-028's polished capsule rig.
 
 ## ADR-025: Quick-match balance: five card stops, situational plans, rivals that adapt
 - **Date:** 2026-10-16

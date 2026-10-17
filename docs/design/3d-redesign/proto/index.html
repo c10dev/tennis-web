@@ -1,0 +1,69 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D Redesign Frames</title>
+<!-- Style frames for docs/3d-redesign.md. Serve this folder over HTTP and open ?frame=<id> (ids in frames.js). -->
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js" } }</script>
+<style>
+  :root { --ink: #15171e; --paper: #f4f3ee; --muted: #586174; --mask: rgba(21, 23, 30, 0.55); --ball: #d6f53a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ffffff; font: 13px/1.35 system-ui, sans-serif; color: var(--ink); }
+  #frame { display: inline-block; }
+  #stage { position: relative; overflow: hidden; }
+  canvas { display: block; }
+  .mask { position: absolute; background: var(--mask); border: 1px dashed rgba(255, 255, 255, 0.7); color: #fff; font-size: 9px;
+    display: grid; place-items: center; letter-spacing: 0.04em; text-transform: uppercase; }
+  .chip { position: absolute; display: flex; gap: 6px; align-items: baseline; padding: 4px 8px; background: var(--ball); color: var(--ink);
+    font-weight: 800; letter-spacing: 0.06em; font-size: 12px; border: 2px solid var(--ink); }
+  .chip small { font-weight: 600; letter-spacing: 0; }
+  .letterbox { position: absolute; left: 0; right: 0; height: 28px; background: var(--ink); }
+  .label { position: absolute; transform: translateX(-50%); text-align: center; font-weight: 700; white-space: nowrap; }
+  .label small { display: block; font-weight: 600; color: var(--muted); }
+  .caption { height: 82px; overflow: hidden; padding: 8px 10px 10px; background: var(--paper); border-top: 3px solid var(--ink); }
+  .caption strong { display: block; font-size: 14px; }
+  .caption span { color: var(--muted); }
+</style>
+<div id="frame"><div id="stage"></div><div class="caption"><strong id="title"></strong><span id="note"></span></div></div>
+<script type="module">
+  import * as THREE from 'three';
+  import { FRAMES, render } from './frames.js';
+
+  const id = new URLSearchParams(location.search).get('frame') ?? 'cam-chase';
+  const stage = document.getElementById('stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  stage.append(renderer.domElement);
+  const { def, ctx, cam, w, h } = render(id, renderer.domElement, renderer);
+  stage.style.width = `${w}px`;
+  stage.style.height = `${h}px`;
+  document.getElementById('frame').style.width = `${w}px`;
+  document.getElementById('title').textContent = def.title;
+  document.getElementById('note').textContent = ctx.note ?? '';
+  const add = (cls, css, html = '') => {
+    const el = Object.assign(document.createElement('div'), { className: cls, innerHTML: html });
+    Object.assign(el.style, css);
+    stage.append(el);
+    return el;
+  };
+  if (def.letterbox) {
+    add('letterbox', { top: '0' });
+    add('letterbox', { bottom: '0' });
+  }
+  // Today's overlays on the phone stage (toss build, Pixel 7): score bug, sound switch, Toss's corner, the panel's lip.
+  if (def.masks !== false) {
+    add('mask', { left: '8px', top: '62px', width: '124px', height: '56px' }, 'score bug');
+    add('mask', { left: '254px', top: '62px', width: '45px', height: '45px' }, 'snd');
+    add('mask', { right: '0', top: '0', width: '104px', height: '52px' }, 'toss corner');
+    add('mask', { left: '0', bottom: '0', width: '100%', height: '15px', borderStyle: 'dashed none none' }, '');
+  }
+  for (const [name, sub, at] of def.chips ?? []) {
+    add('chip', at === 'tl' ? { left: '10px', top: def.letterbox ? '36px' : '128px' } : { right: '10px', top: '128px' }, `${name}<small>${sub}</small>`);
+  }
+  for (const l of ctx.labels ?? []) {
+    const p = new THREE.Vector3(l.x, l.y, 0).project(cam);
+    add('label', { left: `${((p.x + 1) / 2) * w}px`, top: `${((1 - p.y) / 2) * h - 4}px` }, `${l.text}${l.sub ? `<small>${l.sub}</small>` : ''}`);
+  }
+  const { calls, triangles } = renderer.info.render;
+  Object.assign(document.body.dataset, { calls: String(calls), triangles: String(triangles) });
+  document.body.dataset.ready = Object.keys(FRAMES).join(',');
+</script>

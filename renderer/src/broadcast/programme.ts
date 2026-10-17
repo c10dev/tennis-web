@@ -1,7 +1,7 @@
 // Builds the broadcast programme: the clips a viewing mode shows, cut by the director's cameras (ADR-009).
 import type { Timeline } from '../playback/timeline.ts';
 import { BROADCAST } from '../tuning/index.ts';
-import { cameraTrack, type TrackShot } from './director.ts';
+import { cameraTrack, isDecisive, type DirectorStyle, type TrackShot } from './director.ts';
 import { selectPoints } from './modes.ts';
 import { replayInserts } from './replay.ts';
 import type { Clip, Programme, ViewMode } from './types.ts';
@@ -13,7 +13,7 @@ export interface Insert {
 }
 export type Inserts = (timeline: Timeline, index: number) => Insert | null;
 
-export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts, options: { intro?: boolean } = {}): Programme {
+export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inserts = replayInserts, options: { intro?: boolean; style?: DirectorStyle } = {}): Programme {
   const clips: Clip[] = [];
   const pointStarts: number[] = [];
   let t = 0;
@@ -27,15 +27,31 @@ export function buildProgramme(timeline: Timeline, mode: ViewMode, inserts: Inse
     return { mode, clips, totalSec: t, pointStarts: [0], timeline };
   }
   if (options.intro !== false) push({ kind: 'intro', duration: BROADCAST.introSec, matchFrom: 0, rate: 0, camera: 'side', pointIndex: 0 });
-  const track = cameraTrack(timeline);
-  const live = (from: number, to: number, pointIndex: number) => {
+  const track = cameraTrack(timeline, { style: options.style ?? 'broadcast' });
+  const plain = (from: number, to: number, pointIndex: number) => {
     for (const shot of shotsBetween(track, from, to)) {
       const { camera, focus } = shot;
       push({ kind: 'live', duration: shot.to - shot.from, matchFrom: shot.from, rate: 1, pointIndex, camera, ...(focus ? { focus } : {}) });
     }
   };
+  let impact: ReturnType<typeof impactMoment> = null;
+  // Live play, with the impact moment spliced in where it falls.
+  const live = (from: number, to: number, pointIndex: number) => {
+    if (!impact || impact.contact < from || impact.contact >= to) return plain(from, to, pointIndex);
+    const I = BROADCAST.impact;
+    const { contact, focus } = impact;
+    plain(from, contact - I.leadSec, pointIndex);
+    const shot = { camera: 'impact' as const, focus, pointIndex };
+    push({ kind: 'slowmo', duration: I.leadSec / I.rate, matchFrom: contact - I.leadSec, rate: I.rate, ...shot });
+    push({ kind: 'hitstop', duration: I.hitstopSec, matchFrom: contact, rate: 0, ...shot });
+    push({ kind: 'slowmo', duration: I.tailSec / I.rate, matchFrom: contact, rate: I.rate, ...shot });
+    plain(contact + I.tailSec, to, pointIndex);
+  };
+  let previous = false;
   for (const i of selectPoints(timeline, mode)) {
     const seg = timeline.segments[i]!;
+    impact = options.style === 'game' && !previous ? impactMoment(seg) : null;
+    previous = impact !== null;
     pointStarts.push(t);
     const extra = inserts(timeline, i);
     if (!extra) {
@@ -75,3 +91,12 @@ export function programmeTimeFor(programme: Programme, T: number): number {
   if (inside) return inside.start + (T - inside.matchFrom);
   return live.find((c) => c.matchFrom >= T)?.start ?? 0;
 }
+
+/** The deciding contact of a decisive point won by an ace or a winner (ADR-024 S3), and its hitter. */
+function impactMoment(seg: Timeline['segments'][number]): { contact: number; focus: 'A' | 'B' } | null {
+  const p = seg.point;
+  if (!isDecisive(seg) || (p.endedBy !== 'ace' && p.endedBy !== 'winner')) return null;
+  const last = p.shots.at(-1)!;
+  return { contact: seg.zero + last.t, focus: last.hitter };
+}
+

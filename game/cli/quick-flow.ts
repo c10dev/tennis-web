@@ -18,6 +18,7 @@ export function flowRows(random: WinRate, n: number, seed: number, ladders: numb
     check('Decisions per match (90th percentile)', percentile(random.decisions, 0.9), T.p90Decisions),
     info('Matches stopped by the cap', fmt(share(random.decisions, (d) => d === QUICK_MOMENTS.maxDecisions), '%')),
     check('Seconds on screen per match (median)', median(random.seconds), T.medianSeconds, 's'),
+    check('Same at the game pace (ADR-024, median)', median(random.gameSeconds), T.medianSeconds, 's'),
     check('Won matchup at a decision point (pp)', matchupEdge(Math.max(300, Math.floor(n / 2)), seed), T.matchupEdge, '%'),
     { label: 'Win % by rating 11..15 vs 13', value: skill.map((w) => `${(w * 100).toFixed(0)}`).join('/'), range: 'rising', status: skill.every((w, i) => i === 0 || w > skill[i - 1]!) ? 'PASS' : 'FAIL' },
     check('Places climbed in 30 matches', ladderPace(readerBot, ladders, 30, seed), T.ladderClimb30),

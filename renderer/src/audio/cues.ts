@@ -55,16 +55,24 @@ export function allCues(p: Programme): Cue[] {
   if (hit) return hit;
   const perPoint = new Map<number, Timed[]>();
   const cues: Cue[] = [];
+  // Live play shown slowed or held (the impact moment) sounds as live; a held moment plays what falls on it, once.
+  const asLive = new Set(['live', 'slowmo', 'hitstop']);
+  const played = new Set<string>();
   for (const clip of p.clips) {
-    if (clip.kind !== 'live' && clip.kind !== 'replay') continue;
+    if (!asLive.has(clip.kind) && clip.kind !== 'replay') continue;
     const seg = p.timeline.segments[clip.pointIndex]!;
     if (!perPoint.has(clip.pointIndex)) perPoint.set(clip.pointIndex, pointCues(p.timeline, seg));
     const end = clip.matchFrom + clip.duration * clip.rate;
-    for (const { T, cue } of perPoint.get(clip.pointIndex)!) {
-      if (T < clip.matchFrom || T >= end) continue;
-      const at = clip.start + (T - clip.matchFrom) / clip.rate;
-      if (clip.kind === 'live') cues.push({ ...cue, at });
-      else if ('replay' in cue) cues.push({ ...cue, replay: true, at });
+    for (const [k, { T, cue }] of perPoint.get(clip.pointIndex)!.entries()) {
+      const inside = clip.rate === 0 ? T === clip.matchFrom : T >= clip.matchFrom && T < end;
+      if (!inside) continue;
+      const at = clip.rate === 0 ? clip.start : clip.start + (T - clip.matchFrom) / clip.rate;
+      if (asLive.has(clip.kind)) {
+        const key = `${clip.pointIndex}:${k}`;
+        if (played.has(key)) continue;
+        played.add(key);
+        cues.push({ ...cue, at });
+      } else if ('replay' in cue) cues.push({ ...cue, replay: true, at });
     }
   }
   cues.sort((a, b) => a.at - b.at);

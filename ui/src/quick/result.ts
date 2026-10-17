@@ -139,11 +139,12 @@ export function quickResult(ctx: Ctx): Screen {
     const caption = h('div', { class: 'replay-caption' }, h('span', { class: 'kicker' }, `${U.decisivePoint} · ${moment.score}`), h('strong', null, moment.line));
     element.append(stage);
     const { mountBroadcast } = await import('../replay/broadcast.ts');
+    const slice = await (await import('../replay/model.ts')).sliceFromQuery();
     if (s.skipped) {
       stage.remove();
       return;
     }
-    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound });
+    const broadcast = mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound, ...(slice ?? {}) });
     stage.append(caption);
     let open = true;
     const close = () => {

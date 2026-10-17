@@ -4,7 +4,7 @@
 import {
   broadcastFrameAt, buildProgramme, buildTimeline, clockReducer, createClock, createOverlays, createScoreBug, createViewer, cuesBetween, initialTier, overlayAt,
   programmeTimeFor, type BroadcastFrame, type ClockAction, type ClockState, type Programme, type ReplayInput, type Timeline, type Viewer,
-  type Mixer, type QualityTier, type ViewMode,
+  type HoldShot, type Mixer, type PlayerModel, type QualityTier, type ViewMode,
 } from '@tennis/renderer';
 import { clipStep } from './clip.ts';
 import { createControls } from './controls.ts';
@@ -20,6 +20,8 @@ export interface Broadcast {
   playWindow(from: number, to: number, speed: number): Promise<void>;
   /** Resolves once the loaded match's shaders are compiled; await it before the first clip (TD-037). */
   ready(): Promise<void>;
+  /** Hold a shot over the picture until cleared (the quick match's decision hold, ADR-024 S2). */
+  hold(shot: HoldShot | null): void;
   dispose(): void;
 }
 
@@ -33,6 +35,9 @@ export interface BroadcastOptions {
   sound?: { readonly mixer: Mixer | null };
   /** After every drawn frame. */
   onFrame?(frame: BroadcastFrame, clock: ClockState, programme: Programme): void;
+  /** Skinned players and the game camera (ADR-024 slice); the mannequin and the TV director without them. */
+  model?: PlayerModel | null;
+  style?: 'broadcast' | 'game';
 }
 
 const div = (id: string) => Object.assign(document.createElement('div'), { id });
@@ -60,7 +65,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
   root.append(canvas, score, graphics);
   if (!options.sound) root.append(soundRoot);
   if (options.controls !== false) root.append(controlsRoot);
-  const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false }) : buildProgramme(timeline, mode));
+  const style = options.style ?? 'broadcast';
+  let held: HoldShot | null = null;
+  const build = (timeline: Timeline) => (options.bare ? buildProgramme(timeline, mode, () => null, { intro: false, style }) : buildProgramme(timeline, mode, undefined, { style }));
   let clipWindow: { end: number; speed: number; done: () => void; first: boolean } | null = null;
   const scoreBug = createScoreBug();
   score.append(scoreBug.element);
@@ -123,7 +130,8 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const frame = broadcastFrameAt(programme, clock.t);
       viewer.render(frame, dt);
       // Read by the e2e tests and handy when debugging the director.
-      Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2) });
+      const { calls, triangles } = viewer.stats();
+      Object.assign(document.body.dataset, { camera: frame.camera, clip: frame.clip, point: String(frame.pointIndex), t: frame.t.toFixed(2), calls: String(calls), triangles: String(triangles) });
       scoreBug.update(frame.scoreBug);
       overlays.update(overlayAt(programme, frame), programme.timeline.names);
       controls?.update(clock, frame);
@@ -138,8 +146,9 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       const timeline = buildTimeline(input);
       if (!viewer || surface !== timeline.surface || !opts.keepTime) {
         viewer?.dispose();
-        const created = createViewer(canvas, timeline, startTier(), stepDown);
+        const created = createViewer(canvas, timeline, startTier(), stepDown, { model: options.model ?? null });
         viewer = created;
+        created.hold(held);
         warmed = false;
         // A failed parallel compile only means the first frame compiles them itself, as before.
         warming = created.warm().catch(() => {}).then(() => {
@@ -148,7 +157,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
         surface = timeline.surface;
         size = '';
         resize();
-      }
+      } else viewer.setTimeline(timeline);
       programme = build(timeline);
       clock = opts.keepTime ? clockReducer(programme, clock, { type: 'seek', t: clock.t }) : createClock();
       controls?.setProgramme(programme);
@@ -173,6 +182,10 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
       });
     },
     ready: () => warming,
+    hold(shot) {
+      held = shot;
+      viewer?.hold(shot);
+    },
     dispose() {
       clipWindow?.done();
       clipWindow = null;

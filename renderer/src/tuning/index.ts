@@ -8,3 +8,6 @@ export * from './playback.ts';
 export * from './scene.ts';
 export * from './look.ts';
 export * from './quality.ts';
+export * from './player.ts';
+export * from './strokes.ts';
+export * from './stances.ts';

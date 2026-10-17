@@ -2,6 +2,7 @@
 import { exhibitionConfig, fingerprint, simulateMatch, type MatchResult, type Surface } from '@tennis/engine';
 import type { ViewMode } from '@tennis/renderer';
 import { mountBroadcast } from './broadcast.ts';
+import { sliceFromQuery } from './model.ts';
 import { createPanel } from './panel.ts';
 
 const params = new URLSearchParams(location.search);
@@ -14,7 +15,8 @@ const app = document.getElementById('app')!;
 const stage = document.createElement('div');
 const panelRoot = Object.assign(document.createElement('div'), { id: 'panel' });
 app.append(stage, panelRoot);
-const broadcast = mountBroadcast(stage, { mode });
+const slice = await sliceFromQuery();
+const broadcast = mountBroadcast(stage, { mode, ...(slice ?? {}) });
 let current: MatchResult | null = null;
 const panel = createPanel(panelRoot, { seed, surface }, (json, name) => start(json as MatchResult, name), () => current);
 

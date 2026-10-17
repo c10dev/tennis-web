@@ -32,6 +32,20 @@ export function cameraPose(frame: CameraFrame, pan: number, aspect?: number): Ca
     }
     case 'side':
       return frame.clip === 'replay' && frame.ball ? sideTracking(frame.ball) : sideWide();
+    case 'tell':
+    case 'closeup': {
+      // In front of the player, towards the net and to the side away from the centre line, facing them.
+      const c = CAMERAS[frame.camera];
+      const p = frame.players[frame.focus ?? 'B'].pos;
+      const toNet = -Math.sign(p.y);
+      const aside = p.x > 0 ? -c.aside : c.aside;
+      return { position: three(p.x + aside, p.y + toNet * c.toNet, c.height), target: three(p.x, p.y, c.aimHeight), fov: c.fov };
+    }
+    // The chase and the impact need the timeline (camera/chase.ts, impact.ts); the viewer computes them. The main
+    // camera stands in elsewhere.
+    case 'impact':
+    case 'chase':
+      return mainCamPose(pan, aspect);
     case 'hawkeye': {
       // Close over the mark from the court side, looking down at it.
       const m = frame.hawkeye?.mark ?? { x: 0, y: 0 };

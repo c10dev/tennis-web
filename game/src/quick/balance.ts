@@ -52,11 +52,13 @@ export interface WinRate {
   points: number[];
   decisions: number[];
   seconds: number[];
+  /** The same at the game pace (ADR-024, TD-060). */
+  gameSeconds: number[];
 }
 
 /** Win rate of `bot` (an average player) against an average AI of every style and persona. */
 export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): WinRate {
-  const out: WinRate = { win: 0, aiCards: [], points: [], decisions: [], seconds: [] };
+  const out: WinRate = { win: 0, aiCards: [], points: [], decisions: [], seconds: [], gameSeconds: [] };
   for (let i = 0; i < n; i++) {
     const { result, decisions } = botMatch(tiebreakConfig(averagePlayer('Bot'), styled(STYLES[i % 4]!), i), streamSeed(seed, 'm', i), bot, opponent ? { opponent } : {});
     if (result.winner === 'A') out.win++;
@@ -65,6 +67,7 @@ export function winRate(bot: Bot, n: number, seed: number, opponent?: Bot): WinR
     out.points.push(pts.length);
     out.decisions.push(decisions.length);
     out.seconds.push(broadcastSeconds(pts));
+    out.gameSeconds.push(broadcastSeconds(pts, 'game'));
   }
   out.win /= n;
   return out;

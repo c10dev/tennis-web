@@ -3,7 +3,8 @@ import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
 import { smoothstep } from '../math.ts';
 import { PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
 import { facingAt } from './facing.ts';
-import { positionAt } from './movement.ts';
+import { strokeAt, type StrokePose } from './stroke.ts';
+import { distanceAt, positionAt } from './movement.ts';
 import { segmentAt, type Timeline } from './timeline.ts';
 
 export type SwingKind = 'serve' | 'forehand' | 'backhand';
@@ -28,6 +29,15 @@ export interface PlayerPose {
   splitStep: number;
   /** Tossing arm raised for a serve, 0–1. */
   toss: number;
+  /** Replay time in seconds: looping clips are sampled at it (ADR-024), so a pose stays a function of time. */
+  t: number;
+  /** The stroke in progress for the skinned rig (ADR-024, effector keys), or null. */
+  stroke: StrokePose | null;
+  /** Running velocity in court coordinates (m/s) and metres moved since the match began (strides follow it). */
+  velocity: Vec2;
+  distance: number;
+  /** Seconds since the point's last ball landed (negative before): reaction clips play from it. */
+  reactionT: number;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -36,16 +46,23 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
   const before = positionAt(timeline, id, Math.max(0, t - dt));
   const after = positionAt(timeline, id, Math.min(timeline.totalSec, t + dt));
   const speed = Math.hypot(after.x - before.x, after.y - before.y) / (2 * dt);
+  const velocity = { x: (after.x - before.x) / (2 * dt), y: (after.y - before.y) / (2 * dt) };
   const index = segmentAt(timeline, t);
   const seg = timeline.segments[index]!;
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
+  const facing = turnToShot(facingAt(timeline, id, index, t, pos), own, tau);
   return {
-    pos, facing: turnToShot(facingAt(timeline, id, index, t, pos), own, tau), speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
+    pos, facing, speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
     splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
     toss: toss(seg.point.shots.filter((s) => s.hitter === id && s.shot === 'serve'), tau),
+    t,
+    stroke: strokeAt(timeline, id, t, pos, facing),
+    velocity,
+    distance: distanceAt(timeline, id, t),
+    reactionT: t - seg.landed,
   };
 }
 

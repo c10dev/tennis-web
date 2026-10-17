@@ -1,6 +1,6 @@
 // Ink outlines by inverted hull (ADR-019): a back-face copy of a part, pushed out along smooth normals by a width
 // that stays about LOOK.outline.px on screen at any distance. No post-processing pass, one extra draw per part.
-import { BackSide, Color, Mesh, ShaderMaterial, type BufferGeometry, type Object3D } from 'three';
+import { BackSide, Color, Mesh, ShaderMaterial, SkinnedMesh, type BufferGeometry, type Object3D } from 'three';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { LOOK } from '../tuning/index.ts';
 
@@ -68,3 +68,48 @@ export function addOutline(part: Mesh): Mesh {
 }
 
 export const isOutline = (o: Object3D): boolean => o.userData.outline === true;
+
+const SKINNED_VERTEX = /* glsl */ `
+#include <common>
+#include <skinning_pars_vertex>
+uniform float px;
+uniform float referenceHeight;
+void main() {
+  #include <beginnormal_vertex>
+  #include <skinbase_vertex>
+  #include <skinnormal_vertex>
+  #include <begin_vertex>
+  #include <skinning_vertex>
+  vec4 mv = modelViewMatrix * vec4(transformed, 1.0);
+  float width = px * 2.0 * -mv.z / (projectionMatrix[1][1] * referenceHeight);
+  mv.xyz += normalize(normalMatrix * objectNormal) * width;
+  gl_Position = projectionMatrix * mv;
+}`;
+
+let skinnedMaterial: ShaderMaterial | null = null;
+
+/** The same ink for a skinned hull: the vertex shader skins position and normal before pushing out (ADR-024). */
+function skinnedInkMaterial(): ShaderMaterial {
+  skinnedMaterial ??= new ShaderMaterial({
+    vertexShader: SKINNED_VERTEX,
+    fragmentShader: FRAGMENT,
+    uniforms: inkMaterial().uniforms,
+    side: BackSide,
+  });
+  return skinnedMaterial;
+}
+
+/** Give a skinned body an ink outline bound to its skeleton, so the hull bends with it; returns the hull. */
+export function addSkinnedOutline(body: SkinnedMesh): SkinnedMesh {
+  const bare = body.geometry.clone();
+  for (const name of Object.keys(bare.attributes)) if (!['position', 'skinIndex', 'skinWeight'].includes(name)) bare.deleteAttribute(name);
+  const geometry = mergeVertices(bare, 1e-4);
+  geometry.computeVertexNormals();
+  const hull = new SkinnedMesh(geometry, skinnedInkMaterial());
+  hull.name = `${body.name || 'body'}-outline`;
+  hull.userData.outline = true;
+  hull.frustumCulled = false;
+  body.add(hull);
+  hull.bind(body.skeleton, body.bindMatrix);
+  return hull;
+}

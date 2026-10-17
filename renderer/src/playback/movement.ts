@@ -64,3 +64,66 @@ export function positionAt(timeline: Timeline, id: PlayerId, t: number): Vec2 {
   if (Math.sign(start.y) !== Math.sign(last.y)) return along(changeEnds(id, last, start), u);
   return ease(last, start, u);
 }
+
+const pathLength = (path: Vec2[]) => path.slice(1).reduce((sum, p, i) => sum + dist(path[i]!, p), 0);
+
+/** Metres moved within a point up to point time `tau`: each move's length times its eased share. */
+function travelledWithin(point: PointEvent, id: PlayerId, tau: number): number {
+  const k = keys(point, id);
+  let sum = 0;
+  for (let i = 1; i < k.length; i++) {
+    const a = k[i - 1]!;
+    const b = k[i]!;
+    if (tau <= a.tau) break;
+    const span = dist(a.pos, b.pos);
+    sum += tau >= b.tau || b.tau <= a.tau ? span : span * trapezoid((tau - a.tau) / (b.tau - a.tau), RIG_MOTION.easeRamp);
+  }
+  return sum;
+}
+
+/** Length of the walk after point `i` (to the next point's start, round the net post at a change of ends). */
+function gapLength(timeline: Timeline, id: PlayerId, i: number): number {
+  const seg = timeline.segments[i]!;
+  const next = timeline.segments[i + 1];
+  if (!next) return 0;
+  const last = within(seg.point, id, seg.end - seg.zero);
+  const start = keys(next.point, id)[0]!.pos;
+  return Math.sign(start.y) !== Math.sign(last.y) ? pathLength(changeEnds(id, last, start)) : dist(last, start);
+}
+
+const offsets = new WeakMap<Timeline, Record<PlayerId, number[]>>();
+
+/** Distance travelled at the start of each segment, per player (timelines never change, so once each). */
+function segmentOffsets(timeline: Timeline): Record<PlayerId, number[]> {
+  let o = offsets.get(timeline);
+  if (!o) {
+    const build = (id: PlayerId) => {
+      const out: number[] = [];
+      let sum = 0;
+      timeline.segments.forEach((seg, i) => {
+        out.push(sum);
+        sum += travelledWithin(seg.point, id, seg.end - seg.zero) + gapLength(timeline, id, i);
+      });
+      return out;
+    };
+    o = { A: build('A'), B: build('B') };
+    offsets.set(timeline, o);
+  }
+  return o;
+}
+
+/**
+ * Metres a player has moved since the match began at replay time t, exactly along the eased paths `positionAt`
+ * follows (ADR-024): the stride is a function of it, so feet stay put on the ground whatever the speed.
+ */
+export function distanceAt(timeline: Timeline, id: PlayerId, t: number): number {
+  const i = segmentAt(timeline, t);
+  const seg = timeline.segments[i]!;
+  const base = segmentOffsets(timeline)[id][i]!;
+  if (t < seg.end) return base + travelledWithin(seg.point, id, t - seg.zero);
+  const inPoint = travelledWithin(seg.point, id, seg.end - seg.zero);
+  if (!timeline.segments[i + 1]) return base + inPoint;
+  const u = Math.min(1, Math.max(0, (t - seg.end) / (seg.next - seg.end)));
+  return base + inPoint + gapLength(timeline, id, i) * trapezoid(u, RIG_MOTION.easeRamp);
+}
+
