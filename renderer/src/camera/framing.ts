@@ -33,3 +33,18 @@ export function fitFov(pose: CamPose, camera: CameraId, aspect: number): number 
 
 /** The ball is drawn a little larger on an upright phone, where the whole court must fit its width. */
 export const portraitBallScale = (aspect: number): number => lerp(1, BALL_LOOK.portraitScale, portraitShare(aspect));
+
+/** A Three.js view offset (`PerspectiveCamera.setViewOffset`). */
+export interface ViewOffset { fullWidth: number; fullHeight: number; x: number; y: number; width: number; height: number }
+
+/**
+ * A canvas whose top `inset` pixels sit under a band the picture must not need (the Toss bar, presentation spec L2):
+ * the cameras frame the area below it (`aspect`), and the view extends upward over the band so the canvas still runs
+ * full screen (S-1). The band is at most half the canvas.
+ */
+export function framingView(width: number, height: number, inset: number): { aspect: number; view: ViewOffset | null } {
+  if (width <= 0 || height <= 0) return { aspect: 1, view: null };
+  const band = Math.min(Math.max(0, Math.round(inset)), Math.floor(height / 2));
+  if (!band) return { aspect: width / height, view: null };
+  return { aspect: width / (height - band), view: { fullWidth: width, fullHeight: height - band, x: 0, y: -band, width, height } };
+}

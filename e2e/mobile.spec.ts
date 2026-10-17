@@ -122,8 +122,8 @@ test.describe('phone layout (toss build)', () => {
     const view = await box(page.locator('#view'));
     const panel = await box(page.locator('#quick-panel'));
     const bug = await box(page.locator('#score .score-bug'));
-    // The stage starts under the Toss band; its bottom stays at 60% of the screen.
-    expect(view.y).toBeCloseTo(t.contentTop, 0);
+    // The 3D runs full screen (spec S-1); the court is framed under the Toss band (L2), the band shows the stands.
+    expect(view.y).toBe(0);
     expect(view.height).toBeLessThan(t.height * 0.62);
     expect(view.height).toBeGreaterThan(t.height * 0.35);
     expect(panel.y + panel.height).toBeLessThanOrEqual(t.height - t.safeBottom + 1);

@@ -8,7 +8,7 @@ import type { CameraId, HoldShot } from './broadcast/types.ts';
 import { cameraPose } from './camera/cameras.ts';
 import { chasePose } from './camera/chase.ts';
 import { impactPose } from './camera/impact.ts';
-import { fitFov } from './camera/framing.ts';
+import { fitFov, framingView } from './camera/framing.ts';
 import { dampPan, panTarget } from './camera/mainCam.ts';
 import { heldPlayers, releasedPlayers } from './playback/hold.ts';
 import type { PlayerPose } from './playback/pose.ts';
@@ -19,7 +19,8 @@ import { createStage } from './scene/stage.ts';
 import { CAMERA, HOLD_RELEASE_SEC } from './tuning/index.ts';
 
 export interface Viewer {
-  resize(width: number, height: number): void;
+  /** The canvas size; its top `topInset` pixels lie under a band the picture must not need (framing.ts `framingView`). */
+  resize(width: number, height: number, topInset?: number): void;
   /** Draw a frame; dt is the real time since the last draw, for camera easing. */
   render(frame: BroadcastFrame, dt: number): void;
   /** Compiles every material's shaders off the main thread where the browser can (KHR_parallel_shader_compile), so
@@ -70,10 +71,14 @@ export function createViewer(
   let drawn: Record<PlayerId, PlayerPose> | null = null;
   let release: { from: Record<PlayerId, PlayerPose>; for: number } | null = null;
   return {
-    resize(width, height) {
+    resize(width, height, topInset = 0) {
       size = { w: width, h: height };
       renderer.setSize(width, height, false);
-      camera.aspect = width / height;
+      const { aspect, view } = framingView(width, height, topInset);
+      camera.aspect = aspect;
+      if (view) camera.setViewOffset(view.fullWidth, view.fullHeight, view.x, view.y, view.width, view.height);
+      else camera.clearViewOffset();
+      projected = { fov: 0, aspect: 0 };
       stage.setAspect(camera.aspect);
     },
     hold(shot) {

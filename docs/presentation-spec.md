@@ -187,17 +187,40 @@ game pace rows only.
   (`right + 10`, `top + 5` on iOS / `top + 10` on Android) from the insets.
   - Nothing of ours may overlap them; overlapping can fail the Toss review.
   - `--nav-reserve` (104 px, Toss build only) keeps that corner empty across.
-- **The Toss band (2026-10-17, from an iPhone screenshot).** Toss's more/X pill sits about `safe-top + 5` to
-  `safe-top + 45`. The whole band belongs to Toss across the full width, not just the corner: in the Toss build
-  nothing of ours starts above `--content-top` = `safe-top + --top-band` (48 px; 0 on the web). That covers the
-  header, the score bug, the sound switch, the leave button, the chip and the 3D stage itself, whose canvas starts
-  at `--content-top`. The Toss build still logs `[safe-area]` (Toss values, env() values, viewport) to the web debug
-  tools' Log tab; adjust `--top-band` if a device shows the pill lower.
+- **The Toss band (2026-10-17).** The whole band of Toss's more/X pill belongs to Toss across the full width, not
+  just the corner. In the Toss build no UI of ours starts above `--content-top` = `safe-top + --top-band` (48 px; 0
+  on the web). That covers the header, the score bug, the sound switch, the leave button, the chip and the captions.
+  - **What the docs say.**
+    - `SafeArea.top` is the status bar's inset only.
+    - The X button sits at `top + 5` on iOS and `top + 10` on Android, `right + 10` across. No bar height is given.
+    - An iPhone screenshot showed the pill ending about `top + 39`. 48 px clears Android's +10 start with a margin.
+  - **The 3D stays full screen (S-1 below).** The canvas runs under the status bar and the band; only the
+    picture's framing starts at `--content-top`. The camera frames the court for the area below the band and extends
+    its view upward into it (`--stage-top-inset`, renderer `framingView`). Nothing to read or tap is drawn there.
+  - The Toss build still logs `[safe-area]` (Toss values, env() values, viewport) to the web debug tools' Log tab;
+    adjust `--top-band` if a device shows the pill lower.
+- **What the platforms require (researched 2026-10-17).**
+  - **S-1.** Apps in Toss game checklist: "인게임 화면은 풀스크린으로 구현돼 있어요" (the in-game screen is full
+    screen). No letterbox bands: backgrounds and the 3D run edge to edge.
+  - **S-2.** Apps in Toss game checklist: "Safe Area 영역을 침범하지 않아요. iOS의 Dynamic Island 영역도 포함해요"
+    (nothing intrudes into the safe area, Dynamic Island included). Text and controls sit inside the insets.
+  - **S-3.** Apps in Toss game checklist: "우측 상단의 닫기 버튼이 정상적으로 노출되고 동작해요" (the top-right close
+    button shows and works). Toss's X must never be covered; overlapping it can fail review (safe-area doc).
+  - **S-4.** Apps in Toss game checklist: "모든 화면에서 사용자가 미니앱을 나갈 수 있는 방법이 있어요" (every screen
+    has a way out). See L5.
+  - **S-5.** WebKit: `viewport-fit=cover` lays the page out to the full screen; content is then kept out of the insets
+    with `env(safe-area-inset-*)`. We set both (`index.html`, `theme.css`); in Toss the SDK's values replace env().
+  - **S-6.** Apple HIG (Layout; Going full screen): keep content clear of the Dynamic Island and the Home indicator,
+    and avoid controls at the very bottom edge and in the corners (the swipe home). The panel sits
+    `safe-bottom + 10 px` up; no control lives in a bottom corner.
+  - Sources: developers-apps-in-toss.toss.im `checklist/app-game.md`, `documentation/common/screen/safe-area.md`,
+    `documentation/common/navigationbar.md`; webkit.org "Designing Websites for iPhone X"; developer.apple.com
+    Human Interface Guidelines, Layout and Going full screen.
 
 ### L3. Quick match regions (phone)
 | Region | Where | Rule |
 |---|---|---|
-| Stage (3D) | From `content-top` down to 60dvh | Canvas `#view`; overlays sit on it, never on the panel |
+| Stage (3D) | Top 60dvh, edge to edge (S-1) | Canvas `#view`; the court is framed below `content-top` (the band shows the stands); overlays sit on it, never on the panel |
 | Panel | Bottom, `safe-bottom + 10 px` up, 10 px gutters | Always fills the area under the stage. A short reveal is centred; a tall decision panel may rise over the stage's lower edge. Max height 100dvh − safe-top − 24 px, scrolls past that |
 | Score bug | Top left, `content-top + 8`, `safe-left + 8` | 14 px type; names ellipsised at 108 px |
 | Leave button | Under the score bug, `content-top + 64` (fast mode: `+ 8`), left 8 | ≥ 44 px tall; opens the concede question |

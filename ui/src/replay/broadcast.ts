@@ -101,13 +101,18 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     clock = { ...clock, t: programmeTimeFor(programme, matchT) };
     controls?.setProgramme(programme);
   });
-  // The canvas may be mounted before it is in the document (size 0): every frame checks its size instead.
+  // The canvas may be mounted before it is in the document (size 0): every frame checks its size instead. A screen may
+  // set `--stage-top-inset` for a band over the canvas's top that the picture must not need (presentation spec L2).
+  const band = Object.assign(document.createElement('div'), { className: 'stage-top-inset' });
+  band.style.cssText = 'position:absolute;width:0;visibility:hidden;pointer-events:none;height:var(--stage-top-inset, 0px)';
+  root.append(band);
   let size = '';
   const resize = () => {
-    const next = `${canvas.clientWidth}x${canvas.clientHeight}`;
+    const inset = band.getBoundingClientRect().height;
+    const next = `${canvas.clientWidth}x${canvas.clientHeight}+${inset}`;
     if (next === size || !viewer || canvas.clientWidth === 0) return;
     size = next;
-    viewer.resize(canvas.clientWidth, canvas.clientHeight);
+    viewer.resize(canvas.clientWidth, canvas.clientHeight, inset);
   };
 
   let last = performance.now();

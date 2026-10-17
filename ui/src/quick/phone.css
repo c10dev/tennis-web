@@ -15,7 +15,9 @@
 
   /* The match: stage on top, panel at the bottom. */
   .quick-match { --stage-h: 60dvh; }
-  .quick-match #view { top: var(--content-top); height: calc(var(--stage-h) - var(--content-top)); bottom: auto; }
+  /* The canvas runs full screen (S-1); the court is framed under the Toss band (L2). */
+  .quick-match { --stage-top-inset: var(--content-top); }
+  .quick-match #view { height: var(--stage-h); bottom: auto; }
   /* With the 3D on, the panel always fills the area under the stage (a short reveal or ticker sits in its middle, so
      no strip of bare background opens between them); a taller decision panel rises over the stage's bottom edge. */
   .quick-match:not(.fast) .quick-panel { display: grid; min-height: calc(100dvh - var(--stage-h) - var(--safe-bottom) - 2 * var(--gutter));

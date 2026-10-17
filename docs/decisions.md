@@ -1408,4 +1408,10 @@ Format: one entry per decision, newest at the bottom.
     starts at `--content-top` (presentation spec L2).
   - The ladder header had ignored the safe area altogether: `career.css` loads after `phone.css` and its equal-weight
     `header.top` padding won. The phone rules now carry `html` to outweigh it.
+- **Platform research (2026-10-17):** the Apps in Toss game checklist asks for a full-screen in-game screen and no
+  intrusion into the safe area (Dynamic Island included). `SafeArea.top` is the status bar's inset only, and X sits
+  at `top + 5` (iOS) / `+ 10` (Android). The 3D canvas therefore runs edge to edge again. The camera frames the court
+  for the area under the Toss band and extends its view up over it (renderer `framingView`, a view offset;
+  `--stage-top-inset` on the quick match), so the stands fill the band and the court sits where it was. Only UI keeps
+  to `--content-top`. Sources and rules S-1–S-6 are in presentation-spec L2.
 
