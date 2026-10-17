@@ -6,6 +6,8 @@
      loads after this file on the ladder and had kept the header at the very top (the 2026-10-17 iPhone overlap). */
   html header.top { gap: 10px; padding: calc(var(--content-top) + 8px) calc(var(--safe-right) + var(--nav-reserve) + 12px) 8px calc(var(--safe-left) + 12px); }
   html header.top .brand { font-size: 20px; }
+  /* A 44 px row, so the sound switch (content-top + 8, 44 px) sits inside the header, not on its edge. */
+  html header.top { min-height: calc(var(--content-top) + 60px); box-sizing: border-box; }
   html main.career { padding: 14px calc(var(--safe-right) + var(--gutter)) calc(var(--safe-bottom) + 40px) calc(var(--safe-left) + var(--gutter)); }
 
   /* Touch targets: 44 px or more. */

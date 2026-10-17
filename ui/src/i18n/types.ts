@@ -52,4 +52,6 @@ export interface UiText {
   concede: { title: string; body: string; ok: string; cancel: string };
   leave: { title: string; ok: string; cancel: string };
   leaveMatch: string;
+  /** The ticker before the first point has finished. */
+  firstServe: string;
 }

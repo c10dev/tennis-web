@@ -47,7 +47,8 @@ export function quickResult(ctx: Ctx): Screen {
   const overtakes = v.overtakes.length
     ? step('overtakes', 'overtakes', h('span', { class: 'kicker' }, U.passed), h('ul', null, v.overtakes.map((o) => h('li', { class: 'overtake' }, h('strong', null, `#${o.rank}`), ` ${o.name}`))))
     : null;
-  const ratings = step('ratings card', 'rating-gains', h('h3', null, U.training),
+  // A match conceded before any card teaches nothing (2026-10-17 device test): no empty card then.
+  const ratings = v.ratings.length === 0 ? null : step('ratings card', 'rating-gains', h('h3', null, U.training),
     v.ratings.map((r) => h('div', { class: `rating-gain${r.rose ? ' rose' : ''}` },
       h('span', { class: 'label' }, r.label),
       r.rose
@@ -61,8 +62,8 @@ export function quickResult(ctx: Ctx): Screen {
   const element = h('section', { class: `quick-result ${v.won ? 'won' : 'lost'}`, id: 'quick-result', style: `--stagger-rise:${R.staggerSec * 1000}ms` },
     decisive, headline, gains, overtakes, ratings, goal, actions,
     h('p', { class: 'muted skip-hint' }, matchMedia('(pointer: coarse)').matches ? U.skipHintTouch : U.skipHint));
-  for (const list of [gains.querySelectorAll('.gain'), overtakes?.querySelectorAll('.overtake') ?? [], ratings.querySelectorAll('.rating-gain')]) stagger(list as Iterable<HTMLElement>);
-  const rose = [...ratings.querySelectorAll<HTMLElement>('.rating-gain.rose')];
+  for (const list of [gains.querySelectorAll('.gain'), overtakes?.querySelectorAll('.overtake') ?? [], ratings?.querySelectorAll('.rating-gain') ?? []]) stagger(list as Iterable<HTMLElement>);
+  const rose = [...(ratings?.querySelectorAll<HTMLElement>('.rating-gain.rose') ?? [])];
 
   const seq = createSequence();
   const sound = appSound();

@@ -32,6 +32,8 @@ test.describe('back and concede', () => {
     await expect(page).toHaveURL(/#\/quick\/result$/);
     await expect(page.locator('#quick-result h1')).toHaveText(/^You conceded \d+-\d+$/);
     await expect(page.locator('#decisive')).toHaveCount(0);
+    // Conceded before any card: nothing was trained, so no empty training card.
+    await expect(page.locator('#rating-gains')).toHaveCount(0);
     await page.locator('#quick-result').click({ position: { x: 5, y: 5 } });
     await page.locator('#to-ladder').click();
     await expect(page.locator('#recent li').first()).toHaveText(/^L · /);

@@ -2,11 +2,11 @@
 // opponent read shows, the user picks a card (keys 1/2/3), both cards are revealed and the point plays in 3D (or as
 // text in fast mode). The 3D code loads only when it is used. In 3D the match plays the hybrid edit (ADR-030): the
 // opening points as units behind wipes, then from the point before the first decision on one continuous picture.
-import { SCHEMA_VERSION, type Card, type PointEvent } from '@tennis/engine';
+import { SCHEMA_VERSION, type Card } from '@tennis/engine';
 import type { Timeline } from '@tennis/renderer';
 import {
   autoPlay, batchPlan, cardChoices, concedeQuick, decide, DECISION_SHOWN, decisionSituation, finishQuick, matchOver, opponentRead, QUICK_PACE, revealView, scoreLine,
-  tickerView, type QuickMatch,
+  tickerView,
 } from '@tennis/game';
 import type { Ctx, Screen } from '../career/context.ts';
 import { appSound } from '../audio/session.ts';
@@ -21,13 +21,9 @@ import { renderRead } from './scout.ts';
 import { pointPlayer } from './points.ts';
 import { createWipe } from './wipe.ts';
 import { createCaption } from './caption.ts';
+import { lastPoint, pipRow, tickerAfter, tickerAtStart } from './ticker.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-/** One pip per point played: green yours, red theirs, ringed where you chose a card; on the ticker the newest pops in. */
-const pipRow = (m: QuickMatch, p: PointEvent | undefined, popNew = false) => h('div', { class: 'pips', id: 'point-pips' },
-  p ? tickerView(m, p, T).pips.map((x, i, all) => h('span', { class: `pip ${x.winner}${x.decision ? ' decision' : ''}${popNew && i === all.length - 1 ? ' is-new' : ''}` })) : []);
-const lastPoint = (m: QuickMatch) => m.live.events.findLast((e): e is PointEvent => e.type === 'point');
 
 export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const qm = ctx.quickMatch;
@@ -67,6 +63,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   /** Plays on to the next decision point, ticking each point by; then the choose screen, or the result. */
   async function run() {
     const decided = qm!.decisions.length > 0;
+    // The panel is never empty: before the first point ends it shows who plays, the plan and 0-0 (device test).
+    if (!lastPoint(qm!)) panel.replaceChildren(tickerAtStart(qm!, opponent));
     const points = autoPlay(qm!);
     if (broadcast) {
       load();
@@ -82,12 +80,7 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
         if (!disposed) await play!.play(p, shown);
       }
       if (disposed) return;
-      const v = tickerView(qm!, p, T);
-      panel.replaceChildren(h('div', { class: 'ticker', id: 'ticker' },
-        h('div', { class: 'situation' }, h('span', { class: 'versus' }, U.versus(opponent)), h('span', { class: 'plan muted' }, U.planTag(v.plan))),
-        h('div', { class: 'tick-line' }, h('strong', { id: 'score-line', class: 'tick-score' }, v.score),
-          h('span', { class: `tick-point ${v.winner}` }, `${U.pointFor(v.winner === 'you')} · ${v.how}`)),
-        pipRow(qm!, p, true)));
+      panel.replaceChildren(tickerAfter(qm!, opponent, p));
       // Fast mode ticks each point by; in 3D the next point's walk back is the beat.
       if (!broadcast) await sleep(QUICK_PACE.autoSec * 1000);
     }

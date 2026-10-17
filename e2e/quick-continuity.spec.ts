@@ -12,6 +12,8 @@ test('plays the opening points behind wipes, then one continuous picture through
   await page.locator('#quick-seed').fill('3');
   await page.locator('#quick-start').click();
   await page.locator('#quick-play').click();
+  // The panel shows the matchup before the first point has finished (2026-10-17 device test: it was empty).
+  await expect(page.locator('#ticker')).toContainText('First serve', { timeout: 3_000 });
   await page.evaluate(() => {
     const w = window as unknown as { __samples: Sample[] };
     w.__samples = [];

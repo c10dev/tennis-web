@@ -74,6 +74,10 @@ test.describe('phone layout (toss build)', () => {
       expect(overlaps(await box(el), tossCorner(t))).toBe(false);
       expect(overlaps(await box(el), tossBand(t))).toBe(false);
     }
+    // The sound switch sits inside the header row, not across its bottom edge (2026-10-17 device test).
+    const header = await box(page.locator('header.top'));
+    const sound = await box(page.locator('#sound-toggle'));
+    expect(sound.y + sound.height).toBeLessThanOrEqual(header.y + header.height);
   });
 
   // Two rematches (ADR-025): a wary rival with the long Korean line and a baseliner's tip, then the longest tip.

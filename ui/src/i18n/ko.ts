@@ -54,4 +54,5 @@ export const koUi: UiText = {
   concede: { title: '기권할까요?', body: '이 경기는 패배로 기록돼요.', ok: '기권', cancel: '계속하기' },
   leave: { title: '게임을 종료할까요?', ok: '종료', cancel: '취소' },
   leaveMatch: '나가기',
+  firstServe: '첫 서브',
 };
