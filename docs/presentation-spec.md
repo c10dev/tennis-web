@@ -189,6 +189,8 @@ game pace rows only.
 | Score bug | Top left, `safe-top + 8`, `safe-left + 8` | 14 px type; names ellipsised at 108 px |
 | Leave button | Under the score bug, `safe-top + 64` (fast mode: `+ 8`), left 8 | ≥ 44 px tall; opens the concede question |
 | Sound switch | Top right, `safe-top + 8`, `right + nav-reserve + 8` | Icon only on a phone, label kept for screen readers; ≥ 44 px |
+| Wipe (E6) | Over the whole screen, under the panel and the leave button | A court-blue band with optic edges carrying the score; 0.25 s on, 0.25 s off |
+| ▶▶ chip (E3) | `safe-top + 60`, `safe-right + 12` | Shown while a walk back plays at 5×. It ignores `--nav-reserve`: at +60 it sits under the Toss band and the sound switch (recheck with L2's iOS values) |
 | Broadcast overlays | On the stage's lower edge: serve speed (right, +8 px), rally count (right, +64 px), lower-third (left, +8 px, ≤ 55vw) | Never under the panel or over the score bug |
 | Dialogs | Centred, inside the safe area | Dim the screen; focus on the safe choice |
 
@@ -202,6 +204,7 @@ game pace rows only.
 | Decisive replay | 30 |
 | Leave button | 6 |
 | Panel | 5 |
+| Wipe layer, ▶▶ chip | 4 |
 | Overlays | (none set) |
 | Canvas | (none set) |
 

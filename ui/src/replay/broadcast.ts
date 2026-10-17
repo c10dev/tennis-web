@@ -202,6 +202,7 @@ export function mountBroadcast(root: HTMLElement, options: BroadcastOptions): Br
     dispose() {
       stretch?.done();
       stretch = null;
+      document.body.dataset.ff = '';
       cancelAnimationFrame(raf);
       controls?.dispose();
       own?.dispose();

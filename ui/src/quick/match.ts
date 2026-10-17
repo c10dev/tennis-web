@@ -193,6 +193,8 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
       stopDeals();
       window.removeEventListener('keydown', onKey);
       broadcast?.dispose();
+      // A match left mid-wipe must not leave the flag up (the next match's chip, the continuity e2e).
+      document.body.dataset.wipe = '';
     },
   };
 }
