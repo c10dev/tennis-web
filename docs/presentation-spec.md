@@ -109,7 +109,7 @@ screen times below leave out thinking time.
 - **E2. A point starts at its start.** A shown point opens on the serve: the toss, or at least the ball in the server's
   hand. It never opens mid-rally. This holds for the units behind wipes too (E8's table said "others last shot" for
   B; C opens them on the serve instead).
-- **E3. Dead time is sped through, not cut.** The walk back between points plays at about 5× with a small "▶▶" chip.
+- **E3. Dead time is sped through, not cut.** The walk back between points plays at 3× with a "▶▶" chip (5× on 2026-10-17 was too quick to read on a phone: half a second).
   Speed changes ramp over 0.25 s, never in steps.
 - **E4. Live play at 1× when it matters.** Decision points and the point before them play at 1×. Earlier points
   without cards may run at up to 2×, ramping down before the last contact so the ending lands at 1×.
@@ -131,7 +131,7 @@ screen times below leave out thinking time.
     - The renderer's own English lower-third (`.ov-lower`) is hidden in the quick match.
 - **E6. Every cut is motivated and marked.** The only cuts allowed:
   - into and out of the result replay, with a wipe and a REPLAY chip;
-  - to skip many points at once, behind a 0.4–0.6 s wipe that carries the score change.
+  - to skip many points at once, behind a 0.8 s wipe that carries the score change (on 0.25 s, the score held 0.3 s, off 0.25 s).
   - A wipe never starts mid-rally.
 - **E7. Rhythm budget.** A match is 60–100 s on screen, under 2 minutes with thinking time (ADR-014's 1–2 minutes).
 
@@ -151,12 +151,12 @@ The screen times are estimates from the 40-match sample.
 As built:
 | Stretch | What plays | Speed |
 |---|---|---|
-| Opening units (before the first decision, but the last) | Serve to end, a 0.5 s wipe carrying the score before each but the first | 2× until 0.7 s before the last contact, then 1× |
+| Opening units (before the first decision, but the last) | Serve to end, a 0.8 s wipe carrying the score before each but the first | 2× until 0.7 s before the last contact, then 1× |
 | The point before the first decision | Serve to end, after a wipe | 1× |
-| Every walk back after it | The players walk to the next start, ▶▶ chip | 5× |
+| Every walk back after it | The players walk to the next start, ▶▶ chip | 3× |
 | Points without cards after it | Serve to end | As the units |
 | The point before a stop, the decision point | Serve to end | 1× (a decision point past 8 s runs its start at 2×) |
-| Into a stop | The walk to the next point's ready spots, then the hold (C3) | 5× |
+| Into a stop | The walk to the next point's ready spots, then the hold (C3) | 3× |
 | Out of a stop | The players ease 0.5 s from the ready spots to the engine's start | 1× |
 
 Speed changes ramp over 0.25 s (E3). Code: `game/src/quick/spans.ts`, `ui/src/quick/{points,wipe}.ts`,
@@ -187,24 +187,25 @@ game pace rows only.
   (`right + 10`, `top + 5` on iOS / `top + 10` on Android) from the insets.
   - Nothing of ours may overlap them; overlapping can fail the Toss review.
   - `--nav-reserve` (104 px, Toss build only) keeps that corner empty across.
-- **Open (TD-052):** on iOS our header overlaps at the top.
-  - Likely cause: our header starts at `safe-top + 8 px`, the same band as Toss's buttons.
-  - The Toss build logs `[safe-area]` (Toss values, env() values, viewport) to the web debug tools' Log tab.
-  - Proposed rule once the values are read: nothing of ours starts above `safe-top + 48 px` in the Toss build. The
-    whole top band belongs to Toss, not just the corner.
+- **The Toss band (2026-10-17, from an iPhone screenshot).** Toss's more/X pill sits about `safe-top + 5` to
+  `safe-top + 45`. The whole band belongs to Toss across the full width, not just the corner: in the Toss build
+  nothing of ours starts above `--content-top` = `safe-top + --top-band` (48 px; 0 on the web). That covers the
+  header, the score bug, the sound switch, the leave button, the chip and the 3D stage itself, whose canvas starts
+  at `--content-top`. The Toss build still logs `[safe-area]` (Toss values, env() values, viewport) to the web debug
+  tools' Log tab; adjust `--top-band` if a device shows the pill lower.
 
 ### L3. Quick match regions (phone)
 | Region | Where | Rule |
 |---|---|---|
-| Stage (3D) | Top 60dvh | Canvas `#view`; overlays sit on it, never on the panel |
+| Stage (3D) | From `content-top` down to 60dvh | Canvas `#view`; overlays sit on it, never on the panel |
 | Panel | Bottom, `safe-bottom + 10 px` up, 10 px gutters | Always fills the area under the stage. A short reveal is centred; a tall decision panel may rise over the stage's lower edge. Max height 100dvh − safe-top − 24 px, scrolls past that |
-| Score bug | Top left, `safe-top + 8`, `safe-left + 8` | 14 px type; names ellipsised at 108 px |
-| Leave button | Under the score bug, `safe-top + 64` (fast mode: `+ 8`), left 8 | ≥ 44 px tall; opens the concede question |
-| Sound switch | Top right, `safe-top + 8`, `right + nav-reserve + 8` | Icon only on a phone, label kept for screen readers; ≥ 44 px |
-| Wipe (E6) | Over the whole screen, under the panel and the leave button | A court-blue band with optic edges carrying the score; 0.25 s on, 0.25 s off |
-| ▶▶ chip (E3) | `safe-top + 60`, `safe-right + 12` | Shown while a walk back plays at 5×. It ignores `--nav-reserve`: at +60 it sits under the Toss band and the sound switch (recheck with L2's iOS values) |
+| Score bug | Top left, `content-top + 8`, `safe-left + 8` | 14 px type; names ellipsised at 108 px |
+| Leave button | Under the score bug, `content-top + 64` (fast mode: `+ 8`), left 8 | ≥ 44 px tall; opens the concede question |
+| Sound switch | Top right, `content-top + 8`, `right + 8` (under Toss's pill) | Icon only on a phone, label kept for screen readers; ≥ 44 px |
+| Wipe (E6) | Over the whole screen, under the panel and the leave button | A court-blue band with optic edges carrying the score; 0.25 s on, the score held 0.3 s, 0.25 s off |
+| ▶▶ chip (E3) | Centred, `content-top + 8` | 20 px type; shown while a walk back plays at 3× |
 | Broadcast overlays | On the stage's lower edge: serve speed (right, +8 px), rally count (right, +64 px) | Never under the panel or over the score bug. The renderer's lower-third is hidden: the caption takes its place |
-| Caption (E5) | On the stage's lower edge, left: `safe-left + 8`, 8 px up from the stage's bottom, ≤ 55vw. Desktop: top left, `safe-top + 132`, under the leave button | Under the near baseline (≈ 70% down the stage); never over the panel, the score bug or the Toss band; e2e `mobile.spec.ts` checks the box |
+| Caption (E5) | On the stage's lower edge, left: `safe-left + 8`, 8 px up from the stage's bottom, ≤ 55vw. Desktop: top left, `content-top + 132`, under the leave button | Under the near baseline (≈ 70% down the stage); never over the panel, the score bug or the Toss band; e2e `mobile.spec.ts` checks the box |
 | Dialogs | Centred, inside the safe area | Dim the screen; focus on the safe choice |
 
 **Stacking order** (higher is on top):

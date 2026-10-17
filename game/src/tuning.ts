@@ -200,8 +200,10 @@ export const QUICK_PACE = {
   /** The hybrid edit (ADR-030, presentation spec E8 C), how every 3D quick match plays since 2026-10-17. Points
    *  without cards run at `fastSpeed` until `leadSec` before their last contact, then 1×; the walk back between points
    *  (`gapSec`, renderer PLAYBACK.pointGapSec; the model leaves out the 8 s changeovers) at `gapSpeed`; the opening
-   *  units are joined by a `wipeSec` wipe. The UI ramps every speed change over `rampSec` of screen time (E3). */
-  hybrid: { fastSpeed: 2, gapSpeed: 5, gapSec: 2.5, leadSec: 0.7, rampSec: 0.25, wipeSec: 0.5 },
+   *  units are joined by a `wipeSec` wipe that holds the score `wipeHoldSec` between its sweeps. The UI ramps every
+   *  speed change over `rampSec` of screen time (E3). 5× walks and a 0.5 s wipe went by unseen on the 2026-10-17
+   *  device test. */
+  hybrid: { fastSpeed: 2, gapSpeed: 3, gapSec: 2.5, leadSec: 0.7, rampSec: 0.25, wipeSec: 0.8, wipeHoldSec: 0.3 },
   /** The captions (presentation spec E5, TD-075): a run of `streakFrom` points makes a point matter. The lower-third
    *  before a point shows from its toss until `serveHoldSec` of match time after the serve; the result line from the
    *  point's end through the walk back. Either stays up at least `minSec` of screen time unless the next replaces it. */

@@ -60,9 +60,9 @@
 .chip.attack { color: var(--atk-text); } .chip.defend { color: var(--def-text); } .chip.counter { color: var(--ctr-text); }
 .chip .icon { flex: none; }
 /* The way out of a match (iPhones have no back button): a small paper pill under the score bug, top left. */
-.leave-match { position: fixed; z-index: 6; top: calc(var(--safe-top) + 84px); left: calc(var(--safe-left) + 16px);
+.leave-match { position: fixed; z-index: 6; top: calc(var(--content-top) + 84px); left: calc(var(--safe-left) + 16px);
   padding: 5px 12px; font-size: 14px; border-radius: 999px; }
-.quick-match.fast .leave-match { top: calc(var(--safe-top) + 12px); }
+.quick-match.fast .leave-match { top: calc(var(--content-top) + 12px); }
 
 /* The wipe between the opening points and the ▶▶ chip on the walk back (ADR-030, presentation spec E3, E6). Under the
    panel and the leave button, over the stage and its score bug: the band carries the score itself. */
@@ -74,15 +74,15 @@
 .wipe.is-off { visibility: visible; transform: translateX(120%) skewX(-12deg); }
 .wipe-score { transform: skewX(12deg); color: var(--paper); font: 800 clamp(28px, 7vw, 56px) / 1 var(--font-display);
   letter-spacing: 0.02em; padding: 0.3em 0.8em; background: var(--ink); border-radius: 12px; }
-.ff-chip { position: absolute; top: calc(var(--safe-top) + 60px); right: calc(var(--safe-right) + 12px); padding: 4px 10px;
-  border-radius: 999px; background: var(--ink); color: var(--optic); font: 800 14px / 1.2 var(--font-display); opacity: 0; }
+.ff-chip { position: absolute; top: calc(var(--content-top) + 60px); right: calc(var(--safe-right) + 8px); padding: 6px 14px;
+  border-radius: 999px; background: var(--ink); color: var(--optic); font: 800 18px / 1.2 var(--font-display); opacity: 0; }
 body[data-ff='1'] .ff-chip { opacity: 0.9; }
 
 /* The context captions (presentation spec E5, L3): a lower-third before a point that matters, the result line after
    it. On the stage's lower edge, under the near baseline, left of the serve speed and rally count; under the wipe.
    They take the place of the renderer's English lower-third, which the quick match hides. */
 .quick-match .ov-lower { display: none; }
-.quick-caption { position: fixed; z-index: 3; left: calc(var(--safe-left) + 16px); top: calc(var(--safe-top) + 132px); max-width: min(320px, 55vw);
+.quick-caption { position: fixed; z-index: 3; left: calc(var(--safe-left) + 16px); top: calc(var(--content-top) + 132px); max-width: min(320px, 55vw);
   pointer-events: none; visibility: hidden; opacity: 0; transform: translateX(-12px); }
 .quick-caption.is-on { visibility: visible; opacity: 1; transform: none; }
 .quick-caption .text { display: inline-block; padding: 5px 12px; background: var(--ink); color: var(--paper); border-left: 6px solid var(--gold);

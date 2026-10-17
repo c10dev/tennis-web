@@ -23,12 +23,17 @@ async function tokens(page: Page) {
       probe.remove();
       return w;
     };
-    return { safeTop: px('--safe-top'), safeBottom: px('--safe-bottom'), navReserve: px('--nav-reserve'), width: innerWidth, height: innerHeight, raw: css.getPropertyValue('--nav-reserve') };
+    return {
+      safeTop: px('--safe-top'), safeBottom: px('--safe-bottom'), navReserve: px('--nav-reserve'), topBand: px('--top-band'), contentTop: px('--content-top'),
+      width: innerWidth, height: innerHeight, raw: css.getPropertyValue('--nav-reserve'),
+    };
   });
 }
 
 /** The area Toss draws its buttons in: the top-right corner. */
 const tossCorner = (t: { width: number; safeTop: number; navReserve: number }): Box => ({ x: t.width - t.navReserve, y: 0, width: t.navReserve, height: t.safeTop + 52 });
+/** The band Toss's more/X pill sits in, across the whole width (presentation spec L2; an iPhone showed it 2026-10-17). */
+const tossBand = (t: { width: number; contentTop: number }): Box => ({ x: 0, y: 0, width: t.width, height: t.contentTop });
 
 async function noSideScroll(page: Page) {
   expect(await page.evaluate(() => document.scrollingElement!.scrollWidth <= innerWidth)).toBe(true);
@@ -59,11 +64,16 @@ test.describe('phone layout (toss build)', () => {
     await startLadder(page);
     const t = await tokens(page);
     expect(t.navReserve).toBeGreaterThan(0);
+    expect(t.topBand).toBe(48);
+    expect(t.contentTop).toBe(t.safeTop + t.topBand);
     await noSideScroll(page);
     for (const id of ['#quick-play', '#plan-aggressive', '#plan-balanced', '#plan-defensive']) {
       expect((await box(page.locator(id))).height).toBeGreaterThanOrEqual(44);
     }
-    for (const el of await page.locator('header.top a, header.top nav').all()) expect(overlaps(await box(el), tossCorner(t))).toBe(false);
+    for (const el of await page.locator('header.top a, header.top nav, header.top .brand, #sound-toggle').all()) {
+      expect(overlaps(await box(el), tossCorner(t))).toBe(false);
+      expect(overlaps(await box(el), tossBand(t))).toBe(false);
+    }
   });
 
   // Two rematches (ADR-025): a wary rival with the long Korean line and a baseliner's tip, then the longest tip.
@@ -112,7 +122,8 @@ test.describe('phone layout (toss build)', () => {
     const view = await box(page.locator('#view'));
     const panel = await box(page.locator('#quick-panel'));
     const bug = await box(page.locator('#score .score-bug'));
-    expect(view.y).toBe(0);
+    // The stage starts under the Toss band; its bottom stays at 60% of the screen.
+    expect(view.y).toBeCloseTo(t.contentTop, 0);
     expect(view.height).toBeLessThan(t.height * 0.62);
     expect(view.height).toBeGreaterThan(t.height * 0.35);
     expect(panel.y + panel.height).toBeLessThanOrEqual(t.height - t.safeBottom + 1);
@@ -130,8 +141,9 @@ test.describe('phone layout (toss build)', () => {
     const leave = await box(page.locator('#leave-match'));
     expect(leave.height).toBeGreaterThanOrEqual(44);
     expect(leave.y).toBeGreaterThanOrEqual(t.safeTop);
-    for (const other of [panel, bug, sound, tossCorner(t)]) expect(overlaps(leave, other)).toBe(false);
-    for (const other of [panel, bug, tossCorner(t)]) expect(overlaps(sound, other)).toBe(false);
+    for (const other of [panel, bug, sound, tossCorner(t), tossBand(t)]) expect(overlaps(leave, other)).toBe(false);
+    for (const other of [panel, bug, tossCorner(t), tossBand(t)]) expect(overlaps(sound, other)).toBe(false);
+    expect(overlaps(bug, tossBand(t))).toBe(false);
     await noSideScroll(page);
     // A tap picks the card; no hover lift sticks on a touch screen.
     const moment = await page.locator('#moment').textContent();
@@ -148,7 +160,7 @@ test.describe('phone layout (toss build)', () => {
     // The near baseline sits about 70% down the phone stage (presentation spec C2's framing).
     expect(cap.y).toBeGreaterThanOrEqual(stage.y + 0.72 * stage.height);
     expect(cap.y + cap.height).toBeLessThanOrEqual(stage.y + stage.height);
-    for (const other of [await box(page.locator('#quick-panel')), bug, leave, sound, tossCorner(t)]) expect(overlaps(cap, other)).toBe(false);
+    for (const other of [await box(page.locator('#quick-panel')), bug, leave, sound, tossCorner(t), tossBand(t)]) expect(overlaps(cap, other)).toBe(false);
     // The boxes measured at the stop are where they were.
     expect(await box(page.locator('#score .score-bug'))).toEqual(bug);
     expect(await box(page.locator('#leave-match'))).toEqual(leave);

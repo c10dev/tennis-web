@@ -1400,3 +1400,12 @@ Format: one entry per decision, newest at the bottom.
 - **Note (2026-10-17):** E5 built (TD-075 closed): a lower-third before a point that matters and a result line after it,
   from the events (`game views/quick-captions.ts`), shown by match time on the broadcast's frames (`ui quick/caption.ts`)
   so the edit never waits for them; on the stage's lower edge under the near baseline, the renderer's English one hidden.
+- **Device test 1 (2026-10-17):** an iPhone in Toss showed no teleporting, but the wipes and the ▶▶ chip went by
+  unseen, and our top row shared the band of Toss's more/X pill. Changes:
+  - The walk back plays at 3× (was 5×): about 0.8 s on screen. The chip is 18 px, under the sound switch.
+  - The wipe holds the score for 0.3 s between its sweeps: 0.8 s in all. The median is now 81 s.
+  - The Toss build reserves `--top-band` (48 px) across the full width. Everything of ours, the 3D stage included,
+    starts at `--content-top` (presentation spec L2).
+  - The ladder header had ignored the safe area altogether: `career.css` loads after `phone.css` and its equal-weight
+    `header.top` padding won. The phone rules now carry `html` to outweigh it.
+

@@ -34,6 +34,6 @@ ul.recent .lost { color: var(--loss); }
   font-size: 13px; font-weight: 700; word-break: keep-all; }
 /* The sound switch (ADR-029, ADR-022 step 6): a paper pill pinned top right on every quick screen, above the 3D replay,
    inside the safe area and left of the corner Toss keeps for its buttons. */
-.sound-switch { position: fixed; top: calc(var(--safe-top) + 12px); right: calc(var(--safe-right) + var(--nav-reserve) + 16px); z-index: 40;
+.sound-switch { position: fixed; top: calc(var(--content-top) + 12px); right: calc(var(--safe-right) + var(--nav-reserve) + 16px); z-index: 40;
   display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 14px; border-radius: 999px; }
 .sound-switch .icon { flex: none; }

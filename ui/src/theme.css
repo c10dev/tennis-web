@@ -47,9 +47,13 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --nav-reserve: 0px;
+  /* The band across the top that Toss's more/X pill sits in (presentation spec L2): nothing of ours starts above
+     --content-top in the Toss build. */
+  --top-band: 0px;
+  --content-top: calc(var(--safe-top) + var(--top-band));
   --gutter: 16px;
 }
-:root[data-target='toss'] { --nav-reserve: 104px; }
+:root[data-target='toss'] { --nav-reserve: 104px; --top-band: 48px; }
 @media (max-width: 640px) { :root { --gutter: 10px; } }
 
 /* Paper surfaces: ink text, and the surface tokens re-pointed for white. */
