@@ -103,7 +103,7 @@ screen times below leave out thinking time.
 | TV pace (3× clips, mannequin) | 26.5 s |
 | Game pace (1× windows, today) | 50.1 s |
 
-### E1–E7. The grammar (built 2026-10-17, ADR-030, except E5)
+### E1–E7. The grammar (built 2026-10-17, ADR-030; E5 the same day)
 - **E1. Time is never skipped silently.** Within a shot, match time only moves forward, continuously. Time may be
   compressed (E3) or skipped behind a marked transition (E6), never by a plain jump with the same framing.
 - **E2. A point starts at its start.** A shown point opens on the serve: the toss, or at least the ball in the server's
@@ -113,10 +113,22 @@ screen times below leave out thinking time.
   Speed changes ramp over 0.25 s, never in steps.
 - **E4. Live play at 1× when it matters.** Decision points and the point before them play at 1×. Earlier points
   without cards may run at up to 2×, ramping down before the last contact so the ending lands at 1×.
-- **E5. Context before content.** **Proposed, not built (TD-075).** Every stop and every point that matters gets one line of why:
+- **E5. Context before content.** **Built (TD-075 closed).** Every stop and every point that matters gets one line of why:
   - a lower-third before the point ("브레이크 포인트", "3연속 실점", "매치 포인트");
   - a one-line result after it ("상대 포핸드 위너").
-  - Captions come from the events. They never cover the court's near half or the score bug.
+  - Captions come from the events. They never cover the court's near half, the score bug, the panel or the Toss band.
+  - *As built* (`game/src/views/quick-captions.ts`, `ui/src/quick/caption.ts`, tuning `QUICK_PACE.caption`):
+    - **A point matters** when it is, in this order: a match point, a set point, a break point (each "위기" when it
+      is the opponent's), the end of a run of 3 or more points won or lost ("3연속 실점"), or a decision point, which
+      otherwise carries the stop's moment ("승부처", "5-5 동점"). The tiebreak tag alone does not count.
+    - **The result line** follows only a point that had a lower-third: who ended it and with what (the play-by-play's
+      ending, "상대 포핸드 위너").
+    - **Timing, in match time** (the broadcast's frames, so the edit never waits): the lower-third from the point's
+      toss until 1.5 s after its serve; the result line from the point's end through the walk back. Once up, either
+      stays at least 2 s of screen time unless the next replaces it.
+    - **Not shown:** under a wipe (the band carries the score); no new caption at a decision stop or its reveal (the
+      banner says why), where the last result line runs out its 2 s; in fast mode (no stage).
+    - The renderer's own English lower-third (`.ov-lower`) is hidden in the quick match.
 - **E6. Every cut is motivated and marked.** The only cuts allowed:
   - into and out of the result replay, with a wipe and a REPLAY chip;
   - to skip many points at once, behind a 0.4–0.6 s wipe that carries the score change.
@@ -191,7 +203,8 @@ game pace rows only.
 | Sound switch | Top right, `safe-top + 8`, `right + nav-reserve + 8` | Icon only on a phone, label kept for screen readers; ≥ 44 px |
 | Wipe (E6) | Over the whole screen, under the panel and the leave button | A court-blue band with optic edges carrying the score; 0.25 s on, 0.25 s off |
 | ▶▶ chip (E3) | `safe-top + 60`, `safe-right + 12` | Shown while a walk back plays at 5×. It ignores `--nav-reserve`: at +60 it sits under the Toss band and the sound switch (recheck with L2's iOS values) |
-| Broadcast overlays | On the stage's lower edge: serve speed (right, +8 px), rally count (right, +64 px), lower-third (left, +8 px, ≤ 55vw) | Never under the panel or over the score bug |
+| Broadcast overlays | On the stage's lower edge: serve speed (right, +8 px), rally count (right, +64 px) | Never under the panel or over the score bug. The renderer's lower-third is hidden: the caption takes its place |
+| Caption (E5) | On the stage's lower edge, left: `safe-left + 8`, 8 px up from the stage's bottom, ≤ 55vw. Desktop: top left, `safe-top + 132`, under the leave button | Under the near baseline (≈ 70% down the stage); never over the panel, the score bug or the Toss band; e2e `mobile.spec.ts` checks the box |
 | Dialogs | Centred, inside the safe area | Dim the screen; focus on the safe choice |
 
 **Stacking order** (higher is on top):
@@ -205,6 +218,7 @@ game pace rows only.
 | Leave button | 6 |
 | Panel | 5 |
 | Wipe layer, ▶▶ chip | 4 |
+| Caption | 3 |
 | Overlays | (none set) |
 | Canvas | (none set) |
 
@@ -291,7 +305,7 @@ There is one audio session, `ui/src/audio/session.ts` over `lib/sound.ts`.
 | Item | Rule | Where it stands |
 |---|---|---|
 | Teleporting between points | E8 | Built (C, ADR-030); to check on a device: the walk into the hold and the release (TD-076) |
-| Context captions | E5 | Proposed (TD-075) |
+| Context captions | E5 | Built (TD-075 closed); to read on a device |
 | iOS header overlap | L2 | Waiting for the `[safe-area]` log values from a device |
 | Phone frame times, quality tiers | — | TD-059, on a device |
 | Ogg Opus on iOS | S4 | TD-070, on a device |

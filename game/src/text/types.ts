@@ -16,6 +16,9 @@ export interface Messages {
   /** "Your serve · 5-4". */
   situation(role: Role, score: string): string;
   moment: { matchPoint: string; matchPointDown: string; all(n: number): string; big: string };
+  /** The lower-third before a point that matters (presentation spec E5), from the user's side; a match point reads
+   *  `moment`. `run` is a streak of `n` points, won or lost. */
+  caption: { setPoint: string; setPointDown: string; breakPoint: string; breakPointDown: string; run(n: number, won: boolean): string };
   how: Record<'ace' | 'double_fault' | 'winner' | 'unforced_error' | 'forced_error' | 'other', string>;
   plan: Record<GamePlan, { label: string; line: string }>;
   style: Record<PlayStyle, string>;

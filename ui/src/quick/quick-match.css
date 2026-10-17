@@ -77,3 +77,14 @@
 .ff-chip { position: absolute; top: calc(var(--safe-top) + 60px); right: calc(var(--safe-right) + 12px); padding: 4px 10px;
   border-radius: 999px; background: var(--ink); color: var(--optic); font: 800 14px / 1.2 var(--font-display); opacity: 0; }
 body[data-ff='1'] .ff-chip { opacity: 0.9; }
+
+/* The context captions (presentation spec E5, L3): a lower-third before a point that matters, the result line after
+   it. On the stage's lower edge, under the near baseline, left of the serve speed and rally count; under the wipe.
+   They take the place of the renderer's English lower-third, which the quick match hides. */
+.quick-match .ov-lower { display: none; }
+.quick-caption { position: fixed; z-index: 3; left: calc(var(--safe-left) + 16px); top: calc(var(--safe-top) + 132px); max-width: min(320px, 55vw);
+  pointer-events: none; visibility: hidden; opacity: 0; transform: translateX(-12px); }
+.quick-caption.is-on { visibility: visible; opacity: 1; transform: none; }
+.quick-caption .text { display: inline-block; padding: 5px 12px; background: var(--ink); color: var(--paper); border-left: 6px solid var(--gold);
+  border-radius: 4px 10px 10px 4px; font: 400 17px / 1.2 var(--font-display); letter-spacing: 0.03em; word-break: keep-all; }
+.quick-caption[data-kind='after'] .text { border-left-color: var(--optic); font: 800 15px / 1.25 var(--font-body); letter-spacing: 0; }

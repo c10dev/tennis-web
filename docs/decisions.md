@@ -1397,3 +1397,6 @@ Format: one entry per decision, newest at the bottom.
   the game pace. The seconds model leaves out the 8 s changeovers (≈ 1 s at 5×) and the ramps (≈ 0.1 s each). The
   outcome line no longer freezes the picture for 0.6 s: it stays up while the walk back plays. E5's captions are not
   built yet (TD-075); the walk into the hold ends facing the way the player walked, then the stance turns to the net.
+- **Note (2026-10-17):** E5 built (TD-075 closed): a lower-third before a point that matters and a result line after it,
+  from the events (`game views/quick-captions.ts`), shown by match time on the broadcast's frames (`ui quick/caption.ts`)
+  so the edit never waits for them; on the stage's lower edge under the near baseline, the renderer's English one hidden.

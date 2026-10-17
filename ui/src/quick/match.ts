@@ -20,6 +20,7 @@ import { playReveal, revealElement } from './reveal.ts';
 import { renderRead } from './scout.ts';
 import { pointPlayer } from './points.ts';
 import { createWipe } from './wipe.ts';
+import { createCaption } from './caption.ts';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -42,9 +43,12 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const sound = appSound();
   // The 3D redesign (ADR-024; `?rig=mannequin` for the M7 look): skinned players, the game camera and its decision hold.
   const slice = ctx.fastMode ? null : await (await import('../replay/model.ts')).sliceFromQuery();
-  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, { mode: 'full', controls: false, bare: true, sound, ...(slice ?? {}) });
+  // The captions (E5) follow the frames in match time; fast mode has no stage for them.
+  const caption = ctx.fastMode ? null : createCaption();
+  const broadcast = ctx.fastMode ? null : (await import('../replay/broadcast.ts')).mountBroadcast(stage, {
+    mode: 'full', controls: false, bare: true, sound, ...(slice ?? {}), onFrame: (f, _c, p) => caption!.frame(p.timeline, f.matchT) });
   const wipe = broadcast ? createWipe() : null;
-  if (wipe) stage.append(wipe.element);
+  if (wipe) stage.append(caption!.element, wipe.element);
   const play = broadcast ? pointPlayer(broadcast, () => timeline!) : null;
   /** The deal sounds, one per card on the CSS deal stagger (motion.css: 120 ms, then 60 ms apart); cut short by a pick. */
   let deals: ReturnType<typeof setTimeout>[] = [];
@@ -55,7 +59,10 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const opponent = qm.recipe.config.players[1].name;
   let busy = false;
   let disposed = false;
-  const phase = (p: string) => Object.assign(document.body.dataset, { quickPhase: p, quickPoints: String(qm.recipe.cards.length), quickDecisions: String(qm.decisions.length) });
+  const phase = (p: string) => {
+    caption?.live(p === 'auto' || p === 'clip' || p === 'outcome');
+    Object.assign(document.body.dataset, { quickPhase: p, quickPoints: String(qm.recipe.cards.length), quickDecisions: String(qm.decisions.length) });
+  };
 
   /** Plays on to the next decision point, ticking each point by; then the choose screen, or the result. */
   async function run() {
@@ -165,7 +172,6 @@ export async function quickMatchScreen(ctx: Ctx): Promise<Screen> {
   const load = () => {
     timeline = broadcast!.load({ schemaVersion: SCHEMA_VERSION, config: qm!.live.config, events: [...qm!.live.events] }, { keepTime: true });
   };
-
 
   const onKey = (e: KeyboardEvent) => {
     if (dialogOpen()) return;

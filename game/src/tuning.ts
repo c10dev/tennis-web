@@ -202,6 +202,10 @@ export const QUICK_PACE = {
    *  (`gapSec`, renderer PLAYBACK.pointGapSec; the model leaves out the 8 s changeovers) at `gapSpeed`; the opening
    *  units are joined by a `wipeSec` wipe. The UI ramps every speed change over `rampSec` of screen time (E3). */
   hybrid: { fastSpeed: 2, gapSpeed: 5, gapSec: 2.5, leadSec: 0.7, rampSec: 0.25, wipeSec: 0.5 },
+  /** The captions (presentation spec E5, TD-075): a run of `streakFrom` points makes a point matter. The lower-third
+   *  before a point shows from its toss until `serveHoldSec` of match time after the serve; the result line from the
+   *  point's end through the walk back. Either stays up at least `minSec` of screen time unless the next replaces it. */
+  caption: { streakFrom: 3, serveHoldSec: 1.5, minSec: 2 },
 } as const;
 
 // ---- M6 (ADR-017). Each block belongs to one workstream: flow (TIEBREAK_RULES, QUICK_MOMENTS, QUICK_PLAN),

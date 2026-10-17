@@ -30,6 +30,10 @@ export const en: Messages = {
   },
   situation: (role, score) => `${role === 'serve' ? 'Your serve' : 'Their serve'} · ${score}`,
   moment: { matchPoint: 'MATCH POINT', matchPointDown: 'MATCH POINT DOWN', all: (n) => `${n}-ALL`, big: 'BIG POINT' },
+  caption: {
+    setPoint: 'SET POINT', setPointDown: 'SET POINT DOWN', breakPoint: 'BREAK POINT', breakPointDown: 'BREAK POINT DOWN',
+    run: (n, won) => (won ? `${n} POINTS IN A ROW` : `${n} POINTS LOST IN A ROW`),
+  },
   how: { ace: 'Ace', double_fault: 'Double fault', winner: 'Winner', unforced_error: 'Unforced error', forced_error: 'Forced error', other: 'Error' },
   plan: {
     aggressive: { label: 'Aggressive', line: 'Go for your shots: more winners, more errors' },

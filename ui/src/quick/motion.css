@@ -82,6 +82,8 @@
 .wipe.is-on { transition: transform var(--wipe-half) ease-in; }
 .wipe.is-off { transition: transform var(--wipe-half) ease-out; }
 .ff-chip { transition: opacity 120ms; }
+/* The captions (E5) slide in from the left and fade; reduced motion makes them a cut (below). */
+.quick-caption { transition: opacity var(--dur-short) linear, transform var(--dur-medium) var(--ease-emphasized), visibility var(--dur-short); }
 
 @media (prefers-reduced-motion: reduce) {
   .quick-match *, .quick-match *::before, .quick-match *::after,

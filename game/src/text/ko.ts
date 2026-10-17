@@ -41,6 +41,10 @@ export const ko: Messages = {
   },
   situation: (role, score) => `${role === 'serve' ? '내 서브' : '상대 서브'} · ${score}`,
   moment: { matchPoint: '매치 포인트', matchPointDown: '매치 포인트 위기', all: (n) => `${n}-${n} 동점`, big: '승부처' },
+  caption: {
+    setPoint: '세트 포인트', setPointDown: '세트 포인트 위기', breakPoint: '브레이크 포인트', breakPointDown: '브레이크 포인트 위기',
+    run: (n, won) => `${n}연속 ${won ? '득점' : '실점'}`,
+  },
   how: { ace: '에이스', double_fault: '더블 폴트', winner: '위너', unforced_error: '언포스드 에러', forced_error: '포스드 에러', other: '실수' },
   plan: {
     aggressive: { label: '공격적', line: '과감하게: 위너도 실수도 늘어요' },

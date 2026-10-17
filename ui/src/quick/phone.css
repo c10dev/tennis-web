@@ -55,7 +55,7 @@
   .quick-match .ov-serve { right: 8px; bottom: calc(100dvh - var(--stage-h) + 8px); }
   .quick-match .ov-serve .value { font-size: 18px; }
   .quick-match .ov-rally { right: 8px; bottom: calc(100dvh - var(--stage-h) + 64px); }
-  .quick-match .ov-lower { left: 8px; bottom: calc(100dvh - var(--stage-h) + 8px); max-width: 55vw; }
+  .quick-caption { left: calc(var(--safe-left) + 8px); top: auto; bottom: calc(100dvh - var(--stage-h) + 8px); max-width: 55vw; }
   .quick-match .ov-hawkeye { top: auto; bottom: calc(100dvh - var(--stage-h) + 56px); }
   .quick-match .ov-hawkeye .call { font-size: 22px; }
   /* The switch shrinks to its icon on a phone (the label stays for screen readers). */

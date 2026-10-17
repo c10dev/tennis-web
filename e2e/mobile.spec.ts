@@ -134,8 +134,26 @@ test.describe('phone layout (toss build)', () => {
     for (const other of [panel, bug, tossCorner(t)]) expect(overlaps(sound, other)).toBe(false);
     await noSideScroll(page);
     // A tap picks the card; no hover lift sticks on a touch screen.
+    const moment = await page.locator('#moment').textContent();
     await page.locator('#card-defend').tap();
     await expect(page.locator('#reveal')).toBeVisible();
+    // E5: the lower-third before the decision point (seed 3's first stop, 4-5, has no tag or run of three: it carries
+    // the stop's moment), on the stage's lower edge, under the near baseline, and clear of every box above.
+    const caption = page.locator('#quick-caption.is-on[data-kind="before"]');
+    await expect(caption).toHaveText(moment!, { timeout: 20_000 });
+    const cap = await box(caption);
+    const stage = await box(page.locator('#view'));
+    expect(cap.x).toBeGreaterThanOrEqual(0);
+    expect(cap.x + cap.width).toBeLessThanOrEqual(t.width);
+    // The near baseline sits about 70% down the phone stage (presentation spec C2's framing).
+    expect(cap.y).toBeGreaterThanOrEqual(stage.y + 0.72 * stage.height);
+    expect(cap.y + cap.height).toBeLessThanOrEqual(stage.y + stage.height);
+    for (const other of [await box(page.locator('#quick-panel')), bug, leave, sound, tossCorner(t)]) expect(overlaps(cap, other)).toBe(false);
+    // The boxes measured at the stop are where they were.
+    expect(await box(page.locator('#score .score-bug'))).toEqual(bug);
+    expect(await box(page.locator('#leave-match'))).toEqual(leave);
+    expect(await box(page.locator('#sound-toggle'))).toEqual(sound);
+    await noSideScroll(page);
   });
 
   test('cards do not lift on touch screens (no hover)', async ({ page }) => {

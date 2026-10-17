@@ -6,7 +6,8 @@ import type { Ending, Messages } from '../text/types.ts';
 
 const stroke = (s: ShotEvent, t: Messages) => t.pbp.stroke(s.shot, s.wing ?? 'forehand');
 
-function ending(p: PointEvent, t: Messages): string {
+/** How the point ended, said from the user's side: "Their forehand winner". */
+export function ending(p: PointEvent, t: Messages): string {
   const last = p.shots.at(-1);
   if (p.endedBy === 'ace') return t.pbp.ending('ace', p.server === 'A', '');
   if (p.endedBy === 'double_fault' || !last) return t.pbp.ending('double_fault', p.server === 'A', '');
