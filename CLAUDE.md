@@ -28,7 +28,7 @@ npm run room -- --n 200 --seed 1    # season-room balance report (M9, docs/journ
 npm run journey -- --n 300 --seed 1 # long solo career reference batch (ADR-032)
 npm run test:e2e     # Playwright (Chromium) against the dev page; not part of npm test (E2E_CLOUD=1 adds the room server)
 npm run server:dev   # the room server (Cloudflare Worker, ADR-034) on :8787 with wrangler dev; VITE_ROOM_SERVER=http://localhost:8787 npm run dev uses it
-npm run server:deploy # deploy the room server (needs wrangler login)
+npm run server:deploy # deploy the room server (needs wrangler login); live at https://tennis-rooms.chaehy5665.workers.dev
 npm run sim -- --n 10000 --seed 42 --surface hard   # batch sim stats report
 npm run sim -- --fingerprint --seed 42 --surface clay   # hash to compare with the replay page
 npm run -s sim -- --replay --seed 42 --surface clay > replay.json   # replay JSON for the page's loader

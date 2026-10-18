@@ -1608,3 +1608,6 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** no database to pay for or wake up; the same TypeScript could later replay swings on the server to
   validate plans (TD-084). `npm run test:e2e` with `E2E_CLOUD=1` adds a project that runs the Worker with
   `wrangler dev` and two isolated browser contexts. `?as=` works in dev builds only, since its token is predictable.
+- **Deployed (2026-10-19):** `https://tennis-rooms.chaehy5665.workers.dev` (account "Chaehy5665@naver.com's Account",
+  46 KB upload). `ui/.env.production` points the production web build at it; two isolated browsers played a swing
+  through it and reached the same report.
