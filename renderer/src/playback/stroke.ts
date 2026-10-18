@@ -36,6 +36,8 @@ export interface StrokePose {
   /** The whole-body shift a ball out of reach needs at contact, in the player's frame, flat (TD-058): the rig shifts
    *  by it times `contactWeight`, and the foot on that side steps out with it. */
   lunge: V3;
+  /** How much the free arm follows `keys.free` (default `weight`); the carry lets a running free arm swing (A2). */
+  freeWeight?: number;
 }
 
 /** A court point in the frame of a player standing at `pos` facing `facing`. */

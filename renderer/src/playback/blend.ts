@@ -40,7 +40,8 @@ function arc(a: V3, b: V3, k: number): V3 {
   return { x: p.x * Math.cos(t) + perp.x * Math.sin(t), y: p.y * Math.cos(t) + perp.y * Math.sin(t), z: p.z * Math.cos(t) + perp.z * Math.sin(t) };
 }
 
-function keys(a: Effectors, b: Effectors, k: number): Effectors {
+/** Effector keys `k` of the way from `a` to `b`, the racket's direction along the sphere. */
+export function blendKeys(a: Effectors, b: Effectors, k: number): Effectors {
   return {
     pelvis: lerp(a.pelvis, b.pelvis, k), turn: lerp(a.turn, b.turn, k), lean: lerp(a.lean, b.lean, k), drop: lerp(a.drop, b.drop, k),
     hand: v3(a.hand, b.hand, k), dir: arc(a.dir, b.dir, k), free: v3(a.free, b.free, k),
@@ -50,7 +51,7 @@ function keys(a: Effectors, b: Effectors, k: number): Effectors {
 function stroke(a: StrokePose | null, b: StrokePose | null, k: number): StrokePose | null {
   if (a && b) {
     return {
-      ...b, weight: lerp(a.weight, b.weight, k), keys: keys(a.keys, b.keys, k), contactWeight: lerp(a.contactWeight, b.contactWeight, k),
+      ...b, weight: lerp(a.weight, b.weight, k), keys: blendKeys(a.keys, b.keys, k), contactWeight: lerp(a.contactWeight, b.contactWeight, k),
       hop: lerp(a.hop, b.hop, k), lunge: v3(a.lunge, b.lunge, k),
       plant: { l: v2(a.plant.l, b.plant.l, k), r: v2(a.plant.r, b.plant.r, k), weight: lerp(a.plant.weight, b.plant.weight, k) },
     };
@@ -68,5 +69,6 @@ export function blendPose(a: PlayerPose, b: PlayerPose, k: number): PlayerPose {
     ...b, clipBlend: { from: a, weight: 1 - k }, pos: v2(a.pos, b.pos, k), facing: turn(a.facing, b.facing, k), stroke: stroke(a.stroke, b.stroke, k),
     // Whole-body lifts and bends ease too (a held bounce must not drop in a frame).
     splitStep: lerp(a.splitStep, b.splitStep, k), crouch: lerp(a.crouch, b.crouch, k), toss: lerp(a.toss, b.toss, k),
+    carry: { weight: lerp(a.carry.weight, b.carry.weight, k), keys: blendKeys(a.carry.keys, b.carry.keys, k), free: lerp(a.carry.free, b.carry.free, k) },
   };
 }

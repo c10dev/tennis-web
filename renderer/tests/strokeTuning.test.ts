@@ -12,6 +12,7 @@ import { GltfRig } from '../src/scene/gltfRig.ts';
 import { buildPlayerModel } from '../src/scene/playerModel.ts';
 import { PLAYER_RIG, STROKE_KEYS } from '../src/tuning/index.ts';
 import { SAMPLE } from './fixtures.ts';
+import { NO_CARRY } from '../src/playback/carry.ts';
 
 const model = buildPlayerModel(readGlb(new Uint8Array(readFileSync(new URL('../../ui/public/models/player.glb', import.meta.url)))));
 const keyAt = (kind: keyof typeof STROKE_KEYS, at: number) => STROKE_KEYS[kind].find((k) => k.at === at)!;
@@ -94,7 +95,7 @@ describe('the planned lunge (TD-058)', () => {
 
   it('matches the rig: the shoulder rests where the plan assumes', () => {
     const rig = new GltfRig(model);
-    rig.apply({ ...poses[0]!.p, pos: { x: 0, y: 0 }, facing: { x: 0, y: 1 }, stroke: null, speed: 0, reactionWeight: 0, t: 0, distance: 0 });
+    rig.apply({ ...poses[0]!.p, pos: { x: 0, y: 0 }, facing: { x: 0, y: 1 }, stroke: null, carry: NO_CARRY, speed: 0, reactionWeight: 0, t: 0, distance: 0 });
     rig.object3d.updateMatrixWorld(true);
     const sh = rig.object3d.worldToLocal(new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName('upperarmr')!.matrixWorld));
     const [sx, sy, sz] = PLAYER_RIG.shoulderR;

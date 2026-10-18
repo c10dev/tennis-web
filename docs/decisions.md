@@ -1456,4 +1456,14 @@ Format: one entry per decision, newest at the bottom.
   near the vertical plane through the player's front it now turns the face through that plane instead of flipping the
   hand half a turn, which also took the in-stroke racket jumps from 1.08 m to 0.65 m a frame (A6's stroke target met).
   The probe's tiebreak "so far" timelines now keep the events after each point (a changeover), as the live match does.
+- **A2, the carry (2026-10-18):** `playback/carry.ts`: every pose carries `carry` (arm keys and how much they own,
+  1 but in a reaction), relaxed between points, `READY_STANCE` from the toss to 0.3 s past the last landing (eased
+  0.5 s), out to the racket side at a run (`CARRY`, run share from the speed averaged over ±0.4 s, so a player
+  reaching a run in a few frames does not swing the racket over in them); the free arm follows its keys only when
+  ready (the clip's swing otherwise, `StrokePose.freeWeight`). `withCarry` puts the stroke over it: their union owns
+  the arms, keys move from the carry's to the stroke's by the stroke's share, and the stroke keeps its own share of
+  turn, lean and hop, so contact is unchanged. The solver now runs every frame for both players (it ran only in
+  strokes). Measured: racket-head height between strokes p50 / p95 1.12 / 1.53 → 0.83 / 1.13 m; the racket in the
+  player's frame between strokes max 0.70 → 0.13 m a frame. A quick turn to the ball still swings it 0.19 m a frame
+  in the world, with the body.
 

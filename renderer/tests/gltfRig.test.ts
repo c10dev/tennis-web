@@ -9,12 +9,13 @@ import { GltfRig } from '../src/scene/gltfRig.ts';
 import { isOutline } from '../src/scene/outline.ts';
 import { buildPlayerModel } from '../src/scene/playerModel.ts';
 import { PLAYER_MODEL, PLAYER_RIG } from '../src/tuning/index.ts';
+import { NO_CARRY } from '../src/playback/carry.ts';
 
 const model = buildPlayerModel(readGlb(new Uint8Array(readFileSync(new URL('../../ui/public/models/player.glb', import.meta.url)))));
 
 const pose = (over: Partial<PlayerPose> = {}): PlayerPose => ({
   pos: { x: 1, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 0,
-  gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, t: 0, stroke: null, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, ...over,
+  gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, t: 0, stroke: null, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, carry: NO_CARRY, ...over,
 });
 
 function skinnedBox(rig: GltfRig): Box3 {

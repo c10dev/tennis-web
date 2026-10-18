@@ -3,10 +3,11 @@ import { Box3, Vector3, type Mesh } from 'three';
 import type { PlayerPose } from '../src/playback/pose.ts';
 import { MannequinRig } from '../src/scene/rig.ts';
 import { RIG } from '../src/tuning/index.ts';
+import { NO_CARRY } from '../src/playback/carry.ts';
 
 const pose = (o: Partial<PlayerPose> = {}): PlayerPose => ({
   pos: { x: 0, y: -11 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 1,
-  gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, t: 0, stroke: null, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, ...o,
+  gait: { phase: 0, amount: 0 }, crouch: 0, splitStep: 0, toss: 0, t: 0, stroke: null, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, carry: NO_CARRY, ...o,
 });
 const top = (rig: MannequinRig, name: string) => {
   rig.object3d.updateWorldMatrix(true, true);

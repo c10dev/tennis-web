@@ -1,7 +1,8 @@
 // A player's pose at replay time t, from the events alone: what a rig needs to draw them (ADR-007).
 import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
 import { smoothstep } from '../math.ts';
-import { PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
+import { CARRY, PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
+import { carryAt, type Carry } from './carry.ts';
 import { facingAt } from './facing.ts';
 import { strokeAt, type StrokePose } from './stroke.ts';
 import { distanceAt, positionAt } from './movement.ts';
@@ -41,6 +42,8 @@ export interface PlayerPose {
   /** Another pose whose clips the rig also samples, at `weight` (this pose's at the rest): a pose eased into another
    *  (`blendPose`, TD-078) carries both bodies' locomotion until the blend ends. */
   clipBlend?: { from: PlayerPose; weight: number };
+  /** The arms' keys when no stroke owns them (ADR-031 A2); the skinned rig solves the stroke over it. */
+  carry: Carry;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -66,7 +69,18 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
     velocity,
     distance: distanceAt(timeline, id, t),
     reactionT: t - seg.landed,
+    carry: { ...carryAt(timeline, t, carrySpeed(timeline, id, t)), weight: 1 - reactionWeight(timeline, t) },
   };
+}
+
+/** Average speed over ± CARRY.speedWindowSec: what the carry blends towards a run by. */
+function carrySpeed(timeline: Timeline, id: PlayerId, t: number): number {
+  const w = CARRY.speedWindowSec;
+  const [a, b] = [Math.max(0, t - w), Math.min(timeline.totalSec, t + w)];
+  if (b <= a) return 0;
+  const p = positionAt(timeline, id, a);
+  const q = positionAt(timeline, id, b);
+  return Math.hypot(q.x - p.x, q.y - p.y) / (b - a);
 }
 
 /** 1 at a shot's contact, falling to 0 `width` seconds either side; the strongest over the shots. */

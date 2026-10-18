@@ -145,8 +145,9 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
   limb(b.upperarmr!, b.lowerarmr!, b.handr!, handTarget, ARM_POLE.r.clone().applyQuaternion(worldQuat(frame)), w);
   orient(b.handr!, hand, w);
   // Free arm.
-  b.wristl!.quaternion.slerp(new Quaternion(), w);
-  limb(b.upperarml!, b.lowerarml!, b.handl!, toWorld(e.free), ARM_POLE.l.clone().applyQuaternion(worldQuat(frame)), w);
+  const fw = s.freeWeight ?? w;
+  b.wristl!.quaternion.slerp(new Quaternion(), fw);
+  limb(b.upperarml!, b.lowerarml!, b.handl!, toWorld(e.free), ARM_POLE.l.clone().applyQuaternion(worldQuat(frame)), fw);
   frame.updateMatrixWorld(true);
   const racket = slot.localToWorld(new Vector3(0, PLAYER_RIG.racket.length, 0));
   return contact.sub(racket);

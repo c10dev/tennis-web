@@ -27,6 +27,8 @@ export interface Sample extends Frame {
   /** World positions of the joints an eye follows at TV size (JOINTS), and of the player's root. */
   joints: Record<string, Vector3>;
   root: Vector3;
+  /** The racket head in the player's own frame (the run and the turn taken out). */
+  racketLocal: Vector3;
 }
 
 /** Knees, ankles, elbows, hands, head and the racket head: what shows when a 41 px body pops. */
@@ -47,7 +49,7 @@ export function measure(rig: GltfRig, frame: Frame): Sample {
   const joints: Record<string, Vector3> = {};
   for (const n of JOINTS) joints[n] = at(n);
   return {
-    ...frame, racket: joints['racket-head']!, freeHand: joints['handl']!, bones, joints, root: rig.object3d.position.clone(),
+    ...frame, racket: joints['racket-head']!, freeHand: joints['handl']!, bones, joints, root: rig.object3d.position.clone(), racketLocal: rig.object3d.worldToLocal(joints['racket-head']!.clone()),
     feet: { l: at('footl'), r: at('footr'), toesL: at('toesl'), toesR: at('toesr') },
   };
 }

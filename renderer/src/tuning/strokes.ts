@@ -71,3 +71,23 @@ export const STROKE_KEYS = {
     k(0.6, 0.1, 0.1, 0.2, 0.06, [-0.14, 0.7, 0.4], [0, 0.8, 0.6], [0.14, 0.7, 0.37]),
   ],
 } as const satisfies Record<string, readonly StrokeKey[]>;
+
+/**
+ * The racket carried between strokes (ADR-031 A2): effector keys for the arms whenever no stroke owns them (the
+ * KayKit clips carry a weapon high). Relaxed between points, the ready stance (stances.ts READY_STANCE) while the ball
+ * is in play (from the toss to `afterLandSec` past the last landing, eased over `easeSec`), out to the racket side at
+ * a run (speeds
+ * `runFrom`–`runFull`) and between points, so the TV camera behind the near player sees it past the body. `free` is how
+ * much the free arm follows its keys (0: the clip's swing).
+ */
+export const CARRY = {
+  relaxed: { pelvis: 0, turn: 0, lean: 0.03, drop: 0, hand: [-0.26, 0.55, 0.15], dir: [-0.3, 0.62, 0.72], free: [0.2, 0.5, 0.05] },
+  run: { pelvis: 0, turn: 0, lean: 0.1, drop: 0.03, hand: [-0.3, 0.62, 0.25], dir: [-0.25, 0.65, 0.72], free: [0.2, 0.6, 0.2] },
+  runFrom: 1.0,
+  runFull: 3.2,
+  easeSec: 0.5,
+  afterLandSec: 0.3,
+  /** The carry reads speed as the average over ± this many seconds: a player reaches a run in a few frames, the
+   *  racket must not swing over in them. */
+  speedWindowSec: 0.4,
+} as const;

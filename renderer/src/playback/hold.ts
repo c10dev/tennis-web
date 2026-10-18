@@ -70,6 +70,8 @@ function stancePose(spot: Spot, cue: StanceCue, t: number): PlayerPose {
     toss: 0, t, stroke,
     distance: swayDistance(cue.sway, cue.swayHz, t) + swayDistance(cue.step, cue.stepHz, t),
     reactionT: -1,
+    // The stance's own arms, so a blend from or to a carried racket (A2) moves between keys, not clips.
+    carry: { weight: 1, keys, free: 1 },
   };
 }
 

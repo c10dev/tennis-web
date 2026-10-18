@@ -7,6 +7,7 @@ import {
 } from 'three';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { clamp, smoothstep } from '../math.ts';
+import { withCarry } from '../playback/carry.ts';
 import type { PlayerPose } from '../playback/pose.ts';
 import { COLOURS, PLAYER_RIG, RIG } from '../tuning/index.ts';
 import { groundToThree, yawFor } from './coords.ts';
@@ -131,7 +132,9 @@ export class GltfRig implements PlayerRig {
     this.bones.hips!.quaternion.premultiply(new Quaternion().setFromAxisAngle(UP, legs));
     this.bones.spine!.quaternion.premultiply(new Quaternion().setFromAxisAngle(UP, -legs));
     this.model.position.set(0, 0, 0);
-    if (pose.stroke) solveStroke(this.object3d, this.model, this.bones, this.slot, pose.stroke, this.rest);
+    // The stroke over the carried racket (ADR-031 A2): the arms follow keys whenever a stroke or the carry owns them.
+    const stroke = withCarry(pose.stroke, pose.carry);
+    if (stroke) solveStroke(this.object3d, this.model, this.bones, this.slot, stroke, this.rest);
     this.shadow.position.set(this.model.position.x, 0.004 - hop, this.model.position.z);
   }
 }

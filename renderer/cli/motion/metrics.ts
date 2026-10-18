@@ -13,8 +13,9 @@ import { FPS, holdFrames, measure, sampleFrames, type Phase, type Sample } from 
 
 export interface Step {
   t: number; from: Phase; to: Phase;
-  /** Metres the racket head moved; whether a stroke owned the body in either frame. */
-  racket: number; stroke: boolean; reaction: boolean;
+  /** Metres the racket head moved, in the world and in the player's frame; whether a stroke or a reaction owned the
+   *  body in either frame. */
+  racket: number; racketLocal: number; stroke: boolean; reaction: boolean;
   /** Radians each bone turned (local; `(root)` the player's facing). */
   bones: Record<string, number>;
   /** Metres each joint moved in the world, and relative to the player's root (the run taken out). */
@@ -42,7 +43,7 @@ export function frameSteps(s: readonly Sample[]): Step[] {
     }
     const stroke = !!(a.pose.stroke?.weight || b.pose.stroke?.weight);
     const reaction = a.pose.reactionWeight > 0 || b.pose.reactionWeight > 0;
-    out.push({ t: b.t, from: a.phase, to: b.phase, racket: a.racket.distanceTo(b.racket), stroke, reaction, bones, joints, jointsRel });
+    out.push({ t: b.t, from: a.phase, to: b.phase, racket: a.racket.distanceTo(b.racket), racketLocal: a.racketLocal.distanceTo(b.racketLocal), stroke, reaction, bones, joints, jointsRel });
   }
   return out;
 }

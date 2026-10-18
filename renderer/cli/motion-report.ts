@@ -39,7 +39,8 @@ console.log(`# Motion report: ${MATCHES.map(([s, f]) => `${s} ${f}`).join(', ')}
 console.log('## Per-frame steps (metres, radians)\n');
 console.log('Joints: knees, ankles, elbows, hands, head, racket head; "rel" takes the run out (relative to the root).\n');
 head(['what', 'n', 'p50', 'p95', 'max']);
-stats('racket head, between strokes (A2 < 0.15)', free.map((s) => s.racket));
+stats('racket head, between strokes, player’s frame (A2 < 0.15)', free.map((s) => s.racketLocal));
+stats('racket head, between strokes, world', free.map((s) => s.racket));
 stats('racket head, in a stroke (A6 < 0.7)', steps.filter((s) => s.stroke).map((s) => s.racket));
 stats('largest joint rel, between strokes (A6 < 0.25)', free.map((s) => largest(s.jointsRel)));
 stats('racket head, into the hold (A1 < 0.10)', entering.map((s) => s.racket));

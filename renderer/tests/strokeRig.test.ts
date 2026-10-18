@@ -12,6 +12,7 @@ import { GltfRig } from '../src/scene/gltfRig.ts';
 import { buildPlayerModel } from '../src/scene/playerModel.ts';
 import { PLAYER_RIG, STROKE, STROKE_KEYS } from '../src/tuning/index.ts';
 import { SAMPLE, match } from './fixtures.ts';
+import { NO_CARRY } from '../src/playback/carry.ts';
 
 const model = buildPlayerModel(readGlb(new Uint8Array(readFileSync(new URL('../../ui/public/models/player.glb', import.meta.url)))));
 const rigs: Record<PlayerId, GltfRig> = { A: new GltfRig(model), B: new GltfRig(model) };
@@ -85,7 +86,7 @@ describe('serve reach', () => {
     const v = (a: readonly number[]) => ({ x: a[0]!, y: a[1]!, z: a[2]! });
     rig.apply({
       pos: { x: 0, y: -12 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 0, gait: { phase: 0, amount: 0 },
-      crouch: 0, splitStep: 0, toss: 0, t: 0, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1,
+      crouch: 0, splitStep: 0, toss: 0, t: 0, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, carry: NO_CARRY,
       stroke: {
         kind: 'serve', weight: 1, contactWeight: 1, hop: 0, keyTimes: [], contact: { x: -0.2, y: 4, z: 0.25 }, plant: { l: { x: 0, y: 0 }, r: { x: 0, y: 0 }, weight: 0 }, lunge: { x: 0, y: 0, z: 0 },
         keys: { pelvis: key.pelvis, turn: key.turn, lean: key.lean, drop: 0, hand: v(key.hand), dir: v(key.dir), free: v(key.free) },
