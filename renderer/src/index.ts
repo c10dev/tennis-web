@@ -15,6 +15,7 @@ export type { CameraId, CameraShot, Clip, ClipKind, HoldShot, Programme, ViewMod
 export { heldPlayers, type TellStance } from './playback/hold.ts';
 export { cameraPose } from './camera/cameras.ts';
 export { dampPan, mainCamPose, panTarget, type CamPose } from './camera/mainCam.ts';
+export { tvProjector, tvView } from './camera/tvView.ts';
 export { scoreBugModel, type ScoreBugModel, type ScoreBugRow } from './overlay/scoreBug.ts';
 export { createOverlays, type OverlayView } from './overlay/overlayDom.ts';
 export { overlayAt, type OverlayModel } from './overlay/overlays.ts';

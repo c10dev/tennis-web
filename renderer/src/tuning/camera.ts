@@ -29,6 +29,9 @@ export const CAMERA = {
   portrait: { aspect: 0.82, height: 22, behindBaseline: 23, lookZ: 5.5, horizontalFov: 27 },
 } as const;
 
+/** The phone stage M8 judges the TV view on (ADR-031): a Pixel 7's 60dvh stage, CSS pixels. */
+export const TV_STAGE = { width: 412, height: 503 } as const;
+
 /** The other broadcast cameras (GDD §8.1), in metres; fov is vertical, degrees. */
 export const CAMERAS = {
   /** Behind and to the centre side of the server, so they stand at one side of the frame. */
