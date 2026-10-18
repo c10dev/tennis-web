@@ -9,7 +9,7 @@ import type { SwingReport } from '../src/journey/types.ts';
 
 describe('journey news', () => {
   const s = newJourney({ seed: 8, player: junior('박서브', 'big_server'), hand: 'right', focus: ['serve'] });
-  const { state, reports } = playCareer(s, { load: 'heavy', focus: ['serve', 'physical'] });
+  const { state, reports } = playCareer(s, 'busy', ['serve', 'physical']);
 
   it('writes headlines and comments for every swing, every placeholder filled', () => {
     for (const r of reports) {

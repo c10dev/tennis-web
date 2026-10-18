@@ -4,7 +4,7 @@ import { normal, stream } from '../rng.ts';
 import { createPro, GROUPS, type CreatableStyle, type Group } from './ratings.ts';
 import { CAREER_REF } from './tuning.ts';
 import { newJourney } from './start.ts';
-import type { Load } from './types.ts';
+import type { AutoStyle } from './plan.ts';
 
 export interface CareerRun {
   bestRank: number | null;
@@ -19,7 +19,7 @@ export interface CareerRun {
 
 const STYLES: readonly CreatableStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
 
-export function runCareer(seed: number, load: Load = 'normal', policy?: Policy): CareerRun {
+export function runCareer(seed: number, plans: AutoStyle = 'smart', policy?: Policy): CareerRun {
   const style = STYLES[seed % STYLES.length]!;
   const rng = stream(seed, 'reference-career');
   const [lo, hi] = CAREER_REF.potentialRange;
@@ -28,7 +28,7 @@ export function runCareer(seed: number, load: Load = 'normal', policy?: Policy):
   const pick = createPro({ name: '테스트', nation: 'KOR', style }, talents, { age: CAREER_REF.age, ovr: CAREER_REF.ovr, potential });
   const focus = [GROUPS[seed % GROUPS.length]!, GROUPS[(seed + 2) % GROUPS.length]!];
   const start = newJourney({ seed, player: pick, hand: 'right', focus });
-  const { state, swings } = playCareer(start, { load, focus }, policy);
+  const { state, swings } = playCareer(start, plans, focus, policy);
   return {
     bestRank: state.stats.bestRank, majors: state.stats.majors, titles: state.stats.titles, swingsAtOne: state.stats.swingsAtOne,
     retiredAt: state.user.player.age, swings, potential: pick.potential, peakOvr: state.user.peak,

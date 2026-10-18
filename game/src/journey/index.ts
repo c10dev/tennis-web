@@ -1,6 +1,9 @@
 // Public API of the text career (ADR-032).
 export { answerAll, playCareer, type Policy } from './autoplay.ts';
-export { JTIERS, SWINGS, type JEvent, type JTierSpec, type Swing } from './calendar.ts';
+export { eventById, JTIERS, SWING_WEEKS, SWINGS, weeksOf, type JEvent, type JTierSpec, type Region, type Swing } from './calendar.ts';
+export { autoPlan, validatePlan, type AutoStyle, type Plan } from './plan.ts';
+export { fatigueForecast, forecast, type EventForecast, type FatigueForecast } from './forecast.ts';
+export type { Entry } from './entry.ts';
 export { commentary, type Line as CommentaryLine, type LineKind } from './commentary.ts';
 export { choose, context as careerContext, currentChoice, queueChoices, type ChoiceView } from './events.ts';
 export { calendarYear } from './events-stage.ts';
@@ -14,5 +17,5 @@ export { emptyStats, newJourney, USER as JOURNEY_USER, type Start } from './star
 export { grade, summarize, type CareerSummary } from './summary.ts';
 export { advanceSwing, type SwingOutcome } from './swing.ts';
 export type {
-  CareerStats, EventResult, Hand, JourneyState, JPlayer, JTier, Load, MatchLine, Nation, PendingChoice, Plan, Stage, SwingReport, UserState,
+  CareerStats, EventResult, Hand, JourneyState, JPlayer, JTier, MatchLine, Nation, PendingChoice, Stage, SwingReport, UserState,
 } from './types.ts';

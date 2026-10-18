@@ -5,6 +5,7 @@ import { EVENTS } from '../src/journey/events-data.ts';
 import { junior } from './journey-helpers.ts';
 import { newJourney } from '../src/journey/start.ts';
 import { summarize } from '../src/journey/summary.ts';
+import { autoPlan } from '../src/journey/plan.ts';
 import { advanceSwing } from '../src/journey/swing.ts';
 import type { JourneyState } from '../src/journey/types.ts';
 
@@ -18,7 +19,7 @@ describe('journey choices', () => {
     for (let i = 0; i < 40 && s.user.stage !== 'retired'; i++) {
       const v = currentChoice(s);
       if (v) for (const t of [v.title, v.text, ...v.options.flatMap((o) => [o.label, o.detail])]) expect(t).not.toMatch(/[{}]|undefined/);
-      s = s.pending.length ? choose(s, v!.options[0]!.id).state : advanceSwing(s, { load: 'normal', focus: ['serve'] }).state;
+      s = s.pending.length ? choose(s, v!.options[0]!.id).state : advanceSwing(s, autoPlan(s, 'smart', ['serve'])).state;
     }
   });
 
@@ -37,18 +38,18 @@ describe('journey choices', () => {
     expect(currentChoice(s)!.id).toBe('retire-forced');
     const done = choose(s, 'retire').state;
     expect(done.user.stage).toBe('retired');
-    expect(() => advanceSwing(done, { load: 'normal', focus: ['serve'] })).toThrow();
+    expect(() => advanceSwing(done, { events: [], focus: [] })).toThrow();
     expect(summarize(done).retiredAt).toBe(38);
   });
 
   it('blocks the next swing until choices are answered, and draws gambles from the seed', () => {
     const s = queueChoices(at(start(), 18));
-    expect(() => advanceSwing(s, { load: 'normal', focus: ['serve'] })).toThrow();
+    expect(() => advanceSwing(s, { events: [], focus: [] })).toThrow();
     expect(JSON.stringify(answerAll(s))).toBe(JSON.stringify(answerAll(s)));
   });
 
   it('plays a whole career to retirement with notes, milestones and a summary', () => {
-    const { state, swings } = playCareer(start(5), { load: 'normal', focus: ['serve', 'forehand'] });
+    const { state, swings } = playCareer(start(5), 'smart', ['serve', 'forehand']);
     expect(state.user.stage).toBe('retired');
     expect(swings).toBeGreaterThan(50);
     expect(swings).toBeLessThan(110);

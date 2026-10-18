@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { junior } from './journey-helpers.ts';
 import { fromJourneySave, JOURNEY_VERSION, sortHall, toJourneySave, type HallEntry } from '../src/journey/save.ts';
 import { newJourney } from '../src/journey/start.ts';
+import { autoPlan } from '../src/journey/plan.ts';
 import { advanceSwing } from '../src/journey/swing.ts';
 import { answerAll } from '../src/journey/autoplay.ts';
 
 describe('journey saves', () => {
   const start = newJourney({ seed: 3, player: junior('이리턴', 'counter_puncher'), hand: 'left', focus: ['return'] });
-  const s = answerAll(advanceSwing(start, { load: 'normal', focus: ['return'] }).state);
+  const s = answerAll(advanceSwing(start, autoPlan(start, 'smart', ['return'])).state);
 
   it('round-trips through JSON and plays on the same', () => {
     const file = JSON.parse(JSON.stringify(toJourneySave(s, '2026-10-19T00:00:00Z')));
@@ -15,7 +16,7 @@ describe('journey saves', () => {
     expect(file.summary).toMatchObject({ name: '이리턴', age: 14, year: 1, stage: 'junior' });
     const loaded = fromJourneySave(file);
     expect(loaded).toEqual(s);
-    const plan = { load: 'heavy' as const, focus: ['return' as const] };
+    const plan = autoPlan(s, 'busy', ['return']);
     expect(JSON.stringify(advanceSwing(loaded, plan))).toBe(JSON.stringify(advanceSwing(s, plan)));
   });
 

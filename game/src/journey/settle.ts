@@ -1,30 +1,31 @@
 // The books after a swing (ADR-032): the user's growth, fatigue and injuries, morale, reputation and money, career
 // stats and the milestones the text layer turns into headlines.
-import type { Rng } from '@tennis/engine';
-import { growUser, injury, nextFatigue } from './growth.ts';
+import type { SwingEnd } from './condition.ts';
+import { growUser } from './growth.ts';
+import type { Plan } from './plan.ts';
 import { rankOf } from './ranking.ts';
 import { groupValues, ovr } from './ratings.ts';
 import { BOOKS, STAGES } from './tuning.ts';
-import type { CareerStats, EventResult, JourneyState, Plan, SwingReport } from './types.ts';
+import type { CareerStats, EventResult, JourneyState, SwingReport } from './types.ts';
 
 export interface SettleInput {
   plan: Plan;
   results: EventResult[];
+  /** Planned events the user could not get into. */
+  skipped: string[];
+  end: SwingEnd;
   rankBefore: number | null;
   juniorRankBefore: number | null;
-  injuryRng: Rng;
   withUser: boolean;
 }
 
 /** `before` is the state the swing started from; `after` has the world's points and growth already. */
-export function settle(before: JourneyState, after: JourneyState, { plan, results, rankBefore, juniorRankBefore, injuryRng, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
+export function settle(before: JourneyState, after: JourneyState, { plan, results, skipped, end, rankBefore, juniorRankBefore, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
   const u = before.user;
-  const matches = results.reduce((a, r) => a + r.matches.length, 0);
   const wasInjured = u.injury > 0;
-  const grown = withUser ? growUser(u.player, { coach: u.coach, load: plan.load, morale: u.morale, matches, injured: wasInjured, focus: plan.focus }) : u.player;
-  const fatigue = nextFatigue(u.player.fatigue, plan.load, matches, wasInjured);
-  const hurt = withUser && !wasInjured ? injury(injuryRng, grown, plan.load, fatigue) : 0;
-  const player = { ...grown, fatigue, injuryWeeks: 0 };
+  const grown = withUser ? growUser(u.player, { coach: u.coach, morale: u.morale, matches: end.matches, trainWeeks: end.trainWeeks, injured: wasInjured || end.hurt > 0, focus: plan.focus }) : u.player;
+  const hurt = withUser ? end.hurt : 0;
+  const player = { ...grown, fatigue: end.fatigue, injuryWeeks: 0 };
   const rankAfter = withUser ? rankOf(player, after.pros, after.points) : null;
   const juniorRankAfter = withUser && u.stage === 'junior' ? rankOf(player, after.juniors, after.juniorPoints) : null;
   const prize = results.reduce((a, r) => a + r.prize, 0);
@@ -50,7 +51,7 @@ export function settle(before: JourneyState, after: JourneyState, { plan, result
     year: before.year, swing: before.swing, age: u.player.age, stage: u.stage, events: results,
     rankBefore, rankAfter, juniorRankBefore, juniorRankAfter,
     ovrBefore: ovr(u.player), ovrAfter: ovr(player), groupsBefore: groupValues(u.player), groupsAfter: groupValues(player),
-    injured: hurt, milestones, money: money - u.money,
+    injured: hurt, milestones, money: money - u.money, skipped, fatigue: end.fatigue, trainWeeks: end.trainWeeks,
   };
   const seen = [...before.seen, ...milestones.map((m) => `m:${m}`)];
   return { state: { ...after, user, stats, seen, reports: withUser ? [...before.reports, report] : before.reports, notes: [] }, report };

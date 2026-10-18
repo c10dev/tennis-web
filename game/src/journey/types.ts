@@ -6,7 +6,6 @@ import type { Group } from './ratings.ts';
 
 export type Nation = 'KOR' | 'JPN' | 'CHN' | 'USA' | 'GBR' | 'AUS' | 'ESP' | 'ARG' | 'ITA' | 'FRA' | 'GER' | 'SUI' | 'SRB' | 'CZE';
 export type Hand = 'right' | 'left';
-export type Load = 'heavy' | 'normal' | 'peak';
 export type Stage = 'junior' | 'college' | 'pro' | 'retired';
 export type JTier = 'jr' | 'jrMajor' | 'futures' | 'challenger' | 't250' | 'masters' | 'major' | 'finals';
 
@@ -105,11 +104,11 @@ export interface SwingReport {
   /** Achievements unlocked this swing (ids for the text layer). */
   milestones: string[];
   money: number;
-}
-
-export interface Plan {
-  load: Load;
-  focus: Group[];
+  /** Planned events the user did not get into (ranking too low, qualifying lost). */
+  skipped: string[];
+  /** Fatigue carried out of the swing, and its free weeks. */
+  fatigue: number;
+  trainWeeks: number;
 }
 
 export interface JourneyState {

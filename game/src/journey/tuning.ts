@@ -67,25 +67,35 @@ export const RANK = {
   estimateExponent: 0.434,
 } as const;
 
-/** Schedule load: events besides the Major, growth from training, fatigue and injury risk. */
-export const LOADS = {
-  events: { heavy: 4, normal: 3, peak: 1 },
-  collegeEvents: 1,
-  juniorFuturesFrom: 16,
-  /** Growth multiplier from the training a schedule leaves room for. */
-  training: { heavy: 0.9, normal: 1, peak: 1.12 },
-  /** Fatigue a swing adds before matches, and per match played. */
-  fatigue: { heavy: 0.3, normal: 0.18, peak: 0.08 },
-  fatiguePerMatch: 0.015,
-  /** Share of fatigue carried into the next swing. */
-  carry: 0.4,
-  /** Injury chance a swing at average proneness, by load, times (0.6 + fatigue). */
-  injury: { heavy: 0.1, normal: 0.06, peak: 0.04 },
-  /** Older bodies break more: from this age the chance is multiplied. */
+/** A swing's weeks (ADR-033): fatigue from events and travel, recovery in free weeks, injuries per event. */
+export const SCHEDULE = {
+  /** Fatigue an event adds before its matches, by weeks it takes, and per match played. */
+  perEvent: 0.05,
+  perMatch: 0.022,
+  /** An event straight after another one, and more when the region changes. */
+  backToBack: 0.03,
+  travel: 0.05,
+  /** A free week takes this much off (a physio adds to it). */
+  rest: 0.09,
+  /** Share of a swing's last fatigue carried into the next swing. */
+  carry: 0.5,
+  /** Injury chance an event, at average proneness, times (0.5 + 2 × fatigue); older bodies more. */
+  injury: 0.012,
   injuryAgeFrom: 30,
   injuryAgeFactor: 1.5,
   /** Swings out: 1 with the first chance, 2 with the next, else 4. */
-  injurySwings: [[0.7, 1], [0.95, 2], [1, 4]] as const,
+  injurySwings: [[0.75, 1], [0.95, 2], [1, 4]] as const,
+  /** Qualifying for a challenger or a 250 the ranking does not reach: pass chance by level over the filler level. */
+  qualifyBase: 0.35,
+  qualifyPerLevel: 0.2,
+  qualifyRange: [0.08, 0.9] as const,
+  /** Growth: full match credit from `playFull` matches, full training credit from `trainFull` free weeks. */
+  playFull: 12,
+  trainFull: 5,
+  /** Juniors may enter futures from this age. */
+  juniorFuturesFrom: 16,
+  /** College players enter at most this many events a swing. */
+  collegeEvents: 1,
 } as const;
 
 /** The user's condition in matches and between swings. */
@@ -108,10 +118,11 @@ export const GROWTH_J = {
   coach: [1, 1.15, 1.3] as const,
   moraleBase: 0.85,
   moraleSpan: 0.3,
-  /** Matches teach too: full credit from `playFull` matches a swing. */
-  playBase: 0.85,
+  /** Matches and free weeks both teach (full credit at SCHEDULE.playFull matches and trainFull free weeks). */
+  playBase: 0.8,
   playSpan: 0.3,
-  playFull: 10,
+  trainBase: 0.75,
+  trainSpan: 0.35,
   /** Share of growth an injured swing keeps (rehab). */
   injured: 0.3,
   /** AI talent: ± this share around the base gain, drawn per player and year. */
@@ -133,6 +144,8 @@ export const BOOKS = {
 
 /** The user at 14. */
 export const START = {
+  /** A room's 18-year-olds start with the points of the pro at this place. */
+  rank: 150,
   morale: 60,
   reputation: 5,
   money: 20000,
