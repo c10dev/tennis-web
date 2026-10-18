@@ -21,3 +21,8 @@ export { assign, humanId, solo, view, worldOf, type Member } from './room.ts';
 export type {
   CareerStats, EventResult, Hand, HumanState, JourneyState, RoomState, WorldState, JPlayer, JTier, MatchLine, Nation, PendingChoice, Stage, SwingReport, UserState,
 } from './types.ts';
+export { answerChoices, fallbackPlan, fold, foldSwing, type Folded, type Submission, type SwingLog } from './fold.ts';
+export { DEADLINE_MS, due, inviteCode, MAX_MEMBERS, MemoryRoomServer, type RoomInfo, type RoomServer, type SubmissionRecord } from './server.ts';
+export { mismatches, RoomClient, type Synced } from './room-sync.ts';
+export { stateHash } from './room.ts';
+export { cupEvent } from './cup.ts';
