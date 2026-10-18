@@ -1,4 +1,4 @@
-# M8 (proposed): character and motion that read at the TV camera
+# M8: character and motion that read at the TV camera
 
 > **요약 (한국어)**
 > - **현황 (2026-10-18, origin/main 1d97946):** 기본 캐릭터는 ADR-024의 Pop 몸체(KayKit Rogue, CC0, 4,263 삼각형, 변형 본 20개)이고, 스트로크는 이펙터 키포즈를 IK로 풀며, 이동·리액션은 KayKit 클립 6개(Idle, Walk, Walk back, Run, Cheer, Hit_A)를 시간으로 샘플링한다. 그런데 10-17 기기 테스트 뒤 카메라가 **고정 TV 뷰 하나**로 돌아갔다(presentation spec C1). 캐릭터 작업은 체이스 카메라(내 선수 85px)와 클로즈업·임팩트 슬로모를 전제로 설계됐지만, 지금 폰에서는 가까운 선수가 **약 45~50px**, 먼 선수가 **약 30px**이고 클로즈업은 하나도 나오지 않는다.
@@ -10,9 +10,9 @@
 >   - C단계: 연기(결과별 리액션, 포인트 사이 동작, 시선).
 >   - D단계: 테니스 복장과 선수 구분(프룬 스크립트로 KayKit 정리와 헤드기어 변형).
 >   - 엔진·이벤트 스키마·카메라 규칙은 바꾸지 않는다. 클로즈업 복귀는 presentation spec에서 따로 결정한다.
-> - **결정할 것:** §6의 질문 10개(전부 기본값 있음).
+> - **결정 (2026-10-18):** 사용자가 §6의 질문 10개를 전부 기본값으로 승인했다(ADR-031).
 
-Analysis only (2026-10-18): no code changes. Builds on `docs/3d-redesign.md` (the design study, §4–§5 and §9 as
+Accepted 2026-10-18 with every default of §6 (ADR-031). The analysis below is as of that day. Builds on `docs/3d-redesign.md` (the design study, §4–§5 and §9 as
 built), ADR-023/024/030 and `docs/presentation-spec.md` (C1: one fixed TV camera). Images are in `docs/design/m8/`:
 the rig viewer (`ui/rig.html`) and the replay page's stage at 412 px wide, DPR 2, seed 42 hard. Measurements marked
 (m) were taken with throwaway scripts over a clay seed-2 exhibition (600 s of frames, both players) and the decision-hold

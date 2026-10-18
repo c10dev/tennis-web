@@ -6,7 +6,7 @@ Tennis management sim (Football Manager-style) with TV-broadcast-style 3D match 
 - `renderer/` — Three.js replay of events (broadcast cams, replays, score bug, audio)
 - `game/` — headless, deterministic career layer (world, calendar, training, season, saves) on the engine
 - `ui/` — menus, management screens, DOM overlays
-- Full design: `GDD.md` (Korean). Current milestone: **M7** (Apps in Toss release, ADR-022); M1–M6 are done (M5: casual quick match, see `docs/casual-design.md` and GDD §13; M6: playtest redesign, ADR-017, GDD §14).
+- Full design: `GDD.md` (Korean). Current milestone: **M7** (Apps in Toss release, ADR-022), with **M8** (character and motion at the TV camera, ADR-031, `docs/m8-character-motion.md`) on the renderer alongside it; M1–M6 are done (M5: casual quick match, see `docs/casual-design.md` and GDD §13; M6: playtest redesign, ADR-017, GDD §14).
 
 ## Stack
 Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces

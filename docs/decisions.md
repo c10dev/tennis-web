@@ -1415,3 +1415,28 @@ Format: one entry per decision, newest at the bottom.
   `--stage-top-inset` on the quick match), so the stands fill the band and the court sits where it was. Only UI keeps
   to `--content-top`. Sources and rules S-1–S-6 are in presentation-spec L2.
 
+
+## ADR-031: M8: character and motion at the TV camera
+- **Date:** 2026-10-18
+- **Status:** Accepted (grows with each step)
+- **Context:** The 3D redesign (ADR-024) built the Pop character, effector-key strokes and an impact moment for the
+  chase camera and its close-ups. Since the 2026-10-17 device test the quick match uses one fixed TV camera
+  (presentation spec C1), where the near player is about 45–50 CSS px and the far one about 30. At that size the
+  2026-10-18 analysis (`docs/m8-character-motion.md`) found one-frame pops into and out of the decision hold (TD-078),
+  foot glides, bone flips, a serve toss from nowhere and a sword-like carry between strokes (TD-079), strokes and tells
+  that do not change the silhouette, a 1–2 px racket, and a fantasy rogue's outfit on both players.
+- **Decision:** the user took every default of the analysis's §6:
+  - M8 runs on the renderer alongside M7's device work; every target is judged at the TV camera (412×503 stage), and
+    close-up-only polish (face, wrist, smear) waits until the presentation spec brings a close-up back.
+  - No camera, editing or pace change (presentation spec C1–C4, E*), no engine or event-schema change.
+  - Arms may grow by bone scale up to +20 % (towards about 3.5 heads); the racket is exaggerated (head radius about
+    0.20 m, handle 0.045 m); every backhand is two-handed until player creation; tells get one theatrical cue each.
+  - The KayKit body is cleaned up in code (`prune-player.ts`: no belt, pouches or hood; tennis kit cells) and players
+    get headgear and swatches; the final character route is decided after that.
+  - Measure first: phase 0 adds a TV-view rig viewer and contact sheets (`npm run shots`), a motion probe with a report
+    (`npm run motion`) and a continuity test whose unmet targets are `it.fails` until the step that meets them.
+  - Phases: A no pops or glides, B readable at 50 px, then an eye check of the sheets and a phone build, C acting,
+    D the tennis player.
+- **Consequences:** the motion targets become tests (racket and bone continuity across every boundary, grounded-foot
+  slip, carry height, toss hand) and the TV-size targets become pose-space pixel checks. Out of scope: new engine shot
+  types (TD-001), the career match's mannequin (TD-064), the A1 arena, commissioned assets.
