@@ -1,7 +1,7 @@
 # M8: character and motion that read at the TV camera
 
 > **요약 (한국어)**
-> - **현황 (2026-10-18, origin/main 1d97946):** 기본 캐릭터는 ADR-024의 Pop 몸체(KayKit Rogue, CC0, 4,263 삼각형, 변형 본 20개)이고, 스트로크는 이펙터 키포즈를 IK로 풀며, 이동·리액션은 KayKit 클립 6개(Idle, Walk, Walk back, Run, Cheer, Hit_A)를 시간으로 샘플링한다. 그런데 10-17 기기 테스트 뒤 카메라가 **고정 TV 뷰 하나**로 돌아갔다(presentation spec C1). 캐릭터 작업은 체이스 카메라(내 선수 85px)와 클로즈업·임팩트 슬로모를 전제로 설계됐지만, 지금 폰에서는 가까운 선수가 **약 45~50px**, 먼 선수가 **약 30px**이고 클로즈업은 하나도 나오지 않는다.
+> - **현황 (2026-10-18, origin/main 1d97946):** 기본 캐릭터는 ADR-024의 Pop 몸체(KayKit Rogue, CC0, 4,263 삼각형, 변형 본 20개)이고, 스트로크는 이펙터 키포즈를 IK로 풀며, 이동·리액션은 KayKit 클립 6개(Idle, Walk, Walk back, Run, Cheer, Hit_A)를 시간으로 샘플링한다. 그런데 10-17 기기 테스트 뒤 카메라가 **고정 TV 뷰 하나**로 돌아갔다(presentation spec C1). 캐릭터 작업은 체이스 카메라(내 선수 85px)와 클로즈업·임팩트 슬로모를 전제로 설계됐지만, 지금 폰에서는 가까운 선수가 **약 41px**, 먼 선수가 **약 29px**(§7 측정값)이고 클로즈업은 하나도 나오지 않는다.
 > - **진단:** (1) 50px에서 읽히는 것은 실루엣뿐인데, 큰 머리와 짧은 팔 때문에 스트로크를 해도 실루엣이 거의 바뀌지 않고, 라켓은 1~2px 선이다. (2) 판단 홀드에 들어가고 나올 때 몸이 한 프레임에 튄다(라켓 헤드 0.8m, 본 1.9rad). (3) 랠리 프레임의 57%는 스트로크가 없어 KayKit 무기 들기 자세(라켓 헤드 높이 1.5m)로 뛴다. (4) 서브 토스 공이 손이 아닌 허공에서 나온다. (5) 스플릿 스텝은 몸 전체를 들어 올리는 것뿐이고, 발을 디딜 때 미끄러진다(p95 7.3cm). (6) 텔 자세 네 가지가 가까이서 봐도 거의 같다. (7) 옷은 판타지 모험가(후드, 벨트 주머니)를 다시 칠한 것이고 두 선수가 같은 몸이다. (8) 리액션은 두 클립뿐이고, Hit_A는 1.1초 동안 멈춘다.
 > - **제안:** M8 = "TV 카메라에서 읽히는 캐릭터와 동작". 단계는 다음과 같다.
 >   - 0단계: 측정 도구(TV 크기 콘택트 시트와 동작 연속성 테스트).
@@ -38,7 +38,7 @@ Pixel 7 size, TD-059 still open for phones).
 
 ## 2. What a player sees
 
-![The quick match's TV view at 412 px: near player ~45–50 px, far ~30 px](design/m8/tv-phone.webp)
+![The quick match's TV view at 412 px: near player ~41 px, far ~29 px](design/m8/tv-phone.webp)
 ![Rig viewer: serve from the side, forehand from the front and the side, a low forehand (0.66 m)](design/m8/strokes.webp)
 ![The four decision-hold stances (none, defend, counter, attack) and the capsule rig's forehand for comparison](design/m8/holds.webp)
 
@@ -50,7 +50,7 @@ Reproduce: `npm run dev`, then `/rig.html?point=3&shot=4&view=front&dt=-0.6,-0.3
 
 The redesign (ADR-024) was built for the K2 chase camera (my player about 85 px) plus close-ups, an impact slow motion
 and a tell shot. The 2026-10-17 device test put the quick match back on one fixed TV camera, where the near player is
-about 45–50 px (1 px ≈ 3.5 cm) and the far one about 30 px, seen from high behind and high in front. Everything below is
+about 41 px (1 px ≈ 4 cm; §7 measured, first estimated at 45–50) and the far one about 29 px, seen from high behind and high in front. Everything below is
 judged at that size first; "CU" marks problems that only show in a close-up, which the shipping mode no longer has.
 
 ### 3.1 Pops and glides (visible at TV size)
@@ -183,3 +183,44 @@ pipeline (TD-064), the A1 sunny-club arena (`docs/3d-redesign.md` §6), commissi
    how long a stroke reads. Leave pacing to the presentation spec? *Default: leave it; M8 does not touch pace.*
 10. **Review loop:** after phases A and B, send the contact sheets (0.1) and a phone build for an eye check before C
     and D? *Default: yes.*
+
+## 7. Baseline (2026-10-18, before phase A)
+
+`npm run motion` (seed 2 clay, 1 grass, 3 hard; first 300 s; both players; 60 fps; the decision holds of a tiebreak
+played point by point) and `npm run shots -- --label baseline` (24 sheets, not committed: `shots/` is ignored). The
+continuity targets are `it.fails` in `renderer/tests/motion-continuity.test.ts` until the step named.
+
+| Per frame | p50 | p95 | max | Target (step) |
+|---|---|---|---|---|
+| Racket head in play, m | 0.042 | 0.243 | 1.078 | < 0.35 (A6) |
+| Twist bones (hand, forearms, shins), rad | 0.138 | 1.004 | 3.141 | < 0.5 (A6); 5,438 of 108k frames over 1 rad |
+| Racket head into the hold, m | 0.804 | 1.470 | 1.547 | < 0.10 (A1) |
+| Largest bone turn into the hold, rad | 1.889 | 1.959 | 2.055 | < 0.3 (A1) |
+| Racket head out of the hold, m | 0.053 | 1.054 | 1.625 | < 0.10 (A1) |
+| Largest bone turn out of the hold, rad | 0.085 | 0.657 | 3.142 | < 0.3 (A1) |
+
+| Grounded foot slip per frame, m | p50 | p95 | max |
+|---|---|---|---|
+| Run | 0.005 | 0.041 | 0.306 |
+| Walk | 0.006 | 0.041 | 0.249 |
+| Idle | 0.000 | 0.014 | 0.224 |
+| Planted | 0.000 | 0.000 | 0.036 |
+| Plant ramp (target p95 < 0.02, A5) | 0.021 | 0.067 | 0.181 |
+| Stroke, no plant | 0.000 | 0.026 | 0.125 |
+| Reaction | 0.006 | 0.036 | 0.121 |
+
+| Carry and toss | Today | Target (step) |
+|---|---|---|
+| Racket-head height without a stroke or reaction, p5 / p50 / p95 | 0.62 / 1.12 / 1.53 m | p5 > 0.6, p95 < 1.2 (A2) |
+| Free hand to ball at the toss's release | 0.79 m (all 108 serves) | < 0.10 (A3) |
+
+| On the TV view (412×503 CSS px) | Today | Target (step) |
+|---|---|---|
+| Body height, near / far player, ready stance | 41.3 / 28.6 | — |
+| Racket head, near player | 8.4 | ≥ 14 (B1) |
+| Racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s), p50 of 49 | 48.9 | ≥ 64, +30 % (B2) |
+| Tell stances on the far player: mean joint distance, min / p50 of the 45 pairs | 0.3 / 6.0 | min ≥ 6 (B3) |
+
+Found by the baseline, beyond §3: the racket jumps up to 1.08 m in a frame in the grass and hard matches
+(`strokeRig.test.ts` holds 0.7 m on its clay fixture only), and the twist flips reach the hips and spine (up to 2.8 rad)
+and the feet (3.1 rad) as well as the hand and shins.

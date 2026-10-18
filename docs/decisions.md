@@ -1440,3 +1440,9 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** the motion targets become tests (racket and bone continuity across every boundary, grounded-foot
   slip, carry height, toss hand) and the TV-size targets become pose-space pixel checks. Out of scope: new engine shot
   types (TD-001), the career match's mannequin (TD-064), the A1 arena, commissioned assets.
+- **Phase 0 (2026-10-18):** `tvView`/`tvProjector` (renderer `camera/tvView.ts`, `TV_STAGE` 412×503) give the TV view
+  as a still and its CSS pixels; the rig viewer draws it (`view=tv`, `w`, `h`, `t`); `npm run shots` writes contact
+  sheets of the same moments in three matches (`--against` for before/after); `npm run motion` and
+  `renderer/cli/motion/` measure the rig frame by frame, and `motion-continuity.test.ts` holds phase A's targets as
+  `it.fails`. The baseline is in `docs/m8-character-motion.md` §7: the near player stands about 41 px tall (not the
+  45–50 estimated), the racket head 8 px, tell stances as little as 0.3 px apart on the far player.
