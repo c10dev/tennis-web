@@ -1,0 +1,111 @@
+// The books after a swing (ADR-032): the user's growth, fatigue and injuries, morale, reputation and money, career
+// stats and the milestones the text layer turns into headlines.
+import type { Rng } from '@tennis/engine';
+import { growUser, injury, nextFatigue } from './growth.ts';
+import { rankOf } from './ranking.ts';
+import { groupValues, ovr } from './ratings.ts';
+import { BOOKS } from './tuning.ts';
+import type { CareerStats, EventResult, JourneyState, Plan, SwingReport } from './types.ts';
+
+export interface SettleInput {
+  plan: Plan;
+  results: EventResult[];
+  rankBefore: number | null;
+  juniorRankBefore: number | null;
+  injuryRng: Rng;
+  withUser: boolean;
+}
+
+/** `before` is the state the swing started from; `after` has the world's points and growth already. */
+export function settle(before: JourneyState, after: JourneyState, { plan, results, rankBefore, juniorRankBefore, injuryRng, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
+  const u = before.user;
+  const matches = results.reduce((a, r) => a + r.matches.length, 0);
+  const wasInjured = u.injury > 0;
+  const grown = withUser ? growUser(u.player, { coach: u.coach, load: plan.load, morale: u.morale, matches, injured: wasInjured, focus: plan.focus }) : u.player;
+  const fatigue = nextFatigue(u.player.fatigue, plan.load, matches, wasInjured);
+  const hurt = withUser && !wasInjured ? injury(injuryRng, grown, plan.load, fatigue) : 0;
+  const player = { ...grown, fatigue, injuryWeeks: 0 };
+  const rankAfter = withUser ? rankOf(player, after.pros, after.points) : null;
+  const juniorRankAfter = withUser && u.stage === 'junior' ? rankOf(player, after.juniors, after.juniorPoints) : null;
+  const prize = results.reduce((a, r) => a + r.prize, 0);
+  const money = u.money + prize + (u.sponsor?.fee ?? 0) - BOOKS.coachFee[u.coach] - BOOKS.living[u.stage === 'pro' ? 'pro' : 'junior'];
+  const stats = tally(before.stats, results, rankAfter, juniorRankAfter, prize);
+  const user = {
+    ...u, player, money,
+    injury: wasInjured ? u.injury - 1 : hurt,
+    focus: plan.focus,
+    morale: clamp(morale(u.morale, results, rankBefore, rankAfter)),
+    reputation: clamp(u.reputation * BOOKS.reputationKeep + results.reduce((a, r) => a + r.points, 0) / BOOKS.pointsPerReputation
+      + results.filter((r) => r.champion && r.tier === 'major').length * BOOKS.majorReputation),
+    sponsor: u.sponsor && u.sponsor.swings > 1 ? { ...u.sponsor, swings: u.sponsor.swings - 1 } : null,
+    peak: Math.max(u.peak, ovr(player)),
+  };
+  const milestones = withUser ? reached(before.stats, stats, results, before.seen) : [];
+  const report: SwingReport = {
+    year: before.year, swing: before.swing, age: u.player.age, stage: u.stage, events: results,
+    rankBefore, rankAfter, juniorRankBefore, juniorRankAfter,
+    ovrBefore: ovr(u.player), ovrAfter: ovr(player), groupsBefore: groupValues(u.player), groupsAfter: groupValues(player),
+    injured: hurt, milestones, money: money - u.money,
+  };
+  const seen = [...before.seen, ...milestones.map((m) => `m:${m}`)];
+  return { state: { ...after, user, stats, seen, reports: withUser ? [...before.reports, report] : before.reports, notes: [] }, report };
+}
+
+function morale(m: number, results: readonly EventResult[], before: number | null, after: number | null): number {
+  let v = m + (BOOKS.moraleRest - m) * BOOKS.moraleDrift;
+  for (const r of results) {
+    if (r.champion) v += r.tier === 'major' ? BOOKS.morale.majorTitle : BOOKS.morale.title;
+    else if (r.roundsWon === r.rounds - 1) v += BOOKS.morale.final;
+    if (r.matches.length === 1 && !r.matches[0]!.won) v += BOOKS.morale.firstRoundLoss;
+  }
+  if (before !== null && after !== null) v += after < before ? BOOKS.morale.rankUp : after > before ? BOOKS.morale.rankDown : 0;
+  return v;
+}
+
+function tally(s: CareerStats, results: readonly EventResult[], rank: number | null, juniorRank: number | null, prize: number): CareerStats {
+  const out: CareerStats = { ...s, h2h: { ...s.h2h }, majorWins: [...s.majorWins], prize: s.prize + prize };
+  for (const r of results) {
+    for (const m of r.matches) {
+      if (m.won) out.wins++;
+      else out.losses++;
+      if (!m.opponent.startsWith('f:')) {
+        const [w, l] = out.h2h[m.opponent] ?? [0, 0];
+        out.h2h[m.opponent] = m.won ? [w + 1, l] : [w, l + 1];
+      }
+    }
+    if (r.roundsWon >= r.rounds - 1 && !r.tier.startsWith('jr')) out.finals++;
+    if (!r.champion) continue;
+    if (r.tier === 'jr' || r.tier === 'jrMajor') out.juniorTitles++;
+    else out.titles++;
+    if (r.tier === 'jrMajor') out.juniorMajors++;
+    if (r.tier === 'major') {
+      out.majors++;
+      out.majorWins.push(r.name);
+    }
+  }
+  if (rank !== null) out.bestRank = Math.min(out.bestRank ?? rank, rank);
+  if (juniorRank !== null) out.bestJuniorRank = Math.min(out.bestJuniorRank ?? juniorRank, juniorRank);
+  if (rank === 1) out.swingsAtOne++;
+  return out;
+}
+
+/** Milestones reached for the first time this swing. */
+function reached(was: CareerStats, now: CareerStats, results: readonly EventResult[], seen: readonly string[]): string[] {
+  const hits: string[] = [];
+  const once = (id: string, cond: boolean) => cond && !seen.includes(`m:${id}`) && hits.push(id);
+  once('first-win', was.wins === 0 && now.wins > 0);
+  once('first-junior-title', now.juniorTitles > was.juniorTitles);
+  once('junior-major', now.juniorMajors > was.juniorMajors);
+  once('junior-no1', now.bestJuniorRank === 1);
+  once('first-pro-points', now.bestRank !== null);
+  once('first-title', now.titles > was.titles);
+  once('major-main-draw', results.some((r) => r.tier === 'major'));
+  once('masters-title', results.some((r) => r.champion && r.tier === 'masters'));
+  once('major-final', results.some((r) => r.tier === 'major' && r.roundsWon >= r.rounds - 1));
+  once('major-title', now.majors > was.majors);
+  once('finals', results.some((r) => r.tier === 'finals'));
+  for (const top of [100, 50, 10, 1]) once(`top${top}`, now.bestRank !== null && now.bestRank <= top);
+  return hits;
+}
+
+const clamp = (v: number) => Math.round(Math.min(100, Math.max(0, v)));

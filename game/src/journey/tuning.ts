@@ -65,3 +65,74 @@ export const RANK = {
   estimateScale: 2988,
   estimateExponent: 0.434,
 } as const;
+
+/** Schedule load: events besides the Major, growth from training, fatigue and injury risk. */
+export const LOADS = {
+  events: { heavy: 4, normal: 3, peak: 1 },
+  collegeEvents: 1,
+  juniorFuturesFrom: 16,
+  /** Growth multiplier from the training a schedule leaves room for. */
+  training: { heavy: 0.9, normal: 1, peak: 1.12 },
+  /** Fatigue a swing adds before matches, and per match played. */
+  fatigue: { heavy: 0.3, normal: 0.18, peak: 0.08 },
+  fatiguePerMatch: 0.015,
+  /** Share of fatigue carried into the next swing. */
+  carry: 0.4,
+  /** Injury chance a swing at average proneness, by load, times (0.6 + fatigue). */
+  injury: { heavy: 0.1, normal: 0.06, peak: 0.04 },
+  /** Older bodies break more: from this age the chance is multiplied. */
+  injuryAgeFrom: 30,
+  injuryAgeFactor: 1.5,
+  /** Swings out: 1 with the first chance, 2 with the next, else 4. */
+  injurySwings: [[0.7, 1], [0.95, 2], [1, 4]] as const,
+} as const;
+
+/** The user's condition in matches and between swings. */
+export const CONDITION_J = {
+  /** Share of fatigue carried into a match as the engine's starting fatigue. */
+  toMatch: 0.6,
+  /** Morale points per rating of composure and concentration (50 is neutral). */
+  moralePerPoint: 25,
+} as const;
+
+/** Growth a swing, in overall (1–20 scale). */
+export const GROWTH_J = {
+  /** [up to age, gain a swing at full room]. */
+  byAge: [[17, 0.3], [20, 0.25], [23, 0.18], [26, 0.1], [29, 0.04], [99, 0]] as const,
+  /** Full speed this far below potential, slower nearer. */
+  headroom: 2,
+  declineFrom: 29,
+  /** Loss a swing per year past `declineFrom` − 1. */
+  declinePerYear: 0.03,
+  coach: [1, 1.15, 1.3] as const,
+  moraleBase: 0.85,
+  moraleSpan: 0.3,
+  /** Matches teach too: full credit from `playFull` matches a swing. */
+  playBase: 0.85,
+  playSpan: 0.3,
+  playFull: 10,
+  /** Share of growth an injured swing keeps (rehab). */
+  injured: 0.3,
+  /** AI talent: ± this share around the base gain, drawn per player and year. */
+  aiSpread: 0.3,
+} as const;
+
+/** Morale, reputation and money after a swing. */
+export const BOOKS = {
+  moraleRest: 55,
+  moraleDrift: 0.2,
+  morale: { majorTitle: 15, title: 6, final: 2, firstRoundLoss: -2, rankUp: 3, rankDown: -2 },
+  reputationKeep: 0.97,
+  pointsPerReputation: 150,
+  majorReputation: 8,
+  /** Dollars a swing. */
+  coachFee: [0, 15000, 60000] as const,
+  living: { junior: 1000, pro: 4000 },
+} as const;
+
+/** The user at 14. */
+export const START = {
+  morale: 60,
+  reputation: 5,
+  money: 20000,
+} as const;

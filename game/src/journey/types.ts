@@ -115,6 +115,8 @@ export interface JourneyState {
   user: UserState;
   pros: JPlayer[];
   juniors: JPlayer[];
+  /** Next AI id number. */
+  nextId: number;
   /** Ranking points of the last four swings, by player id, index = swing slot (0–3). */
   points: Record<string, number[]>;
   juniorPoints: Record<string, number[]>;

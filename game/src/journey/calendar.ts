@@ -21,8 +21,8 @@ export interface JTierSpec {
 export const JTIERS: Record<JTier, JTierSpec> = {
   jr: { draw: 32, bestOf: 3, points: [0, 20, 40, 80, 150, 300], prizePerPoint: 0, junior: true, band: [1, 999], chance: 0.5, filler: [9.6, 0.8] },
   jrMajor: { draw: 64, bestOf: 3, points: [10, 40, 80, 160, 300, 600, 1000], prizePerPoint: 0, junior: true, band: [1, 999], chance: 1, filler: [10, 0.8] },
-  futures: { draw: 32, bestOf: 3, points: [0, 2, 4, 8, 15, 25], prizePerPoint: 60, junior: false, band: [90, 999], chance: 0.6, filler: [12.2, 0.7] },
-  challenger: { draw: 32, bestOf: 3, points: [0, 8, 16, 30, 50, 80], prizePerPoint: 120, junior: false, band: [30, 260], chance: 0.55, filler: [13.4, 0.6] },
+  futures: { draw: 32, bestOf: 3, points: [0, 2, 4, 8, 15, 25], prizePerPoint: 150, junior: false, band: [150, 999], chance: 0.3, filler: [12, 0.7] },
+  challenger: { draw: 32, bestOf: 3, points: [0, 8, 16, 30, 50, 80], prizePerPoint: 160, junior: false, band: [40, 999], chance: 0.5, filler: [13.2, 0.6] },
   t250: { draw: 32, bestOf: 3, points: [0, 25, 50, 100, 165, 250], prizePerPoint: 280, junior: false, band: [9, 200], chance: 0.5, filler: [14.2, 0.5] },
   masters: { draw: 64, bestOf: 3, points: [10, 50, 100, 200, 400, 650, 1000], prizePerPoint: 450, junior: false, band: [1, 999], chance: 0.95, filler: [14.4, 0.4] },
   major: { draw: 128, bestOf: 5, points: [10, 50, 100, 200, 400, 800, 1300, 2000], prizePerPoint: 900, junior: false, band: [1, 999], chance: 1, filler: [13.8, 0.5] },
@@ -50,7 +50,7 @@ export const SWINGS: readonly Swing[] = [
   {
     name: '호주 시즌',
     events: [
-      ev('brisbane-jr', '브리즈번 주니어 인터내셔널', 'jr', 'hard'), ev('melbourne-jr', '멜버른 주니어 메이저', 'jrMajor', 'hard'),
+      ev('brisbane-jr', '브리즈번 주니어 인터내셔널', 'jr', 'hard'), ev('traralgon-jr', '트랄라곤 주니어 인터내셔널', 'jr', 'hard'), ev('melbourne-jr', '멜버른 주니어 메이저', 'jrMajor', 'hard'),
       ev('perth-f', '퍼스 퓨처스', 'futures', 'hard'), ev('manila-f', '마닐라 퓨처스', 'futures', 'hard'),
       ev('canberra-c', '캔버라 챌린저', 'challenger', 'hard'), ev('busan-c', '부산 챌린저', 'challenger', 'hard'),
       ev('brisbane', '브리즈번 인터내셔널', 't250', 'hard'), ev('doha', '도하 오픈', 't250', 'hard'),
@@ -60,7 +60,7 @@ export const SWINGS: readonly Swing[] = [
   {
     name: '클레이 시즌',
     events: [
-      ev('milan-jr', '밀라노 주니어 트로피', 'jr', 'clay'), ev('paris-jr', '파리 주니어 메이저', 'jrMajor', 'clay'),
+      ev('milan-jr', '밀라노 주니어 트로피', 'jr', 'clay'), ev('santacroce-jr', '산타크로체 주니어 컵', 'jr', 'clay'), ev('paris-jr', '파리 주니어 메이저', 'jrMajor', 'clay'),
       ev('antalya-f', '안탈리아 퓨처스', 'futures', 'clay'), ev('cordoba-f', '코르도바 퓨처스', 'futures', 'clay'),
       ev('bordeaux-c', '보르도 챌린저', 'challenger', 'clay'), ev('prague-c', '프라하 챌린저', 'challenger', 'clay'),
       ev('estoril', '에스토릴 오픈', 't250', 'clay'), ev('munich', '뮌헨 오픈', 't250', 'clay'),
@@ -71,7 +71,7 @@ export const SWINGS: readonly Swing[] = [
   {
     name: '잔디 시즌',
     events: [
-      ev('roehampton-jr', '로햄턴 주니어 그라스', 'jr', 'grass'), ev('london-jr', '런던 주니어 메이저', 'jrMajor', 'grass'),
+      ev('roehampton-jr', '로햄턴 주니어 그라스', 'jr', 'grass'), ev('yeongwol-jr', '영월 주니어 인터내셔널', 'jr', 'hard'), ev('london-jr', '런던 주니어 메이저', 'jrMajor', 'grass'),
       ev('nottingham-f', '노팅엄 퓨처스', 'futures', 'grass'), ev('gimcheon-f', '김천 퓨처스', 'futures', 'hard'),
       ev('ilkley-c', '일클리 챌린저', 'challenger', 'grass'), ev('seoul-c', '서울 챌린저', 'challenger', 'hard'),
       ev('halle', '할레 오픈', 't250', 'grass'), ev('stuttgart', '슈투트가르트 오픈', 't250', 'grass'),
@@ -81,7 +81,7 @@ export const SWINGS: readonly Swing[] = [
   {
     name: '북미·아시아 하드 시즌',
     events: [
-      ev('osaka-jr', '오사카 주니어 오픈', 'jr', 'hard'), ev('newyork-jr', '뉴욕 주니어 메이저', 'jrMajor', 'hard'),
+      ev('osaka-jr', '오사카 주니어 오픈', 'jr', 'hard'), ev('college-park-jr', '칼리지파크 주니어 컵', 'jr', 'hard'), ev('newyork-jr', '뉴욕 주니어 메이저', 'jrMajor', 'hard'),
       ev('tulsa-f', '털사 퓨처스', 'futures', 'hard'), ev('changwon-f', '창원 퓨처스', 'futures', 'hard'),
       ev('chicago-c', '시카고 챌린저', 'challenger', 'hard'), ev('shenzhen-c', '선전 챌린저', 'challenger', 'hard'),
       ev('seoul', '코리아 오픈', 't250', 'hard'), ev('tokyo', '도쿄 오픈', 't250', 'hard'),
