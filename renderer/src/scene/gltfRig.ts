@@ -2,9 +2,11 @@
 // hull, a racket in the right hand, and locomotion clips sampled at replay time. Strokes (effector keys and IK) come
 // from `PlayerPose.stroke`, solved over the clips (strokeSolver.ts). Same `PlayerRig` interface as the mannequin.
 import {
-  CircleGeometry, CylinderGeometry, Group, Mesh, MeshBasicMaterial, MeshToonMaterial, Quaternion, Vector3, type Bone, type Object3D,
+  BufferGeometry, CircleGeometry, Color, CylinderGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial, MeshToonMaterial, Object3D, Quaternion,
+  TorusGeometry, Vector3, type Bone,
   type SkinnedMesh,
 } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { clamp, smoothstep } from '../math.ts';
 import { withCarry } from '../playback/carry.ts';
@@ -31,21 +33,37 @@ function moveAngle(pose: PlayerPose): number {
   return Math.atan2(Math.sin(a), Math.cos(a));
 }
 
+/** A geometry with every vertex the colour `hex` (the racket is one vertex-coloured mesh: one draw, one hull). */
+function painted(g: BufferGeometry, hex: number): BufferGeometry {
+  const c = new Color(hex);
+  const n = g.getAttribute('position').count;
+  g.setAttribute('color', new Float32BufferAttribute(Array.from({ length: n * 3 }, (_, i) => [c.r, c.g, c.b][i % 3]!), 3));
+  return g;
+}
+
 function racket(): Group {
   const R = PLAYER_RIG.racket;
   const g = new Group();
   g.name = 'racket';
-  // Handle and throat run from just below the grip to the head's rim.
+  // Handle and throat run from just below the grip to the head's rim; the light strings sit in a dark frame that
+  // shows on every tier (B1). One mesh with one outline: the handle is outlined too, so the shaft reads at 41 px.
   const shaft = R.length - R.headRadius + 0.08;
-  const handle = new Mesh(new CylinderGeometry(R.handleRadius, R.handleRadius * 1.15, shaft, 8), lit(COLOURS.racket));
-  handle.position.y = shaft / 2 - 0.08;
-  const head = new Mesh(new CylinderGeometry(R.headRadius, R.headRadius, 0.022, 16), lit(COLOURS.strings));
+  const handle = new CylinderGeometry(R.handleRadius, R.handleRadius * 1.15, shaft, 8).translate(0, shaft / 2 - 0.08, 0);
+  const strings = new CylinderGeometry(R.headRadius, R.headRadius, 0.022, 16).rotateX(Math.PI / 2).scale(R.headAspect, 1, 1).translate(0, R.length, 0);
+  const frame = new TorusGeometry(R.headRadius, R.frameTube, 6, 24).scale(R.headAspect, 1, 1).translate(0, R.length, 0);
+  const material = lit(0xffffff).clone();
+  material.vertexColors = true;
+  const mesh = new Mesh(mergeGeometries([painted(handle, COLOURS.racket), painted(strings, COLOURS.strings), painted(frame, COLOURS.racket)]), material);
+  mesh.name = 'racket-mesh';
+  addOutline(mesh);
+  // Named points for whoever needs the head's centre (the smear, the probes) or the handle's middle.
+  const head = new Object3D();
   head.name = 'racket-head';
-  head.rotation.x = Math.PI / 2;
-  head.scale.set(R.headAspect, 1, 1);
   head.position.y = R.length;
-  addOutline(head);
-  g.add(handle, head);
+  const grip = new Object3D();
+  grip.name = 'racket-handle';
+  grip.position.y = shaft / 2 - 0.08;
+  g.add(mesh, head, grip);
   return g;
 }
 

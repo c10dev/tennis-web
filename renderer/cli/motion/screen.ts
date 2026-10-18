@@ -1,6 +1,7 @@
 // The player in TV pixels (ADR-031): pose-space proxies for what a phone shows at the Main camera on the M8 stage
 // (TV_STAGE, CSS pixels), measured on the skinned vertices and the racket head's geometry.
 import { Vector3, type Mesh, type SkinnedMesh } from 'three';
+import { PLAYER_RIG } from '../../src/tuning/index.ts';
 import type { PlayerId } from '@tennis/engine';
 import { tvProjector } from '../../src/camera/tvView.ts';
 import { heldPlayers, type TellStance } from '../../src/playback/hold.ts';
@@ -36,10 +37,23 @@ function posed(model: PlayerModel, pose: PlayerPose): GltfRig {
 export const bodyHeightPx = (model: PlayerModel, pose: PlayerPose): number =>
   extent(vertices(posed(model, pose).object3d.getObjectByName('body') as SkinnedMesh)).h;
 
-/** The racket head's larger extent on screen. */
+/** The racket head's larger extent on screen: its oval rim, frame included, around the head's centre. */
 export function racketHeadPx(model: PlayerModel, pose: PlayerPose): number {
-  const e = extent(vertices(posed(model, pose).object3d.getObjectByName('racket-head') as Mesh));
+  const head = posed(model, pose).object3d.getObjectByName('racket-head')!;
+  const R = PLAYER_RIG.racket;
+  const rim = Array.from({ length: 24 }, (_, k) => {
+    const a = (2 * Math.PI * k) / 24;
+    return new Vector3((R.headRadius + R.frameTube) * R.headAspect * Math.cos(a), (R.headRadius + R.frameTube) * Math.sin(a), 0).applyMatrix4(head.matrixWorld);
+  });
+  const e = extent(rim);
   return Math.max(e.w, e.h);
+}
+
+/** The handle's width on screen: its diameter at its middle, by the pixels a metre spans there across the view. */
+export function racketHandlePx(model: PlayerModel, pose: PlayerPose): number {
+  const mid = new Vector3().setFromMatrixPosition(posed(model, pose).object3d.getObjectByName('racket-handle')!.matrixWorld);
+  const [a, b] = [project(mid), project(mid.clone().add(new Vector3(1, 0, 0)))];
+  return 2 * PLAYER_RIG.racket.handleRadius * Math.hypot(b.x - a.x, b.y - a.y);
 }
 
 /** How far the racket head ranges around the player's feet on screen over samples (one stroke's window): the larger

@@ -2,7 +2,7 @@
 // handle that reads at chase distance.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Group, Mesh, Vector3, type CylinderGeometry } from 'three';
+import { Group, Mesh, Vector3 } from 'three';
 import { readGlb } from '../src/asset/glb.ts';
 import { matchFrameAt } from '../src/playback/frame.ts';
 import { toLocal } from '../src/playback/stroke.ts';
@@ -36,11 +36,14 @@ describe('stroke keys', () => {
 describe('the racket in hand', () => {
   it('has a handle thick enough to read at chase distance', () => {
     const rig = new GltfRig(model);
-    const racket = rig.object3d.getObjectByName('racket')!;
-    const handle = racket.children.find((c) => c.name !== 'racket-head') as Mesh;
-    const g = (handle.geometry as CylinderGeometry).parameters;
-    expect(Math.min(g.radiusTop, g.radiusBottom)).toBeGreaterThanOrEqual(PLAYER_RIG.racket.handleRadius * 0.85);
-    expect(PLAYER_RIG.racket.handleRadius).toBeGreaterThanOrEqual(0.03);
+    // The racket is one mesh (B1): measure the shaft's radius below the head's frame.
+    const racket = rig.object3d.getObjectByName('racket-mesh') as Mesh;
+    const below = PLAYER_RIG.racket.length - PLAYER_RIG.racket.headRadius - PLAYER_RIG.racket.frameTube - 0.01;
+    const pos = racket.geometry.getAttribute('position');
+    let radius = 0;
+    for (let i = 0; i < pos.count; i++) if (pos.getY(i) < below) radius = Math.max(radius, Math.hypot(pos.getX(i), pos.getZ(i)));
+    expect(radius).toBeGreaterThanOrEqual(PLAYER_RIG.racket.handleRadius * 0.85);
+    expect(PLAYER_RIG.racket.handleRadius).toBeGreaterThanOrEqual(0.04);
   });
 });
 

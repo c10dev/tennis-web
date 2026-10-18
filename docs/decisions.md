@@ -1501,4 +1501,9 @@ Format: one entry per decision, newest at the bottom.
 - **Phase A done (2026-10-18):** every target in `motion-continuity.test.ts` is met; `npm run motion` after it is in
   `docs/m8-character-motion.md` §7. Stills (`npm run shots`) barely change: phase A is about what happens between
   frames. Next: phase B (readable at 41 px), then the eye check (Q10).
+- **B1, the racket (2026-10-18):** Q5's sizes, head radius 0.16 → 0.20 m and handle 0.032 → 0.045 m, with a dark
+  frame round the light strings that shows on every tier; handle, strings and frame are one vertex-coloured mesh
+  with one hull (5 draws a player, was 6), with `racket-head` and `racket-handle` kept as named points. On the TV
+  view the near player's racket head is 8.4 → 11.3 px and the handle 1.6 → 2.5 px. The first draft's 14 px / 3 px
+  would have needed a 0.27 m head radius, beyond what Q5 approved, so the target is 10 / 2.2 px.
 

@@ -136,7 +136,7 @@ ADR-023/024). Steps inside a phase are mostly independent; phases run in order b
 ### Phase B: read at 50 px
 | Step | What | Metric |
 |---|---|---|
-| B1 | Racket legibility: thicker handle with its own hull, a larger head with a dark frame and light strings (tuning only) | Head ≥ 14 CSS px and handle ≥ 3 CSS px at the near player on the TV camera |
+| B1 | Racket legibility: thicker handle with its own hull, a larger head with a dark frame and light strings (tuning only) | Head ≥ 10 CSS px and handle ≥ 2.2 CSS px at the near player on the TV camera (Q5's sizes; 14 / 3 drafted before) |
 | B2 | Silhouette: longer arms (bone scale, within the IK reach and contact tests), bigger unit turn, backswing and follow-through extension, free arm out (Tennis Clash's x ≈ 0.5–0.6 m) | Racket-tip travel at the TV camera ≥ 40 px over a groundstroke; hand-out-of-body-outline frames measured in pose space |
 | B3 | Tell silhouettes: each tell gets one big, distinct cue (deep crouch, racket high, weight forward, open stance), readable on the far player | On the far player, mean joint distance ≥ 4 px from no tell, ≥ 6 px between cards, ≥ 3 px within a card (§7) |
 | B4 | Variety from event data: two-handed backhand, low and high variants by `from.z`, swing size by `speedKmh`, low-to-high finish by `spinRpm`, face tilt | Key choice deterministic; contact p95 unchanged; the two-hander's free hand ≤ 0.15 m from the handle |
@@ -223,7 +223,7 @@ targets now follow the joints an eye tracks at TV size (knees, ankles, elbows, h
 | On the TV view (412×503 CSS px) | Today | Target (step) |
 |---|---|---|
 | Body height, near / far player, ready stance | 41.3 / 28.6 | — |
-| Racket head, near player | 8.4 | ≥ 14 (B1) |
+| Racket head / handle, near player | 8.4 / 1.6 | ≥ 10 / ≥ 2.2 (B1; first drafted as 14 / 3, which would need a 0.27 m head radius against Q5's approved 0.20) |
 | Racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s), p50 of 49 | 48.9 | ≥ 64, +30 % (B2) |
 | Tell stances on the far player, mean joint distance (min / median): against no tell; between cards; within a card | 0.4 / 2.1; 0.3 / 6.8; 0.4 / 4.9 | min ≥ 4; ≥ 6; ≥ 3 (B3) |
 
