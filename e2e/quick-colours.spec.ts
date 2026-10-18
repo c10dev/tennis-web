@@ -30,7 +30,7 @@ const minCvdDelta = (cs: Rgb[]) => Math.min(...Object.values(CVD).flatMap((m) =>
 // Rally Pop (ADR-018 phase 0, ADR-020 phase 1a): sticker cards never rely on colour alone (icon, key, name), their
 // text and band colours stay apart for protan and deutan viewers, and the verdict carries a symbol and a word.
 test('marks every card with an icon and its key, uses the colour-blind-safe trio, and words the verdict with a symbol', async ({ page }) => {
-  await page.goto('/#/');
+  await page.goto('/?legacy=1#/');
   await page.locator('#quick-match').click();
   await page.locator('#quick-seed').fill('3');
   await page.locator('#quick-start').click();
@@ -62,7 +62,7 @@ test('marks every card with an icon and its key, uses the colour-blind-safe trio
 
 // Rally Pop phase 1a (ADR-020): the self-hosted faces load (a wrong path would only fall back silently).
 test('loads the self-hosted Rally Pop fonts', async ({ page }) => {
-  await page.goto('/#/');
+  await page.goto('/?legacy=1#/');
   await expect(page.locator('#quick-match')).toBeVisible();
   const loaded = await page.evaluate(async () => {
     const faces: [string, string][] = [['Lilita One', '400'], ['Nunito', '600'], ['Nunito', '800'], ['Barlow Condensed', '600'], ['Barlow Condensed', '700']];
@@ -80,7 +80,7 @@ test('does not fetch Pretendard on an English page', async ({ page }) => {
   page.on('request', (r) => {
     if (r.url().includes('pretendard')) fetched.push(r.url());
   });
-  await page.goto('/#/');
+  await page.goto('/?legacy=1#/');
   await expect(page.locator('#quick-match')).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   expect(fetched).toEqual([]);

@@ -9,7 +9,8 @@ describe('build targets (ADR-022)', () => {
 
   it('opens the dev replay page from ?seed= on the web only', () => {
     expect(entryFor('web', '?seed=42&surface=clay')).toBe('replay');
-    expect(entryFor('web', '')).toBe('game');
+    expect(entryFor('web', '')).toBe('journey');
+    expect(entryFor('web', '?legacy=1')).toBe('game');
     expect(entryFor('toss', '?seed=42')).toBe('game');
     expect(entryFor('toss', '')).toBe('game');
   });

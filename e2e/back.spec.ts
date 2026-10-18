@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 // Back and concede (ADR-022, M7 step 8) on the web build: Escape in a match asks before conceding; a concede is a loss.
 
 async function toMatch(page: Page) {
-  await page.goto('/#/quick');
+  await page.goto('/?legacy=1#/quick');
   await page.locator('#quick-seed').fill('3');
   await page.locator('#quick-start').click();
   await page.locator('#fast-mode').check();

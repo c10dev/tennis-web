@@ -9,7 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 const samplesOnDisk = readdirSync(new URL('../ui/public/audio/', import.meta.url)).filter((f) => f.endsWith('.ogg'));
 
 async function startLadder(page: Page) {
-  await page.goto('/#/quick');
+  await page.goto('/?legacy=1#/quick');
   await page.locator('#quick-seed').fill('3');
   await page.locator('#quick-start').click();
   await expect(page.locator('#quick-play')).toBeVisible();
@@ -67,7 +67,7 @@ test.describe('quick-match sound', () => {
       if (/\/audio\/[^/]+\.(ogg|m4a)$/.test(path)) requests.push(path);
     });
     // The audio (and with it the samples) opens on the first tap or key press anywhere (ADR-029), never with the page.
-    await page.goto('/#/quick');
+    await page.goto('/?legacy=1#/quick');
     await expect(page.locator('#quick-start')).toBeVisible();
     await page.waitForTimeout(500);
     expect(await page.evaluate(() => document.body.dataset.audioSamples ?? 'none')).toBe('none');

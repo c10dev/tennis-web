@@ -117,7 +117,7 @@ function reached(was: CareerStats, now: CareerStats, results: readonly EventResu
   once('first-junior-title', now.juniorTitles > was.juniorTitles);
   once('junior-major', now.juniorMajors > was.juniorMajors);
   once('junior-no1', now.bestJuniorRank === 1);
-  once('first-pro-points', now.bestRank !== null);
+  once('first-pro-points', results.some((r) => !r.tier.startsWith('jr') && r.points > 0));
   once('first-title', now.titles > was.titles);
   once('major-main-draw', results.some((r) => r.tier === 'major'));
   once('masters-title', results.some((r) => r.champion && r.tier === 'masters'));

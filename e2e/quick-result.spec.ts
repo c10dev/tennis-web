@@ -49,7 +49,7 @@ async function recordCount(page: Page) {
 const css = (page: Page, sel: string, prop: string) => page.locator(sel).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
 
 async function playToResult(page: Page, seed: number, fast: boolean) {
-  await page.goto('/#/');
+  await page.goto('/?legacy=1#/');
   await page.locator('#quick-match').click();
   await page.locator('#quick-seed').fill(String(seed));
   await page.locator('#quick-start').click();
@@ -166,7 +166,7 @@ test.describe('quick result', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await recordPhases(page);
     await recordCount(page);
-    await page.goto('/#/');
+    await page.goto('/?legacy=1#/');
     await page.locator('#quick-match').click();
     await page.locator('#quick-seed').fill('3');
     await page.locator('#quick-start').click();

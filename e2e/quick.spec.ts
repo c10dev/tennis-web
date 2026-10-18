@@ -24,7 +24,7 @@ function watchErrors(page: Page): string[] {
 }
 
 async function startLadder(page: Page) {
-  await page.goto('/#/');
+  await page.goto('/?legacy=1#/');
   await page.locator('#quick-match').click();
   await page.locator('#quick-seed').fill(String(SEED));
   await page.locator('#quick-start').click();
@@ -154,10 +154,10 @@ test.describe('quick match', () => {
     await page.locator('#play-again').click();
     await expect.poll(() => page.evaluate(() => document.body.dataset.quickPhase)).toMatch(/auto|choose/);
     await page.reload();
-    await page.goto('/#/quick');
+    await page.goto('/?legacy=1#/quick');
     await expect(page.locator('#quick-rank')).toHaveText(rank);
     await expect(page.locator('#recent li')).toHaveCount(1);
-    await page.goto('/#/');
+    await page.goto('/?legacy=1#/');
     await expect(page.locator('#quick-match')).toContainText(`${rank} · 1 played`);
     expect(errors).toEqual([]);
   });
@@ -205,7 +205,7 @@ test.describe('quick match', () => {
   });
 
   test('keeps the season mode one click away', async ({ page }) => {
-    await page.goto('/#/');
+    await page.goto('/?legacy=1#/');
     await page.locator('#new-career').click();
     await expect(page.locator('#start')).toBeVisible();
   });

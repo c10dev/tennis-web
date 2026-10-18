@@ -73,7 +73,7 @@ test.describe('quick match opponent read', () => {
     expect(node.some((m) => m.reads.some((r) => r.history.length > 0))).toBe(true);
     expect(node.some((m) => m.tip !== null)).toBe(true);
 
-    await page.goto('/#/');
+    await page.goto('/?legacy=1#/');
     await page.locator('#quick-match').click();
     await page.locator('#quick-seed').fill(String(SEED));
     await page.locator('#quick-start').click();

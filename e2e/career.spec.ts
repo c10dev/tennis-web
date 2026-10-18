@@ -20,7 +20,7 @@ function watchErrors(page: Page): string[] {
 }
 
 async function newCareer(page: Page) {
-  await page.goto('/#/new');
+  await page.goto('/?legacy=1#/new');
   await page.locator('#seed').fill(String(SEED));
   await page.locator('#start').click();
   await expect(page.locator('#this-week')).toContainText('Week 1');
@@ -79,7 +79,7 @@ test.describe('career', () => {
     await page.locator('tr[data-slot="slot1"] .save').click();
     await expect(page.locator('tr[data-slot="slot1"]')).toContainText('Alex Kim · week 3');
     await page.reload();
-    await page.goto('/#/');
+    await page.goto('/?legacy=1#/');
     await expect(page.locator('#continue')).toContainText('week 3');
     await page.locator('#load').click();
     await page.locator('tr[data-slot="slot1"] .load').click();

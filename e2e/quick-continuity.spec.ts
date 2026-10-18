@@ -8,7 +8,7 @@ interface Sample { t: number; real: number; wipe: boolean; ff: boolean; phase: s
 
 test('plays the opening points behind wipes, then one continuous picture through two decisions', async ({ page }) => {
   test.setTimeout(240_000);
-  await page.goto('/#/quick');
+  await page.goto('/?legacy=1#/quick');
   await page.locator('#quick-seed').fill('3');
   await page.locator('#quick-start').click();
   await page.locator('#quick-play').click();
