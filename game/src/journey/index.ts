@@ -10,7 +10,9 @@ export { choose, context as careerContext, currentChoice, queueChoices, type Cho
 export { calendarYear } from './events-stage.ts';
 export { reached, shortName, TIER_LABEL } from './facts.ts';
 export { NATIONS } from './names.ts';
-export { press, type Comment, type Headline, type Press } from './news.ts';
+export { press, type Headline, type Press } from './news.ts';
+export { GROUP_KO, staffLines, type StaffLine } from './staff-voice.ts';
+export { roomReport, type Meeting, type RoomReport, type Standing } from './room-report.ts';
 export { rankOf as journeyRankOf, total as rankingTotal } from './ranking.ts';
 export { checkTalents, createPro, GROUPS, groupValues, ovr, talentsUsed, type CreatableStyle as JourneyStyle, type Group, type ProInput, type ProShape, type Talents } from './ratings.ts';
 export { fromJourneySave, JOURNEY_VERSION, sortHall, toJourneySave, type HallEntry, type JourneySave } from './save.ts';

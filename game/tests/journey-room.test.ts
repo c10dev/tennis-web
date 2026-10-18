@@ -68,3 +68,20 @@ describe('season rooms', () => {
     expect(r.order.every((id) => r.humans[id]!.reports.length === 4)).toBe(true);
   });
 });
+
+describe('room report', () => {
+  it('ranks friends, lists every match between them once, names the MVP and the cup winner', async () => {
+    const { roomReport } = await import('../src/journey/room-report.ts');
+    const r = createRoom(31, members);
+    const out = advanceRoom(r, together(r));
+    const rep = roomReport(out.room, out.reports);
+    expect(rep.standings.map((s) => s.id).sort()).toEqual([...r.order].sort());
+    const ranks = rep.standings.map((s) => s.rank ?? 1e9);
+    expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
+    expect(rep.meetings.length).toBeGreaterThanOrEqual(2);
+    for (const m of rep.meetings) expect(m.winner).not.toBe(m.loser);
+    expect(rep.cupWinner).not.toBeNull();
+    expect(rep.feed[0]).toContain('룸 컵 우승');
+    for (const line of rep.feed) expect(line).not.toMatch(/undefined|NaN/);
+  });
+});

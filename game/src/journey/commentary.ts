@@ -34,7 +34,8 @@ export function ending(p: PointEvent, names: Record<PlayerId, string>): string {
 
 const LABEL: Partial<Record<string, string>> = { match_point: '매치 포인트', set_point: '세트 포인트', break_point: '브레이크 포인트' };
 
-export function commentary(recipe: MatchRecipe, heading: string): Line[] {
+/** `side` is the reader's player in the recipe (a human who was player B in a match between friends reads 'B'). */
+export function commentary(recipe: MatchRecipe, heading: string, side: PlayerId = 'A'): Line[] {
   const result = replayMatch(recipe);
   const names: Record<PlayerId, string> = { A: recipe.config.players[0].name, B: recipe.config.players[1].name };
   const lines: Line[] = [{ kind: 'title', text: heading }, { kind: 'set', text: '1세트' }];
@@ -48,7 +49,7 @@ export function commentary(recipe: MatchRecipe, heading: string): Line[] {
       const rally = e.rallyLength > 3 ? ` (${e.rallyLength}구 랠리)` : '';
       const at = `${e.scoreBefore.games[0]}-${e.scoreBefore.games[1]} ${formatPoints(e.scoreBefore)}`;
       const saved = e.winner !== holder ? ' · 세이브' : '';
-      lines.push({ kind: 'key', text: `${names[holder]}의 ${LABEL[tag]} (${at}) — ${ending(e, names)}${saved}${rally}`, ours: e.winner === 'A' });
+      lines.push({ kind: 'key', text: `${names[holder]}의 ${LABEL[tag]} (${at}) — ${ending(e, names)}${saved}${rally}`, ours: e.winner === side });
     } else if (e.type === 'game_end') {
       const [a, b] = e.score.games;
       const games = a + b === 0 && e.score.sets.length ? e.score.sets.at(-1)! : [a, b];
@@ -56,15 +57,15 @@ export function commentary(recipe: MatchRecipe, heading: string): Line[] {
       const text = tiebreak ? `타이브레이크는 ${names[e.winner]}의 것 · ${games[0]}-${games[1]}`
         : e.isBreak ? `브레이크! ${withJosa(names[e.winner], '이', '가')} 상대 서브 게임을 가져왔다 · ${games[0]}-${games[1]}`
           : `${names[e.winner]} 서비스 게임 · ${games[0]}-${games[1]}`;
-      lines.push({ kind: e.isBreak ? 'break' : 'game', text, ours: e.winner === 'A' });
+      lines.push({ kind: e.isBreak ? 'break' : 'game', text, ours: e.winner === side });
     } else if (e.type === 'set_end') {
       const [a, b] = e.score.sets.at(-1)!;
-      lines.push({ kind: 'set-end', text: `${set}세트는 ${names[e.winner]}의 것 · ${a}-${b}`, ours: e.winner === 'A' });
+      lines.push({ kind: 'set-end', text: `${set}세트는 ${names[e.winner]}의 것 · ${a}-${b}`, ours: e.winner === side });
       set++;
       if (events[i + 1]?.type !== 'match_end') lines.push({ kind: 'set', text: `${set}세트` });
     } else if (e.type === 'match_end') {
       const score = e.score.sets.map(([a, b]) => `${a}-${b}`).join(' ');
-      lines.push({ kind: 'end', text: `경기 종료! ${names[e.winner]} 승리 · ${score}`, ours: e.winner === 'A' });
+      lines.push({ kind: 'end', text: `경기 종료! ${names[e.winner]} 승리 · ${score}`, ours: e.winner === side });
       const st = e.stats;
       lines.push({ kind: 'stats', text: `에이스 ${st.aces[0]}-${st.aces[1]} · 더블 폴트 ${st.doubleFaults[0]}-${st.doubleFaults[1]} · 위너 ${st.winners[0]}-${st.winners[1]} · 범실 ${st.unforcedErrors[0]}-${st.unforcedErrors[1]} · 브레이크 ${st.breakPoints[0]} / ${st.breakPoints[1]}` });
     }
