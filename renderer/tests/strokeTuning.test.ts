@@ -11,7 +11,7 @@ import { groundToThree, toThree, yawFor } from '../src/scene/coords.ts';
 import { GltfRig } from '../src/scene/gltfRig.ts';
 import { buildPlayerModel } from '../src/scene/playerModel.ts';
 import { PLAYER_RIG, STROKE_KEYS } from '../src/tuning/index.ts';
-import { SAMPLE } from './fixtures.ts';
+import { SAMPLE, wideSample } from './fixtures.ts';
 import { NO_CARRY } from '../src/playback/carry.ts';
 
 const model = buildPlayerModel(readGlb(new Uint8Array(readFileSync(new URL('../../ui/public/models/player.glb', import.meta.url)))));
@@ -69,7 +69,7 @@ describe('the serve on the skinned rig', () => {
 });
 
 describe('the planned lunge (TD-058)', () => {
-  const poses = SAMPLE.slice(0, 3).flatMap((r) => {
+  const poses = wideSample().flatMap((r) => {
     const tl = buildTimeline(r);
     return tl.segments.flatMap((seg) => seg.point.shots.map((s) => ({ s, p: matchFrameAt(tl, seg.zero + s.t).players[s.hitter] })));
   });
@@ -128,7 +128,7 @@ describe('the lunge on the skinned rig (TD-058)', () => {
       return ['toesl', 'toesr'].map((n) => new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName(n)!.matrixWorld).y);
     };
     let lunges = 0;
-    for (const r of SAMPLE) {
+    for (const r of wideSample()) {
       const tl = buildTimeline(r);
       for (const seg of tl.segments) {
         for (const s of seg.point.shots) {

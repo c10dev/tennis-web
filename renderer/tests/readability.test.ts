@@ -6,8 +6,9 @@ import { heldPlayers } from '../src/playback/hold.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
 import { GltfRig } from '../src/scene/gltfRig.ts';
 import { COLOURS } from '../src/tuning/index.ts';
-import { loadPlayerModelFile } from '../cli/motion/probe.ts';
-import { racketHandlePx, racketHeadPx } from '../cli/motion/screen.ts';
+import { loadPlayerModelFile, sampleFrames, timelineFrames } from '../cli/motion/probe.ts';
+import { racketHandlePx, racketHeadPx, racketSpanPx } from '../cli/motion/screen.ts';
+import { quantile } from '../cli/motion/metrics.ts';
 import { match } from './fixtures.ts';
 
 const model = loadPlayerModelFile();
@@ -29,3 +30,16 @@ describe('B1: the racket on the TV view', () => {
     expect(racket.children.filter((c) => c.userData.outline === true)).toHaveLength(1);
   });
 });
+
+describe('B2: the swing on the TV view', () => {
+  // The arm and racket (about 35 px from the shoulder) bound how far the head can range: the first draft's 64 px would
+  // need a longer racket or arms beyond Q5's +20 %, so the target is what +20 % arms and the flourish give.
+  it('sweeps the racket head over at least 51 px around the feet on a near groundstroke, p50 (47.8 before)', () => {
+    const tl = buildTimeline(match(2, 'clay'));
+    const drives = tl.segments.flatMap((seg) => seg.point.shots.filter((s) => s.shot !== 'serve' && s.hitterPos.y < 0 && seg.zero + s.t < 300).map((s) => ({ s, t: seg.zero + s.t })));
+    const spans = drives.map(({ s, t }) => racketSpanPx(sampleFrames(model, timelineFrames(tl, s.hitter, t - 0.6, t + 0.4))));
+    expect(spans.length).toBeGreaterThan(30);
+    expect(quantile(spans, 0.5)).toBeGreaterThanOrEqual(51);
+  });
+});
+

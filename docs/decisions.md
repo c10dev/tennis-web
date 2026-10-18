@@ -1506,4 +1506,11 @@ Format: one entry per decision, newest at the bottom.
   with one hull (5 draws a player, was 6), with `racket-head` and `racket-handle` kept as named points. On the TV
   view the near player's racket head is 8.4 → 11.3 px and the handle 1.6 → 2.5 px. The first draft's 14 px / 3 px
   would have needed a 0.27 m head radius, beyond what Q5 approved, so the target is 10 / 2.2 px.
+- **B2, the swing (2026-10-18):** both arms 20 % longer (`PLAYER_RIG.armScale`, bones slid out along their parents;
+  standing reach 2.43 → 2.56 m, contact reach 1.33 → 1.475 m, fewer lunges), the serve's trophy and drop keys raised
+  so the elbow stays at shoulder height, and the groundstrokes' backswing and follow-through flourished
+  (`STROKE.flourish`: hands 1.3 × as far from their shoulders, hips and chest 1.2 × the turn; the data in
+  `STROKE_KEYS` unchanged). The racket head's span around the feet on the TV view went 47.8 → 51.7 px (p50 of 49
+  near groundstrokes); the first draft's 64 px is beyond an arm and racket about 35 px long at Q5's +20 %, so the
+  target is 51 px. A longer racket or longer arms would go further; that is the user's call.
 

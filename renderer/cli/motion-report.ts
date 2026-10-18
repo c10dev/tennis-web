@@ -78,5 +78,5 @@ console.log('\n## On the TV view (CSS px, 412×503 stage)\n');
 head(['what', 'value']);
 row(['body height, near / far player (ready stance)', `${fmt(bodyHeightPx(model, ready[nearId]), 1)} / ${fmt(bodyHeightPx(model, ready[farId]), 1)}`]);
 row(['racket head / handle, near player (B1 ≥ 10 / ≥ 2.2)', `${fmt(racketHeadPx(model, ready[nearId]), 1)} / ${fmt(racketHandlePx(model, ready[nearId]), 1)}`]);
-row([`racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s), p50 of ${span.length}`, fmt(quantile(span, 0.5), 1)]);
+row([`racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s; B2 ≥ 51), p50 of ${span.length}`, fmt(quantile(span, 0.5), 1)]);
 row(['tell stances on the far player: mean joint distance, min / p50 of pairs', `${fmt(Math.min(...pairs), 1)} / ${fmt(quantile(pairs, 0.5), 1)}`]);

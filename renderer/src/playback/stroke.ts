@@ -51,6 +51,19 @@ export function toLocal(p: Vec3, pos: Vec2, facing: Vec2): V3 {
   return { x: dx * -facing.y + dy * facing.x, y: p.z, z: dx * facing.x + dy * facing.y };
 }
 
+type Triple = readonly [number, number, number];
+const away = (p: Triple, from: Triple, k: number): Triple => [from[0] + (p[0] - from[0]) * k, from[1] + (p[1] - from[1]) * k, from[2] + (p[2] - from[2]) * k];
+/** A key with its hands further from the shoulders and its turn wider (STROKE.flourish, B2). */
+function flourish(key: StrokeKey): StrokeKey {
+  const F = STROKE.flourish;
+  const right = PLAYER_RIG.shoulderR;
+  const left: Triple = [-right[0], right[1], right[2]];
+  return { ...key, pelvis: key.pelvis * F.turn, turn: key.turn * F.turn, hand: away(key.hand, right, F.reach), free: away(key.free, left, F.reach) };
+}
+const flourished = (keys: readonly StrokeKey[]) => keys.map((k, i) => ((STROKE.flourish.keys as readonly number[]).includes(i) ? flourish(k) : k));
+/** The keys the planner plays: the groundstrokes flourished for the TV view, the serve as keyed. */
+const KEYS: Record<SwingKind, readonly StrokeKey[]> = { forehand: flourished(STROKE_KEYS.forehand), backhand: flourished(STROKE_KEYS.backhand), serve: STROKE_KEYS.serve };
+
 const kindOf = (s: ShotEvent): SwingKind => (s.shot === 'serve' ? 'serve' : (s.wing ?? 'forehand'));
 const v3 = (a: readonly [number, number, number]): V3 => ({ x: a[0], y: a[1], z: a[2] });
 const mix = (a: V3, b: V3, u: number): V3 => ({ x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u), z: lerp(a.z, b.z, u) });
@@ -120,7 +133,7 @@ function strokeIn(seg: PointSegment, id: PlayerId, t: number, pos: Vec2, facing:
     const end = s.t + STROKE.blendOut.toSec;
     if (tau < start || tau > end) continue;
     const kind = kindOf(s);
-    const keys = STROKE_KEYS[kind];
+    const keys = KEYS[kind];
     const times = keys.map((key) => s.t + key.at);
     // Groundstrokes: the first key moves to the lead-in start, never past the backswing.
     if (kind !== 'serve') times[0] = Math.min(start, times[1]!);

@@ -93,6 +93,9 @@ export class GltfRig implements PlayerRig {
     this.slot = body.getObjectByName('handslotr')!;
     this.slot.add(racket());
     body.traverse((o) => { if ((o as Bone).isBone) this.bones[o.name] = o as Bone; });
+    // Longer arms for a swing that shows on a 41 px body (ADR-031 B2): each bone slides out along its parent, as the
+    // stretch does, so nothing shears.
+    for (const name of ['lowerarml', 'wristl', 'handl', 'lowerarmr', 'wristr', 'handr']) this.bones[name]!.position.multiplyScalar(PLAYER_RIG.armScale);
     for (const name of ['lowerarmr', 'wristr', 'handr']) this.rest.set(this.bones[name]!, this.bones[name]!.position.clone());
     this.restPose = restPose(this.bones);
     // The feet's turn in the bind pose (standing, soles flat), in the player's frame: a planted foot lies flat (A5).

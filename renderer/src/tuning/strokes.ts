@@ -21,6 +21,9 @@ export const STROKE = {
   reactionSec: 0.15,
   /** Backswing complete to contact: never compressed, whatever the incoming ball allows. */
   forwardSwingSec: 0.18,
+  /** Groundstrokes' backswing and follow-through keys (indices in STROKE_KEYS) exaggerated for the TV view (ADR-031
+   *  B2): each hand `reach` × as far from its shoulder, hips and chest turned `turn` × as far. */
+  flourish: { keys: [1, 3], reach: 1.3, turn: 1.2 },
   /** Seconds to blend in from the clips at the lead-in, and the span after contact over which the stroke hands back. */
   blendInSec: 0.12,
   blendOut: { fromSec: 0.45, toSec: 0.75 },
@@ -66,8 +69,8 @@ export const STROKE_KEYS = {
   ],
   serve: [
     k(-1.0, -0.6, -0.6, 0.05, 0.03, [-0.2, 0.7, 0.3], [0.1, 0.4, 0.9], [0.15, 0.8, 0.35]),
-    k(-0.45, -1.1, -1.25, -0.15, 0.14, [-0.5, 1.15, -0.2], [0.2, 0.6, -0.75], [0.15, 1.9, 0.2]),
-    k(-0.22, -0.9, -0.9, -0.1, 0.08, [-0.35, 1.25, -0.25], [0.1, -0.8, -0.55], [0.2, 1.4, 0.3]),
+    k(-0.45, -1.1, -1.25, -0.15, 0.14, [-0.56, 1.3, -0.22], [0.2, 0.6, -0.75], [0.15, 1.9, 0.2]),
+    k(-0.22, -0.9, -0.9, -0.1, 0.08, [-0.4, 1.4, -0.28], [0.1, -0.8, -0.55], [0.2, 1.4, 0.3]),
     k(0, -0.4, -0.2, 0.05, -0.05, [-0.22, 1.75, 0.27], [-0.05, 0.98, 0.18], [0.33, 0.82, 0.27]),
     k(0.3, 0.5, 0.9, 0.3, 0.06, [0.35, 0.55, 0.3], [0.5, -0.5, 0.7], [0.3, 0.75, -0.1]),
     k(0.6, 0.1, 0.1, 0.2, 0.06, [-0.14, 0.7, 0.4], [0, 0.8, 0.6], [0.14, 0.7, 0.37]),
