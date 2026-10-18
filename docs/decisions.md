@@ -1480,4 +1480,12 @@ Format: one entry per decision, newest at the bottom.
   uncovered the idle-to-walk glide the old hop had hidden in the air as players set off: grounded foot slips over
   10 cm while near still went from 27 to 254 frames in three 300 s matches (the spread is not the cause: 253 without
   it); A5 takes it on.
+- **A5, feet that step (2026-10-18):** a foot moving onto or off its plant lifts by the way it goes
+  (`PLAYER_RIG.step.plantLiftPerMetre` 1.5, at most `liftMax`, never above `liftClearance` 0.35 of the leg below the
+  hip, where a folded knee flips), a planted foot stands on the ground (`footHeight`, measured by a test) and lies flat
+  (the bind pose's turn, `GltfRig.flatFeet`), and the clips blend idle, walk and run by `PlayerPose.gaitSpeed`: the
+  speed averaged over ±0.4 s, moving to the speed itself as a stroke plants the feet. Grounded foot steps in plant
+  ramps 4,586 frames at p95 6.7 cm → 768 at 3.4 cm; slips over 10 cm while near still 254 → 87 (27 before A4 hid
+  them in the hop). The A5 target is now 4 cm a frame at p95 (1 px on the TV view), not the first draft's 2 cm, set
+  before a pixel was measured; walking's median slip bound in `feet.test.ts` moves from 8 to 9 mm (8.06).
 

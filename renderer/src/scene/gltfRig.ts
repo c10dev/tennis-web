@@ -57,6 +57,8 @@ export class GltfRig implements PlayerRig {
   private readonly slot: Object3D;
   /** Bind-pose offsets of the bones the solver slides (arm stretch); the clips never move them. */
   private readonly rest = new Map<Bone, Vector3>();
+  /** The feet's bind-pose turn in the player's frame (soles flat). */
+  private readonly flatFeet: Quaternion[];
 
   /** `kit` recolours the garments (TD-062); without it the player wears the model's own palette. */
   constructor(model: PlayerModel, kit: Kit | null = null) {
@@ -73,6 +75,10 @@ export class GltfRig implements PlayerRig {
     body.traverse((o) => { if ((o as Bone).isBone) this.bones[o.name] = o as Bone; });
     for (const name of ['lowerarmr', 'wristr', 'handr']) this.rest.set(this.bones[name]!, this.bones[name]!.position.clone());
     this.restPose = restPose(this.bones);
+    // The feet's turn in the bind pose (standing, soles flat), in the player's frame: a planted foot lies flat (A5).
+    this.object3d.updateMatrixWorld(true);
+    const frame = this.object3d.getWorldQuaternion(new Quaternion()).invert();
+    this.flatFeet = (['l', 'r'] as const).map((side) => frame.clone().multiply(this.bones[`foot${side}`]!.getWorldQuaternion(new Quaternion())));
     this.model = body;
     const shadow = this.shadow = new Mesh(new CircleGeometry(RIG.shadowRadius, 16), new MeshBasicMaterial({ color: COLOURS.shadow, transparent: true, opacity: 0.28 }));
     shadow.rotation.x = -Math.PI / 2;
@@ -105,9 +111,10 @@ export class GltfRig implements PlayerRig {
     const G = PLAYER_RIG.gait;
     const S = PLAYER_RIG.strides;
     const clip = (name: Clip) => this.clips.find((c) => c.name === name);
-    const move = smoothstep((pose.speed - G.moveFrom) / (G.moveFull - G.moveFrom));
-    const run = smoothstep((pose.speed - G.runFrom) / (G.runFull - G.runFrom));
-    const back = smoothstep((Math.abs(moveAngle(pose)) - PLAYER_RIG.backFrom) / 0.4) * (1 - smoothstep((pose.speed - G.backMax) / 0.5));
+    const speed = pose.gaitSpeed ?? pose.speed;
+    const move = smoothstep((speed - G.moveFrom) / (G.moveFull - G.moveFrom));
+    const run = smoothstep((speed - G.runFrom) / (G.runFull - G.runFrom));
+    const back = smoothstep((Math.abs(moveAngle(pose)) - PLAYER_RIG.backFrom) / 0.4) * (1 - smoothstep((speed - G.backMax) / 0.5));
     const react = pose.reactionWeight;
     const rest = 1 - react;
     const forward = rest * move * (1 - back);
@@ -134,7 +141,7 @@ export class GltfRig implements PlayerRig {
     this.model.position.set(0, 0, 0);
     // The stroke over the carried racket (ADR-031 A2): the arms follow keys whenever a stroke or the carry owns them.
     const stroke = withCarry(pose.stroke, pose.carry);
-    if (stroke) solveStroke(this.object3d, this.model, this.bones, this.slot, stroke, this.rest);
+    if (stroke) solveStroke(this.object3d, this.model, this.bones, this.slot, stroke, this.rest, this.flatFeet);
     this.shadow.position.set(this.model.position.x, 0.004 - hop, this.model.position.z);
   }
 }

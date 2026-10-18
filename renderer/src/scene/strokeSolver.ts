@@ -84,7 +84,7 @@ interface Rest { quats: Map<Bone, Quaternion>; positions: Map<Bone, Vector3>; hi
  * One solve at a given whole-body shift and extra crouch; returns how far the racket head still is from the contact
  * point (world).
  */
-function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: StrokePose, rest: Rest, feet: { p: Vector3; q: Quaternion }[], shift: Vector3, extraDrop: number): Vector3 {
+function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: StrokePose, rest: Rest, feet: { p: Vector3; q: Quaternion }[], shift: Vector3, extraDrop: number, flatFeet?: Quaternion[]): Vector3 {
   const w = s.weight;
   const e = s.keys;
   for (const [bone, q] of rest.quats) bone.quaternion.copy(q);
@@ -112,8 +112,19 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
     const stepOut = side === lead ? shiftWorld : new Vector3();
     // A split step's landing (A4) sets the free feet wider, each half the spread to its own side.
     if (s.spread) target.addScaledVector(leftWorld, (side === 'l' ? 0.5 : -0.5) * s.spread * (1 - s.plant.weight));
+    // A foot moving onto or off its planted spot steps there, lifted by how far it goes (A5), instead of gliding.
+    const away = Math.hypot(plant.x + stepOut.x - target.x, -plant.y + stepOut.z - target.z);
+    let stepLift = Math.min(P.liftMax, P.plantLiftPerMetre * away) * Math.sin(Math.PI * s.plant.weight);
     target.x += (plant.x + stepOut.x - target.x) * s.plant.weight;
     target.z += (-plant.y + stepOut.z - target.z) * s.plant.weight;
+    // A planted foot stands on the ground, whatever stride the clips are in (A5: they blend by an averaged speed).
+    target.y += (PLAYER_RIG.footHeight - target.y) * s.plant.weight;
+    // Never lift a foot so near the hip that the knee has no way to bend (it flips): keep it below the hip by
+    // `liftClearance` of the leg.
+    const hipY = worldPos(b[`upperleg${side}`]!).y;
+    const fullLeg = b[`lowerleg${side}`]!.position.length() + b[`foot${side}`]!.position.length();
+    stepLift = Math.min(stepLift, Math.max(0, hipY - P.liftClearance * fullLeg - target.y));
+    target.y += stepLift;
     target.y += s.hop * w;
     const lungeLength = Math.hypot(s.lunge.x, s.lunge.z);
     if (side === lead) target.y += Math.min(P.liftMax, P.liftPerMetre * lungeLength) * Math.sin(Math.PI * s.contactWeight) * s.plant.weight;
@@ -127,7 +138,8 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
     if (flat.length() > room) target.set(hip.x, target.y, hip.z).add(flat.setLength(room));
     const pole = LEG_POLE.clone().applyQuaternion(worldQuat(frame));
     limb(b[`upperleg${side}`]!, b[`lowerleg${side}`]!, b[`foot${side}`]!, target, pole, 1);
-    orient(b[`foot${side}`]!, feet[i]!.q, 1);
+    const flatFoot = flatFeet?.[i];
+    orient(b[`foot${side}`]!, flatFoot ? feet[i]!.q.clone().slerp(worldQuat(frame).multiply(flatFoot), s.plant.weight) : feet[i]!.q, 1);
   });
 
   // Racket arm: the keyed hand and racket, bent onto the contact point near contact.
@@ -157,7 +169,8 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
 }
 
 /** Pose the bones for `stroke` on top of the clip pose already on them; `model` is the body group inside `frame`. */
-export function solveStroke(frame: Object3D, model: Object3D, bones: Bones, slot: Object3D, stroke: StrokePose, restPositions: Map<Bone, Vector3>): void {
+/** `flatFeet`: the feet's turn standing flat, in the player's frame; a planted foot turns towards it. */
+export function solveStroke(frame: Object3D, model: Object3D, bones: Bones, slot: Object3D, stroke: StrokePose, restPositions: Map<Bone, Vector3>, flatFeet?: Quaternion[]): void {
   frame.updateMatrixWorld(true);
   const quats = new Map<Bone, Quaternion>();
   for (const bone of Object.values(bones)) quats.set(bone, bone.quaternion.clone());
@@ -168,7 +181,7 @@ export function solveStroke(frame: Object3D, model: Object3D, bones: Bones, slot
   const shift = new Vector3(stroke.lunge.x, 0, stroke.lunge.z).multiplyScalar(stroke.contactWeight);
   let drop = 0;
   for (let i = 0; i < 3; i++) {
-    const miss = pass(frame, model, bones, slot, stroke, rest, feet, shift, drop);
+    const miss = pass(frame, model, bones, slot, stroke, rest, feet, shift, drop, flatFeet);
     // A serve reaches its toss by the hop rule alone: no extra crouch.
     if (stroke.kind === 'serve' || stroke.contactWeight === 0 || miss.length() < 0.005) return;
     const local = miss.applyQuaternion(inverse);

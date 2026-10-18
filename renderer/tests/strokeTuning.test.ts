@@ -103,6 +103,20 @@ describe('the planned lunge (TD-058)', () => {
   });
 });
 
+describe('the rig standing', () => {
+  it('has its foot joints footHeight up and its toes on the ground', () => {
+    const rig = new GltfRig(model);
+    rig.apply({
+      pos: { x: 0, y: 0 }, facing: { x: 0, y: 1 }, speed: 0, swing: null, reaction: 'none', reactionWeight: 0, gait: { phase: 0, amount: 0 }, crouch: 0,
+      splitStep: 0, toss: 0, t: 0, stroke: null, velocity: { x: 0, y: 0 }, distance: 0, reactionT: -1, carry: NO_CARRY,
+    });
+    rig.object3d.updateMatrixWorld(true);
+    const y = (n: string) => new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName(n)!.matrixWorld).y;
+    expect(y('footl')).toBeCloseTo(PLAYER_RIG.footHeight, 2);
+    expect(y('toesl')).toBeLessThan(0.05);
+  });
+});
+
 describe('the lunge on the skinned rig (TD-058)', () => {
   it('steps the foot on the lunge side out with the body, lifted through the move, and lands it at contact', () => {
     const rig = new GltfRig(model);

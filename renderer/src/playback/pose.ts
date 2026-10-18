@@ -1,6 +1,6 @@
 // A player's pose at replay time t, from the events alone: what a rig needs to draw them (ADR-007).
 import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
-import { smoothstep } from '../math.ts';
+import { lerp, smoothstep } from '../math.ts';
 import { CARRY, PLAYBACK, RIG_MOTION, SPLIT_STEP } from '../tuning/index.ts';
 import { carryAt, type Carry } from './carry.ts';
 import { facingAt } from './facing.ts';
@@ -44,6 +44,10 @@ export interface PlayerPose {
   clipBlend?: { from: PlayerPose; weight: number };
   /** The arms' keys when no stroke owns them (ADR-031 A2); the skinned rig solves the stroke over it. */
   carry: Carry;
+  /** Speed (m/s) the skinned rig blends idle, walk and run by: the average over ± CARRY.speedWindowSec, so a player
+   *  starting or stopping eases between stances instead of swapping them in a few frames (A5), but the speed itself
+   *  as a stroke plants the feet (the body over them must be the stroke's, not a stride's). `speed` when absent. */
+  gaitSpeed?: number;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -58,7 +62,9 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
   const facing = turnToShot(facingAt(timeline, id, index, t, pos), own, tau);
-  const split = splitStep(seg.point.shots.filter((s) => s.hitter !== id), tau, carrySpeed(timeline, id, t));
+  const averaged = carrySpeed(timeline, id, t);
+  const stroke = strokeAt(timeline, id, t, pos, facing);
+  const split = splitStep(seg.point.shots.filter((s) => s.hitter !== id), tau, averaged);
   return {
     pos, facing, speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
@@ -66,11 +72,12 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
     splitStep: split.hop,
     toss: toss(seg.point.shots.filter((s) => s.hitter === id && s.shot === 'serve'), tau),
     t,
-    stroke: strokeAt(timeline, id, t, pos, facing),
+    stroke,
     velocity,
     distance: distanceAt(timeline, id, t),
     reactionT: t - seg.landed,
-    carry: { ...carryAt(timeline, t, carrySpeed(timeline, id, t), split.land, split.spread), weight: 1 - reactionWeight(timeline, t) },
+    carry: { ...carryAt(timeline, t, averaged, split.land, split.spread), weight: 1 - reactionWeight(timeline, t) },
+    gaitSpeed: lerp(averaged, speed, stroke?.plant.weight ?? 0),
   };
 }
 

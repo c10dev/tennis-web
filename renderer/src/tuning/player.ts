@@ -42,8 +42,12 @@ export const PLAYER_RIG = {
   shoulderR: [-0.211, 1.093, 0.018] as const,
   contactReach: 1.33,
   /** The lunge's step (TD-058): the lead foot lifts `liftPerMetre` × the shift (at most `liftMax`) halfway through; a
-   *  leg still out of reach lifts up to `dragLift`, fully once `dragLiftOver` short, instead of dragging. */
-  step: { liftMax: 0.14, liftPerMetre: 0.5, dragLift: 0.08, dragLiftOver: 0.03 },
+   *  leg still out of reach lifts up to `dragLift`, fully once `dragLiftOver` short, instead of dragging. A foot
+   *  stepping onto or off a plant lifts `plantLiftPerMetre` × the way (A5), never above `liftClearance` of the leg
+   *  below the hip. */
+  /** The foot joint's height standing on the ground (a test measures it on the rig). */
+  footHeight: 0.145,
+  step: { liftMax: 0.14, liftPerMetre: 0.5, plantLiftPerMetre: 1.5, liftClearance: 0.35, dragLift: 0.08, dragLiftOver: 0.03 },
   /** Metres travelled per cycle of each locomotion clip (measured from the clips by a test): the clip's phase is
    * distance / stride, so feet in stance stay put (ADR-024). */
   strides: { Running_A: 1.91, Walking_A: 0.58, Walking_Backwards: 0.54 },

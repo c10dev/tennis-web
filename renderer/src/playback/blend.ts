@@ -56,8 +56,10 @@ function stroke(a: StrokePose | null, b: StrokePose | null, k: number): StrokePo
       plant: { l: v2(a.plant.l, b.plant.l, k), r: v2(a.plant.r, b.plant.r, k), weight: lerp(a.plant.weight, b.plant.weight, k) },
     };
   }
-  if (a) return { ...a, weight: a.weight * (1 - k), plant: { ...a.plant, weight: a.plant.weight * (1 - k) } };
-  if (b) return { ...b, weight: b.weight * k, plant: { ...b.plant, weight: b.plant.weight * k } };
+  // Planted feet let go early and plant late (squared), so they step along with a body the blend is moving rather than
+  // hold back and catch up.
+  if (a) return { ...a, weight: a.weight * (1 - k), plant: { ...a.plant, weight: a.plant.weight * (1 - k) ** 2 } };
+  if (b) return { ...b, weight: b.weight * k, plant: { ...b.plant, weight: b.plant.weight * k * k } };
   return null;
 }
 

@@ -49,8 +49,9 @@ describe('feet', () => {
     expect(quantile(s.run, 0.5)).toBeLessThan(0.006);
     expect(quantile(s.run, 0.95)).toBeLessThan(0.035);
   });
-  it('walking and the walk–run blend: median 8 mm, p95 4.5 cm', () => {
-    expect(quantile(s.walk, 0.5)).toBeLessThan(0.008);
+  // 9 mm since A5 blends the clips by an averaged speed (8.06 mm; ADR-031).
+  it('walking and the walk–run blend: median 9 mm, p95 4.5 cm', () => {
+    expect(quantile(s.walk, 0.5)).toBeLessThan(0.009);
     expect(quantile(s.walk, 0.95)).toBeLessThan(0.045);
   });
   it('planted for a stroke: a foot on the ground holds (median under 1 mm, p95 under 2 cm); a lunge steps, it never drags (TD-058)', () => {
