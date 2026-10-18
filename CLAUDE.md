@@ -6,7 +6,7 @@ Tennis management sim (Football Manager-style) with TV-broadcast-style 3D match 
 - `renderer/` — Three.js replay of events (broadcast cams, replays, score bug, audio)
 - `game/` — headless, deterministic career layer (world, calendar, training, season, saves) on the engine
 - `ui/` — menus, management screens, DOM overlays
-- Full design: `GDD.md` (Korean). Current milestone: **M9**, the text career pivot (kickru-style, one player from juniors to retirement; ADR-032, `docs/journey-design.md`, GDD §15) in `game/src/journey/` and `ui/src/journey/`. The 3D (M7 Toss quick match, M8 character and motion, ADR-031) is paused behind `?legacy=1`; M1–M6 are done (M5: casual quick match, see `docs/casual-design.md` and GDD §13; M6: playtest redesign, ADR-017, GDD §14).
+- Full design: `GDD.md` (Korean). Current milestone: **M9**, the text tennis game: a season room shared with friends, tour scheduling and a team (ADR-032, ADR-033, `docs/journey-design.md`, GDD §16) in `game/src/journey/` and `ui/src/journey/`. The 3D (M7 Toss quick match, M8 character and motion, ADR-031) is paused behind `?legacy=1`; M1–M6 are done (M5: casual quick match, see `docs/casual-design.md` and GDD §13; M6: playtest redesign, ADR-017, GDD §14).
 
 ## Stack
 Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
@@ -38,7 +38,7 @@ game/      src/{world,player,calendar,tournament,season,save,quick,views,tuning.
 renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts} tests/
 ui/        index.html src/{career,quick,replay,lib,storage,platform}   (Vite root)
 e2e/       Playwright specs (playwright.config.ts at the root)
-docs/      journey-design.md (M9 text career), presentation-spec.md (current presentation rules), decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), 3d-redesign.md, m6-workstreams.md
+docs/      journey-design.md (M9 season rooms), presentation-spec.md (current presentation rules), decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), 3d-redesign.md, m6-workstreams.md
 GDD.md     game design doc
 ```
 

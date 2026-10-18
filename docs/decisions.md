@@ -1565,3 +1565,27 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** TD-020 (one season only) is answered by the journey's multi-year world, not by the M4 season. The
   quick match, replay page and renderer keep their tests but get no new work. Work happens on the local branch
   `claude/text-career` cut from `claude/3d-redesign-design-88cb3d`; reconciling with `main` is outside M9.
+
+## ADR-033: M9 reworked: a season shared with friends, built schedules and a team, not a kickru clone
+- **Date:** 2026-10-19
+- **Status:** Accepted
+- **Context:** The first pass of ADR-032 followed kickru's loop step for step (three OVR-45 candidates, a button per
+  season, life events between, news and meme comments, a lookalike at retirement), and several event and comment texts
+  had been carried over almost word for word from strings read out of kickru's bundle during the analysis. The user
+  asked for a game that is not the same, and chose three axes: a season played together by users, building one's own
+  tour schedule, and building a team.
+- **Decision:** the user took every default of the rework (`docs/journey-design.md`):
+  - The main mode is a season room (2–8 people, invite code); alone it is a practice season in the same format.
+  - A swing advances when everyone is ready or 12 hours after the last one; a missing plan repeats the last one.
+  - Everyone starts at 18 with OVR 66, the same hidden potential and the same starting points, and shapes the player
+    with 10 talent points; the 14-year-old junior stage stays in code but not in rooms.
+  - Lockstep on Supabase: the server keeps rooms, members and plans and advances the swing pointer (one RPC, server
+    time); every client folds the plan log with the deterministic engine and posts a state hash per swing.
+  - A swing is 12 weeks of events picked on a calendar (surface, points to defend, entry forecast, travel and
+    fatigue), replacing the three load settings; coaches, physios and agents are hired from a market and replace the
+    coach and sponsor events.
+  - Removed: the events and comments close to kickru's, the three candidates, the lookalike legend. Text is written
+    fresh; analysing a reference game takes its structure only.
+- **Consequences:** `JourneyState` holds several humans; `advanceSwing` takes a plan per human; human-vs-human matches
+  run the engine. New dependency `@supabase/supabase-js` (approved). Server-side validation of plans is debt (clients
+  are trusted). The career balance targets of ADR-032 become reference numbers for long rooms.
