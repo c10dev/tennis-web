@@ -71,12 +71,18 @@ const [nearId, farId] = ready.A.pos.y < 0 ? (['A', 'B'] as const) : (['B', 'A'] 
 const tl0 = timelines[0]!;
 const drives = tl0.segments.flatMap((seg) => seg.point.shots.filter((s) => s.shot !== 'serve' && s.hitterPos.y < 0 && seg.zero + s.t < secs).map((s) => ({ s, t: seg.zero + s.t })));
 const span = drives.map(({ s, t }) => racketSpanPx(sampleFrames(model, timelineFrames(tl0, s.hitter, t - 0.6, t + 0.4))));
-const pairs: number[] = [];
+const pairs: { kind: 'none' | 'between' | 'within'; d: number }[] = [];
 const onFar = TELLS.map((t) => (t ? { ...t, player: farId } : null));
-for (let a = 0; a < onFar.length; a++) for (let b = a + 1; b < onFar.length; b++) pairs.push(stanceDistancePx(model, sofar[0]!, farId, onFar[a]!, onFar[b]!));
+for (let a = 0; a < onFar.length; a++) {
+  for (let b = a + 1; b < onFar.length; b++) {
+    const [x, y] = [onFar[a] ?? null, onFar[b] ?? null];
+    pairs.push({ kind: !x || !y ? 'none' : x.card === y.card ? 'within' : 'between', d: stanceDistancePx(model, sofar[0]!, farId, x, y) });
+  }
+}
+const least = (kind: string) => Math.min(...pairs.filter((p) => p.kind === kind).map((p) => p.d));
 console.log('\n## On the TV view (CSS px, 412×503 stage)\n');
 head(['what', 'value']);
 row(['body height, near / far player (ready stance)', `${fmt(bodyHeightPx(model, ready[nearId]), 1)} / ${fmt(bodyHeightPx(model, ready[farId]), 1)}`]);
 row(['racket head / handle, near player (B1 ≥ 10 / ≥ 2.2)', `${fmt(racketHeadPx(model, ready[nearId]), 1)} / ${fmt(racketHandlePx(model, ready[nearId]), 1)}`]);
 row([`racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s; B2 ≥ 51), p50 of ${span.length}`, fmt(quantile(span, 0.5), 1)]);
-row(['tell stances on the far player: mean joint distance, min / p50 of pairs', `${fmt(Math.min(...pairs), 1)} / ${fmt(quantile(pairs, 0.5), 1)}`]);
+row(['tell stances on the far player, least mean joint distance: from no tell / between cards / within a card (B3 ≥ 4 / 6 / 3)', `${fmt(least('none'), 1)} / ${fmt(least('between'), 1)} / ${fmt(least('within'), 1)}`]);

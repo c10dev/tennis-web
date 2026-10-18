@@ -69,9 +69,9 @@ export function createViewer(
   let heldFor = 0;
   /** The players last drawn, and after a ready hold its poses and the seconds since it ended (the release, ADR-030). */
   let drawn: Record<PlayerId, PlayerPose> | null = null;
-  let release: { from: Record<PlayerId, PlayerPose>; for: number } | null = null;
+  let release: { from: Record<PlayerId, PlayerPose>; for: number; ref: Record<PlayerId, PlayerPose> | null } | null = null;
   /** The poses drawn as a ready hold began: the held stance eases in from them (TD-078). */
-  let enter: Record<PlayerId, PlayerPose> | null = null;
+  let enter: { from: Record<PlayerId, PlayerPose>; ref: Record<PlayerId, PlayerPose> | null } | null = null;
   return {
     resize(width, height, topInset = 0) {
       size = { w: width, h: height };
@@ -85,8 +85,8 @@ export function createViewer(
     },
     hold(shot) {
       if (shot !== held) heldFor = 0;
-      if (held?.ready && !shot?.ready && drawn) release = { from: drawn, for: 0 };
-      if (shot?.ready && !held?.ready) enter = drawn;
+      if (held?.ready && !shot?.ready && drawn) release = { from: drawn, for: 0, ref: null };
+      if (shot?.ready && !held?.ready) enter = drawn ? { from: drawn, ref: null } : null;
       held = shot;
     },
     setTimeline(next) {
@@ -108,13 +108,15 @@ export function createViewer(
         // The next point is not played yet: both players wait at its start, the ball out of play (TD-061).
         heldFor += dt;
         const still = heldPlayers(timeline, held.ready.tell, heldFor);
-        frame.players = enter ? enteredPlayers(enter, still, heldFor / HOLD_ENTER_SEC) : still;
+        if (enter) enter.ref ??= still;
+        frame.players = enter ? enteredPlayers(enter.from, still, heldFor / HOLD_ENTER_SEC, enter.ref ?? undefined) : still;
         frame.ball = null;
       } else if (release) {
         // The point starts where the engine put it, up to a metre from the ready spot: ease over, never jump.
         release.for += dt;
+        release.ref ??= frame.players;
         const done = release.for >= releaseSeconds(release.from, frame.players);
-        frame.players = releasedPlayers(release.from, frame.players, release.for);
+        frame.players = releasedPlayers(release.from, frame.players, release.for, release.ref);
         if (done) release = null;
       }
       drawn = frame.players;

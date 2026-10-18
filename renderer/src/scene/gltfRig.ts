@@ -67,6 +67,17 @@ function racket(): Group {
   return g;
 }
 
+interface Transform { position: Vector3; quaternion: Quaternion }
+
+const HANDS = ['handr', 'handl'] as const;
+
+/** `w` of the way from `a` to `b`, both taken on `side`'s hemisphere (normalised linear blend). */
+function nlerp(a: Quaternion, b: Quaternion, w: number, side: Quaternion): Quaternion {
+  const sa = a.dot(side) < 0 ? -1 : 1;
+  const sb = b.dot(side) < 0 ? -1 : 1;
+  return new Quaternion(a.x * sa * (1 - w) + b.x * sb * w, a.y * sa * (1 - w) + b.y * sb * w, a.z * sa * (1 - w) + b.z * sb * w, a.w * sa * (1 - w) + b.w * sb * w).normalize();
+}
+
 export class GltfRig implements PlayerRig {
   readonly object3d = new Group();
   private readonly clips: SampledClip[];
@@ -79,6 +90,8 @@ export class GltfRig implements PlayerRig {
   private readonly rest = new Map<Bone, Vector3>();
   /** The feet's bind-pose turn in the player's frame (soles flat). */
   private readonly flatFeet: Quaternion[];
+  /** What a solve moves below the player: the body, its shadow and every bone (a crossfade mixes them). */
+  private readonly moving: Object3D[] = [];
 
   /** `kit` recolours the garments (TD-062); without it the player wears the model's own palette. */
   constructor(model: PlayerModel, kit: Kit | null = null) {
@@ -108,24 +121,18 @@ export class GltfRig implements PlayerRig {
     shadow.position.y = 0.004;
     shadow.name = 'shadow';
     this.object3d.add(body, shadow);
+    this.moving.push(body, shadow);
+    body.traverse((o) => { if ((o as Bone).isBone) this.moving.push(o); });
     const used: Clip[] = ['Idle', 'Running_A', 'Walking_A', 'Walking_Backwards', 'Cheer', 'Hit_A'];
     for (const name of used) if (!model.clips.some((c) => c.name === name)) throw new Error(`player model lacks ${name}`);
     this.clips = bindClips(model.clips.filter((c) => (used as string[]).includes(c.name)), this.bones);
   }
 
-  /** Clip layers for this pose and any pose it is eased from (`clipBlend`), and how far the legs turn towards a
-   *  sideways move (the chest keeps facing the ball). */
-  private blended(pose: PlayerPose): { layers: Layer[]; legs: Layer['weight'] } {
+  /** Clip layers for this pose, and how far the legs turn towards a sideways move (the chest keeps facing the ball). */
+  private blended(pose: PlayerPose): { layers: Layer[]; legs: number } {
     const own = this.layers(pose);
     const forward = own[1]!.weight + own[2]!.weight;
-    const legs = clamp(moveAngle(pose), -PLAYER_RIG.legTurnMax, PLAYER_RIG.legTurnMax) * forward;
-    if (!pose.clipBlend) return { layers: own, legs };
-    const { from, weight } = pose.clipBlend;
-    const other = this.blended(from);
-    return {
-      layers: [...other.layers.map((l) => ({ ...l, weight: l.weight * weight })), ...own.map((l) => ({ ...l, weight: l.weight * (1 - weight) }))],
-      legs: other.legs * weight + legs * (1 - weight),
-    };
+    return { layers: own, legs: clamp(moveAngle(pose), -PLAYER_RIG.legTurnMax, PLAYER_RIG.legTurnMax) * forward };
   }
 
   /** Clip layers for this pose: idle at replay time, walk, run and backpedal at the phase distance sets, reactions
@@ -155,9 +162,44 @@ export class GltfRig implements PlayerRig {
   }
 
   apply(pose: PlayerPose): void {
+    if (!pose.crossfade || pose.crossfade.weight <= 0) {
+      this.solve(pose);
+      return;
+    }
+    // Eased from another pose (B3): solve that one, keep its bones, solve this one, mix. The target as the blend began
+    // (`ref`) fixes which way round each turn goes, so it holds while this pose moves on.
+    const cf = pose.crossfade;
+    let ref: { bones: Transform[]; hands: Quaternion[] } | null = null;
+    if (cf.ref) {
+      this.solve(cf.ref);
+      ref = { bones: this.capture(), hands: this.handTurns() };
+    }
+    this.apply(cf.from);
+    const from = this.capture();
+    const hands = this.handTurns();
+    this.solve(pose);
+    const own = this.handTurns();
+    this.mix(from, cf.weight, ref?.bones);
+    // The hands turn in the world, where both poses hold them much alike: their local turns differ by however the
+    // forearms twist, half a turn at times, and mixed locally they flipped over (B3).
+    this.object3d.updateMatrixWorld(true);
+    HANDS.forEach((name, i) => {
+      const bone = this.bones[name]!;
+      const world = nlerp(own[i]!, hands[i]!, cf.weight, ref?.hands[i] ?? own[i]!);
+      bone.quaternion.copy(bone.parent!.getWorldQuaternion(new Quaternion()).invert().multiply(world));
+    });
+  }
+
+  private handTurns(): Quaternion[] {
+    this.object3d.updateMatrixWorld(true);
+    return HANDS.map((name) => this.bones[name]!.getWorldQuaternion(new Quaternion()));
+  }
+
+  private solve(pose: PlayerPose): void {
     const hop = RIG.splitStepHop * pose.splitStep;
     this.object3d.position.copy(groundToThree(pose.pos, hop));
-    this.object3d.rotation.y = yawFor(pose.facing);
+    // The whole turn, not just its y: a crossfade's slerp can leave the Euler angles at (π, y′, π) for the same turn.
+    this.object3d.rotation.set(0, yawFor(pose.facing), 0);
     // Every bone is set from replay time alone, so any pose can be drawn without the ones before it.
     const { layers, legs } = this.blended(pose);
     sampleClips(this.clips, layers, this.restPose);
@@ -170,4 +212,25 @@ export class GltfRig implements PlayerRig {
     if (stroke) solveStroke(this.object3d, this.model, this.bones, this.slot, stroke, this.rest, this.flatFeet);
     this.shadow.position.set(this.model.position.x, 0.004 - hop, this.model.position.z);
   }
+
+  /** Every transform a solve sets below the player's own (whose place and turn the pose already eases). */
+  private capture(): Transform[] {
+    return this.moving.map((o) => ({ position: o.position.clone(), quaternion: o.quaternion.clone() }));
+  }
+
+  /** `w` of the way back to the captured transforms. Turns mix on the hemisphere of `ref`'s (the target as the blend
+   *  began) or else the rest pose's, not by the shorter way: between two poses half a turn apart the shorter way
+   *  changes side from frame to frame. */
+  private mix(from: Transform[], w: number, ref?: Transform[]): void {
+    this.moving.forEach((o, i) => {
+      const f = from[i]!;
+      o.position.lerp(f.position, w);
+      const side = ref?.[i]!.quaternion ?? this.restPose.get(o as Bone)?.quaternion;
+      if (side) o.quaternion.copy(nlerp(o.quaternion, f.quaternion, w, side));
+      else o.quaternion.slerp(f.quaternion, w);
+    });
+  }
+
+
+
 }

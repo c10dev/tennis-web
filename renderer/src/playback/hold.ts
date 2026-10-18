@@ -2,7 +2,7 @@
 // are not on the timeline. Both wait where it will start, in a ready stance, and the opponent's body shows the tell.
 // A function of the hold's own seconds, so the idle and any sway keep moving while match time stands still.
 import type { Card, PlayerId, Vec2 } from '@tennis/engine';
-import { HOLD_RELEASE_SEC, HOLD_RELEASE_SPEED, READY_STANCE, HOLD_STANCES, RIG_MOTION, type StanceCue } from '../tuning/index.ts';
+import { HOLD_CARDS, HOLD_RELEASE_SEC, HOLD_RELEASE_SPEED, READY_STANCE, HOLD_STANCES, RIG_MOTION, type StanceCue } from '../tuning/index.ts';
 import { smoothstep } from '../math.ts';
 import { blendPose } from './blend.ts';
 import { readySpot } from './movement.ts';
@@ -19,7 +19,17 @@ export interface TellStance {
 
 interface Spot { pos: Vec2; facing: Vec2 }
 
-const NEUTRAL: StanceCue = { depth: 0, lean: 0, drop: 0, sway: 0, swayHz: 0, step: 0, stepHz: 0, bounce: 0, bounceHz: 0 };
+const NEUTRAL: StanceCue = { depth: 0, lean: 0, drop: 0, sway: 0, swayHz: 0, step: 0, stepHz: 0, bounce: 0, bounceHz: 0, spread: 0, turn: 0 };
+
+/** A tell over what its card's tells share (HOLD_CARDS, B3): numbers add, the tell's own arms replace the card's. */
+function withCard(card: Card, tell: StanceCue): StanceCue {
+  const base = HOLD_CARDS[card];
+  const add = (k: 'depth' | 'lean' | 'drop' | 'spread' | 'turn') => tell[k] + (base[k] ?? 0);
+  const arms = (k: 'hand' | 'dir' | 'free') => tell[k] ?? base[k];
+  const out: StanceCue = { ...tell, depth: add('depth'), lean: add('lean'), drop: add('drop'), spread: add('spread'), turn: add('turn') };
+  for (const k of ['hand', 'dir', 'free'] as const) { const v = arms(k); if (v) out[k] = v; }
+  return out;
+}
 const v3 = (a: readonly [number, number, number]) => ({ x: a[0], y: a[1], z: a[2] });
 
 /** Where each player starts the next point (movement `readySpot`, where the walk after the last point ends), facing
@@ -51,7 +61,7 @@ function stancePose(spot: Spot, cue: StanceCue, t: number): PlayerPose {
   const speed = Math.hypot(velocity.x, velocity.y);
   const R = READY_STANCE;
   const keys: Effectors = {
-    pelvis: R.pelvis, turn: R.turn, lean: R.lean + cue.lean, drop: R.drop + cue.drop,
+    pelvis: R.pelvis + 0.6 * cue.turn, turn: R.turn + cue.turn, lean: R.lean + cue.lean, drop: R.drop + cue.drop,
     hand: v3(cue.hand ?? R.hand), dir: v3(cue.dir ?? R.dir), free: v3(cue.free ?? R.free),
   };
   const f = spot.facing;
@@ -60,7 +70,7 @@ function stancePose(spot: Spot, cue: StanceCue, t: number): PlayerPose {
   const still = !cue.sway && !cue.step && !cue.bounce;
   const stroke: StrokePose = {
     kind: 'forehand', weight: 1, keys, contact: { x: 0, y: 0, z: 0 }, contactWeight: 0, hop: 0, keyTimes: [], lunge: { x: 0, y: 0, z: 0 },
-    plant: { l: foot(R.feet[0]), r: foot(R.feet[1]), weight: still ? 1 : 0 },
+    plant: { l: foot([R.feet[0][0] + cue.spread / 2, R.feet[0][1]]), r: foot([R.feet[1][0] - cue.spread / 2, R.feet[1][1]]), weight: still ? 1 : 0 },
   };
   return {
     pos, facing: f, speed, velocity, swing: null, reaction: 'none', reactionWeight: 0,
@@ -78,7 +88,7 @@ function stancePose(spot: Spot, cue: StanceCue, t: number): PlayerPose {
 /** Both players' poses `since` seconds into the hold; `tell` shows a tell on one of them. */
 export function heldPlayers(timeline: Timeline, tell: TellStance | null, since: number): Record<PlayerId, PlayerPose> {
   const spots = readyPositions(timeline);
-  const cue = (id: PlayerId) => (tell && tell.player === id ? HOLD_STANCES[tell.card][tell.index] ?? NEUTRAL : NEUTRAL);
+  const cue = (id: PlayerId) => (tell && tell.player === id ? withCard(tell.card, HOLD_STANCES[tell.card][tell.index] ?? NEUTRAL) : NEUTRAL);
   return { A: stancePose(spots.A, cue('A'), since), B: stancePose(spots.B, cue('B'), since) };
 }
 
@@ -90,17 +100,19 @@ export function releaseSeconds(from: Record<PlayerId, PlayerPose>, to: Record<Pl
 }
 
 /** The players `since` seconds after the hold (ADR-030): position, facing and body ease from the held poses to the
- *  timeline's over `releaseSeconds` (`blendPose`, TD-078), so the stance hands the body back instead of swapping it. */
-export function releasedPlayers(from: Record<PlayerId, PlayerPose>, to: Record<PlayerId, PlayerPose>, since: number): Record<PlayerId, PlayerPose> {
+ *  timeline's over `releaseSeconds` (`blendPose`, TD-078), so the stance hands the body back instead of swapping it.
+ *  `ref`: the timeline's poses as the release began. */
+export function releasedPlayers(from: Record<PlayerId, PlayerPose>, to: Record<PlayerId, PlayerPose>, since: number, ref?: Record<PlayerId, PlayerPose>): Record<PlayerId, PlayerPose> {
   const u = since / releaseSeconds(from, to);
   if (u >= 1) return to;
   const k = smoothstep(Math.max(0, u));
-  return { A: blendPose(from.A, to.A, k), B: blendPose(from.B, to.B, k) };
+  return { A: blendPose(from.A, to.A, k, ref?.A), B: blendPose(from.B, to.B, k, ref?.B) };
 }
 
-/** `u` (0–1) of the way from the poses last drawn before the hold (the walk into it) to the held ones (TD-078). */
-export function enteredPlayers(from: Record<PlayerId, PlayerPose>, held: Record<PlayerId, PlayerPose>, u: number): Record<PlayerId, PlayerPose> {
+/** `u` (0–1) of the way from the poses last drawn before the hold (the walk into it) to the held ones (TD-078); `ref`
+ *  as in `releasedPlayers`. */
+export function enteredPlayers(from: Record<PlayerId, PlayerPose>, held: Record<PlayerId, PlayerPose>, u: number, ref?: Record<PlayerId, PlayerPose>): Record<PlayerId, PlayerPose> {
   if (u >= 1) return held;
   const k = smoothstep(Math.max(0, u));
-  return { A: blendPose(from.A, held.A, k), B: blendPose(from.B, held.B, k) };
+  return { A: blendPose(from.A, held.A, k, ref?.A), B: blendPose(from.B, held.B, k, ref?.B) };
 }

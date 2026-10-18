@@ -79,17 +79,19 @@ export function holdFrames(before: Timeline, after: Timeline, id: PlayerId, tell
   for (let k = Math.round(walkSec * fps); k >= 0; k--) frames.push({ t: end - k / fps, pose: matchFrameAt(before, end - k / fps).players[id], phase: 'walk' });
   // As the viewer: the hold's clock has run one frame when it is first drawn, and the stance eases in from the walk.
   const walked = matchFrameAt(before, end).players;
-  const held = (k: number) => enteredPlayers(walked, heldPlayers(before, tell, k / fps), k / fps / HOLD_ENTER_SEC);
+  const enterRef = heldPlayers(before, tell, 1 / fps);
+  const held = (k: number) => enteredPlayers(walked, heldPlayers(before, tell, k / fps), k / fps / HOLD_ENTER_SEC, enterRef);
   const hold = Math.round(holdSec * fps);
   for (let k = 1; k <= hold; k++) frames.push({ t: end, pose: held(k)[id], phase: 'hold' });
   const from = held(hold);
   const start = after.segments[before.segments.length]!.start;
+  const releaseRef = matchFrameAt(after, start + 1 / fps).players;
   let k = 0;
   for (let done = false; !done;) {
     const t = start + ++k / fps;
     const to = matchFrameAt(after, t).players;
     done = k / fps >= releaseSeconds(from, to);
-    frames.push({ t, pose: releasedPlayers(from, to, k / fps)[id], phase: 'release' });
+    frames.push({ t, pose: releasedPlayers(from, to, k / fps, releaseRef)[id], phase: 'release' });
   }
   for (let j = 1; j <= Math.round(playSec * fps); j++) {
     const t = start + (k + j) / fps;

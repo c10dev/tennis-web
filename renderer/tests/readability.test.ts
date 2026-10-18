@@ -2,12 +2,12 @@
 // pose-space projector, so the targets hold without a GPU. Baselines in docs/m8-character-motion.md §7.
 import { describe, expect, it } from 'vitest';
 import { Color, Mesh } from 'three';
-import { heldPlayers } from '../src/playback/hold.ts';
+import { heldPlayers, type TellStance } from '../src/playback/hold.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
 import { GltfRig } from '../src/scene/gltfRig.ts';
 import { COLOURS } from '../src/tuning/index.ts';
-import { loadPlayerModelFile, sampleFrames, timelineFrames } from '../cli/motion/probe.ts';
-import { racketHandlePx, racketHeadPx, racketSpanPx } from '../cli/motion/screen.ts';
+import { ALL_TELLS, loadPlayerModelFile, sampleFrames, tiebreakSoFar, timelineFrames } from '../cli/motion/probe.ts';
+import { racketHandlePx, racketHeadPx, racketSpanPx, stanceDistancePx } from '../cli/motion/screen.ts';
 import { quantile } from '../cli/motion/metrics.ts';
 import { match } from './fixtures.ts';
 
@@ -40,6 +40,34 @@ describe('B2: the swing on the TV view', () => {
     const spans = drives.map(({ s, t }) => racketSpanPx(sampleFrames(model, timelineFrames(tl, s.hitter, t - 0.6, t + 0.4))));
     expect(spans.length).toBeGreaterThan(30);
     expect(quantile(spans, 0.5)).toBeGreaterThanOrEqual(51);
+  });
+});
+
+describe('B3: the tells on the far player', () => {
+  const tl = tiebreakSoFar(1)[0]!;
+  const far = heldPlayers(tl, null, 0.4).A.pos.y < 0 ? 'B' as const : 'A' as const;
+  const tells = ALL_TELLS.map((t) => (t ? { ...t, player: far } : null)) as (TellStance | null)[];
+  const pairs: { kind: 'none' | 'between' | 'within'; d: number; label: string }[] = [];
+  for (let a = 0; a < tells.length; a++) {
+    for (let b = a + 1; b < tells.length; b++) {
+      const [x, y] = [tells[a] ?? null, tells[b] ?? null];
+      const kind = !x || !y ? 'none' : x.card === y.card ? 'within' : 'between';
+      pairs.push({ kind, d: stanceDistancePx(model, tl, far, x, y), label: `${x ? `${x.card}:${x.index}` : 'none'} / ${y ? `${y.card}:${y.index}` : 'none'}` });
+    }
+  }
+  const least = (kind: string) => pairs.filter((p) => p.kind === kind).reduce((m, p) => (p.d < m.d ? p : m));
+
+  it('sets every tell at least 4 px from no tell (mean joint distance; 0.4 px before)', () => {
+    const p = least('none');
+    expect(p.d, p.label).toBeGreaterThanOrEqual(4);
+  });
+  it('sets tells of different cards at least 6 px apart (0.3 px before)', () => {
+    const p = least('between');
+    expect(p.d, p.label).toBeGreaterThanOrEqual(6);
+  });
+  it('sets tells of one card at least 3 px apart (0.4 px before)', () => {
+    const p = least('within');
+    expect(p.d, p.label).toBeGreaterThanOrEqual(3);
   });
 });
 

@@ -225,7 +225,7 @@ targets now follow the joints an eye tracks at TV size (knees, ankles, elbows, h
 | Body height, near / far player, ready stance | 41.3 / 28.6 | — |
 | Racket head / handle, near player | 8.4 / 1.6 | ≥ 10 / ≥ 2.2 (B1; first drafted as 14 / 3, which would need a 0.27 m head radius against Q5's approved 0.20) |
 | Racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s), p50 of 49 | 48.9 | ≥ 51 (B2; drafted as 64, beyond what an arm and racket about 35 px long can sweep at Q5's +20 % arms) |
-| Tell stances on the far player, mean joint distance (min / median): against no tell; between cards; within a card | 0.4 / 2.1; 0.3 / 6.8; 0.4 / 4.9 | min ≥ 4; ≥ 6; ≥ 3 (B3) |
+| Tell stances on the far player, least mean distance of the tracked joints over a second of the hold: from no tell / between cards / within a card | 0.6 / 0.9 / 0.9 (first measured over all bones at one instant: 0.4 / 0.3 / 0.4) | ≥ 4 / ≥ 6 / ≥ 3 (B3) |
 
 Found by the baseline, beyond §3: the racket jumps up to 1.08 m in a frame in the grass and hard matches
 (`strokeRig.test.ts` holds 0.7 m on its clay fixture only); between strokes it flaps by up to 0.70 m a frame when a

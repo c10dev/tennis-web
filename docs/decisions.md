@@ -1513,4 +1513,19 @@ Format: one entry per decision, newest at the bottom.
   `STROKE_KEYS` unchanged). The racket head's span around the feet on the TV view went 47.8 → 51.7 px (p50 of 49
   near groundstrokes); the first draft's 64 px is beyond an arm and racket about 35 px long at Q5's +20 %, so the
   target is 51 px. A longer racket or longer arms would go further; that is the user's call.
+- **B3, the tells (2026-10-18):** every card's tells share a shape (`HOLD_CARDS`, Q7: one big cue): attack stands
+  0.7 m in with the racket cocked up and back, defend 0.6 m back and low with it hanging, counter low with the feet
+  0.85 m wider (`StanceCue.spread`; a side-on `turn` exists but is 0, as turning the counter body made its release
+  swing the free arm round); each tell adds its own cue on top. Measured as the mean on-screen distance of the joints
+  an eye tracks (knees, ankles, elbows, hands, head, racket head; all bones diluted it with unmoving IK helpers), the
+  most over a second of the hold (a bounce or a sway shows by moving): on the far player, from no tell 0.4 → 4.1 px,
+  between cards 0.3 → 6.4 px, within a card 0.4 → 3.1 px.
+  Bigger stances made A1's blend flip arms on the release, so the blend changed method: `blendPose` now hands the rig
+  a `crossfade` (from, weight, and `ref`, the target as the blend began) and `GltfRig` solves both poses and mixes
+  their bones (on `ref`'s hemisphere, so a turn keeps its side for the whole blend), with the hands mixed in the
+  world, where both poses hold them alike; the root takes the pose's eased place and facing (`rotation.set`, since a
+  slerped turn could leave Euler angles at (π, y, π)). Mixing effector targets and solving once had flipped elbows
+  wherever the mixed hand crossed the IK's bend. The free elbow's pole points out and back (`ARM_POLE.l`), not down,
+  which a hanging hand lay along. A1's numbers after: into the hold ≤ 0.021 m, out of it ≤ 0.147 m beyond the motion
+  handed over to, over all twelve tells.
 

@@ -12,7 +12,9 @@ export type Bones = Record<string, Bone>;
 const UP = new Vector3(0, 1, 0);
 const Y = new Vector3(0, 1, 0);
 const X = new Vector3(1, 0, 0);
-const ARM_POLE = { r: new Vector3(-0.3, -1, -0.4), l: new Vector3(0.3, -1, -0.4) };
+// Elbows bend down and back; the free one out to the side as well (B3): a hand hanging by the hip lies along a pole that
+// points down, and its elbow flipped as the hand swung past it.
+const ARM_POLE = { r: new Vector3(-0.3, -1, -0.4), l: new Vector3(1, -0.5, -0.6) };
 const LEG_POLE = new Vector3(0, 0.3, 1);
 
 const worldPos = (o: Object3D) => new Vector3().setFromMatrixPosition(o.matrixWorld);

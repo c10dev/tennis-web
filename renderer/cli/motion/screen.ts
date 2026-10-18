@@ -9,7 +9,7 @@ import type { PlayerPose } from '../../src/playback/pose.ts';
 import type { Timeline } from '../../src/playback/timeline.ts';
 import { GltfRig } from '../../src/scene/gltfRig.ts';
 import type { PlayerModel } from '../../src/scene/playerModel.ts';
-import { measure, type Sample } from './probe.ts';
+import { JOINTS, measure, type Sample } from './probe.ts';
 
 const project = tvProjector(null);
 
@@ -69,15 +69,19 @@ export function racketSpanPx(s: readonly Sample[]): number {
   return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
 }
 
-/** Mean on-screen distance between the same bones in two stances of player `id` (decision hold, `since` s in). */
-export function stanceDistancePx(model: PlayerModel, tl: Timeline, id: PlayerId, a: TellStance | null, b: TellStance | null, since = 0.4): number {
-  const joints = (tell: TellStance | null) => {
+/** Mean on-screen distance between the same joints (JOINTS: knees, ankles, elbows, hands, head, racket head) in two
+ *  stances of player `id` in the decision hold, the most over `times` (hold seconds). */
+export function stanceDistancePx(model: PlayerModel, tl: Timeline, id: PlayerId, a: TellStance | null, b: TellStance | null, times = STANCE_TIMES): number {
+  const joints = (tell: TellStance | null, since: number) => {
     const rig = posed(model, heldPlayers(tl, tell, since)[id]);
-    const out: Vector3[] = [];
-    rig.object3d.getObjectByName('model')!.traverse((o) => { if ((o as { isBone?: boolean }).isBone) out.push(new Vector3().setFromMatrixPosition(o.matrixWorld)); });
-    out.push(new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName('racket-head')!.matrixWorld));
-    return out.map(project);
+    return JOINTS.map((n) => project(new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName(n)!.matrixWorld)));
   };
-  const [pa, pb] = [joints(a), joints(b)];
-  return pa.reduce((sum, p, i) => sum + Math.hypot(p.x - pb[i]!.x, p.y - pb[i]!.y), 0) / pa.length;
+  // A tell that moves (a bounce, a sway, a half-step) shows by its motion: the farthest the two get apart over a cycle.
+  return Math.max(...times.map((since) => {
+    const [pa, pb] = [joints(a, since), joints(b, since)];
+    return pa.reduce((sum, p, i) => sum + Math.hypot(p.x - pb[i]!.x, p.y - pb[i]!.y), 0) / pa.length;
+  }));
 }
+
+/** Hold seconds the stance distance is sampled at: across a second, the slowest cue's half cycle. */
+const STANCE_TIMES = [0.3, 0.55, 0.8, 1.05, 1.3];

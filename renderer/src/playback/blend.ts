@@ -1,14 +1,14 @@
-// One player pose blended into another (ADR-031 step A1, TD-078): the decision hold's stance takes over from the walk
-// into it and hands back to the timeline after it, so no body changes in a frame. Pure.
+// One player pose eased into another (ADR-031 A1, TD-078): the decision hold's stance takes over from the walk into it
+// and hands back to the timeline after it, so no body changes in a frame. Pure.
 //
-// A pose drives two layers on the skinned rig: clips (speed, stride distance, reaction, sampled at `t`) and the stroke
-// over them by its weight. The legs follow the clips even under a full stroke when its feet are not planted (a
-// swaying tell), so the blend keeps the second pose's clip state and asks the rig to sample the first's too
-// (`clipBlend`), fading out.
+// The blended pose is the second one with a `crossfade` back to the first: the skinned rig solves both and mixes their
+// bones (B3). Mixing the effector targets instead and solving once flipped elbows and knees whenever the mixed hand or
+// foot passed where the IK's bend turns over (a racket cocked behind the head handing over to a serve's toss).
+// Position and facing ease here too, for whatever reads them from the pose.
 import type { Vec2 } from '@tennis/engine';
 import { lerp } from '../math.ts';
 import type { PlayerPose } from './pose.ts';
-import type { Effectors, StrokePose } from './stroke.ts';
+import type { Effectors } from './stroke.ts';
 
 type V3 = { x: number; y: number; z: number };
 const v3 = (a: V3, b: V3, k: number): V3 => ({ x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), z: lerp(a.z, b.z, k) });
@@ -40,7 +40,7 @@ function arc(a: V3, b: V3, k: number): V3 {
   return { x: p.x * Math.cos(t) + perp.x * Math.sin(t), y: p.y * Math.cos(t) + perp.y * Math.sin(t), z: p.z * Math.cos(t) + perp.z * Math.sin(t) };
 }
 
-/** Effector keys `k` of the way from `a` to `b`, the racket's direction along the sphere. */
+/** Effector keys `k` of the way from `a` to `b`, the racket's direction along the sphere (the carry's mixes, A2). */
 export function blendKeys(a: Effectors, b: Effectors, k: number): Effectors {
   return {
     pelvis: lerp(a.pelvis, b.pelvis, k), turn: lerp(a.turn, b.turn, k), lean: lerp(a.lean, b.lean, k), drop: lerp(a.drop, b.drop, k),
@@ -48,29 +48,10 @@ export function blendKeys(a: Effectors, b: Effectors, k: number): Effectors {
   };
 }
 
-function stroke(a: StrokePose | null, b: StrokePose | null, k: number): StrokePose | null {
-  if (a && b) {
-    return {
-      ...b, weight: lerp(a.weight, b.weight, k), keys: blendKeys(a.keys, b.keys, k), contactWeight: lerp(a.contactWeight, b.contactWeight, k),
-      hop: lerp(a.hop, b.hop, k), lunge: v3(a.lunge, b.lunge, k),
-      plant: { l: v2(a.plant.l, b.plant.l, k), r: v2(a.plant.r, b.plant.r, k), weight: lerp(a.plant.weight, b.plant.weight, k) },
-    };
-  }
-  // Planted feet let go early and plant late (squared), so they step along with a body the blend is moving rather than
-  // hold back and catch up.
-  if (a) return { ...a, weight: a.weight * (1 - k), plant: { ...a.plant, weight: a.plant.weight * (1 - k) ** 2 } };
-  if (b) return { ...b, weight: b.weight * k, plant: { ...b.plant, weight: b.plant.weight * k * k } };
-  return null;
-}
-
-/** `k` (0–1) of the way from pose `a` to pose `b`: `a` itself at 0, `b` at 1. */
-export function blendPose(a: PlayerPose, b: PlayerPose, k: number): PlayerPose {
+/** `k` (0–1) of the way from pose `a` to pose `b`: `a` itself at 0, `b` at 1. `ref`, `b` as the blend began, keeps
+ *  each bone turning the same way round while `b` moves on (B3). */
+export function blendPose(a: PlayerPose, b: PlayerPose, k: number, ref?: PlayerPose): PlayerPose {
   if (k <= 0) return a;
   if (k >= 1) return b;
-  return {
-    ...b, clipBlend: { from: a, weight: 1 - k }, pos: v2(a.pos, b.pos, k), facing: turn(a.facing, b.facing, k), stroke: stroke(a.stroke, b.stroke, k),
-    // Whole-body lifts and bends ease too (a held bounce must not drop in a frame).
-    splitStep: lerp(a.splitStep, b.splitStep, k), crouch: lerp(a.crouch, b.crouch, k), toss: lerp(a.toss, b.toss, k),
-    carry: { weight: lerp(a.carry.weight, b.carry.weight, k), keys: blendKeys(a.carry.keys, b.carry.keys, k), free: lerp(a.carry.free, b.carry.free, k), spread: lerp(a.carry.spread, b.carry.spread, k) },
-  };
+  return { ...b, pos: v2(a.pos, b.pos, k), facing: turn(a.facing, b.facing, k), crossfade: ref ? { from: a, weight: 1 - k, ref } : { from: a, weight: 1 - k } };
 }

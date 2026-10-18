@@ -67,11 +67,9 @@ describe('leaving the decision hold', () => {
       const mid = releasedPlayers(from, to, T / 2)[id];
       expect(near(mid.pos, { x: (from[id].pos.x + to[id].pos.x) / 2, y: (from[id].pos.y + to[id].pos.y) / 2 })).toBe(true);
       expect(Math.hypot(mid.facing.x, mid.facing.y)).toBeCloseTo(1, 9);
-      // The held stance hands over to the timeline's body instead of swapping in a frame: its weight fades over the
-      // timeline's clips, or its keys move towards the timeline's stroke.
-      const target = to[id].stroke;
-      if (!target) expect(mid.stroke!.weight).toBeCloseTo(0.5, 9);
-      else expect(mid.stroke!.keys.hand.y).toBeCloseTo((from[id].stroke!.keys.hand.y + target.keys.hand.y) / 2, 9);
+      // The held stance hands over to the timeline's body instead of swapping in a frame: the rig crossfades back to it.
+      expect(mid.crossfade!.from).toBe(from[id]);
+      expect(mid.crossfade!.weight).toBeCloseTo(0.5, 9);
     }
   });
 });

@@ -19,7 +19,7 @@ const against = arg('against');
 const out = arg('out', 'shots')!;
 
 const MATCHES: [number, Surface][] = [[42, 'hard'], [2, 'clay'], [3, 'grass']];
-const HOLDS = ['none', 'attack:0', 'attack:1', 'attack:2', 'defend:0', 'defend:1', 'defend:2', 'counter:0', 'counter:1', 'counter:2'];
+const HOLDS = ['none', ...['attack', 'defend', 'counter'].flatMap((card) => [0, 1, 2, 3].map((i) => `${card}:${i}`))];
 
 interface Row { view: string; query: string }
 interface Moment { name: string; rows: Row[] }
@@ -63,7 +63,7 @@ function moments(seed: number, surface: Surface): Moment[] {
     { name: 'run', rows: at(run, '-1.2,-0.9,-0.6,-0.3,0', ['chase', 'tv']) },
     { name: 'winner', rows: after(ending(['winner', 'ace']), ['front', 'tv']) },
     { name: 'error', rows: after(ending(['unforced_error']), ['front', 'tv']) },
-    { name: 'holds', rows: [hold('front', HOLDS), hold('tv', HOLDS.slice(0, 5)), hold('tv', HOLDS.slice(5))] },
+    { name: 'holds', rows: [hold('front', HOLDS), hold('tv', HOLDS.slice(0, 7)), hold('tv', HOLDS.slice(7))] },
   ];
 }
 

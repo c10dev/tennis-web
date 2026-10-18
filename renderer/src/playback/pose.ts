@@ -39,9 +39,10 @@ export interface PlayerPose {
   distance: number;
   /** Seconds since the point's last ball landed (negative before): reaction clips play from it. */
   reactionT: number;
-  /** Another pose whose clips the rig also samples, at `weight` (this pose's at the rest): a pose eased into another
-   *  (`blendPose`, TD-078) carries both bodies' locomotion until the blend ends. */
-  clipBlend?: { from: PlayerPose; weight: number };
+  /** A pose this one is eased from (`blendPose`, TD-078): the skinned rig solves both and mixes their bones, `weight`
+   *  of the way back to it, so no path between two solved poses can flip a joint (B3). `ref`: the target as the blend
+   *  began, which fixes which way round each bone turns for the whole blend. */
+  crossfade?: { from: PlayerPose; weight: number; ref?: PlayerPose };
   /** The arms' keys when no stroke owns them (ADR-031 A2); the skinned rig solves the stroke over it. */
   carry: Carry;
   /** Speed (m/s) the skinned rig blends idle, walk and run by: the average over ± CARRY.speedWindowSec, so a player
