@@ -104,11 +104,14 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
   const reachOut = (side: 'l' | 'r') => (s.plant[side].x - root.x) * shiftWorld.x + (-s.plant[side].y - root.z) * shiftWorld.z;
   const lead = shiftWorld.lengthSq() > 1e-8 ? (reachOut('l') >= reachOut('r') ? 'l' : 'r') : null;
   const P = PLAYER_RIG.step;
+  const leftWorld = X.clone().applyQuaternion(worldQuat(frame));
   (['l', 'r'] as const).forEach((side, i) => {
     // The clip's foot (moved with the body), drawn onto the planted spot.
     const target = feet[i]!.p.clone().add(shiftWorld);
     const plant = s.plant[side];
     const stepOut = side === lead ? shiftWorld : new Vector3();
+    // A split step's landing (A4) sets the free feet wider, each half the spread to its own side.
+    if (s.spread) target.addScaledVector(leftWorld, (side === 'l' ? 0.5 : -0.5) * s.spread * (1 - s.plant.weight));
     target.x += (plant.x + stepOut.x - target.x) * s.plant.weight;
     target.z += (-plant.y + stepOut.z - target.z) * s.plant.weight;
     target.y += s.hop * w;

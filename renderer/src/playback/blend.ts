@@ -69,6 +69,6 @@ export function blendPose(a: PlayerPose, b: PlayerPose, k: number): PlayerPose {
     ...b, clipBlend: { from: a, weight: 1 - k }, pos: v2(a.pos, b.pos, k), facing: turn(a.facing, b.facing, k), stroke: stroke(a.stroke, b.stroke, k),
     // Whole-body lifts and bends ease too (a held bounce must not drop in a frame).
     splitStep: lerp(a.splitStep, b.splitStep, k), crouch: lerp(a.crouch, b.crouch, k), toss: lerp(a.toss, b.toss, k),
-    carry: { weight: lerp(a.carry.weight, b.carry.weight, k), keys: blendKeys(a.carry.keys, b.carry.keys, k), free: lerp(a.carry.free, b.carry.free, k) },
+    carry: { weight: lerp(a.carry.weight, b.carry.weight, k), keys: blendKeys(a.carry.keys, b.carry.keys, k), free: lerp(a.carry.free, b.carry.free, k), spread: lerp(a.carry.spread, b.carry.spread, k) },
   };
 }

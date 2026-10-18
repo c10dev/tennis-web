@@ -4,7 +4,7 @@ import { ballAt, ballSpans } from '../src/playback/ball.ts';
 import { positionAt } from '../src/playback/movement.ts';
 import { playerPose } from '../src/playback/pose.ts';
 import { buildTimeline, segmentAt, type Timeline } from '../src/playback/timeline.ts';
-import { COURT_DRAW, PLAYBACK, RIG_MOTION } from '../src/tuning/index.ts';
+import { COURT_DRAW, PLAYBACK, RIG_MOTION, SPLIT_STEP } from '../src/tuning/index.ts';
 import { SAMPLE, match } from './fixtures.ts';
 
 const IDS: PlayerId[] = ['A', 'B'];
@@ -245,11 +245,11 @@ describe('playerPose body language (mannequin rig)', () => {
     expect(at(other(s.hitter), s.t).crouch).toBe(0);
   });
 
-  it('split-steps as the opponent strikes', () => {
+  it('split-steps as the opponent strikes: landed at the contact, never on the player’s own (splitStep.test.ts, A4)', () => {
     const s = rally[2]!;
-    expect(at(other(s.hitter), s.t).splitStep).toBeCloseTo(1, 6);
-    expect(at(other(s.hitter), s.t + RIG_MOTION.splitStepSec + 0.05).splitStep).toBe(0);
-    expect(at(s.hitter, s.t).splitStep).toBe(0);
+    expect(at(other(s.hitter), s.t).splitStep).toBeLessThan(1e-9);
+    expect(at(other(s.hitter), s.t + 0.05).splitStep).toBe(0);
+    expect(at(s.hitter, s.t - SPLIT_STEP.hopSec / 2).splitStep).toBe(0);
   });
 
   it('raises the tossing arm through the serve toss and drops it after contact', () => {

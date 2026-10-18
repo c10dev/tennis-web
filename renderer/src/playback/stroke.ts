@@ -39,6 +39,8 @@ export interface StrokePose {
   lunge: V3;
   /** How much the free arm follows `keys.free` (default `weight`); the carry lets a running free arm swing (A2). */
   freeWeight?: number;
+  /** Metres the feet spread sideways beyond where the clips put them (a split step's landing, A4). */
+  spread?: number;
 }
 
 /** A court point in the frame of a player standing at `pos` facing `facing`. */

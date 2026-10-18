@@ -44,7 +44,7 @@ describe('the carry', () => {
 });
 
 describe('a stroke over the carry', () => {
-  const carry = { weight: 1, keys: { pelvis: 0, turn: 0, lean: 0.1, drop: 0.05, hand: { x: 0, y: 0.6, z: 0.4 }, dir: { x: 0, y: 0.6, z: 0.8 }, free: { x: 0.1, y: 0.6, z: 0.5 } }, free: 0 };
+  const carry = { weight: 1, keys: { pelvis: 0, turn: 0, lean: 0.1, drop: 0.05, hand: { x: 0, y: 0.6, z: 0.4 }, dir: { x: 0, y: 0.6, z: 0.8 }, free: { x: 0.1, y: 0.6, z: 0.5 } }, free: 0, spread: 0 };
   const shot = seg.point.shots.find((s) => s.hitter === 'A' && s.shot !== 'serve')!;
   const stroke = playerPose(tl, 'A', seg.zero + shot.t).stroke!;
 

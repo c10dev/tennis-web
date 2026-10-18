@@ -1,7 +1,7 @@
 // A player's pose at replay time t, from the events alone: what a rig needs to draw them (ADR-007).
 import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
 import { smoothstep } from '../math.ts';
-import { CARRY, PLAYBACK, RIG_MOTION } from '../tuning/index.ts';
+import { CARRY, PLAYBACK, RIG_MOTION, SPLIT_STEP } from '../tuning/index.ts';
 import { carryAt, type Carry } from './carry.ts';
 import { facingAt } from './facing.ts';
 import { strokeAt, type StrokePose } from './stroke.ts';
@@ -58,18 +58,19 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
   const facing = turnToShot(facingAt(timeline, id, index, t, pos), own, tau);
+  const split = splitStep(seg.point.shots.filter((s) => s.hitter !== id), tau, carrySpeed(timeline, id, t));
   return {
     pos, facing, speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
     crouch: peak(seg.point.shots.filter((s) => s.hitter === id && s.shot !== 'serve'), tau, RIG_MOTION.crouchSec),
-    splitStep: peak(seg.point.shots.filter((s) => s.hitter !== id), tau, RIG_MOTION.splitStepSec),
+    splitStep: split.hop,
     toss: toss(seg.point.shots.filter((s) => s.hitter === id && s.shot === 'serve'), tau),
     t,
     stroke: strokeAt(timeline, id, t, pos, facing),
     velocity,
     distance: distanceAt(timeline, id, t),
     reactionT: t - seg.landed,
-    carry: { ...carryAt(timeline, t, carrySpeed(timeline, id, t)), weight: 1 - reactionWeight(timeline, t) },
+    carry: { ...carryAt(timeline, t, carrySpeed(timeline, id, t), split.land, split.spread), weight: 1 - reactionWeight(timeline, t) },
   };
 }
 
@@ -81,6 +82,22 @@ function carrySpeed(timeline: Timeline, id: PlayerId, t: number): number {
   const p = positionAt(timeline, id, a);
   const q = positionAt(timeline, id, b);
   return Math.hypot(q.x - p.x, q.y - p.y) / (b - a);
+}
+
+/** The split step on the opponent's contacts (A4): the hop (0–1, landing on the contact), the landing's bend and the
+ *  feet's spread (0–1, apart in the air, together after), faded out at a run. */
+function splitStep(theirs: { t: number }[], tau: number, speed: number): { hop: number; land: number; spread: number } {
+  const S = SPLIT_STEP;
+  const calm = 1 - smoothstep((speed - S.runFrom) / (S.runFull - S.runFrom));
+  let [hop, land, spread] = [0, 0, 0];
+  for (const s of theirs) {
+    const up = (tau - (s.t - S.hopSec)) / S.hopSec;
+    if (up > 0 && up < 1) hop = Math.max(hop, Math.sin(Math.PI * up));
+    const down = (tau - s.t) / S.landSec;
+    if (down > 0 && down < 1) land = Math.max(land, Math.sin(Math.PI * down));
+    if (up > 0) spread = Math.max(spread, up < 1 ? smoothstep((up - S.spreadFrom) / (1 - S.spreadFrom)) : 1 - smoothstep((tau - s.t) / S.spreadOutSec));
+  }
+  return { hop: hop * calm, land: land * calm, spread: spread * calm };
 }
 
 /** 1 at a shot's contact, falling to 0 `width` seconds either side; the strongest over the shots. */

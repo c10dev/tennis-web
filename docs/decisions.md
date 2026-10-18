@@ -1472,4 +1472,12 @@ Format: one entry per decision, newest at the bottom.
   serve's stroke starts 0.3 s before the toss (`STROKE.serve.preTossSec`, in the walk after the point before, so
   `strokeAt` also looks at the next segment), and its free-hand key sits under the ball until the release, letting go
   over 0.15 s. Hand to ball at the toss's start and release: 0.79 m → 0.06 m (the palm).
+- **A4, the split step (2026-10-18):** `SPLIT_STEP`: a 0.26 s hop on each opponent contact that peaks 0.13 s before
+  it and lands on it (it used to peak at the contact as a lift of the whole body); the feet spread 0.26 m beyond the
+  stance in the air and come back over 0.5 s, and the hips drop 0.08 m over 0.24 s after landing (through the carry:
+  `Carry.spread`, `StrokePose.spread`, set on the free feet by the solver). Faded out at a run (1.6–2.6 m/s of the
+  carry's averaged speed). Feet on landing at least 0.5 m apart in over 90 % of still moments. Landing on the contact
+  uncovered the idle-to-walk glide the old hop had hidden in the air as players set off: grounded foot slips over
+  10 cm while near still went from 27 to 254 frames in three 300 s matches (the spread is not the cause: 253 without
+  it); A5 takes it on.
 

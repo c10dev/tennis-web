@@ -50,9 +50,8 @@ export const RIG_MOTION = {
   /** Running gait: stride cycles per second, and the speed (m/s) at which the stride is full. */
   gaitHz: 1.4,
   fullRunSpeed: 6,
-  /** Knees bend this long either side of a groundstroke's contact; split steps this long either side of the opponent's. */
+  /** Knees bend this long either side of a groundstroke's contact (the split step is SPLIT_STEP's). */
   crouchSec: 0.3,
-  splitStepSec: 0.15,
   /** Around their own contact a player turns from the ball towards where the shot goes, over this long each side. */
   contactTurnSec: 0.25,
   /**
@@ -72,3 +71,11 @@ export const RIG_MOTION = {
   /** No player moves further than this between two 60 fps frames (8.5 m/s). */
   maxStepPerFrame: 0.142,
 } as const;
+
+/**
+ * The split step (ADR-031 A4): a hop over `hopSec` that lands on the opponent's contact (its top `hopSec`/2 before).
+ * The feet spread by `spread` (m, beyond the stance) in the air, from `spreadFrom` of the hop, so they land apart, and
+ * come back together over `spreadOutSec` after; the hips drop by `drop` over `landSec` after landing. Faded out between
+ * `runFrom` and `runFull` m/s of the carry's averaged speed: nobody split-steps at a run.
+ */
+export const SPLIT_STEP = { hopSec: 0.26, landSec: 0.24, spread: 0.26, spreadFrom: 0.3, spreadOutSec: 0.5, drop: 0.08, runFrom: 1.6, runFull: 2.6 } as const;
