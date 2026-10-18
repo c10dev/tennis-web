@@ -1,5 +1,5 @@
 // Growth and condition over a swing (ADR-032). A swing's gain in overall comes from age, room below potential and
-// how the swing was spent (coach, load, morale, matches); from 29 everyone declines. Pure functions.
+// how the swing was spent (coach, morale, matches, free weeks); from 29 everyone declines. Pure functions.
 import { overall } from '../player/overall.ts';
 import { stream } from '../rng.ts';
 import { applyGain, trueLevel, type Group } from './ratings.ts';
@@ -16,7 +16,8 @@ export function baseGain(age: number, level: number, potential: number): number 
 export const decline = (age: number): number => Math.max(0, age - GROWTH_J.declineFrom + 1) * GROWTH_J.declinePerYear;
 
 export interface UserSwing {
-  coach: 0 | 1 | 2;
+  /** The coach's growth multiplier and the groups they add to the focus. */
+  coach: { mult: number; groups: readonly Group[] };
   morale: number;
   matches: number;
   /** Weeks of the swing without an event. */
@@ -27,11 +28,11 @@ export interface UserSwing {
 
 /** The user's growth over a swing: matches teach, free weeks train, and neither alone is enough. */
 export function growUser(p: JPlayer, s: UserSwing): JPlayer {
-  const mult = GROWTH_J.coach[s.coach] * (GROWTH_J.moraleBase + GROWTH_J.moraleSpan * s.morale / 100)
+  const mult = s.coach.mult * (GROWTH_J.moraleBase + GROWTH_J.moraleSpan * s.morale / 100)
     * (GROWTH_J.playBase + GROWTH_J.playSpan * Math.min(1, s.matches / SCHEDULE.playFull))
     * (GROWTH_J.trainBase + GROWTH_J.trainSpan * Math.min(1, s.trainWeeks / SCHEDULE.trainFull)) * (s.injured ? GROWTH_J.injured : 1);
   const gain = baseGain(p.age, trueLevel(p), p.potential) * mult - decline(p.age);
-  return applyGain(p, gain, s.focus);
+  return applyGain(p, gain, [...new Set([...s.focus, ...s.coach.groups])]);
 }
 
 /** An AI player's growth over a swing: a talent factor drawn per player and year. */

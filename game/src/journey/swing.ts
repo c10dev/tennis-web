@@ -11,6 +11,7 @@ import { validatePlan, type Plan } from './plan.ts';
 import { playEvent, type EventContext } from './play.ts';
 import { order, rankOf, recordSwing } from './ranking.ts';
 import { settle } from './settle.ts';
+import { agency, care, changeTeam } from './staff.ts';
 import type { EventResult, JourneyState, JPlayer, SwingReport } from './types.ts';
 import { filler, turnOver } from './world.ts';
 
@@ -25,6 +26,9 @@ export function advanceSwing(s: JourneyState, plan: Plan, withUser = true): Swin
   const errors = withUser ? validatePlan(s, plan) : [];
   if (errors.length) throw new Error(`The plan cannot be played: ${errors.join(', ')}`);
   const key = `${s.year}/${s.swing}`;
+  const u0 = withUser ? changeTeam(s.user, s, plan.hire ?? [], plan.release ?? []) : s.user;
+  const physio = care(u0.team);
+  const wildcard = u0.wildcard === true || stream(s.seed, 'wildcard', key).next() < agency(u0.team, u0.reputation).wildcard;
   const events = [...SWINGS[s.swing]!.events].sort((a, b) => a.week - b.week || (a.id < b.id ? -1 : 1));
   const { fields, proPlace, jrPlace } = aiFields(s);
   const me = s.user.player;
@@ -54,25 +58,25 @@ export function advanceSwing(s: JourneyState, plan: Plan, withUser = true): Swin
       const byId = new Map(everyone.map((p) => [p.id, p]));
       field = top.filter((pid) => pid !== me.id).map((pid) => byId.get(pid)!);
     } else if (playing && cond.hurt === 0 && plan.events.includes(ev.id) && eligible(ev, s.user.stage, me.age)) {
-      const entry = entryOf(ev, junior ? juniorRank : rank, field, place, s.user.wildcard);
+      const entry = entryOf(ev, junior ? juniorRank : rank, field, place, wildcard);
       enters = entry === 'direct' || (entry === 'qualifying' && qualifies(ev, me, stream(s.seed, 'qualifying', key, ev.id)));
       if (!enters) skipped.push(ev.id);
     }
-    if (enters) cond = restUntil(cond, ev.week);
+    if (enters) cond = restUntil(cond, ev.week, physio);
     const user = enters ? { ...me, fatigue: cond.fatigue } : null;
     const played = playEvent(ctx(user), ev, draw(s.seed, key, ev, field, user, junior ? juniorRank : rank, place));
     add(junior ? earnedJr : earned, played.earned);
     if (played.result) {
       results.push(played.result);
-      cond = afterEvent(cond, ev, played.result.matches.length, me, rng);
+      cond = afterEvent(cond, ev, played.result.matches.length, me, rng, physio);
     }
   }
   const ids = [...s.pros.map((p) => p.id), ...(withUser ? [me.id] : [])];
   const points = recordSwing(s.points, s.swing, earned, ids);
   const juniorPoints = recordSwing(s.juniorPoints, s.swing, earnedJr, [...s.juniors.map((p) => p.id), ...(withUser && s.user.stage === 'junior' ? [me.id] : [])]);
   const grown = { ...s, pros: s.pros.map((p) => growAi(p, s.seed, s.year)), juniors: s.juniors.map((p) => growAi(p, s.seed, s.year)), points, juniorPoints };
-  const end = endSwing(playing ? cond : { ...cond, fatigue: 0 });
-  const { state, report } = settle(s, grown, { plan, results, skipped, end, rankBefore: rank, juniorRankBefore: juniorRank, withUser });
+  const end = endSwing(playing ? cond : { ...cond, fatigue: 0 }, physio);
+  const { state, report } = settle(s, grown, { plan, user: u0, results, skipped, end, rankBefore: rank, juniorRankBefore: juniorRank, withUser });
   const next = s.swing === 3 ? yearEnd(state) : { ...state, swing: s.swing + 1 };
   return { state: withUser ? queueChoices(next) : next, report };
 }

@@ -17,8 +17,8 @@ export interface Effect {
   /** Growth in overall (1–20 scale) put into these groups. */
   gain?: number;
   groups?: Group[];
-  coach?: 0 | 1 | 2;
-  sponsor?: { fee: number; swings: number } | null;
+  /** A coach of this quality who costs nothing while it lasts (a college's). */
+  freeCoach?: number;
   stage?: Stage;
   college?: number;
   /** Swings away from the tour (injury, service). */
@@ -145,8 +145,7 @@ function apply(u: UserState, e: Effect): UserState {
     morale: clamp(u.morale + (e.morale ?? 0)),
     reputation: clamp(u.reputation + (e.reputation ?? 0)),
     money: u.money + (e.money ?? 0),
-    ...(e.coach !== undefined ? { coach: e.coach } : {}),
-    ...(e.sponsor !== undefined ? { sponsor: e.sponsor } : {}),
+    ...(e.freeCoach ? { team: { ...u.team, coach: { id: 'college-coach', role: 'coach' as const, name: '대학 코치진', quality: e.freeCoach, salary: 0, style: 'allround' as const, swingsLeft: e.college ?? 8 } } } : {}),
     ...(e.stage ? { stage: e.stage } : {}),
     ...(e.college !== undefined ? { college: e.college } : {}),
     ...(e.away ? { injury: u.injury + e.away, away: 'service' as const } : {}),

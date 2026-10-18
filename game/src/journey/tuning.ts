@@ -115,7 +115,6 @@ export const GROWTH_J = {
   declineFrom: 29,
   /** Loss a swing per year past `declineFrom` − 1. */
   declinePerYear: 0.03,
-  coach: [1, 1.15, 1.3] as const,
   moraleBase: 0.85,
   moraleSpan: 0.3,
   /** Matches and free weeks both teach (full credit at SCHEDULE.playFull matches and trainFull free weeks). */
@@ -138,7 +137,6 @@ export const BOOKS = {
   pointsPerReputation: 150,
   majorReputation: 8,
   /** Dollars a swing. */
-  coachFee: [0, 15000, 60000] as const,
   living: { junior: 1000, pro: 4000 },
 } as const;
 
@@ -148,7 +146,7 @@ export const START = {
   rank: 150,
   morale: 60,
   reputation: 5,
-  money: 20000,
+  money: 50000,
 } as const;
 
 /** Choices between swings: how many offers or life events come after a swing (stage turns come alone). */
@@ -188,4 +186,24 @@ export const CAREER_REF = {
   potentialMean: 15.3,
   potentialSd: 1.6,
   potentialRange: [12.5, 19] as const,
+} as const;
+
+/** The team (ADR-033): quality 1–5 per member; salaries rise faster than effects so no one hire wins outright. */
+export const TEAM = {
+  perRole: 4,
+  /** Cumulative odds of quality 1–5 on the market. */
+  qualityOdds: [0.3, 0.6, 0.82, 0.95, 1],
+  contract: 4,
+  /** Salary a swing at quality 1, times quality^salaryPower. */
+  salary: { coach: 4000, physio: 2500, agent: 1500 },
+  salaryPower: 1.7,
+  coachPerQuality: 0.06,
+  /** An all-round coach trains no groups in particular but lifts everything a little more. */
+  allroundBonus: 1.3,
+  physioRest: 0.12,
+  physioInjury: 0.1,
+  sponsorPerReputation: 100,
+  wildcardPerQuality: 0.06,
+  /** Share of prize money the agent takes. */
+  commission: 0.1,
 } as const;

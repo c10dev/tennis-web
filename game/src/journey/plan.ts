@@ -4,6 +4,7 @@ import { stream } from '../rng.ts';
 import { JTIERS, SWINGS, TIER_ORDER, weeksOf, type JEvent } from './calendar.ts';
 import { aiFields, eligible, entryOf, rankFor } from './entry.ts';
 import { GROUPS, type Group } from './ratings.ts';
+import { market, ROLES, type Role } from './staff.ts';
 import { SCHEDULE } from './tuning.ts';
 import type { JourneyState } from './types.ts';
 
@@ -11,6 +12,9 @@ export interface Plan {
   /** Event ids of the current swing. */
   events: string[];
   focus: Group[];
+  /** Staff ids from this swing's market to hire, and roles to release (ADR-033). */
+  hire?: string[];
+  release?: Role[];
 }
 
 /** What is wrong with a plan, as codes (empty when it can be played): unknown:id, stage:id, overlap:id, focus, college. */
@@ -32,6 +36,20 @@ export function validatePlan(s: JourneyState, plan: Plan): string[] {
   }
   if (plan.focus.length > 2 || plan.focus.some((g) => !GROUPS.includes(g)) || new Set(plan.focus).size !== plan.focus.length) errors.push('focus');
   if (u.stage === 'college' && plan.events.length > SCHEDULE.collegeEvents) errors.push('college');
+  const offers = market(s);
+  const hires = (plan.hire ?? []).map((id) => offers.find((x) => x.id === id) ?? id);
+  const roles = new Set<Role>();
+  let cost = 0;
+  for (const h of hires) {
+    if (typeof h === 'string') errors.push(`hire:${h}`);
+    else if (roles.has(h.role)) errors.push(`hire-twice:${h.role}`);
+    else {
+      roles.add(h.role);
+      cost += h.salary;
+    }
+  }
+  if (cost > 0 && cost > u.money) errors.push('money');
+  for (const r of plan.release ?? []) if (!ROLES.includes(r) || !u.team[r]) errors.push(`release:${r}`);
   return errors;
 }
 

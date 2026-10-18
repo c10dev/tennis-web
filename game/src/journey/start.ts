@@ -22,7 +22,7 @@ export function newJourney({ seed, player, hand, focus, stage = 'junior' }: Star
   const me: JPlayer = { ...player, id: USER };
   const user = {
     player: me, hand, stage, morale: START.morale, reputation: START.reputation, money: START.money,
-    focus, coach: 0 as const, sponsor: null, injury: 0, college: 0, peak: ovr(me),
+    focus, team: {}, injury: 0, college: 0, peak: ovr(me),
   };
   let s: JourneyState = {
     seed, year: 0, swing: 0, user, pros: roster.pros, juniors: roster.juniors, nextId: roster.nextId,

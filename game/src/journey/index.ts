@@ -4,6 +4,7 @@ export { eventById, JTIERS, SWING_WEEKS, SWINGS, weeksOf, type JEvent, type JTie
 export { autoPlan, validatePlan, type AutoStyle, type Plan } from './plan.ts';
 export { fatigueForecast, forecast, type EventForecast, type FatigueForecast } from './forecast.ts';
 export type { Entry } from './entry.ts';
+export { agency, care, coaching, COACH_GROUPS, market, ROLES, salaryOf, type CoachStyle, type Hired, type Role, type Staff, type Team } from './staff.ts';
 export { commentary, type Line as CommentaryLine, type LineKind } from './commentary.ts';
 export { choose, context as careerContext, currentChoice, queueChoices, type ChoiceView } from './events.ts';
 export { calendarYear } from './events-stage.ts';

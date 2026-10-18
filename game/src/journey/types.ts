@@ -3,6 +3,7 @@
 import type { MatchRecipe, Surface } from '@tennis/engine';
 import type { CareerPlayer } from '../types.ts';
 import type { Group } from './ratings.ts';
+import type { Team } from './staff.ts';
 
 export type Nation = 'KOR' | 'JPN' | 'CHN' | 'USA' | 'GBR' | 'AUS' | 'ESP' | 'ARG' | 'ITA' | 'FRA' | 'GER' | 'SUI' | 'SRB' | 'CZE';
 export type Hand = 'right' | 'left';
@@ -24,10 +25,8 @@ export interface UserState {
   money: number;
   /** Groups trained on purpose, 1–2. */
   focus: Group[];
-  /** 0 none, 1 a good coach, 2 an elite one: faster growth, a fee every swing. */
-  coach: 0 | 1 | 2;
-  /** A sponsor's fee every swing, and how many swings it still runs. */
-  sponsor: { fee: number; swings: number } | null;
+  /** Coach, physio and agent (ADR-033). */
+  team: Team;
   /** Swings still away from the tour (0 playing), and why. */
   injury: number;
   away?: 'injury' | 'service' | undefined;
@@ -104,6 +103,12 @@ export interface SwingReport {
   /** Achievements unlocked this swing (ids for the text layer). */
   milestones: string[];
   money: number;
+  /** The swing's books: prize after commission, sponsor money, wages. */
+  prize: number;
+  sponsor: number;
+  wages: number;
+  /** Staff whose contracts ended, or who left because the money ran out. */
+  staffLeft: string[];
   /** Planned events the user did not get into (ranking too low, qualifying lost). */
   skipped: string[];
   /** Fatigue carried out of the swing, and its free weeks. */

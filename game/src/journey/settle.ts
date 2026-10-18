@@ -6,10 +6,13 @@ import type { Plan } from './plan.ts';
 import { rankOf } from './ranking.ts';
 import { groupValues, ovr } from './ratings.ts';
 import { BOOKS, STAGES } from './tuning.ts';
-import type { CareerStats, EventResult, JourneyState, SwingReport } from './types.ts';
+import { agency, coaching, payTeam, ROLES, withoutRole } from './staff.ts';
+import type { CareerStats, EventResult, JourneyState, SwingReport, UserState } from './types.ts';
 
 export interface SettleInput {
   plan: Plan;
+  /** The user at the start of the swing, after this swing's hires and releases. */
+  user: UserState;
   results: EventResult[];
   /** Planned events the user could not get into. */
   skipped: string[];
@@ -20,41 +23,50 @@ export interface SettleInput {
 }
 
 /** `before` is the state the swing started from; `after` has the world's points and growth already. */
-export function settle(before: JourneyState, after: JourneyState, { plan, results, skipped, end, rankBefore, juniorRankBefore, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
-  const u = before.user;
+export function settle(before: JourneyState, after: JourneyState, { plan, user: u, results, skipped, end, rankBefore, juniorRankBefore, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
   const wasInjured = u.injury > 0;
-  const grown = withUser ? growUser(u.player, { coach: u.coach, morale: u.morale, matches: end.matches, trainWeeks: end.trainWeeks, injured: wasInjured || end.hurt > 0, focus: plan.focus }) : u.player;
+  const grown = withUser ? growUser(u.player, { coach: coaching(u.team), morale: u.morale, matches: end.matches, trainWeeks: end.trainWeeks, injured: wasInjured || end.hurt > 0, focus: plan.focus }) : u.player;
   const hurt = withUser ? end.hurt : 0;
   const player = { ...grown, fatigue: end.fatigue, injuryWeeks: 0 };
   const rankAfter = withUser ? rankOf(player, after.pros, after.points) : null;
   const juniorRankAfter = withUser && u.stage === 'junior' ? rankOf(player, after.juniors, after.juniorPoints) : null;
-  const prize = results.reduce((a, r) => a + r.prize, 0);
-  const pro = u.stage === 'pro';
-  const money = u.money + prize + (u.sponsor?.fee ?? 0) - (pro ? BOOKS.coachFee[u.coach] : 0) - BOOKS.living[pro ? 'pro' : 'junior']
-    + (u.stage === 'college' ? STAGES.collegeStipend : 0);
-  const stats = tally(before.stats, results, rankAfter, juniorRankAfter, prize);
-  const user = {
-    ...u, player, money,
+  const agent = agency(u.team, u.reputation);
+  const gross = results.reduce((a, r) => a + r.prize, 0);
+  const prize = Math.round(gross * (1 - agent.commission));
+  const paid = payTeam(u.team);
+  let money = u.money + prize + agent.sponsor - paid.wages - BOOKS.living[u.stage === 'pro' ? 'pro' : 'junior'] + (u.stage === 'college' ? STAGES.collegeStipend : 0);
+  let team = { ...paid.team };
+  const staffLeft = paid.left.map((h) => h.name);
+  // Out of money: the dearest staff go first, without notice pay.
+  for (const role of [...ROLES].sort((a, b) => (team[b]?.salary ?? 0) - (team[a]?.salary ?? 0))) {
+    if (money >= 0 || !team[role]) continue;
+    staffLeft.push(team[role]!.name);
+    team = withoutRole(team, role);
+  }
+  const stats = tally(before.stats, results, rankAfter, juniorRankAfter, gross);
+  const next: UserState = {
+    ...u, player, money, team,
     injury: wasInjured ? u.injury - 1 : hurt,
     away: wasInjured ? (u.injury > 1 ? u.away : undefined) : hurt ? 'injury' as const : undefined,
     focus: plan.focus,
     morale: clamp(morale(u.morale, results, rankBefore, rankAfter)),
     reputation: clamp(u.reputation * BOOKS.reputationKeep + results.reduce((a, r) => a + r.points, 0) / BOOKS.pointsPerReputation
       + results.filter((r) => r.champion && r.tier === 'major').length * BOOKS.majorReputation),
-    sponsor: u.sponsor && u.sponsor.swings > 1 ? { ...u.sponsor, swings: u.sponsor.swings - 1 } : null,
     peak: Math.max(u.peak, ovr(player)),
     college: u.stage === 'college' ? Math.max(0, u.college - 1) : u.college,
     wildcard: false,
   };
+  money = next.money;
   const milestones = withUser ? reached(before.stats, stats, results, before.seen) : [];
   const report: SwingReport = {
     year: before.year, swing: before.swing, age: u.player.age, stage: u.stage, events: results,
     rankBefore, rankAfter, juniorRankBefore, juniorRankAfter,
     ovrBefore: ovr(u.player), ovrAfter: ovr(player), groupsBefore: groupValues(u.player), groupsAfter: groupValues(player),
-    injured: hurt, milestones, money: money - u.money, skipped, fatigue: end.fatigue, trainWeeks: end.trainWeeks,
+    injured: hurt, milestones, money: money - before.user.money, prize, sponsor: agent.sponsor, wages: paid.wages, staffLeft,
+    skipped, fatigue: end.fatigue, trainWeeks: end.trainWeeks,
   };
   const seen = [...before.seen, ...milestones.map((m) => `m:${m}`)];
-  return { state: { ...after, user, stats, seen, reports: withUser ? [...before.reports, report] : before.reports, notes: [] }, report };
+  return { state: { ...after, user: next, stats, seen, reports: withUser ? [...before.reports, report] : before.reports, notes: [] }, report };
 }
 
 function morale(m: number, results: readonly EventResult[], before: number | null, after: number | null): number {

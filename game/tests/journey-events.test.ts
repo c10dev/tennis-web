@@ -30,7 +30,8 @@ describe('journey choices', () => {
     const college = choose(s, 'college').state.user;
     expect(college.stage).toBe('college');
     expect(college.college).toBeGreaterThan(0);
-    expect(college.coach).toBe(1);
+    expect(college.team.coach?.quality).toBe(2);
+    expect(college.team.coach?.salary).toBe(0);
   });
 
   it('ends the career at the forced age and sums it up', () => {

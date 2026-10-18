@@ -1,9 +1,9 @@
-// Stage turns and offers (ADR-032): turning pro or going to college, coaches, sponsors, wild cards, national teams,
-// service and retirement. Korean only (TD-080).
+// Stage turns and offers (ADR-032/033): turning pro or going to college, national teams, service and retirement
+// (coaches, sponsors and wild cards come from the team now). Korean only (TD-080).
 import type { LifeEvent } from './events.ts';
 import { nameVars } from './vars.ts';
 import { ovr } from './ratings.ts';
-import { BOOKS, STAGES } from './tuning.ts';
+import { STAGES } from './tuning.ts';
 import type { JourneyState } from './types.ts';
 
 const name = (s: JourneyState) => nameVars(s.user.player.name);
@@ -24,7 +24,7 @@ export const STAGE_EVENTS: LifeEvent[] = [
     when: (s, c) => s.user.stage === 'junior' && c.age >= STAGES.turnPro,
     options: [
       { id: 'pro', label: '프로로 전향한다', detail: '퓨처스부터 랭킹을 쌓아요. 상금은 적고 이동은 많아요.', effect: { stage: 'pro' }, note: '{name}, 프로 전향 선언. 이제 진짜 승부다' },
-      { id: 'college', label: '미국 대학에 진학한다', detail: '2년 동안 대학 리그에서 뛰며 좋은 코치에게 배워요. 프로 랭킹은 늦게 시작해요.', effect: { stage: 'college', college: STAGES.collegeSwings, coach: 1 }, note: '{name}, 장학생으로 미국 대학 진학' },
+      { id: 'college', label: '미국 대학에 진학한다', detail: '2년 동안 대학 리그에서 뛰며 좋은 코치에게 배워요. 프로 랭킹은 늦게 시작해요.', effect: { stage: 'college', college: STAGES.collegeSwings, freeCoach: 2 }, note: '{name}, 장학생으로 미국 대학 진학' },
     ],
   },
   {
@@ -41,13 +41,6 @@ export const STAGE_EVENTS: LifeEvent[] = [
     text: '대학 리그를 마친 {name}. 이제 프로 투어가 기다려요.',
     when: (s) => s.user.stage === 'college' && s.user.college === 0,
     options: [{ id: 'pro', label: '프로 무대로', detail: '대학에서 쌓은 실력으로 투어에 도전해요.', effect: { stage: 'pro', reputation: 3 }, note: '{name}, 대학 졸업 후 프로 데뷔' }],
-  },
-  {
-    id: 'coach-broke', kind: 'stage', title: '코치와의 결별', vars: name,
-    text: '통장 잔고가 바닥났어요. 더 이상 코치 비용을 낼 수 없어요.',
-    when: (s) => pro(s) && s.user.coach > 0 && s.user.money < 0,
-    every: 1,
-    options: [{ id: 'part', label: '혼자 해 본다', detail: '비용은 줄지만 성장 속도가 느려져요.', effect: { coach: 0, morale: -3 } }],
   },
   {
     id: 'service', kind: 'stage', title: '입영 통지서', vars: name,
@@ -67,47 +60,7 @@ export const STAGE_EVENTS: LifeEvent[] = [
   },
 ];
 
-const coachFee = (s: JourneyState) => BOOKS.coachFee[Math.min(2, s.user.coach + 1) as 1 | 2];
-
 export const OFFERS: LifeEvent[] = [
-  {
-    id: 'academy', kind: 'offer', title: '아카데미 스카우트', vars: name, weight: 3,
-    text: '유럽의 명문 테니스 아카데미가 {name}에게 장학생 자리를 제안했어요. 가족과는 떨어져 지내야 해요.',
-    when: (s, c) => s.user.stage === 'junior' && c.age <= 15 && s.user.coach === 0 && (c.juniorRank ?? 999) <= 60,
-    options: [
-      { id: 'go', label: '아카데미로 떠난다', detail: '좋은 코치에게 배우지만 향수병이 찾아와요.', effect: { coach: 1, morale: -4 }, note: '{name}, 유럽 아카데미 장학생으로 합류' },
-      { id: 'stay', label: '집에서 훈련한다', detail: '익숙한 환경에서 마음 편히 운동해요.', effect: { morale: 4 } },
-    ],
-  },
-  {
-    id: 'coach', kind: 'offer', title: '코치 영입 제안', every: 8, weight: 3,
-    vars: (s) => ({ ...name(s), fee: coachFee(s).toLocaleString('en-US'), level: s.user.coach === 0 ? '투어 경험이 많은' : '세계 정상급 선수를 키운' }),
-    text: '{level} 코치가 {nameWith} 함께하고 싶어 해요. 구간마다 {fee}달러가 들어요.',
-    when: (s) => pro(s) && s.user.coach < 2 && s.user.money >= coachFee(s) * 4,
-    options: (s) => [
-      { id: 'hire', label: '계약한다', detail: '성장 속도가 빨라지지만 비용이 꾸준히 나가요.', effect: { coach: Math.min(2, s.user.coach + 1) as 1 | 2, morale: 2 }, note: '{name}, 새 코치와 손잡았다' },
-      { id: 'decline', label: '지금 팀을 유지한다', detail: '돈을 아껴요.', effect: {} },
-    ],
-  },
-  {
-    id: 'sponsor', kind: 'offer', title: '스폰서 제안', every: 8, weight: 3,
-    vars: (s) => ({ ...name(s), fee: Math.max(3, Math.round(s.user.reputation * 1.5)) * 1000, brand: s.user.reputation >= 50 ? '글로벌 스포츠 브랜드' : s.user.reputation >= 25 ? '라켓 브랜드' : '지역 스포츠용품점' }),
-    text: '{brand}가 {name}에게 후원 계약을 제안했어요. 구간마다 {fee}달러, 2년 계약이에요.',
-    when: (s) => s.user.sponsor === null && s.user.reputation >= 12 && s.user.stage !== 'retired',
-    options: (_s, v) => [
-      { id: 'sign', label: '계약한다', detail: '돈이 들어오지만 광고 촬영으로 바빠져요.', effect: { sponsor: { fee: Number(v.fee), swings: 8 }, fatigue: 0.05, reputation: 2 }, note: '{name}, {brand}와 후원 계약' },
-      { id: 'decline', label: '거절한다', detail: '테니스에만 집중해요.', effect: { morale: 1 } },
-    ],
-  },
-  {
-    id: 'wildcard', kind: 'offer', title: '메이저 와일드카드', every: 4, weight: 2, vars: name,
-    text: '다음 메이저 대회 조직위가 {name}에게 본선 와일드카드를 주겠대요.',
-    when: (s, c) => pro(s) && (c.rank === null || c.rank > 110) && s.user.reputation >= 20,
-    options: [
-      { id: 'take', label: '받는다', detail: '랭킹으로는 못 서는 메이저 본선에 나가요.', effect: { wildcard: true, morale: 3 }, note: '{name}, 메이저 와일드카드 획득' },
-      { id: 'pass', label: '실력으로 올라가겠다', detail: '자존심을 지켜요.', effect: { morale: 2, reputation: -1 } },
-    ],
-  },
   {
     id: 'davis-cup', kind: 'offer', title: '국가대항전 대표 발탁', every: 8, weight: 2, vars: name,
     text: '국가대표팀 감독이 {nameObj} 국가대항전 명단에 넣고 싶어 해요.',
