@@ -5,7 +5,7 @@ import { createRoster } from '../src/journey/world.ts';
 describe('journey ranking', () => {
   const { pros } = createRoster(1, 'me');
   const me = { ...pros[0]!, id: 'user', name: 'me' };
-  const points: Record<string, number[]> = Object.fromEntries(pros.map((p, i) => [p.id, [1000 - i * 5, 0, 0, 0]]));
+  const points: Record<string, number[]> = Object.fromEntries(pros.map((p, i) => [p.id, [2000 - i * 5, 0, 0, 0]]));
 
   it('sums the last four swings and replaces a slot a year on', () => {
     let pts = recordSwing({}, 0, new Map([['a', 100]]), ['a', 'b']);
@@ -19,7 +19,7 @@ describe('journey ranking', () => {
 
   it('ranks the user among the pool, unranked with no points, estimated below it', () => {
     expect(rankOf(me, pros, points)).toBeNull();
-    expect(rankOf(me, pros, { ...points, user: [998, 0, 0, 0] })).toBe(2);
+    expect(rankOf(me, pros, { ...points, user: [1998, 0, 0, 0] })).toBe(2);
     const low = rankOf(me, pros, { ...points, user: [10, 0, 0, 0] })!;
     expect(low).toBeGreaterThan(pros.length);
     expect(low).toBe(estimateRank(10));

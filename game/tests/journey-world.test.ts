@@ -38,7 +38,10 @@ describe('journey world', () => {
     expect(roster.juniors.filter((p) => p.age === 14)).toHaveLength(WORLD_J.cohort);
     expect(roster.juniors.some((p) => p.age === 18)).toBe(false);
     expect(roster.pros.length).toBeLessThanOrEqual(WORLD_J.maxPros);
-    expect(roster.nextId).toBe(r.nextId + WORLD_J.cohort);
+    // Ids go to the new cohort and to the newcomers who top the pool up.
+    const newcomers = roster.pros.filter((p) => !r.pros.some((q) => q.id === p.id) && !r.juniors.some((j) => j.id === p.id)).length;
+    expect(roster.nextId).toBe(r.nextId + WORLD_J.cohort + newcomers);
+    expect(roster.pros.length).toBeGreaterThanOrEqual(WORLD_J.pros);
   });
 
   it('is deterministic', () => {

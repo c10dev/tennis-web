@@ -25,8 +25,8 @@ export const CREATE = {
   /** Ratings in a candidate's two strong groups sit this much higher before settling at OVR 45. */
   strongLift: 2,
   injuryProneness: 10,
-  potentialMean: 15.6,
-  potentialSd: 1.3,
+  potentialMean: 15.3,
+  potentialSd: 1.6,
   potentialRange: [12.5, 19] as const,
 } as const;
 
@@ -37,10 +37,10 @@ export const GROWTH = {
 
 /** The world around the user: a pool of named pros and four junior cohorts. */
 export const WORLD_J = {
-  pros: 160,
+  pros: 250,
   /** Pro levels by place in the starting pool: top − span × (place / pros)^shape, plus noise. */
   proTop: 17.6,
-  proSpan: 3.7,
+  proSpan: 3.9,
   proShape: 0.45,
   proNoise: 0.3,
   proAges: [18, 35] as const,
@@ -51,8 +51,11 @@ export const WORLD_J = {
   juniorPotential: [14.6, 1.4] as const,
   /** Juniors who turn 18 and join the pros each year, best of their cohort first. */
   graduates: 12,
-  /** Pool is trimmed to this many after the year's moves, lowest-ranked first. */
-  maxPros: 190,
+  /** Pool is trimmed to this many after the year's moves, lowest-ranked first, and topped up to `pros` with
+   * newcomers (players who come up through the lower tours, not followed as juniors). */
+  maxPros: 280,
+  newcomerLevel: [13.6, 0.5] as const,
+  newcomerAges: [19, 23] as const,
   /** Retirement: chance a year from `from`, rising by `perYear`; everyone stops by `last`. */
   retire: { from: 31, base: 0.12, perYear: 0.1, last: 37 },
   /** Hidden potential above today's level for a pro, by age: [up to age, min gain, max gain]. */

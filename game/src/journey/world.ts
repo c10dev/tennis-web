@@ -92,6 +92,13 @@ export function turnOver(r: Roster, seed: number, year: number, rank: readonly s
     .sort((a, b) => a.at - b.at)
     .slice(0, WORLD_J.maxPros)
     .map(({ p }) => p);
+  const [mean, sd] = WORLD_J.newcomerLevel;
+  while (trimmed.length < WORLD_J.pros) {
+    const nation = drawNation(rng);
+    const p = playerAt(rng, id(nextId++), mean + sd * normal(rng), int(rng, ...WORLD_J.newcomerAges), nation, nameFor(rng, nation, taken));
+    p.potential = proPotential(rng, p);
+    trimmed.push(p);
+  }
   return { roster: { pros: trimmed, juniors, nextId }, retired };
 }
 

@@ -34,6 +34,13 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'journey',
+          include: ['game/tests/journey-*.slow.test.ts'],
+          testTimeout: 600_000,
+        },
+      },
+      {
+        test: {
           name: 'renderer',
           include: ['renderer/tests/**/*.test.ts'],
           environment: 'node',

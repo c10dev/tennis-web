@@ -21,9 +21,9 @@ export interface JTierSpec {
 export const JTIERS: Record<JTier, JTierSpec> = {
   jr: { draw: 32, bestOf: 3, points: [0, 20, 40, 80, 150, 300], prizePerPoint: 0, junior: true, band: [1, 999], chance: 0.5, filler: [9.6, 0.8] },
   jrMajor: { draw: 64, bestOf: 3, points: [10, 40, 80, 160, 300, 600, 1000], prizePerPoint: 0, junior: true, band: [1, 999], chance: 1, filler: [10, 0.8] },
-  futures: { draw: 32, bestOf: 3, points: [0, 2, 4, 8, 15, 25], prizePerPoint: 150, junior: false, band: [150, 999], chance: 0.3, filler: [12, 0.7] },
-  challenger: { draw: 32, bestOf: 3, points: [0, 8, 16, 30, 50, 80], prizePerPoint: 160, junior: false, band: [40, 999], chance: 0.5, filler: [13.2, 0.6] },
-  t250: { draw: 32, bestOf: 3, points: [0, 25, 50, 100, 165, 250], prizePerPoint: 280, junior: false, band: [9, 200], chance: 0.5, filler: [14.2, 0.5] },
+  futures: { draw: 32, bestOf: 3, points: [0, 1, 2, 4, 7, 12], prizePerPoint: 300, junior: false, band: [200, 999], chance: 0.4, filler: [12, 0.7] },
+  challenger: { draw: 32, bestOf: 3, points: [0, 4, 8, 15, 25, 40], prizePerPoint: 320, junior: false, band: [60, 999], chance: 0.7, filler: [13.2, 0.6] },
+  t250: { draw: 32, bestOf: 3, points: [0, 25, 50, 100, 165, 250], prizePerPoint: 280, junior: false, band: [9, 250], chance: 0.65, filler: [14.2, 0.5] },
   masters: { draw: 64, bestOf: 3, points: [10, 50, 100, 200, 400, 650, 1000], prizePerPoint: 450, junior: false, band: [1, 999], chance: 0.95, filler: [14.4, 0.4] },
   major: { draw: 128, bestOf: 5, points: [10, 50, 100, 200, 400, 800, 1300, 2000], prizePerPoint: 900, junior: false, band: [1, 999], chance: 1, filler: [13.8, 0.5] },
   finals: { draw: 8, bestOf: 3, points: [200, 600, 1000, 1500], prizePerPoint: 1500, junior: false, band: [1, 8], chance: 1, filler: [16, 0.3] },

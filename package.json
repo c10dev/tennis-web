@@ -32,6 +32,8 @@
     "test:season": "vitest run --project season",
     "season": "tsx game/cli/season.ts",
     "quick": "tsx game/cli/quick.ts",
+    "journey": "tsx game/cli/journey.ts",
+    "test:journey": "vitest run --project journey",
     "test:quick": "vitest run --project quick",
     "shots": "tsx e2e/shots/sheets.ts",
     "motion": "tsx renderer/cli/motion-report.ts"
