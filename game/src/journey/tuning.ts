@@ -21,7 +21,8 @@ export const FAST = {
  * points that lift a group's ratings by `perTalent` each before OVR is evened out. */
 export const CREATE = {
   age: 18,
-  ovr: 66,
+  /** About the level of the pool at `START.rank` (measured 2026-10-19), so the start matches the ranking. */
+  ovr: 70,
   potential: 16.2,
   talents: 10,
   perTalent: 0.6,
@@ -132,7 +133,7 @@ export const GROWTH_J = {
 export const BOOKS = {
   moraleRest: 55,
   moraleDrift: 0.2,
-  morale: { majorTitle: 15, title: 6, final: 2, firstRoundLoss: -2, rankUp: 3, rankDown: -2 },
+  morale: { majorTitle: 15, title: 6, final: 2, firstRoundLoss: -2, rankUp: 3, rankDown: -2, cup: 4 },
   reputationKeep: 0.97,
   pointsPerReputation: 150,
   majorReputation: 8,
@@ -143,7 +144,7 @@ export const BOOKS = {
 /** The user at 14. */
 export const START = {
   /** A room's 18-year-olds start with the points of the pro at this place. */
-  rank: 150,
+  rank: 180,
   morale: 60,
   reputation: 5,
   money: 50000,

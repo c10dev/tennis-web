@@ -33,9 +33,9 @@ export function playerAt(rng: Rng, id: string, level: number, age: number, natio
   return { id, name, nation, style, attributes, age, potential: 0, progress: {}, fatigue: 0, injuryWeeks: 0 };
 }
 
-export function createRoster(seed: number, userName: string): Roster {
+export function createRoster(seed: number, userName: string, names: readonly string[] = []): Roster {
   const rng = stream(seed, 'roster');
-  const taken = new Set([userName]);
+  const taken = new Set([userName, ...names]);
   let nextId = 1;
   const pros: JPlayer[] = [];
   for (let i = 1; i <= WORLD_J.pros; i++) {
@@ -68,9 +68,9 @@ function proPotential(rng: Rng, p: JPlayer): number {
  * The year's turnover, after the last swing: everyone a year older, some pros retire, the best 17-year-olds turn pro,
  * a new cohort arrives and the pool is trimmed. `rank` orders pros best first; `juniorRank` orders juniors.
  */
-export function turnOver(r: Roster, seed: number, year: number, rank: readonly string[], juniorRank: readonly string[], keepName: string): { roster: Roster; retired: JPlayer[] } {
+export function turnOver(r: Roster, seed: number, year: number, rank: readonly string[], juniorRank: readonly string[], keepName: string, keepNames: readonly string[] = []): { roster: Roster; retired: JPlayer[] } {
   const rng = stream(seed, 'turnover', year);
-  const taken = new Set([keepName, ...r.pros.map((p) => p.name), ...r.juniors.map((p) => p.name)]);
+  const taken = new Set([keepName, ...keepNames, ...r.pros.map((p) => p.name), ...r.juniors.map((p) => p.name)]);
   const { from, base, perYear, last } = WORLD_J.retire;
   const retired: JPlayer[] = [];
   const pros: JPlayer[] = [];

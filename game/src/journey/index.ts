@@ -14,9 +14,10 @@ export { press, type Comment, type Headline, type Press } from './news.ts';
 export { rankOf as journeyRankOf, total as rankingTotal } from './ranking.ts';
 export { checkTalents, createPro, GROUPS, groupValues, ovr, talentsUsed, type CreatableStyle as JourneyStyle, type Group, type ProInput, type ProShape, type Talents } from './ratings.ts';
 export { fromJourneySave, JOURNEY_VERSION, sortHall, toJourneySave, type HallEntry, type JourneySave } from './save.ts';
-export { emptyStats, newJourney, USER as JOURNEY_USER, type Start } from './start.ts';
+export { createRoom, emptyStats, newJourney, USER as JOURNEY_USER, type Start } from './start.ts';
 export { grade, summarize, type CareerSummary } from './summary.ts';
-export { advanceSwing, type SwingOutcome } from './swing.ts';
+export { advanceRoom, advanceSwing, type RoomOutcome } from './swing.ts';
+export { assign, humanId, solo, view, worldOf, type Member } from './room.ts';
 export type {
-  CareerStats, EventResult, Hand, JourneyState, JPlayer, JTier, MatchLine, Nation, PendingChoice, Stage, SwingReport, UserState,
+  CareerStats, EventResult, Hand, HumanState, JourneyState, RoomState, WorldState, JPlayer, JTier, MatchLine, Nation, PendingChoice, Stage, SwingReport, UserState,
 } from './types.ts';

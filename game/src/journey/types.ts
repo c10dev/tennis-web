@@ -114,29 +114,45 @@ export interface SwingReport {
   /** Fatigue carried out of the swing, and its free weeks. */
   fatigue: number;
   trainWeeks: number;
+  /** The room cup (ADR-033): this player's matches and whether they won it; null alone or out. */
+  cup: { matches: MatchLine[]; champion: boolean } | null;
 }
 
-export interface JourneyState {
+/** The world everyone in a room shares. */
+export interface WorldState {
   seed: number;
-  /** 1 is the user's first year; swing 0–3 is the next one to play. */
+  /** 1 is the first year; swing 0–3 is the next one to play. */
   year: number;
   swing: number;
-  user: UserState;
   pros: JPlayer[];
   juniors: JPlayer[];
   /** Next AI id number. */
   nextId: number;
-  /** Ranking points of the last four swings, by player id, index = swing slot (0–3). */
+  /** Ranking points of the last four swings, by player id (humans too), index = swing slot (0–3). */
   points: Record<string, number[]>;
   juniorPoints: Record<string, number[]>;
+}
+
+/** One human's side of a room. */
+export interface HumanState {
+  user: UserState;
   stats: CareerStats;
   reports: SwingReport[];
-  /** Ids of events already seen (life events that happen once). */
+  /** Ids of events already seen (life events that happen once) and milestones reached. */
   seen: string[];
-  /** Choices waiting for the user before the next swing (events and offers). */
+  /** Choices waiting before the next swing (events and offers). */
   pending: PendingChoice[];
   /** Short lines the next report shows first (the outcome of the last choices). */
   notes: string[];
+}
+
+/** One human's view of the room: the world plus their side (what single-player code reads). */
+export interface JourneyState extends WorldState, HumanState {}
+
+/** A season room (ADR-033): the world and every human in it, in joining order. */
+export interface RoomState extends WorldState {
+  humans: Record<string, HumanState>;
+  order: string[];
 }
 
 export interface PendingChoice {

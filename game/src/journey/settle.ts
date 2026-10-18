@@ -17,13 +17,15 @@ export interface SettleInput {
   /** Planned events the user could not get into. */
   skipped: string[];
   end: SwingEnd;
+  /** The room cup, when the room had two or more fit players. */
+  cup: SwingReport['cup'];
   rankBefore: number | null;
   juniorRankBefore: number | null;
   withUser: boolean;
 }
 
 /** `before` is the state the swing started from; `after` has the world's points and growth already. */
-export function settle(before: JourneyState, after: JourneyState, { plan, user: u, results, skipped, end, rankBefore, juniorRankBefore, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
+export function settle(before: JourneyState, after: JourneyState, { plan, user: u, results, skipped, end, cup, rankBefore, juniorRankBefore, withUser }: SettleInput): { state: JourneyState; report: SwingReport } {
   const wasInjured = u.injury > 0;
   const grown = withUser ? growUser(u.player, { coach: coaching(u.team), morale: u.morale, matches: end.matches, trainWeeks: end.trainWeeks, injured: wasInjured || end.hurt > 0, focus: plan.focus }) : u.player;
   const hurt = withUser ? end.hurt : 0;
@@ -49,7 +51,7 @@ export function settle(before: JourneyState, after: JourneyState, { plan, user: 
     injury: wasInjured ? u.injury - 1 : hurt,
     away: wasInjured ? (u.injury > 1 ? u.away : undefined) : hurt ? 'injury' as const : undefined,
     focus: plan.focus,
-    morale: clamp(morale(u.morale, results, rankBefore, rankAfter)),
+    morale: clamp(morale(u.morale, results, rankBefore, rankAfter) + (cup?.champion ? BOOKS.morale.cup : 0)),
     reputation: clamp(u.reputation * BOOKS.reputationKeep + results.reduce((a, r) => a + r.points, 0) / BOOKS.pointsPerReputation
       + results.filter((r) => r.champion && r.tier === 'major').length * BOOKS.majorReputation),
     peak: Math.max(u.peak, ovr(player)),
@@ -63,7 +65,7 @@ export function settle(before: JourneyState, after: JourneyState, { plan, user: 
     rankBefore, rankAfter, juniorRankBefore, juniorRankAfter,
     ovrBefore: ovr(u.player), ovrAfter: ovr(player), groupsBefore: groupValues(u.player), groupsAfter: groupValues(player),
     injured: hurt, milestones, money: money - before.user.money, prize, sponsor: agent.sponsor, wages: paid.wages, staffLeft,
-    skipped, fatigue: end.fatigue, trainWeeks: end.trainWeeks,
+    skipped, fatigue: end.fatigue, trainWeeks: end.trainWeeks, cup,
   };
   const seen = [...before.seen, ...milestones.map((m) => `m:${m}`)];
   return { state: { ...after, user: next, stats, seen, reports: withUser ? [...before.reports, report] : before.reports, notes: [] }, report };

@@ -7,7 +7,7 @@ import { stream } from '../rng.ts';
 import { JTIERS, SWINGS, weeksOf, type JEvent } from './calendar.ts';
 import { order, rankOf } from './ranking.ts';
 import { SCHEDULE } from './tuning.ts';
-import type { JourneyState, JPlayer, Stage } from './types.ts';
+import type { JourneyState, JPlayer, Stage, WorldState } from './types.ts';
 
 export type Entry = 'direct' | 'qualifying' | 'out';
 
@@ -21,7 +21,7 @@ export interface Fields {
 const places = (ids: readonly string[]) => new Map(ids.map((pid, i) => [pid, i + 1]));
 
 /** Every event's AI field for the swing about to be played: events in week order, nobody in two events at once. */
-export function aiFields(s: JourneyState): Fields {
+export function aiFields(s: WorldState): Fields {
   const key = `${s.year}/${s.swing}`;
   const proPlace = places(order(s.pros, s.points));
   const jrPlace = places(order(s.juniors, s.juniorPoints));
