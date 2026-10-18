@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { candidates } from '../src/journey/ratings.ts';
+import { junior } from './journey-helpers.ts';
 import { fromJourneySave, JOURNEY_VERSION, sortHall, toJourneySave, type HallEntry } from '../src/journey/save.ts';
 import { newJourney } from '../src/journey/start.ts';
 import { advanceSwing } from '../src/journey/swing.ts';
 import { answerAll } from '../src/journey/autoplay.ts';
 
 describe('journey saves', () => {
-  const start = newJourney({ seed: 3, player: candidates(3, { name: '이리턴', nation: 'KOR', style: 'counter_puncher' })[2]!, hand: 'left', focus: ['return'] });
+  const start = newJourney({ seed: 3, player: junior('이리턴', 'counter_puncher'), hand: 'left', focus: ['return'] });
   const s = answerAll(advanceSwing(start, { load: 'normal', focus: ['return'] }).state);
 
   it('round-trips through JSON and plays on the same', () => {

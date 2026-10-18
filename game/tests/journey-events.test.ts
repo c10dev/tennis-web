@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { answerAll, playCareer } from '../src/journey/autoplay.ts';
 import { choose, currentChoice, queueChoices } from '../src/journey/events.ts';
 import { EVENTS } from '../src/journey/events-data.ts';
-import { candidates } from '../src/journey/ratings.ts';
+import { junior } from './journey-helpers.ts';
 import { newJourney } from '../src/journey/start.ts';
 import { summarize } from '../src/journey/summary.ts';
 import { advanceSwing } from '../src/journey/swing.ts';
 import type { JourneyState } from '../src/journey/types.ts';
 
-const start = (seed = 1) => newJourney({ seed, player: candidates(seed, { name: '김테니', nation: 'KOR', style: 'all_court' })[1]!, hand: 'right', focus: ['serve'] });
+const start = (seed = 1) => newJourney({ seed, player: junior('김테니', 'all_court'), hand: 'right', focus: ['serve'] });
 const at = (s: JourneyState, age: number, stage = s.user.stage): JourneyState => ({ ...s, user: { ...s.user, stage, player: { ...s.user.player, age } } });
 
 describe('journey choices', () => {

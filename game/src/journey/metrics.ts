@@ -1,6 +1,8 @@
 // Balance metrics for the text career (ADR-032, journey-design.md §8): careers played by the autoplayer, measured.
 import { playCareer, type Policy } from './autoplay.ts';
-import { candidates, GROUPS, type CreatableStyle } from './ratings.ts';
+import { normal, stream } from '../rng.ts';
+import { createPro, GROUPS, type CreatableStyle, type Group } from './ratings.ts';
+import { CAREER_REF } from './tuning.ts';
 import { newJourney } from './start.ts';
 import type { Load } from './types.ts';
 
@@ -19,7 +21,11 @@ const STYLES: readonly CreatableStyle[] = ['big_server', 'baseliner', 'counter_p
 
 export function runCareer(seed: number, load: Load = 'normal', policy?: Policy): CareerRun {
   const style = STYLES[seed % STYLES.length]!;
-  const pick = candidates(seed, { name: '테스트', nation: 'KOR', style })[seed % 3]!;
+  const rng = stream(seed, 'reference-career');
+  const [lo, hi] = CAREER_REF.potentialRange;
+  const potential = Math.min(hi, Math.max(lo, CAREER_REF.potentialMean + CAREER_REF.potentialSd * normal(rng)));
+  const talents: Partial<Record<Group, number>> = { [GROUPS[seed % 6]!]: 5, [GROUPS[(seed + 3) % 6]!]: 5 };
+  const pick = createPro({ name: '테스트', nation: 'KOR', style }, talents, { age: CAREER_REF.age, ovr: CAREER_REF.ovr, potential });
   const focus = [GROUPS[seed % GROUPS.length]!, GROUPS[(seed + 2) % GROUPS.length]!];
   const start = newJourney({ seed, player: pick, hand: 'right', focus });
   const { state, swings } = playCareer(start, { load, focus }, policy);

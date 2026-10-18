@@ -3,12 +3,12 @@ import { playCareer } from '../src/journey/autoplay.ts';
 import { reached, shortName } from '../src/journey/facts.ts';
 import { press } from '../src/journey/news.ts';
 import { MILESTONES } from '../src/journey/news-ko.ts';
-import { candidates } from '../src/journey/ratings.ts';
+import { junior } from './journey-helpers.ts';
 import { newJourney } from '../src/journey/start.ts';
 import type { SwingReport } from '../src/journey/types.ts';
 
 describe('journey news', () => {
-  const s = newJourney({ seed: 8, player: candidates(8, { name: '박서브', nation: 'KOR', style: 'big_server' })[0]!, hand: 'right', focus: ['serve'] });
+  const s = newJourney({ seed: 8, player: junior('박서브', 'big_server'), hand: 'right', focus: ['serve'] });
   const { state, reports } = playCareer(s, { load: 'heavy', focus: ['serve', 'physical'] });
 
   it('writes headlines and comments for every swing, every placeholder filled', () => {

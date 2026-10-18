@@ -17,17 +17,15 @@ export const FAST = {
   fatigueCap: 0.6,
 } as const;
 
-/** Creation (kickru's start): three 14-year-olds at OVR 45 with a hidden potential on the 1–20 overall scale. */
+/** Creation in a room (ADR-033): everyone at the same age, OVR and hidden potential (1–20 scale), shaped by talent
+ * points that lift a group's ratings by `perTalent` each before OVR is evened out. */
 export const CREATE = {
-  age: 14,
-  ovr: 45,
-  level: 9,
-  /** Ratings in a candidate's two strong groups sit this much higher before settling at OVR 45. */
-  strongLift: 2,
+  age: 18,
+  ovr: 66,
+  potential: 16.2,
+  talents: 10,
+  perTalent: 0.6,
   injuryProneness: 10,
-  potentialMean: 15.3,
-  potentialSd: 1.6,
-  potentialRange: [12.5, 19] as const,
 } as const;
 
 export const GROWTH = {
@@ -168,4 +166,13 @@ export const STAGES = {
   /** Korean men serve at this age unless exempt (a medal); 6 swings away. */
   serviceAge: 28,
   serviceSwings: 6,
+} as const;
+
+/** The long solo career from 14 (ADR-032, kept for TD-083 and as a reference batch): its start and potential spread. */
+export const CAREER_REF = {
+  age: 14,
+  ovr: 45,
+  potentialMean: 15.3,
+  potentialSd: 1.6,
+  potentialRange: [12.5, 19] as const,
 } as const;

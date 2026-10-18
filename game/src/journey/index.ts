@@ -8,7 +8,7 @@ export { reached, shortName, TIER_LABEL } from './facts.ts';
 export { NATIONS } from './names.ts';
 export { press, type Comment, type Headline, type Press } from './news.ts';
 export { rankOf as journeyRankOf, total as rankingTotal } from './ranking.ts';
-export { candidates, GROUPS, groupValues, ovr, type CandidateInput, type CreatableStyle as JourneyStyle, type Group } from './ratings.ts';
+export { checkTalents, createPro, GROUPS, groupValues, ovr, talentsUsed, type CreatableStyle as JourneyStyle, type Group, type ProInput, type ProShape, type Talents } from './ratings.ts';
 export { fromJourneySave, JOURNEY_VERSION, sortHall, toJourneySave, type HallEntry, type JourneySave } from './save.ts';
 export { emptyStats, newJourney, USER as JOURNEY_USER, type Start } from './start.ts';
 export { grade, summarize, type CareerSummary } from './summary.ts';

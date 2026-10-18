@@ -53,15 +53,15 @@ export const STAGE_EVENTS: LifeEvent[] = [
     id: 'service', kind: 'stage', title: '입영 통지서', vars: name,
     text: '병역 의무를 미룰 수 있는 나이가 끝났어요. {nameTopic} 상무에서 군 복무를 시작해요.',
     when: (s, c) => pro(s) && s.user.player.nation === 'KOR' && !s.user.exempt && c.age >= STAGES.serviceAge && c.age <= STAGES.serviceAge + 2,
-    options: [{ id: 'serve', label: '입대한다', detail: '1년 반 동안 투어를 떠나요. 감각은 조금 떨어져요.', effect: { away: STAGES.serviceSwings, morale: -5 }, note: '{name}, 국군체육부대 입대. 전역 후 복귀를 다짐했다' }],
+    options: [{ id: 'serve', label: '입대한다', detail: '여섯 구간 동안 투어 대회에 나가지 못해요. 랭킹 포인트도 서서히 빠져요.', effect: { away: STAGES.serviceSwings, morale: -5 }, note: '{name}, 국군체육부대 입대. 전역 후 복귀를 다짐했다' }],
   },
   {
     id: 'retire-advice', kind: 'stage', title: '은퇴를 고민할 때', vars: name, every: STAGES.adviseEvery,
-    text: '몸이 예전 같지 않아요. 주변에서 은퇴를 이야기하기 시작했어요.',
+    text: '회복에 걸리는 시간이 눈에 띄게 길어졌어요. 기자회견마다 은퇴 질문이 나와요.',
     when: (s, c) => pro(s) && c.age < STAGES.forced && (c.age >= STAGES.adviseAlways
       || (c.age >= STAGES.adviseFrom && s.user.peak - c.ovr >= STAGES.adviseDrop && (c.rank === null || c.rank > STAGES.adviseRank))),
     options: [
-      { id: 'retire', label: '라켓을 내려놓는다', detail: '커리어를 마무리하고 기록을 남겨요.', effect: { stage: 'retired' } },
+      { id: 'retire', label: '라켓을 내려놓는다', detail: '마지막 대회를 고르고 투어에 작별 인사를 해요.', effect: { stage: 'retired' } },
       { id: 'continue', label: '한 시즌 더 도전한다', detail: '아직 보여줄 게 남았어요.', effect: { morale: 2 } },
     ],
   },

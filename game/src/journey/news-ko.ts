@@ -74,7 +74,7 @@ export const TEMPLATES: readonly Template[] = [
   {
     id: 'slump', tone: 'bad', when: (f) => f.lost >= 3 && f.won <= 1,
     news: ['{name}, {won}승 {lost}패… 깊어지는 부진', '{name}, 이번 구간 승리를 거의 챙기지 못했다'],
-    comments: ['요즘 왜 이러냐', '멘탈 코치 붙여라', '1회전 탈락 모음집 만들 기세', '{short} 믿어보자 / 그 믿음 {lost}패째', '폼은 일시적, 클래스는 영원하다… 맞지?'],
+    comments: ['요즘 왜 이러냐', '멘탈 코치 붙여라', '1회전 탈락 모음집 만들 기세', '바닥 찍었으면 이제 올라갈 일만 남았다'],
   },
   {
     id: 'junior', tone: 'plain', when: (f) => f.junior,

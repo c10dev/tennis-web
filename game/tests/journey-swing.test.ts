@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { candidates } from '../src/journey/ratings.ts';
+import { junior } from './journey-helpers.ts';
 import { newJourney } from '../src/journey/start.ts';
 import { answerAll } from '../src/journey/autoplay.ts';
 import { advanceSwing } from '../src/journey/swing.ts';
 import type { JourneyState, Plan } from '../src/journey/types.ts';
 import { total } from '../src/journey/ranking.ts';
 
-const start = (seed = 1) => newJourney({ seed, player: candidates(seed, { name: '김테니', nation: 'KOR', style: 'baseliner' })[0]!, hand: 'right', focus: ['forehand'] });
+const start = (seed = 1) => newJourney({ seed, player: junior('김테니', 'baseliner'), hand: 'right', focus: ['forehand'] });
 const plan: Plan = { load: 'normal', focus: ['forehand', 'serve'] };
 
 describe('journey swing', () => {
