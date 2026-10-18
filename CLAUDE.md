@@ -47,7 +47,7 @@ GDD.md     game design doc
 2. Determinism: never use `Math.random()` or `Date.now()` in engine or game. Inject a seeded RNG. Same seed + input = identical events.
 3. Engine work is test-first: write failing Vitest test, then implement.
 4. Keep files small (~200 lines max) and functions focused. Prefer pure functions.
-5. All tuning constants live in `engine/src/tuning.ts`, `game/src/tuning.ts` and `renderer/src/tuning/`.
+5. All tuning constants live in `engine/src/tuning.ts`, `game/src/tuning.ts`, `game/src/journey/tuning.ts` and `renderer/src/tuning/`.
 6. Event schema changes: update types, bump `schemaVersion`, note in decisions.md.
 7. Log notable decisions in `docs/decisions.md` (ADR format).
 8. Log shortcuts/known issues in `docs/tech-debt.md` instead of leaving silent TODOs.
