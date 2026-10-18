@@ -33,7 +33,8 @@
     "season": "tsx game/cli/season.ts",
     "quick": "tsx game/cli/quick.ts",
     "test:quick": "vitest run --project quick",
-    "shots": "tsx e2e/shots/sheets.ts"
+    "shots": "tsx e2e/shots/sheets.ts",
+    "motion": "tsx renderer/cli/motion-report.ts"
   },
   "devDependencies": {
     "@apps-in-toss/devtools": "3.7.0",
