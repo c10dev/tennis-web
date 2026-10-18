@@ -63,7 +63,7 @@ stats('racket-head height, no stroke or reaction', carry);
 console.log(`\nCarry p5: ${fmt(quantile(carry, 0.05))} m.`);
 const toss = timelines.flatMap((tl) => ids.flatMap((id) => tossGaps(model, tl, id, secs)));
 head(['what', 'n', 'p50', 'p95', 'max']);
-stats('free hand to ball, toss release', toss);
+stats('free hand to ball, toss start and release (A3 < 0.10)', toss);
 
 // TV sizes.
 const ready = heldPlayers(sofar[0]!, null, 0.4);

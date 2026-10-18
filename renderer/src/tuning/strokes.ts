@@ -27,8 +27,10 @@ export const STROKE = {
   /** Either side of contact, the keyed racket bends onto the ball (as A1's contactBlend). */
   contactBlendSec: 0.16,
   /** Serve: the hop that lifts a body too short for the toss (rule: what reach lacks, within hopMax), its rise and
-   * fall, and a wider bend onto the ball, so the racket's fastest frame stays under 0.7 m. */
-  serve: { hopMax: 0.55, riseSec: 0.28, fallSec: 0.32, contactBlendSec: 0.26 },
+   * fall, and a wider bend onto the ball, so the racket's fastest frame stays under 0.7 m. The serve starts `preTossSec`
+   * before the toss (blending in, so the free hand holds the ball when it appears) and the free hand lets the ball go
+   * over `letGoSec` after the release (ADR-031 A3). */
+  serve: { hopMax: 0.55, riseSec: 0.28, fallSec: 0.32, contactBlendSec: 0.26, preTossSec: 0.3, letGoSec: 0.15 },
   /** Feet planted for the stroke, from contact: in over [in0, in1], held to hold, out by out (seconds; a serve's feet
    * plant from the toss). Positions are the stance below, placed in the frame the player has at contact. */
   plant: { in0: -0.2, in1: -0.08, hold: 0.15, out: 0.32, serveIn: -0.9 },

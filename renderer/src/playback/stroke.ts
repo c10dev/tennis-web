@@ -2,9 +2,10 @@
 // between key poses timed from the shot events. Pure and closed-form; the rig solves the targets onto bones.
 import type { PlayerId, ShotEvent, Vec2, Vec3 } from '@tennis/engine';
 import { lerp, smoothstep } from '../math.ts';
-import { PLAYBACK, PLAYER_RIG, STROKE, STROKE_KEYS, type StrokeKey } from '../tuning/index.ts';
+import { BALL, PLAYBACK, PLAYER_RIG, STROKE, STROKE_KEYS, type StrokeKey } from '../tuning/index.ts';
 import type { SwingKind } from './pose.ts';
-import { segmentAt, type Timeline } from './timeline.ts';
+import { segmentAt, type PointSegment, type Timeline } from './timeline.ts';
+import { tossPosition } from './trajectory.ts';
 
 type V3 = { x: number; y: number; z: number };
 
@@ -72,10 +73,10 @@ function sample(keys: readonly StrokeKey[], times: number[], tau: number): Effec
   return blend(keys.at(-1)!, keys.at(-1)!, 0);
 }
 
-/** When this shot's stroke starts: the toss for a serve; otherwise the lead-in, not before the incoming contact plus a reaction. */
+/** When this shot's stroke starts: just before the toss for a serve; otherwise the lead-in, not before the incoming contact plus a reaction. */
 function leadStart(shots: ShotEvent[], i: number): number {
   const s = shots[i]!;
-  if (s.shot === 'serve') return s.t - PLAYBACK.tossLeadSec;
+  if (s.shot === 'serve') return s.t - PLAYBACK.tossLeadSec - STROKE.serve.preTossSec;
   const before = shots[i - 1];
   return Math.max(s.t - STROKE.leadSec, before ? before.t + STROKE.reactionSec : -Infinity);
 }
@@ -101,7 +102,13 @@ export function serveHop(contactHeight: number, standingReach: number): number {
 }
 
 export function strokeAt(timeline: Timeline, id: PlayerId, t: number, pos: Vec2, facing: Vec2): StrokePose | null {
-  const seg = timeline.segments[segmentAt(timeline, t)]!;
+  const index = segmentAt(timeline, t);
+  // A serve starts just before its point does (A3), in the walk after the point before.
+  const next = timeline.segments[index + 1];
+  return strokeIn(timeline.segments[index]!, id, t, pos, facing) ?? (next ? strokeIn(next, id, t, pos, facing) : null);
+}
+
+function strokeIn(seg: PointSegment, id: PlayerId, t: number, pos: Vec2, facing: Vec2): StrokePose | null {
   const tau = t - seg.zero;
   const shots = seg.point.shots;
   for (let i = 0; i < shots.length; i++) {
@@ -115,17 +122,30 @@ export function strokeAt(timeline: Timeline, id: PlayerId, t: number, pos: Vec2,
     const times = keys.map((key) => s.t + key.at);
     // Groundstrokes: the first key moves to the lead-in start, never past the backswing.
     if (kind !== 'serve') times[0] = Math.min(start, times[1]!);
-    const weight = smoothstep((tau - start) / STROKE.blendInSec) * (1 - smoothstep((tau - s.t - STROKE.blendOut.fromSec) / (STROKE.blendOut.toSec - STROKE.blendOut.fromSec)));
+    const blendIn = kind === 'serve' ? STROKE.serve.preTossSec : STROKE.blendInSec;
+    const weight = smoothstep((tau - start) / blendIn) * (1 - smoothstep((tau - s.t - STROKE.blendOut.fromSec) / (STROKE.blendOut.toSec - STROKE.blendOut.fromSec)));
     const hopPeak = kind === 'serve' ? serveHop(s.from.z, PLAYER_RIG.standingReach) : 0;
     const { riseSec, fallSec } = STROKE.serve;
     const hop = hopPeak * (tau < s.t ? smoothstep(1 - (s.t - tau) / riseSec) : smoothstep(1 - (tau - s.t) / fallSec));
     const contact = toLocal(s.from, pos, facing);
+    const keyed = sample(keys, times, tau);
     return {
-      kind, weight, keys: sample(keys, times, tau), contact, plant: plantAt(s, kind, tau), lunge: kind === 'serve' ? NO_LUNGE : lungeFor(contact),
+      kind, weight, keys: kind === 'serve' ? holdingBall(keyed, s, tau, pos, facing) : keyed, contact, plant: plantAt(s, kind, tau),
+      lunge: kind === 'serve' ? NO_LUNGE : lungeFor(contact),
       contactWeight: smoothstep(1 - Math.abs(tau - s.t) / (kind === 'serve' ? STROKE.serve.contactBlendSec : STROKE.contactBlendSec)), hop, keyTimes: times,
     };
   }
   return null;
+}
+
+/** The serve's free hand under the ball (A3): on it until the release, letting go over `letGoSec` after. */
+function holdingBall(keys: Effectors, s: ShotEvent, tau: number, pos: Vec2, facing: Vec2): Effectors {
+  const T = PLAYBACK.tossLeadSec;
+  const u = (tau - (s.t - T)) / T;
+  const held = 1 - smoothstep((u - BALL.toss.releaseShare) * T / STROKE.serve.letGoSec);
+  if (held <= 0) return keys;
+  const ball = toLocal(tossPosition(s, Math.max(0, Math.min(1, u))), pos, facing);
+  return { ...keys, free: mix(keys.free, { x: ball.x, y: ball.y - BALL.toss.palm, z: ball.z }, held) };
 }
 
 /** The stroke's stance placed in the frame the player has at contact: at `hitterPos`, facing where the shot goes. */

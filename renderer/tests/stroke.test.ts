@@ -21,8 +21,15 @@ describe('stroke planner', () => {
         expect(pose.stroke?.kind).toBe(s.shot === 'serve' ? 'serve' : (s.wing ?? 'forehand'));
         checked++;
       }
-      // Before the toss nobody strokes.
-      for (const id of ['A', 'B'] as PlayerId[]) expect(playerPose(tl, id, seg.start - 0.05).stroke).toBeNull();
+      // Before the toss only the server moves (to hold the ball, ADR-031 A3), and not before preTossSec.
+      const server = seg.point.shots[0]!.hitter;
+      for (const id of ['A', 'B'] as PlayerId[]) {
+        const early = playerPose(tl, id, seg.start - STROKE.serve.preTossSec - 0.05).stroke;
+        const late = playerPose(tl, id, seg.start - 0.05).stroke;
+        if (early) expect(early.kind).not.toBe('serve');
+        if (id === server) expect(late?.kind).toBe('serve');
+        else expect(late).toBeNull();
+      }
     }
     expect(checked).toBeGreaterThan(100);
   });

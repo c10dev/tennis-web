@@ -63,7 +63,7 @@ describe('motion continuity (M8 targets)', () => {
     for (const s of free) expect(s.racketLocal, `at ${s.t.toFixed(3)} s`).toBeLessThan(0.15);
   });
 
-  it.fails('A3: the serve toss leaves the free hand (under 0.10 m at release)', () => {
+  it('A3: the serve toss leaves the free hand (under 0.10 m from the toss to the release)', () => {
     const gaps = timelines.flatMap((tl) => ids.flatMap((id) => tossGaps(model, tl, id, SECS)));
     expect(gaps.length).toBeGreaterThan(50);
     expect(Math.max(...gaps)).toBeLessThan(0.1);

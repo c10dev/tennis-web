@@ -7,7 +7,7 @@ import type { Timeline } from '../../src/playback/timeline.ts';
 import { toThree } from '../../src/scene/coords.ts';
 import { GltfRig } from '../../src/scene/gltfRig.ts';
 import type { PlayerModel } from '../../src/scene/playerModel.ts';
-import { PLAYBACK } from '../../src/tuning/index.ts';
+import { BALL, PLAYBACK } from '../../src/tuning/index.ts';
 import type { TellStance } from '../../src/playback/hold.ts';
 import { FPS, holdFrames, measure, sampleFrames, type Phase, type Sample } from './probe.ts';
 
@@ -72,18 +72,20 @@ export function footSlips(s: readonly Sample[]): { kind: SlipKind; d: number }[]
 export const carryHeights = (s: readonly Sample[]): number[] =>
   s.filter((x) => x.phase !== 'hold' && !(x.pose.stroke && x.pose.stroke.weight > 0) && x.pose.reactionWeight === 0).map((x) => x.racket.y);
 
-/** Free hand to ball (metres) one frame into each of `id`'s serve tosses before `until` replay seconds. */
+/** Free hand to ball (metres) one frame into each of `id`'s serve tosses before `until` replay seconds, and one frame
+ *  before the ball leaves the hand (BALL.toss.releaseShare). */
 export function tossGaps(model: PlayerModel, tl: Timeline, id: PlayerId, until: number): number[] {
   const rig = new GltfRig(model);
   const out: number[] = [];
   for (const seg of tl.segments) {
     for (const s of seg.point.shots) {
-      const t = seg.zero + s.t - PLAYBACK.tossLeadSec + 1 / FPS;
-      if (s.hitter !== id || s.shot !== 'serve' || t >= until) continue;
-      const frame = matchFrameAt(tl, t);
-      if (!frame.ball) continue;
-      const hand = measure(rig, { t, pose: frame.players[id], phase: 'play' }).freeHand;
-      out.push(hand.distanceTo(toThree(frame.ball)));
+      const toss = seg.zero + s.t - PLAYBACK.tossLeadSec;
+      if (s.hitter !== id || s.shot !== 'serve' || toss >= until) continue;
+      for (const t of [toss + 1 / FPS, toss + BALL.toss.releaseShare * PLAYBACK.tossLeadSec - 1 / FPS]) {
+        const frame = matchFrameAt(tl, t);
+        if (!frame.ball) continue;
+        out.push(measure(rig, { t, pose: frame.players[id], phase: 'play' }).freeHand.distanceTo(toThree(frame.ball)));
+      }
     }
   }
   return out;

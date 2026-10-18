@@ -1466,4 +1466,10 @@ Format: one entry per decision, newest at the bottom.
   strokes). Measured: racket-head height between strokes p50 / p95 1.12 / 1.53 → 0.83 / 1.13 m; the racket in the
   player's frame between strokes max 0.70 → 0.13 m a frame. A quick turn to the ball still swings it 0.19 m a frame
   in the world, with the body.
+- **A3, the toss (2026-10-18):** `tossPosition` holds the ball in the free hand in front of the server and to their
+  left (`BALL.toss`: 0.35 m forward, 0.22 m left, 1.0 m up), lifts it with the hand to 1.65 m over the first 30 % of
+  the toss (speeding up, as an arm does), then flies it onto the contact point (peak about 0.15 m above it). The
+  serve's stroke starts 0.3 s before the toss (`STROKE.serve.preTossSec`, in the walk after the point before, so
+  `strokeAt` also looks at the next segment), and its free-hand key sits under the ball until the release, letting go
+  over 0.15 s. Hand to ball at the toss's start and release: 0.79 m → 0.06 m (the palm).
 

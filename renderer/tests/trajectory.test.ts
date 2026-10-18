@@ -64,16 +64,37 @@ describe('gravityArc', () => {
   });
 });
 
-describe('tossPosition', () => {
-  it('rises from the hand above the contact point and comes down onto it at contact', () => {
-    const serve = shots.find((s) => s.shot === 'serve')!;
+describe('tossPosition (ADR-031 A3)', () => {
+  const serve = shots.find((s) => s.shot === 'serve')!;
+  const net = { x: 0, y: -Math.sign(serve.hitterPos.y) };
+  const left = { x: -net.y, y: net.x };
+
+  it('starts in the server’s free hand: in front, to the left, at the hold height', () => {
     const start = tossPosition(serve, 0);
-    expect(start.z).toBeCloseTo(BALL.tossStartHeight, 9);
+    const dx = start.x - serve.hitterPos.x;
+    const dy = start.y - serve.hitterPos.y;
+    expect(dx * net.x + dy * net.y).toBeCloseTo(BALL.toss.hold.forward, 9);
+    expect(dx * left.x + dy * left.y).toBeCloseTo(BALL.toss.hold.left, 9);
+    expect(start.z).toBeCloseTo(BALL.toss.hold.height, 9);
+  });
+
+  it('is lifted in the hand to the release, then flies up and comes down onto the contact point', () => {
+    const r = BALL.toss.releaseShare;
+    expect(tossPosition(serve, r).z).toBeCloseTo(BALL.toss.releaseHeight, 9);
     const end = tossPosition(serve, 1);
-    expect(end.x).toBe(serve.from.x);
-    expect(end.y).toBe(serve.from.y);
+    expect(end.x).toBeCloseTo(serve.from.x, 9);
+    expect(end.y).toBeCloseTo(serve.from.y, 9);
     expect(end.z).toBeCloseTo(serve.from.z, 9);
-    const peak = Math.max(...Array.from({ length: 21 }, (_, k) => tossPosition(serve, k / 20).z));
+    const peak = Math.max(...Array.from({ length: 41 }, (_, k) => tossPosition(serve, k / 40).z));
     expect(peak).toBeGreaterThan(serve.from.z);
+  });
+
+  it('never jumps', () => {
+    let prev = tossPosition(serve, 0);
+    for (let k = 1; k <= 60; k++) {
+      const p = tossPosition(serve, k / 60);
+      expect(Math.hypot(p.x - prev.x, p.y - prev.y, p.z - prev.z)).toBeLessThan(0.12);
+      prev = p;
+    }
   });
 });

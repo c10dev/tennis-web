@@ -35,8 +35,19 @@ export function gravityArc(z0: number, z1: number, T: number, dt: number): numbe
   return z0 + vz * dt - (BALL.gravity * dt * dt) / 2;
 }
 
-/** Serve toss at fraction u (0–1) of the toss lead: up from the hand, down onto the contact point. */
+/** Serve toss at fraction u (0–1) of the toss lead (ADR-031 A3): in the free hand in front of the server, lifted to the
+ *  release (speeding up as an arm does), then flown onto the contact point. */
 export function tossPosition(serve: ShotEvent, u: number): Vec3 {
-  const T = PLAYBACK.tossLeadSec;
-  return { x: serve.from.x, y: serve.from.y, z: gravityArc(BALL.tossStartHeight, serve.from.z, T, u * T) };
+  const B = BALL.toss;
+  // The server faces the net: (0, net); their left is (−net, 0).
+  const net = -Math.sign(serve.hitterPos.y) || 1;
+  const hold = { x: serve.hitterPos.x - net * B.hold.left, y: serve.hitterPos.y + net * B.hold.forward };
+  if (u <= B.releaseShare) {
+    const k = Math.max(0, u / B.releaseShare);
+    return { ...hold, z: B.hold.height + (B.releaseHeight - B.hold.height) * k * k };
+  }
+  const T = (1 - B.releaseShare) * PLAYBACK.tossLeadSec;
+  const dt = (u - B.releaseShare) * PLAYBACK.tossLeadSec;
+  const w = dt / T;
+  return { x: hold.x + (serve.from.x - hold.x) * w, y: hold.y + (serve.from.y - hold.y) * w, z: gravityArc(B.releaseHeight, serve.from.z, T, dt) };
 }

@@ -21,8 +21,10 @@ export const NET = { centerHeight: 0.914, postHeight: 1.07 } as const;
 export const BALL = {
   radius: 0.0335,
   gravity: 9.81,
-  /** Height of the tossing hand when a serve's toss starts. */
-  tossStartHeight: 1.1,
+  /** A serve's toss (ADR-031 A3): held in the free hand in front of the server (metres forward of them, to their left,
+   *  up) when the toss starts, lifted in the hand to `releaseHeight` over the first `releaseShare` of the toss, then
+   *  flown onto the contact point. `palm`: the ball sits this far above the hand joint. */
+  toss: { hold: { forward: 0.35, left: 0.22, height: 1.0 }, releaseHeight: 1.65, releaseShare: 0.3, palm: 0.06 },
   /** A ball that ends a rally (or a fault) stays visible this long after it lands or hits the net. */
   rollSec: 0.8,
   /** Share of the flight's ground speed kept after the last bounce. */
