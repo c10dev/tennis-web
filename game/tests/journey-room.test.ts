@@ -80,6 +80,8 @@ describe('room report', () => {
     expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
     expect(rep.meetings.length).toBeGreaterThanOrEqual(2);
     for (const m of rep.meetings) expect(m.winner).not.toBe(m.loser);
+    expect(rep.meetings.some((m) => m.where === '룸 컵 결승')).toBe(true);
+    for (const m of rep.meetings) expect(m.where).not.toContain('준우승');
     expect(rep.cupWinner).not.toBeNull();
     expect(rep.feed[0]).toContain('룸 컵 우승');
     for (const line of rep.feed) expect(line).not.toMatch(/undefined|NaN/);

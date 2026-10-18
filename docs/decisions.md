@@ -1611,3 +1611,8 @@ Format: one entry per decision, newest at the bottom.
 - **Deployed (2026-10-19):** `https://tennis-rooms.chaehy5665.workers.dev` (account "Chaehy5665@naver.com's Account",
   46 KB upload). `ui/.env.production` points the production web build at it; two isolated browsers played a swing
   through it and reached the same report.
+- **The web app (2026-10-19):** `https://rally-tour.chaehy5665.workers.dev`, the built site served as static assets by
+  a Worker (`deploy/web/wrangler.jsonc`, `npm run web:deploy`). The user asked for Cloudflare Pages; wrangler 4.149
+  creates new Pages projects as Workers with static assets, Cloudflare's replacement for Pages, with the same kind of
+  link and free tier. Two isolated browsers made a room through the link, joined it by code, played a swing and
+  saw the same room page.

@@ -1,6 +1,5 @@
 // The room's page after a swing (ADR-033): who leads among friends, every match they played against each other, the
 // swing's best player and the cup. Korean only (TD-080).
-import { reached } from './facts.ts';
 import { ovr } from './ratings.ts';
 import { rankOf } from './ranking.ts';
 import type { MatchLine, RoomState, SwingReport } from './types.ts';
@@ -38,7 +37,8 @@ export interface RoomReport {
   feed: string[];
 }
 
-const roundName = (round: number, rounds: number, champion: boolean) => reached({ champion, roundsWon: round - 1, rounds });
+/** The round a match was played in: "결승", "4강", "16강"… */
+const roundName = (round: number, rounds: number) => (round >= rounds ? '결승' : `${2 ** (rounds - round + 1)}강`);
 
 export function roomReport(room: RoomState, reports: Readonly<Record<string, SwingReport>>): RoomReport {
   const name = (id: string) => room.humans[id]?.user.player.name ?? id;
@@ -63,8 +63,8 @@ export function roomReport(room: RoomState, reports: Readonly<Record<string, Swi
   };
   const cupRounds = Math.max(0, ...Object.values(reports).flatMap((r) => r.cup?.matches.map((m) => m.round) ?? []));
   for (const [id, r] of Object.entries(reports)) {
-    for (const e of r.events) for (const m of e.matches) meet(id, m, `${e.name} ${roundName(m.round, e.rounds, false)}`);
-    for (const m of r.cup?.matches ?? []) meet(id, m, `룸 컵 ${roundName(m.round, cupRounds, false)}`);
+    for (const e of r.events) for (const m of e.matches) meet(id, m, `${e.name} ${roundName(m.round, e.rounds)}`);
+    for (const m of r.cup?.matches ?? []) meet(id, m, `룸 컵 ${roundName(m.round, cupRounds)}`);
   }
 
   const earned = Object.entries(reports).map(([id, r]) => ({ id, name: name(id), points: r.events.reduce((a, e) => a + e.points, 0) }))

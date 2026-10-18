@@ -1,0 +1,7 @@
+{
+  // The web app (ADR-034): the built site (`npm run build` into dist/) served as static assets by a Worker, the way
+  // Cloudflare now hosts what used to be Pages. `npm run web:deploy` builds and uploads it.
+  "name": "rally-tour",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "../../dist" }
+}

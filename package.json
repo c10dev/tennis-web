@@ -37,6 +37,7 @@
     "room": "tsx game/cli/room.ts",
     "server:dev": "wrangler dev --config server/wrangler.jsonc --port 8787",
     "server:deploy": "wrangler deploy --config server/wrangler.jsonc",
+    "web:deploy": "vite build && wrangler deploy --config deploy/web/wrangler.jsonc",
     "server:types": "wrangler types --config server/wrangler.jsonc server/worker-configuration.d.ts",
     "test:journey": "vitest run --project journey",
     "test:quick": "vitest run --project quick",

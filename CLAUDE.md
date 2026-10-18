@@ -29,6 +29,7 @@ npm run journey -- --n 300 --seed 1 # long solo career reference batch (ADR-032)
 npm run test:e2e     # Playwright (Chromium) against the dev page; not part of npm test (E2E_CLOUD=1 adds the room server)
 npm run server:dev   # the room server (Cloudflare Worker, ADR-034) on :8787 with wrangler dev; VITE_ROOM_SERVER=http://localhost:8787 npm run dev uses it
 npm run server:deploy # deploy the room server (needs wrangler login); live at https://tennis-rooms.chaehy5665.workers.dev
+npm run web:deploy   # build and deploy the web app; live at https://rally-tour.chaehy5665.workers.dev
 npm run sim -- --n 10000 --seed 42 --surface hard   # batch sim stats report
 npm run sim -- --fingerprint --seed 42 --surface clay   # hash to compare with the replay page
 npm run -s sim -- --replay --seed 42 --surface clay > replay.json   # replay JSON for the page's loader
@@ -44,6 +45,7 @@ renderer/  src/{playback,broadcast,scene,camera,overlay,audio,tuning/,viewer.ts}
 ui/        index.html src/{career,quick,replay,lib,storage,platform}   (Vite root)
 e2e/       Playwright specs (playwright.config.ts at the root)
 server/    the room server: Worker + Durable Object (src/{index,room-object,handler}.ts), wrangler.jsonc, tests/
+deploy/web/ wrangler.jsonc for the web app (static assets from dist/)
 docs/      journey-design.md (M9 season rooms), presentation-spec.md (current presentation rules), decisions.md, tech-debt.md, casual-design.md (2026-10-13 design brief, newer than the GDD), 3d-redesign.md, m6-workstreams.md
 GDD.md     game design doc
 ```
