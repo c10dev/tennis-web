@@ -1,6 +1,8 @@
-// Who this device is and which room it is in (ADR-033). On the web build the room server is this browser's storage
-// until Supabase lands (R8); `?as=<id>` makes a tab act as another member (development and e2e).
+// Who this device is and which room it is in (ADR-033). Practice seasons stay in this browser; rooms with friends use
+// the Cloudflare room server when the build has one (VITE_ROOM_SERVER), else this browser too. `?as=<id>` makes a tab
+// act as another member (dev builds only, for development and e2e).
 import { RoomClient, type RoomServer, type Submission } from '@tennis/game';
+import { CloudRoomServer } from './cloud-server.ts';
 import { LocalRoomServer } from './local-server.ts';
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -23,9 +25,12 @@ function randomId(): string {
   return [...bytes].map((b) => b.toString(36).padStart(2, '0')).join('').slice(0, 10);
 }
 
-/** This device's member id: `?as=` first, then a stored one, else a new one. */
+/** `?as=<id>`: act as another member (dev builds only: its token is predictable). */
+const devAs = (): string | null => (import.meta.env.DEV ? new URLSearchParams(location.search).get('as') : null);
+
+/** This device's member id: `?as=` first (dev), then a stored one, else a new one. */
 export function me(): string {
-  const as = new URLSearchParams(location.search).get('as');
+  const as = devAs();
   if (as) return as;
   let id = store.getItem('journey:me');
   if (!id) {
@@ -41,15 +46,50 @@ export const randomSeed = (): number => {
   return a[0]! >>> 1;
 };
 
-let server: RoomServer | null = null;
-export function roomServer(): RoomServer {
-  server ??= new LocalRoomServer(store, me());
-  return server;
+export type ServerKind = 'local' | 'cloud';
+
+/** The room server's address (VITE_ROOM_SERVER at build time); `?server=local` keeps rooms in this browser. */
+const CLOUD = (import.meta.env.VITE_ROOM_SERVER as string | undefined) ?? '';
+export const roomsKind = (): ServerKind => (CLOUD && new URLSearchParams(location.search).get('server') !== 'local' ? 'cloud' : 'local');
+
+/** This device's secret for the room server (with `?as=`, a fixed one per test member). */
+function token(): string {
+  const as = devAs();
+  if (as) return `dev-token-${as}`.padEnd(20, '0');
+  let t = store.getItem('journey:token');
+  if (!t) {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    t = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+    store.setItem('journey:token', t);
+  }
+  return t;
+}
+
+const servers = new Map<ServerKind, RoomServer>();
+export function roomServer(kind: ServerKind = activeKind() ?? roomsKind()): RoomServer {
+  let s = servers.get(kind);
+  if (!s) {
+    s = kind === 'cloud' ? new CloudRoomServer(CLOUD, me(), token()) : new LocalRoomServer(store, me());
+    servers.set(kind, s);
+  }
+  return s;
 }
 
 const ACTIVE = () => `journey:active:${me()}`;
-export const activeRoom = (): string | null => store.getItem(ACTIVE());
-export const setActiveRoom = (code: string | null): void => (code ? store.setItem(ACTIVE(), code) : store.removeItem(ACTIVE()));
+interface Active {
+  code: string;
+  kind: ServerKind;
+}
+function readActive(): Active | null {
+  const text = store.getItem(ACTIVE());
+  if (!text) return null;
+  return text.startsWith('{') ? (JSON.parse(text) as Active) : { code: text, kind: 'local' };
+}
+export const activeRoom = (): string | null => readActive()?.code ?? null;
+export const activeKind = (): ServerKind | null => readActive()?.kind ?? null;
+export const setActiveRoom = (code: string | null, kind: ServerKind = 'local'): void =>
+  (code ? store.setItem(ACTIVE(), JSON.stringify({ code, kind })) : store.removeItem(ACTIVE()));
 
 const clients = new Map<string, RoomClient>();
 export function clientFor(code: string): RoomClient {

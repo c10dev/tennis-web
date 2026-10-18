@@ -6,6 +6,10 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.E2E_PORT ?? 5179);
 const TOSS_PORT = PORT + 1;
 const desktop = { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 720 } };
+// E2E_CLOUD=1 also runs the room server (ADR-033) with `wrangler dev` and a page built against it.
+const CLOUD = process.env.E2E_CLOUD === '1';
+const CLOUD_PORT = PORT + 2;
+const WORKER_PORT = PORT + 3;
 
 export default defineConfig({
   testDir: 'e2e',
@@ -14,7 +18,8 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: `http://localhost:${PORT}`, viewport: { width: 1280, height: 720 } },
   projects: [
-    { name: 'chromium', testIgnore: /(toss|mobile)\.spec\.ts/, use: desktop },
+    { name: 'chromium', testIgnore: /(toss|mobile|cloud)\.spec\.ts/, use: desktop },
+    ...(CLOUD ? [{ name: 'cloud', testMatch: /cloud\.spec\.ts/, use: { ...desktop, baseURL: `http://localhost:${CLOUD_PORT}` } }] : []),
     { name: 'toss', testMatch: /toss\.spec\.ts/, use: { ...desktop, baseURL: `http://localhost:${TOSS_PORT}` } },
     // A phone in portrait with touch (M7 step 4) on the toss build.
     { name: 'mobile', testMatch: /mobile\.spec\.ts/, use: { ...devices['Pixel 7'], baseURL: `http://localhost:${TOSS_PORT}` } },
@@ -22,5 +27,9 @@ export default defineConfig({
   webServer: [
     { command: `npx vite --port ${PORT} --strictPort`, url: `http://localhost:${PORT}`, reuseExistingServer: false },
     { command: `AIT_PANEL=0 npx vite --mode toss --port ${TOSS_PORT} --strictPort`, url: `http://localhost:${TOSS_PORT}`, reuseExistingServer: false },
+    ...(CLOUD ? [
+      { command: `npx wrangler dev --config server/wrangler.jsonc --port ${WORKER_PORT}`, url: `http://localhost:${WORKER_PORT}/rooms/AAAAAA`, reuseExistingServer: false, timeout: 120_000 },
+      { command: `VITE_ROOM_SERVER=http://localhost:${WORKER_PORT} npx vite --port ${CLOUD_PORT} --strictPort`, url: `http://localhost:${CLOUD_PORT}`, reuseExistingServer: false },
+    ] : []),
   ],
 });

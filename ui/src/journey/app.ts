@@ -47,7 +47,9 @@ async function render(): Promise<void> {
   const mine = ++token;
   const route = currentRoute();
   if (route.name === 'play') {
-    go(await nextStop());
+    const stop = await nextStop();
+    // A newer render (a hash change or a room update) may have started meanwhile; only the latest one moves on.
+    if (mine === token) go(stop);
     return;
   }
   const fn = SCREENS[route.name] ?? startScreen;

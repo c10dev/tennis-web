@@ -5,7 +5,7 @@ import { h } from '../../lib/h.ts';
 import { go } from '../../lib/router.ts';
 import type { Screen } from '../app.ts';
 import { STYLE } from '../format.ts';
-import { randomSeed, roomServer, setActiveRoom } from '../session.ts';
+import { randomSeed, roomServer, roomsKind, setActiveRoom } from '../session.ts';
 
 const TALENTS = 10;
 const STYLES: JourneyStyle[] = ['big_server', 'baseliner', 'counter_puncher', 'all_court'];
@@ -51,15 +51,16 @@ export function createScreen(params: string[]): Screen {
       return;
     }
     const member: Omit<Member, 'id'> = { name: n, nation: nation.value as Nation, style, hand: hand.value as 'right' | 'left', talents: { ...talents }, focus };
-    const server = roomServer();
+    const kind = mode === 'practice' ? 'local' : roomsKind();
+    const server = roomServer(kind);
     try {
       if (mode === 'join') {
         await server.joinRoom(code, member);
-        setActiveRoom(code);
+        setActiveRoom(code, kind);
         go('#/lobby');
       } else {
         const info = await server.createRoom(member, randomSeed() || 1);
-        setActiveRoom(info.code);
+        setActiveRoom(info.code, kind);
         if (mode === 'practice') {
           await server.start(info.code);
           go('#/play');

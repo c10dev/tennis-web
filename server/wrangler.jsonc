@@ -1,0 +1,9 @@
+{
+  // The room server (ADR-033). `npx wrangler dev` runs it locally without an account; deploying needs `wrangler login`.
+  "name": "tennis-rooms",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "RoomObject" }] },
+  // Free plan: SQLite-backed Durable Objects only.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomObject"] }]
+}

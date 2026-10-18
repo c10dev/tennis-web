@@ -3,6 +3,8 @@
 // injected clock, so the game layer never reads one.
 import type { Submission } from './fold.ts';
 import type { Member } from './room.ts';
+import * as rules from './room-rules.ts';
+import { inviteCode } from './room-rules.ts';
 
 export interface RoomInfo {
   code: string;
@@ -41,25 +43,7 @@ export interface RoomServer {
   subscribe(code: string, onChange: () => void): () => void;
 }
 
-export const DEADLINE_MS = 12 * 60 * 60 * 1000;
-export const MAX_MEMBERS = 8;
-
-/** A six-character invite code from a number (no 0/O/1/I). */
-export function inviteCode(n: number): string {
-  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let out = '';
-  let v = Math.abs(Math.floor(n)) || 1;
-  for (let i = 0; i < 6; i++) {
-    out += abc[v % abc.length];
-    v = Math.floor(v / abc.length) + (i + 1) * 7919;
-  }
-  return out;
-}
-
-/** True when the swing can be played: everyone ready, or the deadline gone. */
-export function due(info: RoomInfo, subs: Readonly<Record<string, SubmissionRecord>>, now: number): boolean {
-  return info.members.every((m) => subs[m.id]?.ready) || now >= info.openedAt + info.deadlineMs;
-}
+export { DEADLINE_MS, due, inviteCode, MAX_MEMBERS } from './room-rules.ts';
 
 /** An in-memory server for tests: several "devices" share one, each with its own user id. */
 export class MemoryRoomServer {
@@ -104,42 +88,31 @@ export class MemoryRoomServer {
   }
 
   private create(host: Member, seed: number): RoomInfo {
-    const code = inviteCode(seed * 31 + this.next++);
-    return this.save({ code, host: host.id, seed, phase: 'lobby', members: [host], swing: 0, openedAt: this.clock(), deadlineMs: DEADLINE_MS, hashes: {} });
+    return this.save(rules.newRoom(inviteCode(seed * 31 + this.next++), host, seed, this.clock()));
   }
 
   private join(code: string, m: Member): RoomInfo {
-    const r = this.get(code);
-    if (r.phase !== 'lobby') throw new Error('The season has started');
-    if (r.members.some((x) => x.id === m.id)) return r;
-    if (r.members.length >= MAX_MEMBERS) throw new Error('The room is full');
-    return this.save({ ...r, members: [...r.members, m] });
+    return this.save(rules.join(this.get(code), m));
   }
 
   private begin(code: string, userId: string): RoomInfo {
-    const r = this.get(code);
-    if (r.host !== userId) throw new Error('Only the host starts the season');
-    return this.save({ ...r, phase: 'season', openedAt: this.clock() });
+    return this.save(rules.start(this.get(code), userId, this.clock()));
   }
 
   private put(code: string, swing: number, userId: string, rec: SubmissionRecord): void {
     const r = this.get(code);
-    if (r.phase !== 'season' || swing !== r.swing) throw new Error('That swing is not open');
-    if (!r.members.some((m) => m.id === userId)) throw new Error('Not a member');
     const key = `${code}/${swing}`;
-    this.subs.set(key, { ...(this.subs.get(key) ?? {}), [userId]: structuredClone(rec) });
+    this.subs.set(key, rules.submit(r, this.subs.get(key) ?? {}, userId, swing, rec, rec.ready));
     this.save(r);
   }
 
   private move(code: string, swing: number): boolean {
-    const r = this.get(code);
-    if (r.phase !== 'season' || r.swing !== swing || !due(r, this.subs.get(`${code}/${swing}`) ?? {}, this.clock())) return false;
-    this.save({ ...r, swing: swing + 1, openedAt: this.clock() });
-    return true;
+    const next = rules.advance(this.get(code), this.subs.get(`${code}/${swing}`) ?? {}, swing, this.clock());
+    if (next) this.save(next);
+    return next !== null;
   }
 
   private hash(code: string, swing: number, userId: string, hash: string): void {
-    const r = this.get(code);
-    this.save({ ...r, hashes: { ...r.hashes, [swing]: { ...(r.hashes[swing] ?? {}), [userId]: hash } } });
+    this.save(rules.postHash(this.get(code), userId, swing, hash));
   }
 }

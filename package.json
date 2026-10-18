@@ -7,7 +7,8 @@
     "engine",
     "game",
     "renderer",
-    "ui"
+    "ui",
+    "server"
   ],
   "engines": {
     "node": ">=24"
@@ -18,13 +19,13 @@
     "build": "vite build",
     "build:toss": "vite build --mode toss && ait build",
     "preview": "vite preview",
-    "test": "vitest run --project engine --project game --project renderer --project ui",
+    "test": "vitest run --project engine --project game --project renderer --project ui --project server",
     "test:engine": "vitest run --project engine",
     "test:renderer": "vitest run --project renderer",
     "test:stats": "vitest run --project stats",
     "coverage": "vitest run --project engine --coverage",
     "sim": "tsx engine/cli/sim.ts",
-    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p game/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
+    "typecheck": "tsc -p engine/tsconfig.json --noEmit && tsc -p game/tsconfig.json --noEmit && tsc -p renderer/tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit",
     "lint": "eslint .",
     "test:e2e": "playwright test",
     "test:game": "vitest run --project game",
@@ -34,6 +35,9 @@
     "quick": "tsx game/cli/quick.ts",
     "journey": "tsx game/cli/journey.ts",
     "room": "tsx game/cli/room.ts",
+    "server:dev": "wrangler dev --config server/wrangler.jsonc --port 8787",
+    "server:deploy": "wrangler deploy --config server/wrangler.jsonc",
+    "server:types": "wrangler types --config server/wrangler.jsonc server/worker-configuration.d.ts",
     "test:journey": "vitest run --project journey",
     "test:quick": "vitest run --project quick",
     "shots": "tsx e2e/shots/sheets.ts",
@@ -50,6 +54,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
     "vite": "8.3.4",
-    "vitest": "5.0.4"
+    "vitest": "5.0.4",
+    "wrangler": "4.149.0"
   }
 }

@@ -21,7 +21,9 @@ export async function waitScreen(_params: string[], rerender: () => void): Promi
   }
   const subs = await roomServer().submissions(code, info.swing);
   if (!subs[(await roomServer().me())]?.ready) {
-    go('#/plan');
+    // Not ready for the open swing: either it was never sent, or another device has just played the swing this
+    // screen was waiting on. #/play shows that swing's report first, then the plan.
+    go('#/play');
     return { element: h('div') };
   }
   const unready = async () => {

@@ -34,6 +34,12 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'server',
+          include: ['server/tests/**/*.test.ts'],
+        },
+      },
+      {
+        test: {
           name: 'journey',
           include: ['game/tests/journey-*.slow.test.ts'],
           testTimeout: 600_000,

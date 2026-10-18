@@ -1589,3 +1589,22 @@ Format: one entry per decision, newest at the bottom.
 - **Consequences:** `JourneyState` holds several humans; `advanceSwing` takes a plan per human; human-vs-human matches
   run the engine. New dependency `@supabase/supabase-js` (approved). Server-side validation of plans is debt (clients
   are trusted). The career balance targets of ADR-032 become reference numbers for long rooms.
+
+## ADR-034: The room server runs on Cloudflare Workers and Durable Objects, not Supabase
+- **Date:** 2026-10-19
+- **Status:** Accepted
+- **Context:** ADR-033 planned Supabase for the lockstep room server. A new project in the user's paid organization
+  costs $10 a month, and free Supabase projects pause after a week without activity, which a game played a swing at a
+  time with friends would hit. The server only stores rooms, members and submissions, moves the swing pointer once
+  (everyone ready, or the deadline by server time) and tells devices that something changed.
+- **Decision:** a Worker (`server/`, workspace `@tennis/server`) routes `/rooms/:code/...` to one SQLite-backed Durable
+  Object per room, which the Workers Free plan includes. The room's rules are pure functions in
+  `game/src/journey/room-rules.ts`, shared with the in-memory and browser-storage servers; `RoomHandler` applies them
+  over a key-value store, so Node tests cover it without the Workers runtime. Devices send a member id and a secret
+  token; the room keeps the token's hash from the first call. Changes go out over hibernating websockets, with a slow
+  poll as a fallback. `wrangler` 4.149.0 is a pinned dev dependency (approved); `wrangler dev` needs no account,
+  deploying needs `wrangler login`. The web build uses the server when `VITE_ROOM_SERVER` is set; practice seasons stay
+  in the browser either way; `?server=local` keeps rooms local.
+- **Consequences:** no database to pay for or wake up; the same TypeScript could later replay swings on the server to
+  validate plans (TD-084). `npm run test:e2e` with `E2E_CLOUD=1` adds a project that runs the Worker with
+  `wrangler dev` and two isolated browser contexts. `?as=` works in dev builds only, since its token is predictable.

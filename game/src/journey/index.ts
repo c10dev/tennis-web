@@ -25,6 +25,8 @@ export type {
 } from './types.ts';
 export { answerChoices, fallbackPlan, fold, foldSwing, type Folded, type Submission, type SwingLog } from './fold.ts';
 export { DEADLINE_MS, due, inviteCode, MAX_MEMBERS, MemoryRoomServer, type RoomInfo, type RoomServer, type SubmissionRecord } from './server.ts';
+export * as roomRules from './room-rules.ts';
+export { RoomError } from './room-rules.ts';
 export { mismatches, RoomClient, type Synced } from './room-sync.ts';
 export { stateHash } from './room.ts';
 export { cupEvent } from './cup.ts';

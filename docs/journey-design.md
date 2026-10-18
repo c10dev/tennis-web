@@ -36,10 +36,11 @@
 - 큰 경기(메이저 4강·결승, 파이널스 결승, 친구끼리의 경기)는 엔진 이벤트로 텍스트 중계.
 - 피한다: 레퍼런스 게임의 문구·이벤트 소재를 옮기지 않는다(ADR-033).
 
-## 6. 서버 (lockstep)
-- Supabase: `rooms`(시드, 마감 시간, 현재 구간), `members`(닉네임, 선수 설정), `plans`(구간별 계획, 준비 여부), `swings`(진행 기록, 상태 해시). 익명 로그인.
-- 서버는 시뮬레이션하지 않는다. `advance_swing` RPC가 전원 준비 또는 마감을 서버 시각으로 판정해 구간을 원자적으로 넘긴다. 클라이언트는 계획 로그를 접어(fold) 상태를 만들고, 구간별 해시로 불일치를 감지한다.
-- 개발·e2e: `MemoryRoomServer`(테스트), `LocalRoomServer`(localStorage, 같은 브라우저 두 탭).
+## 6. 서버 (lockstep, ADR-034)
+- Cloudflare Worker + 방마다 하나의 Durable Object(SQLite, 무료 플랜). 방 기록, 참가자, 구간별 제출(계획·답·준비), 구간 포인터, 상태 해시를 둔다.
+- 서버는 시뮬레이션하지 않는다. `advance`가 전원 준비 또는 마감을 서버 시각으로 판정해 구간을 한 번만 넘긴다. 기기들은 제출 로그를 접어(fold) 상태를 만들고 구간별 해시로 불일치를 찾는다.
+- 신원: 기기마다 회원 id + 비밀 토큰(방은 해시만 보관). 변경은 웹소켓으로 알린다.
+- 연습 시즌은 언제나 브라우저 안(localStorage). 개발·e2e: `MemoryRoomServer`(테스트), `LocalRoomServer`(같은 브라우저 두 탭), `npm run server:dev`(wrangler dev).
 
 ## 7. 밸런스 목표 (`npm run room -- --n 200 --seed 1`)
 | 지표 | 목표 |

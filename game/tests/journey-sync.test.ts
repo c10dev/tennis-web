@@ -15,9 +15,9 @@ describe('room sync (lockstep)', () => {
     const info = await a!.createRoom(member('가나다', { serve: 10 }), 77);
     await b!.joinRoom(info.code, member('라마바', { return: 10 }));
     await c!.joinRoom(info.code, member('사아자', { mental: 10 }));
-    await expect(b!.start(info.code)).rejects.toThrow('host');
+    await expect(b!.start(info.code)).rejects.toThrow('방장');
     await a!.start(info.code);
-    await expect(c!.joinRoom(info.code, member('늦은이', {}))).rejects.toThrow('started');
+    await expect(server.as('u4').joinRoom(info.code, member('늦은이', {}))).rejects.toThrow('시작된');
     const clients = [a!, b!, c!].map((s) => new RoomClient(s, info.code));
 
     for (const client of clients) {
