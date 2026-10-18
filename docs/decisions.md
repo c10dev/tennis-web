@@ -1540,3 +1540,28 @@ Format: one entry per decision, newest at the bottom.
   from no tell / between cards / within a card 0.6 / 0.9 / 0.9 → 4.1 / 6.4 / 3.1 px, every phase A target still met.
   Next: the eye check on a phone (Q10), then C.
 
+
+## ADR-032: M9: pivot to a text career ("주니어에서 그랜드슬램까지"), 3D paused
+- **Date:** 2026-10-18
+- **Status:** Accepted
+- **Context:** The user paused the 3D work (M8 stops after phase B, ADR-031) and asked for a text game like kickru.com
+  ("벤치에서 발롱까지"): one player raised from youth to retirement, a season advanced with one button, life events and
+  offers between chunks, generated news and community comments, text commentary for big matches only, a career summary
+  at retirement. The 3D comes back later.
+- **Decision:** the user took every default of the M9 plan (`docs/journey-design.md`):
+  - One player's career from age 14 (juniors → futures and challengers → tour) to retirement at about 30–38.
+  - A year is four swings, each ending at a Major; one "advance swing" press plays a swing. Between swings: schedule
+    load, training focus (1–2 groups), 0–2 life events, occasional offers (coach, sponsor, academy, college).
+  - Ordinary matches show results only; Major semis and finals (and junior Major finals) get text commentary built from
+    engine events. No choices inside a match.
+  - Fictional tournaments and players (Majors named after their cities); the retirement screen's lookalike names real
+    retired legends for comparison only. Korean only; English is debt.
+  - Local hall of fame only; server rankings next milestone. The web's `/` opens the text career; the season mode,
+    quick match and 3D stay behind `?legacy=1`; the Toss build keeps the quick match until a playtest.
+  - New headless module `game/src/journey/` and UI `ui/src/journey/`; the M4 `season/` stays as it is. Reused: the
+    week model (`endWeek`), tiers' points, draws and brackets, RNG streams, `overall`, quick captions.
+  - The user's matches run the full engine (recipes kept for commentary); AI-vs-AI matches run a point-level Bernoulli
+    fast model calibrated against engine batches, so a swing plays in well under 150 ms without a worker.
+- **Consequences:** TD-020 (one season only) is answered by the journey's multi-year world, not by the M4 season. The
+  quick match, replay page and renderer keep their tests but get no new work. Work happens on the local branch
+  `claude/text-career` cut from `claude/3d-redesign-design-88cb3d`; reconciling with `main` is outside M9.
