@@ -2,8 +2,9 @@
 // are not on the timeline. Both wait where it will start, in a ready stance, and the opponent's body shows the tell.
 // A function of the hold's own seconds, so the idle and any sway keep moving while match time stands still.
 import type { Card, PlayerId, Vec2 } from '@tennis/engine';
-import { READY_STANCE, HOLD_STANCES, RIG_MOTION, type StanceCue } from '../tuning/index.ts';
-import { lerp, smoothstep } from '../math.ts';
+import { HOLD_RELEASE_SEC, HOLD_RELEASE_SPEED, READY_STANCE, HOLD_STANCES, RIG_MOTION, type StanceCue } from '../tuning/index.ts';
+import { smoothstep } from '../math.ts';
+import { blendPose } from './blend.ts';
 import { readySpot } from './movement.ts';
 import type { PlayerPose } from './pose.ts';
 import type { Effectors, StrokePose } from './stroke.ts';
@@ -79,17 +80,25 @@ export function heldPlayers(timeline: Timeline, tell: TellStance | null, since: 
   return { A: stancePose(spots.A, cue('A'), since), B: stancePose(spots.B, cue('B'), since) };
 }
 
-/** `u` (0–1) of the way from the held poses to the timeline's, after the hold (ADR-030): the position and facing ease
- *  over, the body is the timeline's at once (it is a ready stance either way). */
-export function releasedPlayers(from: Record<PlayerId, PlayerPose>, to: Record<PlayerId, PlayerPose>, u: number): Record<PlayerId, PlayerPose> {
+/** Seconds the release takes: HOLD_RELEASE_SEC, or as long as a walk (HOLD_RELEASE_SPEED) needs to cover the
+ *  furthest a player is from where the point starts (a tell that creeps in, plus the engine's spread, ADR-030). */
+export function releaseSeconds(from: Record<PlayerId, PlayerPose>, to: Record<PlayerId, PlayerPose>): number {
+  const far = Math.max(...(['A', 'B'] as const).map((id) => Math.hypot(to[id].pos.x - from[id].pos.x, to[id].pos.y - from[id].pos.y)));
+  return Math.max(HOLD_RELEASE_SEC, far / HOLD_RELEASE_SPEED);
+}
+
+/** The players `since` seconds after the hold (ADR-030): position, facing and body ease from the held poses to the
+ *  timeline's over `releaseSeconds` (`blendPose`, TD-078), so the stance hands the body back instead of swapping it. */
+export function releasedPlayers(from: Record<PlayerId, PlayerPose>, to: Record<PlayerId, PlayerPose>, since: number): Record<PlayerId, PlayerPose> {
+  const u = since / releaseSeconds(from, to);
   if (u >= 1) return to;
   const k = smoothstep(Math.max(0, u));
-  const one = (id: PlayerId): PlayerPose => {
-    const a = from[id];
-    const b = to[id];
-    const f = { x: lerp(a.facing.x, b.facing.x, k), y: lerp(a.facing.y, b.facing.y, k) };
-    const n = Math.hypot(f.x, f.y);
-    return { ...b, pos: { x: lerp(a.pos.x, b.pos.x, k), y: lerp(a.pos.y, b.pos.y, k) }, facing: n > 1e-6 ? { x: f.x / n, y: f.y / n } : b.facing };
-  };
-  return { A: one('A'), B: one('B') };
+  return { A: blendPose(from.A, to.A, k), B: blendPose(from.B, to.B, k) };
+}
+
+/** `u` (0–1) of the way from the poses last drawn before the hold (the walk into it) to the held ones (TD-078). */
+export function enteredPlayers(from: Record<PlayerId, PlayerPose>, held: Record<PlayerId, PlayerPose>, u: number): Record<PlayerId, PlayerPose> {
+  if (u >= 1) return held;
+  const k = smoothstep(Math.max(0, u));
+  return { A: blendPose(from.A, held.A, k), B: blendPose(from.B, held.B, k) };
 }

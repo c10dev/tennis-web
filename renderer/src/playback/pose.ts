@@ -38,6 +38,9 @@ export interface PlayerPose {
   distance: number;
   /** Seconds since the point's last ball landed (negative before): reaction clips play from it. */
   reactionT: number;
+  /** Another pose whose clips the rig also samples, at `weight` (this pose's at the rest): a pose eased into another
+   *  (`blendPose`, TD-078) carries both bodies' locomotion until the blend ends. */
+  clipBlend?: { from: PlayerPose; weight: number };
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {

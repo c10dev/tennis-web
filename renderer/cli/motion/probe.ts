@@ -3,15 +3,15 @@
 // the continuity tests and `npm run motion`. Node only: it reads the committed glb from disk.
 import { readFileSync } from 'node:fs';
 import { Quaternion, Vector3 } from 'three';
-import type { PlayerId } from '@tennis/engine';
+import { averagePlayer, createConfig, SCHEMA_VERSION, simulateMatch, type PlayerId } from '@tennis/engine';
 import { readGlb } from '../../src/asset/glb.ts';
 import { matchFrameAt } from '../../src/playback/frame.ts';
-import { heldPlayers, releasedPlayers, type TellStance } from '../../src/playback/hold.ts';
+import { enteredPlayers, heldPlayers, releasedPlayers, releaseSeconds, type TellStance } from '../../src/playback/hold.ts';
 import type { PlayerPose } from '../../src/playback/pose.ts';
-import type { Timeline } from '../../src/playback/timeline.ts';
+import { buildTimeline, type Timeline } from '../../src/playback/timeline.ts';
 import { GltfRig } from '../../src/scene/gltfRig.ts';
 import { boneName, buildPlayerModel, type PlayerModel } from '../../src/scene/playerModel.ts';
-import { HOLD_RELEASE_SEC, PLAYER_MODEL } from '../../src/tuning/index.ts';
+import { HOLD_ENTER_SEC, HOLD_STANCES, PLAYER_MODEL } from '../../src/tuning/index.ts';
 
 export const FPS = 60;
 export type Phase = 'play' | 'walk' | 'hold' | 'release';
@@ -75,18 +75,39 @@ export function holdFrames(before: Timeline, after: Timeline, id: PlayerId, tell
   const frames: Frame[] = [];
   const end = before.segments.at(-1)!.next;
   for (let k = Math.round(walkSec * fps); k >= 0; k--) frames.push({ t: end - k / fps, pose: matchFrameAt(before, end - k / fps).players[id], phase: 'walk' });
+  // As the viewer: the hold's clock has run one frame when it is first drawn, and the stance eases in from the walk.
+  const walked = matchFrameAt(before, end).players;
+  const held = (k: number) => enteredPlayers(walked, heldPlayers(before, tell, k / fps), k / fps / HOLD_ENTER_SEC);
   const hold = Math.round(holdSec * fps);
-  for (let k = 0; k < hold; k++) frames.push({ t: end, pose: heldPlayers(before, tell, k / fps)[id], phase: 'hold' });
-  const from = heldPlayers(before, tell, (hold - 1) / fps);
+  for (let k = 1; k <= hold; k++) frames.push({ t: end, pose: held(k)[id], phase: 'hold' });
+  const from = held(hold);
   const start = after.segments[before.segments.length]!.start;
-  const release = Math.round(HOLD_RELEASE_SEC * fps);
-  for (let k = 1; k <= release; k++) {
-    const t = start + k / fps;
-    frames.push({ t, pose: releasedPlayers(from, matchFrameAt(after, t).players, k / release)[id], phase: 'release' });
+  let k = 0;
+  for (let done = false; !done;) {
+    const t = start + ++k / fps;
+    const to = matchFrameAt(after, t).players;
+    done = k / fps >= releaseSeconds(from, to);
+    frames.push({ t, pose: releasedPlayers(from, to, k / fps)[id], phase: 'release' });
   }
-  for (let k = 1; k <= Math.round(playSec * fps); k++) {
-    const t = start + (release + k) / fps;
+  for (let j = 1; j <= Math.round(playSec * fps); j++) {
+    const t = start + (k + j) / fps;
     frames.push({ t, pose: matchFrameAt(after, t).players[id], phase: 'play' });
   }
   return frames;
 }
+
+/**
+ * A seven-point tiebreak (seed 2) as the quick match sees it point by point: after each of its first `count` points,
+ * the match so far with the events that follow that point (a changeover after the sixth), as the live match hands
+ * them over (engine `advance`), up to the next point.
+ */
+export function tiebreakSoFar(count = 8): Timeline[] {
+  const TIEBREAK = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
+  const config = createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { ...TIEBREAK } });
+  const events = simulateMatch(config, 2).events;
+  const starts = events.map((e, i) => (e.type === 'point' ? i : -1)).filter((i) => i >= 0);
+  return starts.slice(0, count).map((_, k) => buildTimeline({ schemaVersion: SCHEMA_VERSION, config, events: events.slice(0, starts[k + 1] ?? events.length) }));
+}
+
+/** No tell, then every tell stance (HOLD_STANCES), on B. */
+export const ALL_TELLS: readonly (TellStance | null)[] = [null, ...(['attack', 'defend', 'counter'] as const).flatMap((card) => HOLD_STANCES[card].map((_, index) => ({ player: 'B' as const, card, index })))];

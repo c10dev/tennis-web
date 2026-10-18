@@ -1446,3 +1446,14 @@ Format: one entry per decision, newest at the bottom.
   `renderer/cli/motion/` measure the rig frame by frame, and `motion-continuity.test.ts` holds phase A's targets as
   `it.fails`. The baseline is in `docs/m8-character-motion.md` §7: the near player stands about 41 px tall (not the
   45–50 estimated), the racket head 8 px, tell stances as little as 0.3 px apart on the far player.
+- **A1, the hold blend (2026-10-18; TD-078 closed):** `playback/blend.ts` `blendPose` eases one pose into another:
+  position, facing (the shorter way round), stroke keys (the racket direction along the sphere), whole-body lifts, and
+  both bodies' clips (`PlayerPose.clipBlend`, sampled together by `GltfRig`: under an unplanted stance the legs follow
+  the clips). The hold eases in from the walk over `HOLD_ENTER_SEC` (0.35 s) and out over `releaseSeconds`
+  (`HOLD_RELEASE_SEC`, or longer at `HOLD_RELEASE_SPEED` 2.5 m/s when a tell crept in). The release is judged against
+  the motion it hands over to (a server's wind-up moves the racket 0.17 m a frame): at most 0.15 m a frame beyond it
+  (measured 0.135). The last pop was the racket face's sign test (`strokeSolver` `racketFace`, `PLAYER_RIG.faceBlend`):
+  near the vertical plane through the player's front it now turns the face through that plane instead of flipping the
+  hand half a turn, which also took the in-stroke racket jumps from 1.08 m to 0.65 m a frame (A6's stroke target met).
+  The probe's tiebreak "so far" timelines now keep the events after each point (a changeover), as the live match does.
+

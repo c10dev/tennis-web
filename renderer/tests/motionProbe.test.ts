@@ -1,11 +1,10 @@
 // The motion probe (ADR-031, M8 phase 0): samples the skinned rig over replay time, or through a decision hold as the
 // viewer plays it, and measures what a frame-to-frame eye would catch. These tests check the probe, not the motion.
 import { describe, expect, it } from 'vitest';
-import { averagePlayer, createConfig, SCHEMA_VERSION, simulateMatch } from '@tennis/engine';
-import { holdFrames, loadPlayerModelFile, sampleFrames, timelineFrames } from '../cli/motion/probe.ts';
+import { holdFrames, loadPlayerModelFile, sampleFrames, tiebreakSoFar, timelineFrames } from '../cli/motion/probe.ts';
 import { bodyHeightPx, racketHeadPx } from '../cli/motion/screen.ts';
 import { carryHeights, frameSteps, tossGaps } from '../cli/motion/metrics.ts';
-import { buildTimeline } from '../src/playback/timeline.ts';
+import { buildTimeline, type Timeline } from '../src/playback/timeline.ts';
 import { heldPlayers } from '../src/playback/hold.ts';
 import { match } from './fixtures.ts';
 
@@ -32,18 +31,13 @@ describe('motion probe', () => {
   });
 
   it('plays a decision hold as the viewer does: the walk, the hold, the release, then the next point', () => {
-    const TIEBREAK = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
-    const config = createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { ...TIEBREAK } });
-    const events = simulateMatch(config, 2).events;
-    const ends = events.map((e, i) => (e.type === 'point' ? i : -1)).filter((i) => i >= 0);
-    const before = buildTimeline({ schemaVersion: SCHEMA_VERSION, config, events: events.slice(0, ends[2]! + 1) });
-    const after = buildTimeline({ schemaVersion: SCHEMA_VERSION, config, events: events.slice(0, ends[3]! + 1) });
+    const [before, after] = tiebreakSoFar(4).slice(2) as [Timeline, Timeline];
     const frames = holdFrames(before, after, 'B', { player: 'B', card: 'defend', index: 1 });
     const phases = frames.map((f) => f.phase);
     expect(phases[0]).toBe('walk');
     expect(phases.indexOf('hold')).toBeLessThan(phases.indexOf('release'));
     expect(phases.at(-1)).toBe('play');
-    expect(phases.filter((p) => p === 'release').length).toBe(30);
+    expect(phases.filter((p) => p === 'release').length).toBeGreaterThanOrEqual(30);
   });
 
   it('measures the carry between strokes and the serve toss against the free hand', () => {

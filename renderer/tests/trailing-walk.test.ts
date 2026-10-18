@@ -2,10 +2,11 @@
 // walk to where it will start (the decision hold's ready spots) instead of freezing and then jumping there.
 import { describe, expect, it } from 'vitest';
 import { averagePlayer, createConfig, SCHEMA_VERSION, simulateMatch, type PlayerId } from '@tennis/engine';
-import { heldPlayers, readyPositions, releasedPlayers } from '../src/playback/hold.ts';
+import { heldPlayers, readyPositions, releasedPlayers, releaseSeconds } from '../src/playback/hold.ts';
 import { playerPose } from '../src/playback/pose.ts';
 import { distanceAt, positionAt } from '../src/playback/movement.ts';
 import { buildTimeline } from '../src/playback/timeline.ts';
+import { HOLD_RELEASE_SEC, HOLD_RELEASE_SPEED } from '../src/tuning/index.ts';
 
 const TIEBREAK = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
 const config = createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { ...TIEBREAK } });
@@ -58,14 +59,30 @@ describe('leaving the decision hold', () => {
   const from = heldPlayers(tl, null, 2);
   const to = { A: playerPose(tl, 'A', 0.3), B: playerPose(tl, 'B', 0.3) };
 
-  it('starts on the held spot and hands over to the timeline’s pose, easing between', () => {
+  it('starts on the held spot and hands over to the timeline’s pose, easing between, body too (TD-078)', () => {
     for (const id of ids) {
+      const T = releaseSeconds(from, to);
       expect(near(releasedPlayers(from, to, 0)[id].pos, from[id].pos)).toBe(true);
-      expect(releasedPlayers(from, to, 1)[id]).toEqual(to[id]);
-      const mid = releasedPlayers(from, to, 0.5)[id];
+      expect(releasedPlayers(from, to, T)[id]).toEqual(to[id]);
+      const mid = releasedPlayers(from, to, T / 2)[id];
       expect(near(mid.pos, { x: (from[id].pos.x + to[id].pos.x) / 2, y: (from[id].pos.y + to[id].pos.y) / 2 })).toBe(true);
       expect(Math.hypot(mid.facing.x, mid.facing.y)).toBeCloseTo(1, 9);
-      expect(mid.stroke).toBe(to[id].stroke);
+      // The held stance hands over to the timeline's body instead of swapping in a frame: its weight fades over the
+      // timeline's clips, or its keys move towards the timeline's stroke.
+      const target = to[id].stroke;
+      if (!target) expect(mid.stroke!.weight).toBeCloseTo(0.5, 9);
+      else expect(mid.stroke!.keys.hand.y).toBeCloseTo((from[id].stroke!.keys.hand.y + target.keys.hand.y) / 2, 9);
     }
+  });
+});
+
+describe('how long the release takes', () => {
+  it('is HOLD_RELEASE_SEC, or longer when a player has further to go than a walk covers in it', () => {
+    const tl = sofar[5]!;
+    const from = heldPlayers(tl, null, 2);
+    const to = { A: playerPose(tl, 'A', 0.3), B: playerPose(tl, 'B', 0.3) };
+    expect(releaseSeconds(from, from)).toBe(HOLD_RELEASE_SEC);
+    const far = { ...to, A: { ...to.A, pos: { x: from.A.pos.x + 3, y: from.A.pos.y } } };
+    expect(releaseSeconds(from, far)).toBeCloseTo(3 / HOLD_RELEASE_SPEED, 9);
   });
 });

@@ -8,7 +8,8 @@ import { toThree } from '../../src/scene/coords.ts';
 import { GltfRig } from '../../src/scene/gltfRig.ts';
 import type { PlayerModel } from '../../src/scene/playerModel.ts';
 import { PLAYBACK } from '../../src/tuning/index.ts';
-import { FPS, measure, type Phase, type Sample } from './probe.ts';
+import type { TellStance } from '../../src/playback/hold.ts';
+import { FPS, holdFrames, measure, sampleFrames, type Phase, type Sample } from './probe.ts';
 
 export interface Step {
   t: number; from: Phase; to: Phase;
@@ -92,3 +93,20 @@ export const largest = (r: Record<string, number>, only?: readonly string[]): nu
   Math.max(...Object.entries(r).filter(([n]) => !only || only.includes(n)).map(([, v]) => v));
 
 export const quantile = (a: readonly number[], p: number): number => a.length ? a.slice().sort((x, y) => x - y)[Math.floor(p * (a.length - 1))]! : NaN;
+
+export interface HoldSteps { entering: Step[]; leaving: Step[]; own: Step[] }
+
+/**
+ * Each decision hold between consecutive timelines of `sofar`, for each player and each of `tells`: the steps into the
+ * hold, the steps of the release (and into play), and beside each of those the step the next timeline itself takes at
+ * that moment, the motion the release hands over to (a server's wind-up moves the racket 0.17 m a frame).
+ */
+export function holdSteps(model: PlayerModel, sofar: readonly Timeline[], tells: readonly (TellStance | null)[]): (HoldSteps & { tell: TellStance | null })[] {
+  return sofar.slice(0, -1).flatMap((tl, k) => tells.flatMap((tell) => (['A', 'B'] as const).map((id) => {
+    const steps = frameSteps(sampleFrames(model, holdFrames(tl, sofar[k + 1]!, id, tell)));
+    const leaving = steps.filter((s) => s.to === 'release' || (s.from === 'release' && s.to === 'play'));
+    const times = [leaving[0]!.t - 1 / FPS, ...leaving.map((s) => s.t)];
+    const own = frameSteps(sampleFrames(model, times.map((t) => ({ t, pose: matchFrameAt(sofar[k + 1]!, t).players[id], phase: 'play' as const }))));
+    return { tell, entering: steps.filter((s) => s.from === 'walk' && s.to === 'hold'), leaving, own };
+  })));
+}

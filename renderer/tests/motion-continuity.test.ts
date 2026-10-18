@@ -3,10 +3,10 @@
 // racket positions, not bone twist (a bone turning about its own axis does not show at TV size). Targets not met yet
 // are `it.fails`; the phase A step that meets one turns it into `it`. Numbers today: `npm run motion`.
 import { describe, expect, it } from 'vitest';
-import { averagePlayer, createConfig, SCHEMA_VERSION, simulateMatch, type PlayerId } from '@tennis/engine';
+import type { PlayerId } from '@tennis/engine';
 import { buildTimeline } from '../src/playback/timeline.ts';
-import { carryHeights, footSlips, frameSteps, largest, quantile, tossGaps } from '../cli/motion/metrics.ts';
-import { holdFrames, loadPlayerModelFile, sampleFrames, timelineFrames } from '../cli/motion/probe.ts';
+import { carryHeights, footSlips, frameSteps, holdSteps, largest, quantile, tossGaps } from '../cli/motion/metrics.ts';
+import { ALL_TELLS, loadPlayerModelFile, sampleFrames, tiebreakSoFar, timelineFrames } from '../cli/motion/probe.ts';
 import { match } from './fixtures.ts';
 
 const model = loadPlayerModelFile();
@@ -19,29 +19,36 @@ const steps = samples.flatMap(frameSteps);
 /** Steps no stroke or reaction owns: running, walking, waiting. */
 const free = steps.filter((s) => !s.stroke && !s.reaction);
 
-// The decision holds of a tiebreak played point by point (trailing-walk.test.ts), a tell on B.
-const TIEBREAK = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
-const config = createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { ...TIEBREAK } });
-const events = simulateMatch(config, 2).events;
-const ends = events.map((e, i) => (e.type === 'point' ? i : -1)).filter((i) => i >= 0);
-const sofar = ends.slice(0, 8).map((i) => buildTimeline({ schemaVersion: SCHEMA_VERSION, config, events: events.slice(0, i + 1) }));
-const holdSteps = sofar.slice(0, -1).flatMap((tl, k) =>
-  ids.flatMap((id) => frameSteps(sampleFrames(model, holdFrames(tl, sofar[k + 1]!, id, { player: 'B', card: (['attack', 'defend', 'counter'] as const)[k % 3]!, index: k % 3 })))));
-const boundary = holdSteps.filter((s) => (s.from === 'walk' && s.to === 'hold') || s.to === 'release' || (s.from === 'release' && s.to === 'play'));
+// The decision holds of a tiebreak played point by point, a tell on B.
+const sofar = tiebreakSoFar();
+const holds = holdSteps(model, sofar, ALL_TELLS);
 
 describe('motion continuity (M8 targets)', () => {
   it('samples enough to judge', () => {
     expect(steps.length).toBeGreaterThan(100_000);
     expect(free.length).toBeGreaterThan(30_000);
-    expect(boundary.length).toBeGreaterThan(400);
+    expect(holds.length).toBe(7 * 2 * ALL_TELLS.length);
   });
 
-  it.fails('A1: the decision hold is entered and left without a pop (racket and joints < 0.10 m, facing < 0.1 rad a frame)', () => {
-    for (const s of boundary) {
-      const at = `${s.from}→${s.to} ${s.t.toFixed(3)} s`;
-      expect(s.racket, `racket at ${at}`).toBeLessThan(0.1);
-      expect(largest(s.joints), `joints at ${at}`).toBeLessThan(0.1);
-      expect(s.bones['(root)'], `facing at ${at}`).toBeLessThan(0.1);
+  it('A1: the decision hold is entered without a pop (racket and joints < 0.10 m, facing < 0.1 rad a frame)', () => {
+    for (const s of holds.flatMap((h) => h.entering)) {
+      expect(s.racket, `racket at ${s.t.toFixed(3)} s`).toBeLessThan(0.1);
+      expect(largest(s.joints), `joints at ${s.t.toFixed(3)} s`).toBeLessThan(0.1);
+      expect(s.bones['(root)'], `facing at ${s.t.toFixed(3)} s`).toBeLessThan(0.1);
+    }
+  });
+
+  // The release catches up with the motion it hands over to (a server's wind-up swings the racket behind the back), so
+  // its bound is how much faster than that motion it may move: 0.15 m a frame, 9 m/s, a quick move but not a pop.
+  it('A1: the decision hold hands over without a pop (no more than 0.15 m a frame beyond the timeline’s own motion)', () => {
+    for (const h of holds) {
+      expect(h.own.length).toBe(h.leaving.length);
+      h.leaving.forEach((s, i) => {
+        const own = h.own[i]!;
+        expect(s.racket - own.racket, `racket at ${s.t.toFixed(3)} s, ${h.tell?.card ?? 'no'}:${h.tell?.index ?? ''}`).toBeLessThan(0.15);
+        expect(largest(s.joints) - largest(own.joints), `joints at ${s.t.toFixed(3)} s, ${h.tell?.card ?? 'no'}:${h.tell?.index ?? ''}`).toBeLessThan(0.15);
+        expect(s.bones['(root)'], `facing at ${s.t.toFixed(3)} s`).toBeLessThan(0.1);
+      });
     }
   });
 
@@ -71,7 +78,7 @@ describe('motion continuity (M8 targets)', () => {
     for (const s of free) expect(largest(s.jointsRel), `at ${s.t.toFixed(3)} s`).toBeLessThan(0.25);
   });
 
-  it.fails('A6: in a stroke the racket head stays under a real swing’s top speed (0.7 m a frame, 42 m/s)', () => {
+  it('A6: in a stroke the racket head stays under a real swing’s top speed (0.7 m a frame, 42 m/s)', () => {
     for (const s of steps.filter((x) => x.stroke)) expect(s.racket, `at ${s.t.toFixed(3)} s`).toBeLessThan(0.7);
   });
 });

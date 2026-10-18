@@ -83,6 +83,21 @@ export class GltfRig implements PlayerRig {
     this.clips = bindClips(model.clips.filter((c) => (used as string[]).includes(c.name)), this.bones);
   }
 
+  /** Clip layers for this pose and any pose it is eased from (`clipBlend`), and how far the legs turn towards a
+   *  sideways move (the chest keeps facing the ball). */
+  private blended(pose: PlayerPose): { layers: Layer[]; legs: Layer['weight'] } {
+    const own = this.layers(pose);
+    const forward = own[1]!.weight + own[2]!.weight;
+    const legs = clamp(moveAngle(pose), -PLAYER_RIG.legTurnMax, PLAYER_RIG.legTurnMax) * forward;
+    if (!pose.clipBlend) return { layers: own, legs };
+    const { from, weight } = pose.clipBlend;
+    const other = this.blended(from);
+    return {
+      layers: [...other.layers.map((l) => ({ ...l, weight: l.weight * weight })), ...own.map((l) => ({ ...l, weight: l.weight * (1 - weight) }))],
+      legs: other.legs * weight + legs * (1 - weight),
+    };
+  }
+
   /** Clip layers for this pose: idle at replay time, walk, run and backpedal at the phase distance sets, reactions
    * from the landing. */
   private layers(pose: PlayerPose): Layer[] {
@@ -110,11 +125,9 @@ export class GltfRig implements PlayerRig {
     this.object3d.position.copy(groundToThree(pose.pos, hop));
     this.object3d.rotation.y = yawFor(pose.facing);
     // Every bone is set from replay time alone, so any pose can be drawn without the ones before it.
-    const layers = this.layers(pose);
+    const { layers, legs } = this.blended(pose);
     sampleClips(this.clips, layers, this.restPose);
     // A sideways move turns the legs towards it while the chest keeps facing the ball.
-    const forward = layers[1]!.weight + layers[2]!.weight;
-    const legs = clamp(moveAngle(pose), -PLAYER_RIG.legTurnMax, PLAYER_RIG.legTurnMax) * forward;
     this.bones.hips!.quaternion.premultiply(new Quaternion().setFromAxisAngle(UP, legs));
     this.bones.spine!.quaternion.premultiply(new Quaternion().setFromAxisAngle(UP, -legs));
     this.model.position.set(0, 0, 0);

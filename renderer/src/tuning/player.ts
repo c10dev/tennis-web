@@ -28,6 +28,9 @@ export const PLAYER_RIG = {
   racket: { length: 0.68, headRadius: 0.16, headAspect: 0.8, handleRadius: 0.032 },
   /** The arm may lengthen by this share near contact (child bones slide out along it: no shear), squash-and-stretch. */
   stretchMax: 0.15,
+  /** How far (as the forward share of the racket's horizontal side) from the plane through the player's front the strings
+   *  start turning through it instead of picking a side (strokeSolver `racketFace`, TD-079). */
+  faceBlend: 0.25,
   /** Racket-head centre at full stretch straight up, standing: shoulders 1.09 m + arm 0.576 m × 1.15 + racket 0.68 m.
    * A serve struck higher is reached by a hop (STROKE.serve). */
   standingReach: 2.43,

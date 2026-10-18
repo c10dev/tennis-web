@@ -53,13 +53,26 @@ export function racketInHand(slot: Object3D): { axis: Vector3; normal: Vector3; 
   return { axis, normal, centre: slot.position.clone().addScaledVector(axis, PLAYER_RIG.racket.length) };
 }
 
-/** World rotation of the hand that points the racket along `dir` with its strings facing `face`'s side. */
+/**
+ * Which way the strings face for a racket along `dir`: its horizontal side turned towards the player's front. Where
+ * that side is nearly square to the front (`dir` near the vertical plane through it), the face turns smoothly through
+ * the plane's own perpendicular instead of flipping sides (TD-079); a racket near vertical faces the front.
+ */
+export function racketFace(dir: Vector3, forward: Vector3): Vector3 {
+  const side = UP.clone().cross(dir);
+  if (side.lengthSq() < 0.04) return forward.clone().addScaledVector(dir, -forward.dot(dir)).normalize();
+  side.normalize();
+  const other = dir.clone().cross(side);
+  const a1 = forward.dot(side);
+  const a2 = forward.dot(other);
+  const face = side.clone().multiplyScalar(a1).addScaledVector(other, a2 * (1 - smoothstep(Math.abs(a1) / PLAYER_RIG.faceBlend)));
+  return face.lengthSq() < 1e-12 ? side : face.normalize();
+}
+
+/** World rotation of the hand that points the racket along `dir` with its strings facing `racketFace`. */
 function handRotation(slot: Object3D, dir: Vector3, forward: Vector3): Quaternion {
   const { axis, normal } = racketInHand(slot);
-  let face = UP.clone().cross(dir);
-  if (face.lengthSq() < 0.04) face = forward.clone();
-  if (face.dot(forward) < 0) face.negate();
-  face.addScaledVector(dir, -face.dot(dir)).normalize();
+  const face = racketFace(dir, forward);
   const want = new Matrix4().makeBasis(dir, face, dir.clone().cross(face));
   const have = new Matrix4().makeBasis(axis, normal, axis.clone().cross(normal));
   return new Quaternion().setFromRotationMatrix(want.multiply(have.transpose()));

@@ -81,3 +81,9 @@ export const HOLD_STANCES: Record<Card, readonly StanceCue[]> = {
 /** Seconds after the decision hold over which each player eases from the ready spot to where the point really starts
  *  (READY_SPOTS is the middle of the engine's range, up to about a metre off; ADR-030). */
 export const HOLD_RELEASE_SEC = 0.5;
+
+/** Metres a second the release may move a player (a brisk walk): a longer way takes longer than HOLD_RELEASE_SEC. */
+export const HOLD_RELEASE_SPEED = 2.5;
+
+/** Seconds over which the walk into the decision hold eases into the held stance (TD-078). */
+export const HOLD_ENTER_SEC = 0.35;

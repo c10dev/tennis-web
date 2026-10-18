@@ -2,11 +2,11 @@
 //   npm run motion [-- --secs 300]
 // Three matches (seed 2 clay, 1 grass, 3 hard), both players at 60 fps, plus the decision holds of a tiebreak played
 // point by point (as trailing-walk.test.ts builds them); TV sizes on the M8 stage (TV_STAGE, CSS pixels).
-import { averagePlayer, createConfig, exhibitionConfig, SCHEMA_VERSION, simulateMatch, type Card, type PlayerId, type Surface } from '@tennis/engine';
-import { heldPlayers, type TellStance } from '../src/playback/hold.ts';
-import { buildTimeline, type Timeline } from '../src/playback/timeline.ts';
-import { carryHeights, footSlips, frameSteps, largest, quantile, tossGaps, type Step } from './motion/metrics.ts';
-import { holdFrames, loadPlayerModelFile, sampleFrames, timelineFrames, type Sample } from './motion/probe.ts';
+import { exhibitionConfig, simulateMatch, type PlayerId, type Surface } from '@tennis/engine';
+import { heldPlayers } from '../src/playback/hold.ts';
+import { buildTimeline } from '../src/playback/timeline.ts';
+import { carryHeights, footSlips, frameSteps, holdSteps, largest, quantile, tossGaps, type Step } from './motion/metrics.ts';
+import { ALL_TELLS, loadPlayerModelFile, sampleFrames, tiebreakSoFar, timelineFrames, type Sample } from './motion/probe.ts';
 import { bodyHeightPx, racketHeadPx, racketSpanPx, stanceDistancePx } from './motion/screen.ts';
 
 const i = process.argv.indexOf('--secs');
@@ -27,15 +27,12 @@ const steps: Step[] = samples.flatMap(frameSteps);
 const slips = samples.flatMap(footSlips);
 
 // Decision holds: the match so far after each point, every tell on B in turn.
-const TIEBREAK = { bestOf: 1, noAd: true, finalSet: 'tiebreak7', setFormat: 'tiebreak' } as const;
-const config = createConfig([averagePlayer('A'), averagePlayer('B')], { rules: { ...TIEBREAK } });
-const events = simulateMatch(config, 2).events;
-const ends = events.map((e, k) => (e.type === 'point' ? k : -1)).filter((k) => k >= 0);
-const sofar: Timeline[] = ends.slice(0, 8).map((k) => buildTimeline({ schemaVersion: SCHEMA_VERSION, config, events: events.slice(0, k + 1) }));
-const TELLS: (TellStance | null)[] = [null, ...(['attack', 'defend', 'counter'] as Card[]).flatMap((card) => [0, 1, 2].map((index) => ({ player: 'B' as const, card, index })))];
-const holdSteps = sofar.slice(0, -1).flatMap((tl, k) => ids.flatMap((id) => frameSteps(sampleFrames(model, holdFrames(tl, sofar[k + 1]!, id, TELLS[(k % 9) + 1]!)))));
-const entering = holdSteps.filter((s) => s.from === 'walk' && s.to === 'hold');
-const leaving = holdSteps.filter((s) => s.to === 'release' || (s.from === 'release' && s.to === 'play'));
+const sofar = tiebreakSoFar();
+const TELLS = ALL_TELLS;
+const holds = holdSteps(model, sofar, TELLS);
+const entering = holds.flatMap((h) => h.entering);
+const leaving = holds.flatMap((h) => h.leaving);
+const excess = (pick: (s: Step) => number) => holds.flatMap((h) => h.leaving.map((s, i) => pick(s) - pick(h.own[i]!)));
 const free = steps.filter((s) => !s.stroke && !s.reaction);
 
 console.log(`# Motion report: ${MATCHES.map(([s, f]) => `${s} ${f}`).join(', ')}; first ${secs} s, both players, 60 fps\n`);
@@ -48,8 +45,8 @@ stats('largest joint rel, between strokes (A6 < 0.25)', free.map((s) => largest(
 stats('racket head, into the hold (A1 < 0.10)', entering.map((s) => s.racket));
 stats('largest joint, into the hold (A1 < 0.10)', entering.map((s) => largest(s.joints)));
 stats('facing, into the hold (A1 < 0.1 rad)', entering.map((s) => s.bones['(root)']!));
-stats('racket head, out of the hold (A1 < 0.10)', leaving.map((s) => s.racket));
-stats('largest joint, out of the hold (A1 < 0.10)', leaving.map((s) => largest(s.joints)));
+stats('racket head, out of the hold, beyond the timeline’s own (A1 < 0.15)', excess((s) => s.racket));
+stats('largest joint, out of the hold, beyond the timeline’s own (A1 < 0.15)', excess((s) => largest(s.joints)));
 stats('facing, out of the hold (A1 < 0.1 rad)', leaving.map((s) => s.bones['(root)']!));
 stats('twist bones (close-ups only, not a target)', steps.map((s) => largest(s.bones, TWIST)));
 console.log(`\nTwist-bone steps over 1 rad: ${steps.filter((s) => largest(s.bones, TWIST) > 1).length} of ${steps.length} frames.\n`);
