@@ -44,16 +44,17 @@ export const PLAYER_RIG = {
   /** The lunge's step (TD-058): the lead foot lifts `liftPerMetre` × the shift (at most `liftMax`) halfway through; a
    *  leg still out of reach lifts up to `dragLift`, fully once `dragLiftOver` short, instead of dragging. A foot
    *  stepping onto or off a plant lifts `plantLiftPerMetre` × the way (A5), never above `liftClearance` of the leg
-   *  below the hip. */
+   *  below the hip. Knees bend the clip's way, leaning `legPoleBias` towards the front where the clip leg is straight. */
   /** The foot joint's height standing on the ground (a test measures it on the rig). */
   footHeight: 0.145,
-  step: { liftMax: 0.14, liftPerMetre: 0.5, plantLiftPerMetre: 1.5, liftClearance: 0.35, dragLift: 0.08, dragLiftOver: 0.03 },
+  step: { liftMax: 0.14, liftPerMetre: 0.5, plantLiftPerMetre: 1.5, liftClearance: 0.35, legPoleBias: 0.1, dragLift: 0.08, dragLiftOver: 0.03 },
   /** Metres travelled per cycle of each locomotion clip (measured from the clips by a test): the clip's phase is
    * distance / stride, so feet in stance stay put (ADR-024). */
   strides: { Running_A: 1.91, Walking_A: 0.58, Walking_Backwards: 0.54 },
-  /** Speeds (m/s) where walking starts and where the run has fully taken over (a narrow band: walk and run cycles
-   * blended at their own phases slide the feet); backpedalling only below `backMax`. */
-  gait: { moveFrom: 0.15, moveFull: 0.6, runFrom: 1.4, runFull: 2, backMax: 2.5 },
+  /** Speeds (m/s) where walking starts and where the run has fully taken over; backpedalling only below `backMax`.
+   * Walk and run cycles blend at their own phases, so a narrow band slides the feet and a quick change of weight jumps
+   * the knees (A6 widened it from 1.4–2 to 1.2–2.4). */
+  gait: { moveFrom: 0.15, moveFull: 0.6, runFrom: 1.2, runFull: 2.4, backMax: 2.5 },
   /** Moving sideways or back-diagonally, the hips and legs turn towards the move by up to this (radians) while the
    * chest keeps facing; further round than `backFrom` the player backpedals instead. */
   legTurnMax: 1.75,

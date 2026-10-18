@@ -84,7 +84,7 @@ interface Rest { quats: Map<Bone, Quaternion>; positions: Map<Bone, Vector3>; hi
  * One solve at a given whole-body shift and extra crouch; returns how far the racket head still is from the contact
  * point (world).
  */
-function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: StrokePose, rest: Rest, feet: { p: Vector3; q: Quaternion }[], shift: Vector3, extraDrop: number, flatFeet?: Quaternion[]): Vector3 {
+function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: StrokePose, rest: Rest, feet: { p: Vector3; q: Quaternion; knee: Vector3 }[], shift: Vector3, extraDrop: number, flatFeet?: Quaternion[]): Vector3 {
   const w = s.weight;
   const e = s.keys;
   for (const [bone, q] of rest.quats) bone.quaternion.copy(q);
@@ -136,7 +136,9 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
     if (excess > 0) target.y += P.dragLift * smoothstep(excess / P.dragLiftOver);
     const room = Math.sqrt(Math.max(0, legLength ** 2 - (target.y - hip.y) ** 2));
     if (flat.length() > room) target.set(hip.x, target.y, hip.z).add(flat.setLength(room));
-    const pole = LEG_POLE.clone().applyQuaternion(worldQuat(frame));
+    // Bend the knee the way the clip bends it (A6): a fixed forward pole flipped the knee whenever a stride kicked the
+    // foot up behind the hip; a straight clip leg leans on LEG_POLE.
+    const pole = feet[i]!.knee.clone().add(shiftWorld).sub(hip).addScaledVector(LEG_POLE.clone().applyQuaternion(worldQuat(frame)), P.legPoleBias);
     limb(b[`upperleg${side}`]!, b[`lowerleg${side}`]!, b[`foot${side}`]!, target, pole, 1);
     const flatFoot = flatFeet?.[i];
     orient(b[`foot${side}`]!, flatFoot ? feet[i]!.q.clone().slerp(worldQuat(frame).multiply(flatFoot), s.plant.weight) : feet[i]!.q, 1);
@@ -175,7 +177,7 @@ export function solveStroke(frame: Object3D, model: Object3D, bones: Bones, slot
   const quats = new Map<Bone, Quaternion>();
   for (const bone of Object.values(bones)) quats.set(bone, bone.quaternion.clone());
   const rest: Rest = { quats, positions: restPositions, hips: bones.hips!.position.clone() };
-  const feet = (['l', 'r'] as const).map((side) => ({ p: worldPos(bones[`foot${side}`]!), q: worldQuat(bones[`foot${side}`]!) }));
+  const feet = (['l', 'r'] as const).map((side) => ({ p: worldPos(bones[`foot${side}`]!), q: worldQuat(bones[`foot${side}`]!), knee: worldPos(bones[`lowerleg${side}`]!) }));
   const inverse = worldQuat(frame).invert();
   // The lunge is planned (a function of time, so the stepping foot moves smoothly); what is left low is crouched to.
   const shift = new Vector3(stroke.lunge.x, 0, stroke.lunge.z).multiplyScalar(stroke.contactWeight);

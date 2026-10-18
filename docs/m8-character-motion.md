@@ -232,3 +232,24 @@ Found by the baseline, beyond §3: the racket jumps up to 1.08 m in a frame in t
 split step's speed dip blends Idle and Walking_A (60 fps frames in `shots/judgement/`, every rally); leaving the hold can
 turn the player 180° in one frame. The twist flips reach the hips and spine (up to 2.8 rad) and the feet (3.1 rad) as
 well as the hand and shins, but they turn bones about their own axes and do not show at TV size.
+
+### After phase A (2026-10-18)
+
+| Per frame, m (facing in rad) | Baseline max | After A | Target |
+|---|---|---|---|
+| Racket head between strokes, player's frame | 0.703 (world) | p95 0.037, max 0.132 | < 0.15 |
+| Racket head in a stroke | 1.078 | p95 0.359, max 0.649 | < 0.7 |
+| Largest joint between strokes, run taken out | 0.716 | p95 0.088, max 0.297 (21 of 54,742 over 0.25) | max < 0.35, under 0.05 % over 0.25 |
+| Racket head / largest joint into the hold | 1.547 / 1.694 | 0.016 / 0.027 | < 0.10 |
+| Racket head / largest joint out of the hold, beyond the motion it hands over to | 1.625 / 1.814 (absolute) | 0.135 / 0.135 | < 0.15 |
+| Facing out of the hold | 3.142 | 0.010 | < 0.1 |
+
+| | Baseline | After A | Target |
+|---|---|---|---|
+| Racket-head height between strokes, p5 / p50 / p95 | 0.62 / 1.12 / 1.53 m | 0.62 / 0.83 / 1.13 m | 0.6–1.2 |
+| Free hand to ball at the toss's start and release | 0.79 m | 0.06 m (the palm) | < 0.10 |
+| Plant-ramp grounded foot steps, frames / p95 | 4,586 / 6.7 cm | 769 / 3.6 cm | p95 < 4 cm (1 px) |
+| Grounded slips over 10 cm while near still (three matches) | 27 (the old hop hid more in the air) | 17 | under 0.25 % |
+| Split step | a lift peaking at the opponent's contact | lands on it, feet ≥ 0.5 m apart | — |
+| Rig CPU per player-frame (dev VM) | 20 µs | 32 µs (the carry solves every frame) | ≤ 2 ms for both |
+

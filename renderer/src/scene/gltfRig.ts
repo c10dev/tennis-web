@@ -22,10 +22,12 @@ import { solveStroke, type Bones } from './strokeSolver.ts';
 type Clip = 'Idle' | 'Running_A' | 'Walking_A' | 'Walking_Backwards' | 'Cheer' | 'Hit_A';
 const UP = new Vector3(0, 1, 0);
 
-/** Angle of the run from the facing direction (radians, + towards the player's left), 0 when standing. */
+/** Angle of the run from the facing direction (radians, + towards the player's left), 0 when standing; by the same
+ *  averaged velocity the clips blend by (`gaitVelocity`, A6). */
 function moveAngle(pose: PlayerPose): number {
-  if (pose.speed < 1e-3) return 0;
-  const a = Math.atan2(pose.velocity.y, pose.velocity.x) - Math.atan2(pose.facing.y, pose.facing.x);
+  const v = pose.gaitVelocity ?? pose.velocity;
+  if (Math.hypot(v.x, v.y) < 1e-3) return 0;
+  const a = Math.atan2(v.y, v.x) - Math.atan2(pose.facing.y, pose.facing.x);
   return Math.atan2(Math.sin(a), Math.cos(a));
 }
 
@@ -111,9 +113,12 @@ export class GltfRig implements PlayerRig {
     const G = PLAYER_RIG.gait;
     const S = PLAYER_RIG.strides;
     const clip = (name: Clip) => this.clips.find((c) => c.name === name);
+    // Standing to stepping eases by the averaged speed (A5). Walk to run takes the higher of it and the speed itself: a
+    // stride's phase runs with the metres covered, so a walk at run speed would cycle its legs far too fast (A6), while
+    // a run slowing down is only a slow run.
     const speed = pose.gaitSpeed ?? pose.speed;
     const move = smoothstep((speed - G.moveFrom) / (G.moveFull - G.moveFrom));
-    const run = smoothstep((speed - G.runFrom) / (G.runFull - G.runFrom));
+    const run = smoothstep((Math.max(speed, pose.speed) - G.runFrom) / (G.runFull - G.runFrom));
     const back = smoothstep((Math.abs(moveAngle(pose)) - PLAYER_RIG.backFrom) / 0.4) * (1 - smoothstep((speed - G.backMax) / 0.5));
     const react = pose.reactionWeight;
     const rest = 1 - react;

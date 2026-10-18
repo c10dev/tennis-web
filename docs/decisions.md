@@ -1488,4 +1488,17 @@ Format: one entry per decision, newest at the bottom.
   ramps 4,586 frames at p95 6.7 cm → 768 at 3.4 cm; slips over 10 cm while near still 254 → 87 (27 before A4 hid
   them in the hop). The A5 target is now 4 cm a frame at p95 (1 px on the TV view), not the first draft's 2 cm, set
   before a pixel was measured; walking's median slip bound in `feet.test.ts` moves from 8 to 9 mm (8.06).
+- **A6, joint pops (2026-10-18; TD-079 closed):** the leg IK bends each knee the way the clip bends it (its knee
+  as the pole, `legPoleBias` towards the front where the clip leg is straight): a fixed forward pole flipped knees
+  whenever a stride kicked a foot up behind the hip, which A2's every-frame solve had exposed. Legs turn for a
+  sideways move by the same averaged velocity the clips blend by (`gaitVelocity`), and walk becomes run by the higher
+  of the averaged speed and the speed itself over a wider band (1.2–2.4 m/s): a stride's phase runs with the metres
+  covered, so a walk at run speed cycled its legs too fast. Between strokes the largest joint jump went 0.716 m →
+  0.297 m a frame, over 0.25 m in 21 of 54,742 frames; the target is now a 0.35 m cap with under 0.05 % over
+  0.25 m (walk and run clips cycle at their own phases, so a frame's jump in the blend is bounded, not removed). Bone
+  twist about its own axis (3,776 frames over 1 rad) is left for close-ups. The solver now runs every frame for both
+  players: 32 µs a player-frame on the dev VM, against 20 µs with clips only.
+- **Phase A done (2026-10-18):** every target in `motion-continuity.test.ts` is met; `npm run motion` after it is in
+  `docs/m8-character-motion.md` §7. Stills (`npm run shots`) barely change: phase A is about what happens between
+  frames. Next: phase B (readable at 41 px), then the eye check (Q10).
 

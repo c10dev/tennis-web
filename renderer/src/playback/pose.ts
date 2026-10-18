@@ -48,6 +48,8 @@ export interface PlayerPose {
    *  starting or stopping eases between stances instead of swapping them in a few frames (A5), but the speed itself
    *  as a stroke plants the feet (the body over them must be the stroke's, not a stride's). `speed` when absent. */
   gaitSpeed?: number;
+  /** The velocity that goes with `gaitSpeed`: which way the legs turn for a sideways or backward move. */
+  gaitVelocity?: Vec2;
 }
 
 export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerPose {
@@ -62,9 +64,11 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
   const tau = t - seg.zero;
   const own = seg.point.shots.filter((s) => s.hitter === id);
   const facing = turnToShot(facingAt(timeline, id, index, t, pos), own, tau);
-  const averaged = carrySpeed(timeline, id, t);
+  const averaged = averagedMotion(timeline, id, t);
   const stroke = strokeAt(timeline, id, t, pos, facing);
-  const split = splitStep(seg.point.shots.filter((s) => s.hitter !== id), tau, averaged);
+  const plantWeight = stroke?.plant.weight ?? 0;
+  const gaitSpeed = lerp(averaged.speed, speed, plantWeight);
+  const split = splitStep(seg.point.shots.filter((s) => s.hitter !== id), tau, averaged.speed);
   return {
     pos, facing, speed, swing: swing(timeline, id, t), reaction: reaction(timeline, id, t), reactionWeight: reactionWeight(timeline, t),
     gait: { phase: 2 * Math.PI * RIG_MOTION.gaitHz * t, amount: Math.min(1, speed / RIG_MOTION.fullRunSpeed) },
@@ -76,19 +80,22 @@ export function playerPose(timeline: Timeline, id: PlayerId, t: number): PlayerP
     velocity,
     distance: distanceAt(timeline, id, t),
     reactionT: t - seg.landed,
-    carry: { ...carryAt(timeline, t, averaged, split.land, split.spread), weight: 1 - reactionWeight(timeline, t) },
-    gaitSpeed: lerp(averaged, speed, stroke?.plant.weight ?? 0),
+    carry: { ...carryAt(timeline, t, averaged.speed, split.land, split.spread), weight: 1 - reactionWeight(timeline, t) },
+    gaitSpeed,
+    gaitVelocity: { x: lerp(averaged.velocity.x, velocity.x, plantWeight), y: lerp(averaged.velocity.y, velocity.y, plantWeight) },
   };
 }
 
-/** Average speed over ± CARRY.speedWindowSec: what the carry blends towards a run by. */
-function carrySpeed(timeline: Timeline, id: PlayerId, t: number): number {
+/** Average velocity over ± CARRY.speedWindowSec (m/s, court coordinates) and its speed: what the carry and the
+ *  clip blend read, so a player starting or stopping does not swap stances in a few frames (A2, A5). */
+function averagedMotion(timeline: Timeline, id: PlayerId, t: number): { speed: number; velocity: Vec2 } {
   const w = CARRY.speedWindowSec;
   const [a, b] = [Math.max(0, t - w), Math.min(timeline.totalSec, t + w)];
-  if (b <= a) return 0;
+  if (b <= a) return { speed: 0, velocity: { x: 0, y: 0 } };
   const p = positionAt(timeline, id, a);
   const q = positionAt(timeline, id, b);
-  return Math.hypot(q.x - p.x, q.y - p.y) / (b - a);
+  const velocity = { x: (q.x - p.x) / (b - a), y: (q.y - p.y) / (b - a) };
+  return { speed: Math.hypot(velocity.x, velocity.y), velocity };
 }
 
 /** The split step on the opponent's contacts (A4): the hop (0–1, landing on the contact), the landing's bend and the
