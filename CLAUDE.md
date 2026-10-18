@@ -14,7 +14,7 @@ Vite + TypeScript (strict) + Three.js · Vitest · npm workspaces
 ## Commands
 ```
 npm install
-npm run dev          # Vite dev server: career game at /, replay page at /?seed=42&surface=clay&mode=full|key|highlights|result
+npm run dev          # Vite dev server: the text tour at / (?as=<id> plays a second member in another tab), the old app at /?legacy=1, replay page at /?seed=42&surface=clay&mode=full|key|highlights|result
 npm run build        # production build to dist/
 npm run dev:toss     # the Apps in Toss build (quick match only, ADR-022); build:toss for dist/
 npm test             # Vitest: engine + game + renderer (test:stats and test:season for the slow balance checks)
@@ -23,6 +23,8 @@ npm run test:renderer
 npm run test:game
 npm run season -- --n 50 --seed 1   # season balance report (M4 targets)
 npm run quick -- --n 2000 --seed 1  # quick-match balance report (M5 targets); test:quick guards it
+npm run room -- --n 200 --seed 1    # season-room balance report (M9, docs/journey-design.md §7)
+npm run journey -- --n 300 --seed 1 # long solo career reference batch (ADR-032)
 npm run test:e2e     # Playwright (Chromium) against the dev page; not part of npm test
 npm run sim -- --n 10000 --seed 42 --surface hard   # batch sim stats report
 npm run sim -- --fingerprint --seed 42 --surface clay   # hash to compare with the replay page
