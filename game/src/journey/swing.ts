@@ -3,6 +3,7 @@
 import { stream } from '../rng.ts';
 import { JTIERS, SWINGS, type JEvent } from './calendar.ts';
 import { accepted, aiEntrants, schedule } from './entry.ts';
+import { queueChoices } from './events.ts';
 import { growAi } from './growth.ts';
 import { playEvent, type EventContext } from './play.ts';
 import { order, rankOf, recordSwing } from './ranking.ts';
@@ -29,7 +30,8 @@ export function advanceSwing(s: JourneyState, plan: Plan, withUser = true): Swin
     const junior = JTIERS[ev.tier].junior;
     return [ev.id, aiEntrants(s.seed, key, ev, junior ? s.juniors : s.pros, junior ? jrPlace : proPlace)] as const;
   }));
-  const open = events.filter((ev) => ev.tier !== 'finals' && accepted(ev, JTIERS[ev.tier].junior ? juniorRank : rank, fields.get(ev.id)!, JTIERS[ev.tier].junior ? jrPlace : proPlace));
+  const wildcard = (ev: JEvent) => ev.tier === 'major' && s.user.wildcard === true && s.user.stage === 'pro';
+  const open = events.filter((ev) => ev.tier !== 'finals' && (wildcard(ev) || accepted(ev, JTIERS[ev.tier].junior ? juniorRank : rank, fields.get(ev.id)!, JTIERS[ev.tier].junior ? jrPlace : proPlace)));
   const chosen = new Set(user && s.user.injury === 0 ? schedule({ stage: s.user.stage, age: user.age, load: plan.load, open }).map((e) => e.id) : []);
   const ctx: EventContext = {
     seed: s.seed, key, user, morale: s.user.morale, userFatigue: s.user.player.fatigue,
@@ -63,7 +65,8 @@ export function advanceSwing(s: JourneyState, plan: Plan, withUser = true): Swin
   const juniorPoints = recordSwing(s.juniorPoints, s.swing, earnedJr, [...s.juniors.map((p) => p.id), ...(user && s.user.stage === 'junior' ? [user.id] : [])]);
   const grown = { ...s, pros: s.pros.map((p) => growAi(p, s.seed, s.year)), juniors: s.juniors.map((p) => growAi(p, s.seed, s.year)), points, juniorPoints };
   const { state, report } = settle(s, grown, { plan, results, rankBefore: rank, juniorRankBefore: juniorRank, injuryRng: stream(s.seed, 'injury', key), withUser });
-  return { state: s.swing === 3 ? yearEnd(state) : { ...state, swing: s.swing + 1 }, report };
+  const next = s.swing === 3 ? yearEnd(state) : { ...state, swing: s.swing + 1 };
+  return { state: withUser ? queueChoices(next) : next, report };
 }
 
 /** AI entrants with the user put in at their place (or in the last slot of an open event), then filled. */

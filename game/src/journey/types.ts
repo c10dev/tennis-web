@@ -29,12 +29,17 @@ export interface UserState {
   coach: 0 | 1 | 2;
   /** A sponsor's fee every swing, and how many swings it still runs. */
   sponsor: { fee: number; swings: number } | null;
-  /** Swings still out injured (0 fit). */
+  /** Swings still away from the tour (0 playing), and why. */
   injury: number;
+  away?: 'injury' | 'service' | undefined;
   /** College years left (stage 'college'). */
   college: number;
   /** Best overall reached, for retirement advice. */
   peak: number;
+  /** Exempt from military service (a Korean player with an Asian Games gold or an Olympic medal). */
+  exempt?: boolean;
+  /** A wild card into the next swing's Major. */
+  wildcard?: boolean;
 }
 
 export interface CareerStats {

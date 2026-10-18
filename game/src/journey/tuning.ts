@@ -136,3 +136,33 @@ export const START = {
   reputation: 5,
   money: 20000,
 } as const;
+
+/** Choices between swings: how many offers or life events come after a swing (stage turns come alone). */
+export const CHOICES = {
+  none: 0.35,
+  one: 0.45,
+  /** Events' gains are written as felt; this much of them reaches the ratings (they bypass potential). */
+  gainScale: 0.4,
+} as const;
+
+/** Stage turns and offers. */
+export const STAGES = {
+  turnPro: 18,
+  /** A junior this good (junior rank, or OVR) at 16–17 is offered an early pro start. */
+  earlyProJuniorRank: 3,
+  earlyProOvr: 70,
+  /** College: swings before turning pro, growth multiplier, a stipend a swing. */
+  collegeSwings: 8,
+  collegeStipend: 3000,
+  /** Retirement advice from this age when OVR is this far under the peak and the rank is past `adviseRank`; always
+   * from `adviseAlways`; the career ends at `forced`. Advice comes back at most every `adviseEvery` swings. */
+  adviseFrom: 31,
+  adviseDrop: 5,
+  adviseRank: 100,
+  adviseAlways: 35,
+  adviseEvery: 4,
+  forced: 38,
+  /** Korean men serve at this age unless exempt (a medal); 6 swings away. */
+  serviceAge: 28,
+  serviceSwings: 6,
+} as const;

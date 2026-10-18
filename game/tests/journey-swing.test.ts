@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { candidates } from '../src/journey/ratings.ts';
 import { newJourney } from '../src/journey/start.ts';
+import { answerAll } from '../src/journey/autoplay.ts';
 import { advanceSwing } from '../src/journey/swing.ts';
 import type { JourneyState, Plan } from '../src/journey/types.ts';
 import { total } from '../src/journey/ranking.ts';
@@ -33,7 +34,7 @@ describe('journey swing', () => {
 
   it('ages the user and the world after four swings', () => {
     let s: JourneyState = start();
-    for (let i = 0; i < 4; i++) s = advanceSwing(s, plan).state;
+    for (let i = 0; i < 4; i++) s = answerAll(advanceSwing(s, plan).state);
     expect(s.year).toBe(2);
     expect(s.swing).toBe(0);
     expect(s.user.player.age).toBe(15);
@@ -42,7 +43,7 @@ describe('journey swing', () => {
   it('is deterministic for the same seed and choices', () => {
     const run = () => {
       let s = start(4);
-      for (let i = 0; i < 3; i++) s = advanceSwing(s, plan).state;
+      for (let i = 0; i < 3; i++) s = answerAll(advanceSwing(s, plan).state);
       return s;
     };
     expect(JSON.stringify(run())).toBe(JSON.stringify(run()));

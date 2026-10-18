@@ -4,7 +4,7 @@ import type { Rng } from '@tennis/engine';
 import { growUser, injury, nextFatigue } from './growth.ts';
 import { rankOf } from './ranking.ts';
 import { groupValues, ovr } from './ratings.ts';
-import { BOOKS } from './tuning.ts';
+import { BOOKS, STAGES } from './tuning.ts';
 import type { CareerStats, EventResult, JourneyState, Plan, SwingReport } from './types.ts';
 
 export interface SettleInput {
@@ -28,17 +28,22 @@ export function settle(before: JourneyState, after: JourneyState, { plan, result
   const rankAfter = withUser ? rankOf(player, after.pros, after.points) : null;
   const juniorRankAfter = withUser && u.stage === 'junior' ? rankOf(player, after.juniors, after.juniorPoints) : null;
   const prize = results.reduce((a, r) => a + r.prize, 0);
-  const money = u.money + prize + (u.sponsor?.fee ?? 0) - BOOKS.coachFee[u.coach] - BOOKS.living[u.stage === 'pro' ? 'pro' : 'junior'];
+  const pro = u.stage === 'pro';
+  const money = u.money + prize + (u.sponsor?.fee ?? 0) - (pro ? BOOKS.coachFee[u.coach] : 0) - BOOKS.living[pro ? 'pro' : 'junior']
+    + (u.stage === 'college' ? STAGES.collegeStipend : 0);
   const stats = tally(before.stats, results, rankAfter, juniorRankAfter, prize);
   const user = {
     ...u, player, money,
     injury: wasInjured ? u.injury - 1 : hurt,
+    away: wasInjured ? (u.injury > 1 ? u.away : undefined) : hurt ? 'injury' as const : undefined,
     focus: plan.focus,
     morale: clamp(morale(u.morale, results, rankBefore, rankAfter)),
     reputation: clamp(u.reputation * BOOKS.reputationKeep + results.reduce((a, r) => a + r.points, 0) / BOOKS.pointsPerReputation
       + results.filter((r) => r.champion && r.tier === 'major').length * BOOKS.majorReputation),
     sponsor: u.sponsor && u.sponsor.swings > 1 ? { ...u.sponsor, swings: u.sponsor.swings - 1 } : null,
     peak: Math.max(u.peak, ovr(player)),
+    college: u.stage === 'college' ? Math.max(0, u.college - 1) : u.college,
+    wildcard: false,
   };
   const milestones = withUser ? reached(before.stats, stats, results, before.seen) : [];
   const report: SwingReport = {
