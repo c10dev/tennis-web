@@ -33,6 +33,7 @@
     "season": "tsx game/cli/season.ts",
     "quick": "tsx game/cli/quick.ts",
     "journey": "tsx game/cli/journey.ts",
+    "room": "tsx game/cli/room.ts",
     "test:journey": "vitest run --project journey",
     "test:quick": "vitest run --project quick",
     "shots": "tsx e2e/shots/sheets.ts",
