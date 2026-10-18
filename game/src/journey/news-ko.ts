@@ -18,7 +18,7 @@ const titleOf = (f: Facts, tier: string) => f.titles.some((e) => e.tier === tier
 export const TEMPLATES: readonly Template[] = [
   {
     id: 'major-title', tone: 'big', when: (f) => f.majorTitle,
-    news: ['{nameTopic} {title} 정상에 섰다. 커리어 메이저 {majors}번째 우승', '{name}, {title} 우승… 결승에서 {titleOppObj} {titleScore}로 꺾었다', '역사가 쓰였다. {name}, {title} 챔피언'],
+    news: ['{nameTopic} {title} 정상에 섰다. 커리어 메이저 {majors}번째 우승', '{name}, {title} 우승… 결승에서 {titleOppObj} 꺾었다 ({titleScore})', '역사가 쓰였다. {name}, {title} 챔피언'],
     comments: ['울었다 진짜로', '{short} 메이저 우승 기념으로 오늘 치킨 쏜다', '결승 풀경기 다시 보러 간다', '이걸 살아서 보네', '{short} 처음 봤을 때부터 알아봤다 ㄹㅇ', '국뽕 차오른다…', '이제 GOAT 논쟁 들어가냐?'],
   },
   {
@@ -48,7 +48,7 @@ export const TEMPLATES: readonly Template[] = [
   },
   {
     id: 'title', tone: 'good', when: (f) => f.titles.length > 0,
-    news: ['{name}, {title} 우승… 통산 {titles}번째 타이틀', '{nameTopic} {title} 결승에서 {titleOppObj} {titleScore}로 꺾고 정상에 올랐다', '{name}, {title} 트로피 들어 올렸다'],
+    news: ['{name}, {title} 우승… 통산 {titles}번째 타이틀', '{nameTopic} {title} 결승에서 {titleOppObj} 꺾고 정상에 올랐다 ({titleScore})', '{name}, {title} 트로피 들어 올렸다'],
     comments: ['우승 축하해!!', '결승 {titleScore} 경기력 미쳤다', '{short} 요즘 폼 장난 아님', '트로피 하나 더 추가요', '{tier} 우승이 쉬운 게 아니다'],
   },
   {
