@@ -126,19 +126,19 @@ ADR-023/024). Steps inside a phase are mostly independent; phases run in order b
 ### Phase A: no pops, no glides
 | Step | What | Metric |
 |---|---|---|
-| A1 | Blend into and out of the hold: the stance cross-fades over `HOLD_RELEASE_SEC` from the timeline's body (closes the new TD-078) | Racket head < 0.10 m and bones < 0.3 rad a frame across both boundaries |
-| A2 | Carry and ready layer whenever no stroke owns the body: racket in front, free hand on the throat, lower carry at run speed, receiver's ready crouch from the server's toss; strokes blend from it | Racket head 0.6–1.2 m up between strokes (from 1.48 m median); contact p95 unchanged |
+| A1 | Blend into and out of the hold: the stance cross-fades over `HOLD_RELEASE_SEC` from the timeline's body (closes the new TD-078) | Racket and joints < 0.10 m and facing < 0.1 rad a frame across both boundaries (§7) |
+| A2 | Carry and ready layer whenever no stroke owns the body: racket in front, free hand on the throat, lower carry at run speed, receiver's ready crouch from the server's toss; strokes blend from it | Racket head 0.6–1.2 m up between strokes (p95 1.53 m today) and < 0.15 m a frame (no flap); contact p95 unchanged |
 | A3 | Serve toss from the free hand: `tossPosition` starts at the hand key's position, hand keys follow the ball up | Hand-to-ball < 0.10 m at release; hand ≥ 1.7 m at −0.45 s |
 | A4 | Split step: hop with its apex just before the opponent's contact, land on it with wider feet and a knee bend; none above ~2 m/s | Landing ±1 frame of contact; feet ≥ 0.5 m apart; no hop while running |
 | A5 | Plant as a step: the foot lifts along an arc into and out of the plant (as the lunge does) or waits for the clip's next foot contact | Grounded-foot slip p95 < 2 cm including ramp frames (from 7.3 cm) |
-| A6 | Twist continuity: the face sign from the key's direction, not a sign test; no antiparallel aims | `handr`, `lowerarm*`, `lowerleg*` < 0.5 rad a frame; tighten the racket jump bound to 0.35 m |
+| A6 | Joint and racket pops: find what moves a knee, ankle or the racket faster than a body can (clip switches, IK pole flips, the face sign test in `strokeSolver.ts`) and smooth it; bone twist about its own axis is left for close-ups | Joints < 0.25 m a frame between strokes (run taken out); racket head < 0.7 m a frame in a stroke (§7) |
 
 ### Phase B: read at 50 px
 | Step | What | Metric |
 |---|---|---|
 | B1 | Racket legibility: thicker handle with its own hull, a larger head with a dark frame and light strings (tuning only) | Head ≥ 14 CSS px and handle ≥ 3 CSS px at the near player on the TV camera |
 | B2 | Silhouette: longer arms (bone scale, within the IK reach and contact tests), bigger unit turn, backswing and follow-through extension, free arm out (Tennis Clash's x ≈ 0.5–0.6 m) | Racket-tip travel at the TV camera ≥ 40 px over a groundstroke; hand-out-of-body-outline frames measured in pose space |
-| B3 | Tell silhouettes: each tell gets one big, distinct cue (deep crouch, racket high, weight forward, open stance), readable on the far player | Pairwise projected-joint distance between stances ≥ 6 px at the far player (today: measure in 0.2) |
+| B3 | Tell silhouettes: each tell gets one big, distinct cue (deep crouch, racket high, weight forward, open stance), readable on the far player | On the far player, mean joint distance ≥ 4 px from no tell, ≥ 6 px between cards, ≥ 3 px within a card (§7) |
 | B4 | Variety from event data: two-handed backhand, low and high variants by `from.z`, swing size by `speedKmh`, low-to-high finish by `spinRpm`, face tilt | Key choice deterministic; contact p95 unchanged; the two-hander's free hand ≤ 0.15 m from the handle |
 
 ### Phase C: acting
@@ -190,14 +190,20 @@ pipeline (TD-064), the A1 sunny-club arena (`docs/3d-redesign.md` §6), commissi
 played point by point) and `npm run shots -- --label baseline` (24 sheets, not committed: `shots/` is ignored). The
 continuity targets are `it.fails` in `renderer/tests/motion-continuity.test.ts` until the step named.
 
-| Per frame | p50 | p95 | max | Target (step) |
+Targets revised the same day after the baseline was taken apart: a bone turning about its own axis does not show on
+a 41 px body (thousands of "flips" were that, while knees and ankles jumped in about 40 frames), and a real swing moves
+the racket head up to 0.6 m a frame, so the first draft's bone-angle and 0.35 m bounds measured the wrong things. The
+targets now follow the joints an eye tracks at TV size (knees, ankles, elbows, hands, head, racket head).
+
+| Per frame, m (facing in rad) | p50 | p95 | max | Target (step) |
 |---|---|---|---|---|
-| Racket head in play, m | 0.042 | 0.243 | 1.078 | < 0.35 (A6) |
-| Twist bones (hand, forearms, shins), rad | 0.138 | 1.004 | 3.141 | < 0.5 (A6); 5,438 of 108k frames over 1 rad |
-| Racket head into the hold, m | 0.804 | 1.470 | 1.547 | < 0.10 (A1) |
-| Largest bone turn into the hold, rad | 1.889 | 1.959 | 2.055 | < 0.3 (A1) |
-| Racket head out of the hold, m | 0.053 | 1.054 | 1.625 | < 0.10 (A1) |
-| Largest bone turn out of the hold, rad | 0.085 | 0.657 | 3.142 | < 0.3 (A1) |
+| Racket head between strokes (no stroke or reaction) | 0.031 | 0.096 | 0.703 | < 0.15 (A2): the idle↔walk blend flaps it in a split step |
+| Racket head in a stroke | 0.093 | 0.360 | 1.078 | < 0.7, a real swing's 42 m/s (A6) |
+| Largest joint between strokes, the run taken out | 0.026 | 0.105 | 0.716 | < 0.25 (A6) |
+| Racket head / largest joint into the hold | 0.804 / 0.804 | 1.470 / 1.470 | 1.547 / 1.694 | < 0.10 (A1) |
+| Racket head / largest joint out of the hold | 0.053 / 0.059 | 1.054 / 1.149 | 1.625 / 1.814 | < 0.10 (A1) |
+| Facing out of the hold | 0.000 | 0.008 | 3.142 | < 0.1 (A1) |
+| Twist bones (hand, forearms, shins) | 0.138 | 1.004 | 3.141 | none: close-ups only; 5,438 of 108k frames over 1 rad |
 
 | Grounded foot slip per frame, m | p50 | p95 | max |
 |---|---|---|---|
@@ -219,8 +225,10 @@ continuity targets are `it.fails` in `renderer/tests/motion-continuity.test.ts` 
 | Body height, near / far player, ready stance | 41.3 / 28.6 | — |
 | Racket head, near player | 8.4 | ≥ 14 (B1) |
 | Racket-head span around the feet over a near groundstroke (−0.6 to +0.4 s), p50 of 49 | 48.9 | ≥ 64, +30 % (B2) |
-| Tell stances on the far player: mean joint distance, min / p50 of the 45 pairs | 0.3 / 6.0 | min ≥ 6 (B3) |
+| Tell stances on the far player, mean joint distance (min / median): against no tell; between cards; within a card | 0.4 / 2.1; 0.3 / 6.8; 0.4 / 4.9 | min ≥ 4; ≥ 6; ≥ 3 (B3) |
 
 Found by the baseline, beyond §3: the racket jumps up to 1.08 m in a frame in the grass and hard matches
-(`strokeRig.test.ts` holds 0.7 m on its clay fixture only), and the twist flips reach the hips and spine (up to 2.8 rad)
-and the feet (3.1 rad) as well as the hand and shins.
+(`strokeRig.test.ts` holds 0.7 m on its clay fixture only); between strokes it flaps by up to 0.70 m a frame when a
+split step's speed dip blends Idle and Walking_A (60 fps frames in `shots/judgement/`, every rally); leaving the hold can
+turn the player 180° in one frame. The twist flips reach the hips and spine (up to 2.8 rad) and the feet (3.1 rad) as
+well as the hand and shins, but they turn bones about their own axes and do not show at TV size.

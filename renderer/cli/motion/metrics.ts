@@ -10,7 +10,15 @@ import type { PlayerModel } from '../../src/scene/playerModel.ts';
 import { PLAYBACK } from '../../src/tuning/index.ts';
 import { FPS, measure, type Phase, type Sample } from './probe.ts';
 
-export interface Step { t: number; from: Phase; to: Phase; racket: number; bones: Record<string, number> }
+export interface Step {
+  t: number; from: Phase; to: Phase;
+  /** Metres the racket head moved; whether a stroke owned the body in either frame. */
+  racket: number; stroke: boolean; reaction: boolean;
+  /** Radians each bone turned (local; `(root)` the player's facing). */
+  bones: Record<string, number>;
+  /** Metres each joint moved in the world, and relative to the player's root (the run taken out). */
+  joints: Record<string, number>; jointsRel: Record<string, number>;
+}
 
 /** Radians between two rotations: the angle of a⁻¹b, by atan2 (acos loses small angles near 1). */
 function turn(a: Quaternion, b: Quaternion): number {
@@ -24,7 +32,16 @@ export function frameSteps(s: readonly Sample[]): Step[] {
     const [a, b] = [s[i - 1]!, s[i]!];
     const bones: Record<string, number> = {};
     for (const n of Object.keys(b.bones)) bones[n] = turn(a.bones[n]!, b.bones[n]!);
-    out.push({ t: b.t, from: a.phase, to: b.phase, racket: a.racket.distanceTo(b.racket), bones });
+    const joints: Record<string, number> = {};
+    const jointsRel: Record<string, number> = {};
+    const moved = b.root.clone().sub(a.root);
+    for (const n of Object.keys(b.joints)) {
+      joints[n] = a.joints[n]!.distanceTo(b.joints[n]!);
+      jointsRel[n] = b.joints[n]!.clone().sub(a.joints[n]!).sub(moved).length();
+    }
+    const stroke = !!(a.pose.stroke?.weight || b.pose.stroke?.weight);
+    const reaction = a.pose.reactionWeight > 0 || b.pose.reactionWeight > 0;
+    out.push({ t: b.t, from: a.phase, to: b.phase, racket: a.racket.distanceTo(b.racket), stroke, reaction, bones, joints, jointsRel });
   }
   return out;
 }
@@ -69,5 +86,9 @@ export function tossGaps(model: PlayerModel, tl: Timeline, id: PlayerId, until: 
   }
   return out;
 }
+
+/** The largest of a record's values, over `only` keys if given. */
+export const largest = (r: Record<string, number>, only?: readonly string[]): number =>
+  Math.max(...Object.entries(r).filter(([n]) => !only || only.includes(n)).map(([, v]) => v));
 
 export const quantile = (a: readonly number[], p: number): number => a.length ? a.slice().sort((x, y) => x - y)[Math.floor(p * (a.length - 1))]! : NaN;

@@ -24,7 +24,13 @@ export interface Sample extends Frame {
   feet: { l: Vector3; r: Vector3; toesL: Vector3; toesR: Vector3 };
   /** Local rotations of the deform bones, and `(root)`: the whole player's turn. */
   bones: Record<string, Quaternion>;
+  /** World positions of the joints an eye follows at TV size (JOINTS), and of the player's root. */
+  joints: Record<string, Vector3>;
+  root: Vector3;
 }
+
+/** Knees, ankles, elbows, hands, head and the racket head: what shows when a 41 px body pops. */
+export const JOINTS = ['lowerlegl', 'lowerlegr', 'footl', 'footr', 'lowerarml', 'lowerarmr', 'handl', 'handr', 'head', 'racket-head'];
 
 export const loadPlayerModelFile = (): PlayerModel =>
   buildPlayerModel(readGlb(new Uint8Array(readFileSync(new URL('../../../ui/public/models/player.glb', import.meta.url)))));
@@ -38,8 +44,10 @@ export function measure(rig: GltfRig, frame: Frame): Sample {
   const at = (n: string) => new Vector3().setFromMatrixPosition(rig.object3d.getObjectByName(n)!.matrixWorld);
   const bones: Record<string, Quaternion> = { '(root)': rig.object3d.quaternion.clone() };
   for (const n of DEFORM) bones[n] = rig.object3d.getObjectByName(n)!.quaternion.clone();
+  const joints: Record<string, Vector3> = {};
+  for (const n of JOINTS) joints[n] = at(n);
   return {
-    ...frame, racket: at('racket-head'), freeHand: at('handl'), bones,
+    ...frame, racket: joints['racket-head']!, freeHand: joints['handl']!, bones, joints, root: rig.object3d.position.clone(),
     feet: { l: at('footl'), r: at('footr'), toesL: at('toesl'), toesR: at('toesr') },
   };
 }

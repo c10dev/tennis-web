@@ -5,7 +5,7 @@
 import { averagePlayer, createConfig, exhibitionConfig, SCHEMA_VERSION, simulateMatch, type Card, type PlayerId, type Surface } from '@tennis/engine';
 import { heldPlayers, type TellStance } from '../src/playback/hold.ts';
 import { buildTimeline, type Timeline } from '../src/playback/timeline.ts';
-import { carryHeights, footSlips, frameSteps, quantile, tossGaps, type Step } from './motion/metrics.ts';
+import { carryHeights, footSlips, frameSteps, largest, quantile, tossGaps, type Step } from './motion/metrics.ts';
 import { holdFrames, loadPlayerModelFile, sampleFrames, timelineFrames, type Sample } from './motion/probe.ts';
 import { bodyHeightPx, racketHeadPx, racketSpanPx, stanceDistancePx } from './motion/screen.ts';
 
@@ -36,19 +36,23 @@ const TELLS: (TellStance | null)[] = [null, ...(['attack', 'defend', 'counter'] 
 const holdSteps = sofar.slice(0, -1).flatMap((tl, k) => ids.flatMap((id) => frameSteps(sampleFrames(model, holdFrames(tl, sofar[k + 1]!, id, TELLS[(k % 9) + 1]!)))));
 const entering = holdSteps.filter((s) => s.from === 'walk' && s.to === 'hold');
 const leaving = holdSteps.filter((s) => s.to === 'release' || (s.from === 'release' && s.to === 'play'));
-const maxBone = (s: Step, only?: string[]) => Math.max(...Object.entries(s.bones).filter(([n]) => !only || only.includes(n)).map(([, v]) => v));
+const free = steps.filter((s) => !s.stroke && !s.reaction);
 
 console.log(`# Motion report: ${MATCHES.map(([s, f]) => `${s} ${f}`).join(', ')}; first ${secs} s, both players, 60 fps\n`);
 console.log('## Per-frame steps (metres, radians)\n');
+console.log('Joints: knees, ankles, elbows, hands, head, racket head; "rel" takes the run out (relative to the root).\n');
 head(['what', 'n', 'p50', 'p95', 'max']);
-stats('racket head, in play', steps.map((s) => s.racket));
-stats('largest bone turn, in play', steps.map((s) => maxBone(s)));
-stats('twist bones (hand, forearms, shins)', steps.map((s) => maxBone(s, TWIST)));
-stats('racket head, into the hold', entering.map((s) => s.racket));
-stats('largest bone turn, into the hold', entering.map((s) => maxBone(s)));
-stats('racket head, out of the hold', leaving.map((s) => s.racket));
-stats('largest bone turn, out of the hold', leaving.map((s) => maxBone(s)));
-console.log(`\nTwist-bone steps over 1 rad: ${steps.filter((s) => maxBone(s, TWIST) > 1).length} of ${steps.length} frames.\n`);
+stats('racket head, between strokes (A2 < 0.15)', free.map((s) => s.racket));
+stats('racket head, in a stroke (A6 < 0.7)', steps.filter((s) => s.stroke).map((s) => s.racket));
+stats('largest joint rel, between strokes (A6 < 0.25)', free.map((s) => largest(s.jointsRel)));
+stats('racket head, into the hold (A1 < 0.10)', entering.map((s) => s.racket));
+stats('largest joint, into the hold (A1 < 0.10)', entering.map((s) => largest(s.joints)));
+stats('facing, into the hold (A1 < 0.1 rad)', entering.map((s) => s.bones['(root)']!));
+stats('racket head, out of the hold (A1 < 0.10)', leaving.map((s) => s.racket));
+stats('largest joint, out of the hold (A1 < 0.10)', leaving.map((s) => largest(s.joints)));
+stats('facing, out of the hold (A1 < 0.1 rad)', leaving.map((s) => s.bones['(root)']!));
+stats('twist bones (close-ups only, not a target)', steps.map((s) => largest(s.bones, TWIST)));
+console.log(`\nTwist-bone steps over 1 rad: ${steps.filter((s) => largest(s.bones, TWIST) > 1).length} of ${steps.length} frames.\n`);
 
 console.log('## Grounded foot slip per frame (metres)\n');
 head(['body', 'n', 'p50', 'p95', 'max']);
