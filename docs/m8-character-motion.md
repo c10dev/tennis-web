@@ -253,3 +253,15 @@ well as the hand and shins, but they turn bones about their own axes and do not 
 | Split step | a lift peaking at the opponent's contact | lands on it, feet ≥ 0.5 m apart | — |
 | Rig CPU per player-frame (dev VM) | 20 µs | 32 µs (the carry solves every frame) | ≤ 2 ms for both |
 
+### After phase B (2026-10-18)
+
+| On the TV view (412×503 CSS px) | Baseline | After B | Target |
+|---|---|---|---|
+| Racket head / handle, near player | 8.4 / 1.6 | 11.3 / 2.5 | ≥ 10 / ≥ 2.2 |
+| Racket-head span over a near groundstroke, p50 | 47.8 | 52.2 | ≥ 51 |
+| Tells on the far player: from no tell / between cards / within a card | 0.6 / 0.9 / 0.9 | 4.1 / 6.4 / 3.1 | ≥ 4 / ≥ 6 / ≥ 3 |
+| Backhands two-handed (free hand within 0.2 m of the racket hand) | none | > 90 % of backhand frames | — |
+
+Phase A's targets hold after B: the hold's release stays within 0.147 m a frame of the motion it hands over to over
+all twelve tells; plant ramps p95 3.9 cm; the racket in a stroke at most 0.664 m a frame.
+

@@ -5,7 +5,7 @@
 import { Matrix4, Quaternion, Vector3, type Bone, type Object3D } from 'three';
 import { clamp, smoothstep } from '../math.ts';
 import type { StrokePose } from '../playback/stroke.ts';
-import { PLAYER_RIG } from '../tuning/index.ts';
+import { PLAYER_RIG, STROKE } from '../tuning/index.ts';
 import { solveTwoBone } from './ik.ts';
 
 export type Bones = Record<string, Bone>;
@@ -166,7 +166,13 @@ function pass(frame: Object3D, model: Object3D, b: Bones, slot: Object3D, s: Str
   // Free arm.
   const fw = s.freeWeight ?? w;
   b.wristl!.quaternion.slerp(new Quaternion(), fw);
-  limb(b.upperarml!, b.lowerarml!, b.handl!, toWorld(e.free), ARM_POLE.l.clone().applyQuaternion(worldQuat(frame)), fw);
+  // Two-handed (B4): the free hand goes to the grip above the racket hand, wherever the stroke has taken it.
+  const freeTarget = toWorld(e.free);
+  if (s.twoHanded) {
+    frame.updateMatrixWorld(true);
+    freeTarget.lerp(slot.localToWorld(new Vector3(0, STROKE.events.twoHandGrip, 0)), s.twoHanded);
+  }
+  limb(b.upperarml!, b.lowerarml!, b.handl!, freeTarget, ARM_POLE.l.clone().applyQuaternion(worldQuat(frame)), fw);
   frame.updateMatrixWorld(true);
   const racket = slot.localToWorld(new Vector3(0, PLAYER_RIG.racket.length, 0));
   return contact.sub(racket);

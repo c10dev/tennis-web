@@ -1528,4 +1528,15 @@ Format: one entry per decision, newest at the bottom.
   wherever the mixed hand crossed the IK's bend. The free elbow's pole points out and back (`ARM_POLE.l`), not down,
   which a hanging hand lay along. A1's numbers after: into the hold ≤ 0.021 m, out of it ≤ 0.147 m beyond the motion
   handed over to, over all twelve tells.
+- **B4, strokes from the events (2026-10-18):** `keysFor(kind, shot)` shapes each groundstroke (`STROKE.events`): the
+  flourish's reach by pace (0.6–1.5 of B2's from 105 to 134 km/h), the follow-through's height by spin (−0.10 to
+  +0.18 m from 1,500 to 3,000 rpm), the backswing's height by the contact's (0.6 m a metre about 1.0 m), and a
+  modest crouch for a low ball (0.1 m a metre below 0.95 m: deeper, the folded legs left no room to lift a stepping
+  foot, A5's target, and the solver still crouches further for a ball out of reach). Every backhand is two-handed
+  (Q6): `StrokePose.twoHanded` sends the free hand to the grip 0.1 m up the handle wherever the stroke has taken the
+  racket hand, until the follow-through hands over to the recovery (keys alone left the hands 0.6 m apart at contact,
+  where the racket bends onto the ball). Free hand within 0.2 m of the racket hand in over 90 % of backhand frames.
+- **Phase B done (2026-10-18):** racket head / handle 8.4 / 1.6 → 11.3 / 2.5 px, swing span 47.8 → 52.2 px, tells
+  from no tell / between cards / within a card 0.6 / 0.9 / 0.9 → 4.1 / 6.4 / 3.1 px, every phase A target still met.
+  Next: the eye check on a phone (Q10), then C.
 

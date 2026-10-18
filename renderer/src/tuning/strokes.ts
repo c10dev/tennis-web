@@ -24,6 +24,15 @@ export const STROKE = {
   /** Groundstrokes' backswing and follow-through keys (indices in STROKE_KEYS) exaggerated for the TV view (ADR-031
    *  B2): each hand `reach` × as far from its shoulder, hips and chest turned `turn` × as far. */
   flourish: { keys: [1, 3], reach: 1.3, turn: 1.2 },
+  /** Groundstrokes from the events (B4): the flourish's reach scales with pace from `paceFrom` to `paceTo` km/h (by
+   *  `paceScale` low to high); the follow-through's hand rises `spinLift` m low to high from `spinFrom` to `spinTo`
+   *  rpm; the backswing hand rises `highLift` m a metre of contact above `heightMid`, and the hips drop `lowDrop` m a
+   *  metre of contact below `lowFrom` in the backswing and at contact; a backhand's free hand holds the grip
+   *  `twoHandGrip` m up the handle from the racket hand until the follow-through (Q6: all two-handed). */
+  events: {
+    paceFrom: 105, paceTo: 134, paceScale: [0.6, 1.5], spinFrom: 1500, spinTo: 3000, spinLift: [-0.1, 0.18],
+    heightMid: 1.0, highLift: 0.6, lowFrom: 0.95, lowDrop: 0.1, twoHandGrip: 0.1,
+  },
   /** Seconds to blend in from the clips at the lead-in, and the span after contact over which the stroke hands back. */
   blendInSec: 0.12,
   blendOut: { fromSec: 0.45, toSec: 0.75 },

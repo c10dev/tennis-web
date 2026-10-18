@@ -41,6 +41,9 @@ export interface StrokePose {
   freeWeight?: number;
   /** Metres the feet spread sideways beyond where the clips put them (a split step's landing, A4). */
   spread?: number;
+  /** How much the free hand holds the grip above the racket hand, wherever the stroke takes it (B4, every backhand two-
+   *  handed until the follow-through hands over to the recovery). */
+  twoHanded?: number;
 }
 
 /** A court point in the frame of a player standing at `pos` facing `facing`. */
@@ -53,16 +56,36 @@ export function toLocal(p: Vec3, pos: Vec2, facing: Vec2): V3 {
 
 type Triple = readonly [number, number, number];
 const away = (p: Triple, from: Triple, k: number): Triple => [from[0] + (p[0] - from[0]) * k, from[1] + (p[1] - from[1]) * k, from[2] + (p[2] - from[2]) * k];
-/** A key with its hands further from the shoulders and its turn wider (STROKE.flourish, B2). */
-function flourish(key: StrokeKey): StrokeKey {
-  const F = STROKE.flourish;
+const clamp01 = (u: number) => Math.max(0, Math.min(1, u));
+
+/** A key with its hands `reach` × as far from the shoulders and its turn wider (STROKE.flourish, B2). */
+function flourish(key: StrokeKey, reach: number): StrokeKey {
   const right = PLAYER_RIG.shoulderR;
   const left: Triple = [-right[0], right[1], right[2]];
-  return { ...key, pelvis: key.pelvis * F.turn, turn: key.turn * F.turn, hand: away(key.hand, right, F.reach), free: away(key.free, left, F.reach) };
+  return { ...key, pelvis: key.pelvis * STROKE.flourish.turn, turn: key.turn * STROKE.flourish.turn, hand: away(key.hand, right, reach), free: away(key.free, left, reach) };
 }
-const flourished = (keys: readonly StrokeKey[]) => keys.map((k, i) => ((STROKE.flourish.keys as readonly number[]).includes(i) ? flourish(k) : k));
-/** The keys the planner plays: the groundstrokes flourished for the TV view, the serve as keyed. */
-const KEYS: Record<SwingKind, readonly StrokeKey[]> = { forehand: flourished(STROKE_KEYS.forehand), backhand: flourished(STROKE_KEYS.backhand), serve: STROKE_KEYS.serve };
+
+/**
+ * The keys the planner plays for shot `s` (B4): the serve as keyed; a groundstroke flourished by its pace, finished by
+ * its spin, taken back and crouched by its contact's height (the backhand's second hand is the solver's, `twoHanded`).
+ */
+export function keysFor(kind: SwingKind, s: ShotEvent): readonly StrokeKey[] {
+  if (kind === 'serve') return STROKE_KEYS.serve;
+  const E = STROKE.events;
+  const F = STROKE.flourish;
+  const pace = lerp(E.paceScale[0], E.paceScale[1], clamp01((s.speedKmh - E.paceFrom) / (E.paceTo - E.paceFrom)));
+  const lift = lerp(E.spinLift[0], E.spinLift[1], clamp01((s.spinRpm - E.spinFrom) / (E.spinTo - E.spinFrom)));
+  const high = (s.from.z - E.heightMid) * E.highLift;
+  const low = Math.max(0, E.lowFrom - s.from.z) * E.lowDrop;
+  const keys = STROKE_KEYS[kind];
+  return keys.map((k0, i) => {
+    let k: StrokeKey = (F.keys as readonly number[]).includes(i) ? flourish(k0, 1 + (F.reach - 1) * pace) : k0;
+    if (i === 1) k = { ...k, hand: [k.hand[0], k.hand[1] + high, k.hand[2]], drop: k.drop + low };
+    if (i === 2) k = { ...k, drop: k.drop + low };
+    if (i === 3) k = { ...k, hand: [k.hand[0], k.hand[1] + lift, k.hand[2]] };
+    return k;
+  });
+}
 
 const kindOf = (s: ShotEvent): SwingKind => (s.shot === 'serve' ? 'serve' : (s.wing ?? 'forehand'));
 const v3 = (a: readonly [number, number, number]): V3 => ({ x: a[0], y: a[1], z: a[2] });
@@ -133,7 +156,7 @@ function strokeIn(seg: PointSegment, id: PlayerId, t: number, pos: Vec2, facing:
     const end = s.t + STROKE.blendOut.toSec;
     if (tau < start || tau > end) continue;
     const kind = kindOf(s);
-    const keys = KEYS[kind];
+    const keys = keysFor(kind, s);
     const times = keys.map((key) => s.t + key.at);
     // Groundstrokes: the first key moves to the lead-in start, never past the backswing.
     if (kind !== 'serve') times[0] = Math.min(start, times[1]!);
@@ -144,8 +167,10 @@ function strokeIn(seg: PointSegment, id: PlayerId, t: number, pos: Vec2, facing:
     const hop = hopPeak * (tau < s.t ? smoothstep(1 - (s.t - tau) / riseSec) : smoothstep(1 - (tau - s.t) / fallSec));
     const contact = toLocal(s.from, pos, facing);
     const keyed = sample(keys, times, tau);
+    // A backhand's free hand stays on the grip until the follow-through, then lets go by the recovery key (B4).
+    const twoHanded = kind === 'backhand' ? 1 - smoothstep((tau - times[3]!) / (times[4]! - times[3]!)) : 0;
     return {
-      kind, weight, keys: kind === 'serve' ? holdingBall(keyed, s, tau, pos, facing) : keyed, contact, plant: plantAt(s, kind, tau),
+      kind, weight, twoHanded, keys: kind === 'serve' ? holdingBall(keyed, s, tau, pos, facing) : keyed, contact, plant: plantAt(s, kind, tau),
       lunge: kind === 'serve' ? NO_LUNGE : lungeFor(contact),
       contactWeight: smoothstep(1 - Math.abs(tau - s.t) / (kind === 'serve' ? STROKE.serve.contactBlendSec : STROKE.contactBlendSec)), hop, keyTimes: times,
     };
