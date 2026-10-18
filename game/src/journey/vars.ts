@@ -3,10 +3,10 @@ import { withJosa } from '../text/ko.ts';
 
 export type Vars = Record<string, string | number>;
 
-/** {key}, {keyTopic} 은/는, {keySubj} 이/가, {keyObj} 을/를, {keyWith} 과/와. */
+/** {key}, {keyTopic} 은/는, {keySubj} 이/가, {keyObj} 을/를, {keyWith} 과/와, {keyBy} 으로/로. */
 export const particles = (key: string, word: string): Vars => ({
   [key]: word, [`${key}Topic`]: withJosa(word, '은', '는'), [`${key}Subj`]: withJosa(word, '이', '가'),
-  [`${key}Obj`]: withJosa(word, '을', '를'), [`${key}With`]: withJosa(word, '과', '와'),
+  [`${key}Obj`]: withJosa(word, '을', '를'), [`${key}With`]: withJosa(word, '과', '와'), [`${key}By`]: withJosa(word, '으로', '로'),
 });
 
 export const nameVars = (name: string): Vars => particles('name', name);
