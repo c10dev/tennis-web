@@ -51,3 +51,4 @@ export { overtakesBetween } from './quick/overtakes.ts';
 export { nextGoal } from './quick/standing.ts';
 export { habitLine, opponentRead, opponentScouting, rivalLine } from './views/quick-scout.ts';
 export { en, ko, textFor, type Lang, type Messages } from './text/index.ts';
+export * from './journey/index.ts';
